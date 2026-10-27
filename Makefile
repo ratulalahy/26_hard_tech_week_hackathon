@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test notebooks slice
+.PHONY: test notebooks profile slice
 
 test:
 	cd lab && uv run pytest
@@ -23,3 +23,7 @@ notebooks:
 WINDOW ?= validation
 slice:
 	cd lab && uv run python scripts/run_slice.py --window $(WINDOW)
+
+# The dashboard's validation-year grid context (Task 8): results/grid-profile.json.
+profile:
+	cd lab && uv run python scripts/export_grid_profile.py
