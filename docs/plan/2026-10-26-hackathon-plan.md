@@ -377,3 +377,8 @@
   - The implementation contract must support an offline static laptop build: export frozen scenario results and a scenario-availability catalog; no backend, remote machine, API key, network font, or live inference is a core demo dependency.
   - Reconcile proposals before the fresh Astra gate. A review disposition marked "spec" is an unresolved requirement until the spec actually implements it and the gate verifies it; it is not evidence that the experiment is sound already.
   - Existing `make` targets, exact dependency pins and performance claims are acceptance work, not verified facts. Run the commands that exist; label proposed commands as planned until implemented.
+
+- **2026-10-26 23:14 MT, owner decisions received (supersedes the pending F02/E09 choices above).**
+  - **F02 approved:** PACE first, regional overview. A complete PACE path is mandatory; about ten BAs remain in the overview, with deeper regional experiments extended as time permits.
+  - **E09 approved:** emissions first, with deadlines and common completed work as constraints. Stress exposure and wholesale cost remain separate reported outcomes.
+  - These decisions are recorded in `docs/brief.md`; the independent specs must implement them rather than re-open the product choice.

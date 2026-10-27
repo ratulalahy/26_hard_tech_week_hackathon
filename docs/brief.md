@@ -59,6 +59,13 @@ Sources: torus.co news (2025-02-07), BusinessWire (2025-09-09), Battery Technolo
 | Team | Solo owner plus agents. Claude Code builds; Codex plans and reviews. |
 | Deadline | Experiments frozen Wed 11 AM; mostly done by Wed 2 PM. |
 
+## Owner clarifications (2026-10-26 23:14 MT)
+
+- **Primary objective approved:** emissions first. Minimize attributed operational emissions in the simulation, subject to deadlines and the same completed work. Report grid-stress exposure and wholesale energy-cost scenarios separately; do not silently trade them through arbitrary objective weights.
+- **Delivery priority approved:** PACE first, regional overview. Build and verify the complete PACE forecast → router → replay → offline demo before extending experiment depth. Keep roughly ten BAs in the overview; full experiment depth is not required for every overview region.
+- **Demo platform:** MacBook Pro, Chrome, offline static build. The experiment machine is not part of the product or pitch; no live hardware loop is needed.
+- **Test-window correction:** retain the original sealed boundaries, but end evaluation at the frozen snapshot's availability cutoff. Do not claim a complete twelve-month evaluation if some hours have not happened or have not been published. This implements the existing plan-review correction, not a new holdout chosen after seeing outcomes.
+
 ## Constraints
 
 - Free and open data only. Anything simulated or assumed is labeled as such, end to end.

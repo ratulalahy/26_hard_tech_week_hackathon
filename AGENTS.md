@@ -12,6 +12,8 @@ The entry has two parts:
 
 The headline is Option 2, Compute Follows the Sun; the traffic report is its engine. Utah's PACE is the hero region.
 
+The owner approved emissions-first scheduling, with deadlines and identical completed work as constraints. Delivery is PACE first with roughly ten BAs in the overview; full experiment depth is not required for every overview region. The decision record is in `docs/brief.md`.
+
 Key documents:
 - the brief: `docs/brief.md`;
 - the approved plan: `docs/plan/2026-10-26-hackathon-plan.md`;

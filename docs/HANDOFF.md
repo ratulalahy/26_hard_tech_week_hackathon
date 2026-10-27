@@ -24,6 +24,14 @@ Each entry is dated in Mountain Time (MDT, UTC−6) and cites its evidence: a co
 
 ## Entries
 
+### 2026-10-26 23:14 MT: Codex — owner decisions resolved
+
+- **Owner selected:** "Emissions first (recommended)" and "PACE first, regional overview (recommended)" in the two planning questions. F02 and E09 are resolved.
+- Updated the decision record (`docs/brief.md`), the rules summary (`AGENTS.md`) and a new plan amendment. Earlier pending-decision entries remain as history.
+- Planning adjustments are pushed in `2dc22cd`; draft PR: https://github.com/ratulalahy/26_hard_tech_week_hackathon/pull/9.
+- Shared-data cache remains read-only. The three data profiles are still pending on main at this check; no test values or experimental outcomes were read.
+- Next: use the committed profiles to write the independent design spec, then push it to the same branch/PR.
+
 ### 2026-10-26 23:13 MT: Codex
 
 **Read and synced**
