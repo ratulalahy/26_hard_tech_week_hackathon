@@ -1,0 +1,245 @@
+<title>GridPilot Project Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@500;600&family=Funnel+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column of status sections; a sticky jump bar; tables for numbers. Utah palette from docs/design/tokens.md */
+:root{
+  --bg:#fdf9f4; --panel:#ffffff; --ink:#2d1d14; --ink-2:#5b493f; --ink-3:#6c594f; --hair:rgba(110,62,30,.16);
+  --good:#298954; --good-soft:#e3f2e3; --bad:#c6481c; --bad-soft:#fbe6dc; --act:#1157a4; --act-soft:#e3eefc;
+  --wait:#9a6a00; --wait-soft:#fbf0d2; --mute-soft:#f3ece4;
+  --display:'Funnel Display', ui-sans-serif, system-ui, sans-serif;
+  --ui:'Funnel Sans', ui-sans-serif, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1b1410; --panel:#241b16; --ink:#f4ebe2; --ink-2:#d6c6b8; --ink-3:#b9a698; --hair:rgba(244,235,226,.14);
+  --good:#6cc28c; --good-soft:#1f3326; --bad:#f08a62; --bad-soft:#3a2219; --act:#7fb2ee; --act-soft:#1b2a3d;
+  --wait:#e6b94a; --wait-soft:#3a2f14; --mute-soft:#2c221c; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#1b1410; --panel:#241b16; --ink:#f4ebe2; --ink-2:#d6c6b8; --ink-3:#b9a698; --hair:rgba(244,235,226,.14);
+  --good:#6cc28c; --good-soft:#1f3326; --bad:#f08a62; --bad-soft:#3a2219; --act:#7fb2ee; --act-soft:#1b2a3d;
+  --wait:#e6b94a; --wait-soft:#3a2f14; --mute-soft:#2c221c; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--ui);font-variant-numeric:tabular-nums;margin:0}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+h1,h2,h3{font-family:var(--display);font-weight:600;text-wrap:balance;margin:0}
+h1{font-size:26px;line-height:1.2}
+h2{font-size:18px;margin-bottom:10px}
+h3{font-size:14px;font-family:var(--ui);font-weight:600;margin-bottom:4px}
+p{margin:0 0 8px;max-width:72ch}
+a{color:var(--act)}
+.meta{color:var(--ink-3);font-size:12.5px}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--hair);display:flex;gap:4px 14px;flex-wrap:wrap;padding:8px 0;margin-bottom:18px;font-size:13px}
+nav a{color:var(--ink-2);text-decoration:none}
+nav a:hover,nav a:focus-visible{color:var(--ink);text-decoration:underline}
+section{background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:16px 18px;margin-bottom:14px;scroll-margin-top:52px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px 22px}
+.cols>div{min-width:0}
+ul{margin:0;padding-left:18px}
+li{margin:2px 0}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--hair);vertical-align:top}
+th{font-weight:600;color:var(--ink-2);font-size:12px}
+td.n,th.n{text-align:right;white-space:nowrap}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.done{background:var(--good-soft);color:var(--good)}
+.doing{background:var(--act-soft);color:var(--act)}
+.next{background:var(--mute-soft);color:var(--ink-2)}
+.risk{background:var(--bad-soft);color:var(--bad)}
+.idea{background:var(--wait-soft);color:var(--wait)}
+.hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:4px}
+.stat{border:1px solid var(--hair);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-family:var(--display);font-size:24px;font-weight:600;line-height:1.15}
+.stat.good b{color:var(--good)} .stat.bad b{color:var(--bad)}
+.stat span{color:var(--ink-3);font-size:12px}
+.note{font-size:12.5px;color:var(--ink-3);margin-top:8px}
+ol.deck{margin:0;padding-left:20px}
+ol.deck li{margin:4px 0}
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <h1>GridPilot · project board</h1>
+    <div class="meta">Torus bounty, Hard Tech Week · judging Wed Oct 28, 5:00 PM MT · updated Tue Oct 27, 2:55 PM MT</div>
+  </div>
+  <div class="meta">
+    <a href="https://claude.ai/artifact/CVQL3dwgYWcggm1Spu2dhe">Live dashboard</a> ·
+    <a href="https://claude.ai/artifact/Xq2wzr8tHYHB2nKC4563Tk">Design gallery</a> ·
+    <a href="https://github.com/ratulalahy/26_hard_tech_week_hackathon">Repo</a>
+  </div>
+</header>
+
+<nav aria-label="Sections">
+  <a href="#problem">Problem</a><a href="#findings">Findings</a><a href="#plan">Plan</a><a href="#evaluation">Evaluation</a><a href="#pitch">Pitch</a><a href="#ideas">Ideas</a><a href="#risks">Risks</a><a href="#decisions">Decisions</a>
+</nav>
+
+<section id="problem">
+  <h2>Problem and idea</h2>
+  <div class="cols">
+    <div>
+      <h3>Problem</h3>
+      <p>AI clusters draw power around the clock. Utah's grid (PacifiCorp East) averages about 560 g CO₂/kWh and runs on coal at night. Operators can choose <i>when</i> and <i>where</i> a job runs. Which lever matters, and how much?</p>
+    </div>
+    <div>
+      <h3>Idea</h3>
+      <p>A day-ahead "traffic report" for the grid (Option 1) feeds a router that keeps AI jobs out of dirty hours and regions (Option 2). We replay a real GPU-cluster workload against real hourly EIA carbon data, then add storage for the work that cannot move.</p>
+    </div>
+    <div>
+      <h3>What makes it different</h3>
+      <ul>
+        <li>Real data: EIA hourly CO₂ for 4 regions, plus a year of a measured GPU-cluster trace.</li>
+        <li>An exact gang-job simulator with site capacity and transfer costs.</li>
+        <li>Honest forecasts that respect publication delays; no peeking.</li>
+        <li>A sealed test year, opened once and logged.</li>
+        <li>Every number labelled observed, modeled, simulated or assumed.</li>
+        <li>An offline, premium dashboard.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="findings">
+  <h2>Findings so far (validation year, Nov 2024 – Oct 2025)</h2>
+  <div class="hero">
+    <div class="stat good"><b>22.5%</b><span>CO₂ cut by moving work out of Utah (S: 18.4–26.8%)</span></div>
+    <div class="stat"><b>0.7%</b><span>cut by waiting for cleaner hours in Utah alone</span></div>
+    <div class="stat bad"><b>3–4%</b><span>cut if only jobs of ≤ 8 GPUs may move</span></div>
+    <div class="stat good"><b>35%</b><span>cut if remote spare capacity doubles</span></div>
+  </div>
+  <ul style="margin-top:12px">
+    <li><b>Moving beats waiting about 30×.</b> The cut holds across every robustness check: 20.2–23.2% on the consumption basis.</li>
+    <li><b>The big jobs carry it.</b> The top 1% of jobs use 94% of the energy. About 66% of the moved energy goes to Northwest hydro.</li>
+    <li><b>Forecast choice barely matters.</b> The learned model ties the weekly profile, and a simple fixed clean-region ranking (S) does as well as any dynamic search.</li>
+    <li><b>Every policy is on time</b>, by construction under baseline bookings, and above the lower bound (3,501 t).</li>
+  </ul>
+  <div class="tbl" style="margin-top:10px"><table>
+    <thead><tr><th>Check (validation)</th><th class="n">S</th><th class="n">W</th><th class="n">L</th></tr></thead>
+    <tbody>
+      <tr><td>Registered result</td><td class="n">22.6%</td><td class="n">22.5%</td><td class="n">22.5%</td></tr>
+      <tr><td>Production-basis carbon (flatters hydro)</td><td class="n">25.5%</td><td class="n">25.3%</td><td class="n">25.2%</td></tr>
+      <tr><td>Only jobs on observed carbon hours (99.5% of jobs)</td><td class="n">22.5%</td><td class="n">22.4%</td><td class="n">22.4%</td></tr>
+      <tr><td>Workload shifted 49 / 98 days</td><td class="n">23.2 / 22.0%</td><td class="n">23.0 / 21.9%</td><td class="n">23.1 / 21.9%</td></tr>
+      <tr><td>Transfer takes 2 h</td><td class="n">20.2%</td><td class="n">20.2%</td><td class="n">20.3%</td></tr>
+      <tr><td>Jobs may wait 24 h</td><td class="n">22.8%</td><td class="n">22.5%</td><td class="n">22.6%</td></tr>
+      <tr><td>Remote spare capacity 1,024 slots</td><td class="n">35.0%</td><td class="n">34.9%</td><td class="n">34.9%</td></tr>
+      <tr><td>Only jobs ≤ 8 GPUs may move</td><td class="n">3.2%</td><td class="n">3.9%</td><td class="n">3.9%</td></tr>
+    </tbody></table></div>
+  <p class="note">Simulated replay. Deadlines are relative to the stay-in-Utah baseline, and runtimes are exact as declared. EIA-attributed (consumption-basis) emissions. The test-year result arrives Wed morning.</p>
+</section>
+
+<section id="plan">
+  <h2>Plan and progress</h2>
+  <p class="meta">6 done · 3 in progress · 4 next · 15 queued. Source: <code>docs/plan/tasks.csv</code>; plan doc <code>docs/plan/2026-10-27-master-plan.md</code>. Times from the system clock.</p>
+  <h3 style="margin-top:8px">Open</h3><div class="tbl"><table><thead><tr><th>ID</th><th>Task</th><th>Who</th><th>When (MT)</th><th>Deliverable</th><th>Status</th></tr></thead><tbody><tr><td>T11</td><td>Seal machinery: fix round from adversarial review<div class="meta">6 Important gaps + S-ranking envelope (D-062)</div></td><td>Claude agent</td><td>Tue 14:30 → Tue 17:00<div class="meta">after T10</div></td><td>PR #44</td><td><span class="pill doing">in progress</span></td></tr><tr><td>T10b</td><td>Storage + Utah peak relief (illustrative)<div class="meta">Astra corrections applied: heuristic not bound; SOC; connection limit</div></td><td>Claude agent</td><td>Tue 14:30 → Tue 17:30<div class="meta">after T10</div></td><td>PR (storage)</td><td><span class="pill doing">in progress</span></td></tr><tr><td>P1</td><td>Draft 4:30 script + Q&amp;A + one-pager + deck outline<div class="meta">Placeholders for test numbers</div></td><td>Claude agent</td><td>Tue 14:45 → Tue 16:00<div class="meta">after AS1</div></td><td>docs/pitch/*</td><td><span class="pill doing">in progress</span></td></tr><tr><td>T11r</td><td>Re-check T11 fixes</td><td>Claude reviewer</td><td>Tue 17:00 → Tue 17:45<div class="meta">after T11</div></td><td>review note</td><td><span class="pill next">next</span></td></tr><tr><td>T10br</td><td>Review storage piece</td><td>Claude reviewer</td><td>Tue 17:30 → Tue 18:15<div class="meta">after T10b</div></td><td>review note</td><td><span class="pill next">next</span></td></tr><tr><td>O1</td><td>Review pitch drafts<div class="meta">Tonight; anytime</div></td><td>Owner</td><td>Tue 16:00 → Tue 21:00<div class="meta">after P1</div></td><td>comments</td><td><span class="pill next">next</span></td></tr><tr><td>O2</td><td>Mac check: make web + preview in Chrome<div class="meta">git pull &amp;&amp; make web &amp;&amp; cd web &amp;&amp; npm run preview</div></td><td>Owner</td><td>Tue 15:00 → Tue 21:00</td><td>ok / issues</td><td><span class="pill next">next</span></td></tr><tr><td>T15</td><td>Mobility/capacity toggle + flexibility budget + Astra copy fixes<div class="meta">Starts when pitch draft frees a slot</div></td><td>Claude agent</td><td>Tue 16:00 → Tue 20:00<div class="meta">after P1</div></td><td>PR (merge after T13)</td><td><span class="pill next">queued</span></td></tr><tr><td>T12</td><td>make data + independent rebuild + freeze writer<div class="meta">Any hash mismatch stops the freeze</div></td><td>Claude agent</td><td>Tue 18:30 → Tue 20:30<div class="meta">after T11r, T10br</div></td><td>docs/evidence/rebuild-20261027.json</td><td><span class="pill next">queued</span></td></tr><tr><td>T12r</td><td>Review rebuild + freeze record</td><td>Claude reviewer</td><td>Tue 20:30 → Tue 21:15<div class="meta">after T12</div></td><td>review note</td><td><span class="pill next">queued</span></td></tr><tr><td>FZ</td><td>Write freeze.json on main + tag config-freeze<div class="meta">Go/no-go check</div></td><td>Claude lead</td><td>Tue 21:15 → Tue 21:30<div class="meta">after T12r</div></td><td>tag config-freeze</td><td><span class="pill next">queued</span></td></tr><tr><td>T13</td><td>Sealed test year: one logged run + export<div class="meta">Opened exactly once (D-059)</div></td><td>Claude lead</td><td>Tue 21:30 → Tue 22:15<div class="meta">after FZ</div></td><td>results/test + test_reads.jsonl</td><td><span class="pill next">queued</span></td></tr><tr><td>T14</td><td>Water footprint (illustrative)<div class="meta">NREL factors x fuel mix; heavy caveats</div></td><td>Claude agent</td><td>Tue 18:15 → Tue 22:00<div class="meta">after T10b</div></td><td>PR (merge after T13)</td><td><span class="pill next">queued</span></td></tr><tr><td>MG</td><td>Merge T15 + T14 after review; rebuild dashboard with test view</td><td>Claude lead</td><td>Tue 22:15 → Wed 00:30<div class="meta">after T13, T15, T14</div></td><td>dashboard + artifact link</td><td><span class="pill next">queued</span></td></tr><tr><td>AU</td><td>Astra results audit (Codex)<div class="meta">Runs overnight; pre-approved</div></td><td>Codex</td><td>Tue 23:00 → Wed 01:00<div class="meta">after T13</div></td><td>docs/reviews/*results-audit*</td><td><span class="pill next">queued</span></td></tr><tr><td>AD</td><td>Disposition audit findings</td><td>Claude lead</td><td>Wed 07:00 → Wed 09:00<div class="meta">after AU</div></td><td>dispositions</td><td><span class="pill next">queued</span></td></tr><tr><td>P2</td><td>Fill test numbers; build deck (Slides) + one-pager</td><td>Claude agent</td><td>Wed 08:00 → Wed 11:00<div class="meta">after AD, P1</div></td><td>deck link + one-pager</td><td><span class="pill next">queued</span></td></tr><tr><td>UI</td><td>Final dashboard copy + screenshots</td><td>Claude agent</td><td>Wed 08:00 → Wed 11:30<div class="meta">after AD</div></td><td>dashboard</td><td><span class="pill next">queued</span></td></tr><tr><td>EF</td><td>Experiments freeze</td><td>All</td><td>Wed 13:00 → Wed 13:00</td><td>no new numbers</td><td><span class="pill next">queued</span></td></tr><tr><td>NL</td><td>Numbers and deck locked</td><td>All</td><td>Wed 14:00 → Wed 14:00<div class="meta">after P2, UI</div></td><td>final artifacts</td><td><span class="pill next">queued</span></td></tr><tr><td>R1</td><td>Three timed rehearsals offline on the Mac<div class="meta">Fallback: screenshots + recorded run</div></td><td>Owner</td><td>Wed 14:00 → Wed 16:30<div class="meta">after NL</div></td><td>4:30 demo</td><td><span class="pill next">queued</span></td></tr><tr><td>J</td><td>Demo + Q&amp;A at Aernata</td><td>Owner</td><td>Wed 17:00 → Wed 17:00<div class="meta">after R1</div></td><td></td><td><span class="pill next">queued</span></td></tr></tbody></table></div>
+  <details style="margin-top:10px"><summary class="meta" style="cursor:pointer">Done (6)</summary><div class="tbl"><table><thead><tr><th>ID</th><th>Task</th><th>Who</th><th>When (MT)</th><th>Deliverable</th><th>Status</th></tr></thead><tbody><tr><td>S1</td><td>Data profiled and spec reconciled<div class="meta">Three review gates (Astra/Sol/Claude)</div></td><td>Claude+Codex</td><td>done Tue 03:05</td><td>Spec F1-F14; data profiles</td><td><span class="pill done">done</span></td></tr><tr><td>S2</td><td>Core experiment (8 tasks) and dashboard<div class="meta">Validation: move 22.5% vs wait 0.7%</div></td><td>Claude agents</td><td>done Tue 07:16</td><td>tag checkpoint-tue</td><td><span class="pill done">done</span></td></tr><tr><td>G1</td><td>Spec approved by owner<div class="meta">Test year may open once after freeze</div></td><td>Owner</td><td>done Tue 14:18</td><td>D-059</td><td><span class="pill done">done</span></td></tr><tr><td>T9</td><td>Pre-freeze copy/label/export fixes<div class="meta">Honest headline wording</div></td><td>Claude agent</td><td>done Tue 10:38</td><td>PR #40</td><td><span class="pill done">done</span></td></tr><tr><td>T10</td><td>Robustness + sensitivities (7 runs)<div class="meta">Mobility caveat: 3-4% if only small jobs move</div></td><td>Claude agent</td><td>done Tue 12:08</td><td>results/extensions.json</td><td><span class="pill done">done</span></td></tr><tr><td>AS1</td><td>Astra strategy reviews (lead + owner sessions)<div class="meta">Both: credible path to winning</div></td><td>Codex</td><td>done Tue 14:46</td><td>docs/reviews/*plan-astra*</td><td><span class="pill done">done</span></td></tr></tbody></table></div></details>
+</section>
+
+<section id="evaluation">
+  <h2>Evaluation and quality</h2>
+  <div class="cols">
+    <div>
+      <h3>Reviews</h3>
+      <ul>
+        <li>The spec passed 3 gates: Astra, Sol, then a fresh Claude review.</li>
+        <li>Every task had an independent review, with fix rounds until clean.</li>
+        <li>Leakage was settled at the forecast and carbon-search steps, with probes on real data.</li>
+        <li>The dashboard had 2 critique rounds; every number on screen traces to the results.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Checks</h3>
+      <ul>
+        <li>317+ lab tests pass. Axe finds 0 accessibility violations. The offline test passes.</li>
+        <li>The run reproduces exactly: 9/9 schedule fingerprints match across runs.</li>
+        <li>An independent rebuild from raw data comes before the freeze.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Codex credits</h3>
+      <ul>
+        <li>Used: Astra spec gate, Sol spec re-check, and the Astra strategy review (now, your request).</li>
+        <li>Planned: the Astra results audit, Wed morning.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="pitch">
+  <h2>Pitch (draft outline; final after the test results)</h2>
+  <div class="cols">
+    <div>
+      <h3>Deck, about 8 slides</h3>
+      <ol class="deck">
+        <li>Utah's AI jobs run on coal nights.</li>
+        <li>The grid's rush hour isn't when it's cleanest.</li>
+        <li>Tomorrow's grid traffic report.</li>
+        <li>One job: stay, wait, or move.</li>
+        <li>Moving beats waiting by about 30×.</li>
+        <li>The catch: big jobs must move. Storage covers what can't.</li>
+        <li>How we know: sealed test year, every number labelled.</li>
+        <li>What a site operator would do tomorrow.</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Demo flow, 4–5 min</h3>
+      <ul>
+        <li>The Story mode is the spine, one beat per slide idea.</li>
+        <li>The Control room and Cockpit are for Q&amp;A.</li>
+        <li>The Method drawer answers "how do you know".</li>
+      </ul>
+      <h3 style="margin-top:10px">Q&amp;A to prepare</h3>
+      <ul>
+        <li>"Isn't the booking calendar cheating?"</li>
+        <li>"Why does a static ranking match ML?"</li>
+        <li>"Average vs marginal emissions?"</li>
+        <li>"Can 72-GPU jobs really move?"</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="ideas">
+  <h2>Ideas backlog (data from outside our current set)</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Idea</th><th>Free data</th><th class="n">Effort</th><th>Value</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Storage at the Utah cluster</td><td>Our own profiles</td><td class="n">2–3 h</td><td>High (Torus fit)</td><td><span class="pill doing">building</span></td></tr>
+      <tr><td>Rush-hour peak relief in Utah: MW taken off 7–10 PM</td><td>Our own ledgers</td><td class="n">1 h</td><td>High (capacity value)</td><td><span class="pill doing">in storage piece</span></td></tr>
+      <tr><td>Water footprint: gallons per MWh by region (Utah drought, Great Salt Lake)</td><td>NREL water factors by fuel, with EIA-930 fuel mix</td><td class="n">3–5 h</td><td>High (local story)</td><td><span class="pill next">chosen, queued</span></td></tr>
+      <tr><td>Hot-weather cooling: temperature-dependent PUE by region</td><td>Open-Meteo, already downloaded</td><td class="n">2 h</td><td>Medium</td><td><span class="pill idea">proposed</span></td></tr>
+      <tr><td>Soak up curtailed California solar</td><td>CAISO curtailment reports</td><td class="n">2–3 h</td><td>Medium</td><td><span class="pill idea">proposed</span></td></tr>
+      <tr><td>Cost: wholesale price of the chosen hours</td><td>CAISO/WEIM prices, already downloaded</td><td class="n">2–3 h</td><td>Medium</td><td><span class="pill idea">proposed</span></td></tr>
+      <tr><td>Health damages of avoided generation</td><td>EPA AVERT</td><td class="n">4+ h</td><td>Low (time)</td><td><span class="pill next">parked</span></td></tr>
+    </tbody></table></div>
+  <p class="note">How we pick: who cares (grid operator, site operator, community, Torus) → which number they watch → is the data free and honest → hours to build → does it sharpen the story. Astra's review adds to this list.</p>
+</section>
+
+<section id="risks">
+  <h2>Risks and open items</h2>
+  <ul>
+    <li><span class="pill risk">risk</span> <b>Torus fit.</b> Storage is the bridge (being built); rush-hour peak relief would strengthen it.</li>
+    <li><span class="pill risk">risk</span> <b>The "AI" angle is thin.</b> Forecasts don't matter much. Frame it as an insight: placement and capacity matter, not a fancier model.</li>
+    <li><span class="pill doing">in progress</span> <b>Pitch materials.</b> Drafts tonight, filled in after the test run and audit.</li>
+    <li><span class="pill next">open</span> <b>Mac demo check.</b> Run <code>make web</code> and preview in Chrome; check smoothness and fonts.</li>
+    <li><span class="pill next">open</span> <b>Test-year result.</b> Unknown until it runs once tonight.</li>
+  </ul>
+</section>
+
+<section id="decisions">
+  <h2>Your decisions</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>ID</th><th>Decision</th></tr></thead>
+    <tbody>
+      <tr><td>D-050</td><td>Claim frame: a simulated advance-reservation scheduler with baseline-relative deadlines.</td></tr>
+      <tr><td>D-053</td><td>Utah palette: green cleaner, red dirtier, blue for the router's action.</td></tr>
+      <tr><td>D-058</td><td>Extensions: robustness pack plus key sensitivities. No-advance-booking version and full sweep cut.</td></tr>
+      <tr><td>D-059</td><td>Spec approved. The test year opens once, after the freeze.</td></tr>
+      <tr><td>D-061</td><td>Add the storage piece.</td></tr>
+      <tr><td>D-063</td><td>Pitch drafting tonight. Add the water footprint (illustrative, after the test run).</td></tr>
+      <tr><td>D-064</td><td>Also add the mobility/capacity toggle and the flexibility-budget view (after the test run).</td></tr>
+    </tbody></table></div>
+  <p class="note">The full log is <code>docs/decisions.md</code> in the repo (D-001 to D-061).</p>
+</section>
+</div>
