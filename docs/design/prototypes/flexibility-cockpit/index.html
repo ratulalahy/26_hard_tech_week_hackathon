@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GridPilot — Flexibility cockpit concept</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#workspace">Skip to workspace</a>
+<div class="ambient" aria-hidden="true"></div>
+<header class="topbar">
+ <a class="brand" href="./index.html" aria-label="GridPilot concept home">
+ <svg width="29" height="29" viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="1" width="20" height="20" rx="6" fill="white" stroke="#d7ddd4"/><rect x="5" y="12" width="3" height="5" rx="1" fill="#298954"/><rect x="9.5" y="9" width="3" height="8" rx="1" fill="#f5c79f"/><rect x="14" y="5" width="3" height="12" rx="1" fill="#c6481c"/></svg>
+ <span>GridPilot<span class="brand-sub">ENERGY × COMPUTE</span></span></a>
+ <nav aria-label="Concept navigation"><span class="nav-active">Flexibility cockpit</span><button class="nav-link" data-open="design">Design notes <span aria-hidden="true">↗</span></button></nav>
+ <div class="top-right"><span class="concept-tag">CONCEPT 01</span><span class="status"><i></i> Offline · validation data</span><button class="button subtle" data-open="evidence">Evidence <span aria-hidden="true">↗</span></button></div>
+</header>
+<main id="workspace">
+ <section class="intro" aria-labelledby="page-title">
+  <div><p class="eyebrow"><span class="line"></span> UTAH FIRST. ENERGY AWARE.</p><h1 id="page-title">Good work. <span>Cleaner places.</span></h1><p class="intro-copy">Explore where flexibility makes a difference—and where it runs out.</p></div>
+  <div class="intro-note"><span class="tiny-label">YOUR WORKSPACE</span><strong>PacifiCorp East <span class="small-chip">PACE</span></strong><span>Utah · Four-site planning scenario</span></div>
+ </section>
+ <div class="workspace-grid">
+  <section class="map-panel glass" aria-labelledby="map-title">
+   <div class="panel-head"><div><p class="eyebrow">01 / PLACEMENT</p><h2 id="map-title">Same work. A different place.</h2></div><span class="badge"><span class="badge-dot"></span> Modeled carbon</span></div>
+   <div class="map-frame">
+    <div class="map-annotation"><span class="tiny-label">THE OPPORTUNITY</span><p>Cleaner power is<br>already on the map.</p><span>Available compute still sets the limit.</span></div>
+    <svg id="region-map" viewBox="0 0 620 500" role="img" aria-labelledby="map-svg-title map-svg-desc"><title id="map-svg-title">Western US balancing authorities</title><desc id="map-svg-desc">Illustrative placement links from Utah to the Northwest, California and Nevada. Colors show modeled annual consumption-based carbon intensity, not live conditions.</desc></svg>
+    <div class="map-sites" aria-label="Inspect regional intensity"><button class="site selected" data-site="PACE" aria-pressed="true"><span class="site-dot clay"></span>Utah <span>Home</span></button><button class="site" data-site="BPAT" aria-pressed="false"><span class="site-dot green"></span>Northwest</button><button class="site" data-site="CISO" aria-pressed="false"><span class="site-dot sage"></span>California</button><button class="site" data-site="NEVP" aria-pressed="false"><span class="site-dot sand"></span>Nevada</button></div>
+    <div class="map-floating"><div><span class="tiny-label" id="site-label">UTAH / PACE</span><strong><span id="site-ci">—</span> <small>g CO₂/kWh</small></strong></div><span class="floating-mark" aria-hidden="true">↗</span><span class="floating-note">Modeled · annual validation mean</span></div>
+   </div>
+   <div class="map-foot"><div class="map-scale"><span>Lower carbon</span><span class="scale-strip"></span><span>Higher carbon</span></div><span>Links illustrate options, not measured flows.</span></div>
+  </section>
+  <section class="outcome-panel glass" aria-labelledby="outcome-title">
+   <div class="panel-head"><p class="eyebrow">02 / THE OUTCOME</p><span class="badge green-badge">Simulated</span></div>
+   <h2 id="outcome-title">Placement changes<br>the footprint.</h2>
+   <div class="hero-number" aria-live="polite" aria-atomic="true"><span id="saving">—</span><span class="hero-unit">%</span><span class="hero-arrow" aria-hidden="true">↘</span></div>
+   <p class="hero-description">less attributed operational CO₂<br><span>than the same work scheduled in Utah.</span></p>
+   <div class="interval"><span class="interval-dot"></span><span id="interval">Loading validation range…</span></div>
+   <div class="mini-comparison" aria-label="Reduction in attributed CO2 relative to local execution">
+    <div class="comparison-label"><span>Reduction vs local execution</span><span>0–40%</span></div>
+    <div class="bar-row"><span>Wait in Utah</span><div class="bar-track"><span class="bar wait-bar" id="wait-bar"></span></div><strong id="wait-saving">—</strong></div>
+    <div class="bar-row"><span>Place the work</span><div class="bar-track"><span class="bar place-bar" id="place-bar"></span><span id="bar-interval" class="bar-interval"></span></div><strong id="place-saving">—</strong></div>
+   </div>
+   <div class="proof-row"><span class="check">✓</span><div><strong>Same declared GPU-work</strong><span>Deadlines preserved by baseline reservations.</span></div><button class="icon-button" data-open="evidence" aria-label="Read simulation assumptions">i</button></div>
+   <p class="outcome-foot"><span id="scenario-label">Registered scenario</span> · fixed clean-region rule S</p>
+  </section>
+ </div>
+ <div class="lower-grid">
+  <section class="day-panel glass" aria-labelledby="day-title">
+   <div class="panel-head"><div><p class="eyebrow">03 / THE SHAPE OF THE DAY</p><h2 id="day-title">A cleaner hour is a different opportunity.</h2></div><div class="chart-key"><span><i class="clay"></i>Utah</span><span><i class="green"></i>Northwest</span><span><i class="sage"></i>California</span></div></div>
+   <div class="chart-subline"><span>Consumption-based intensity <b>g CO₂/kWh</b></span><span>Typical validation day · Denver time</span></div>
+   <svg id="day-chart" viewBox="0 0 850 198" role="img" aria-label="Typical hourly carbon intensity in Utah, the Northwest and California, modeled from validation data"></svg>
+   <div class="day-note"><span class="sun-mark" aria-hidden="true">☀</span><p><strong>Time helps when the work fits.</strong> Long, non-interruptible jobs span both cleaner and dirtier hours.</p><span class="badge">Modeled · historical means</span></div>
+  </section>
+  <section class="scenario-panel glass" aria-labelledby="scenario-title">
+   <div class="panel-head"><div><p class="eyebrow">04 / CHALLENGE THE RESULT</p><h2 id="scenario-title">Change the constraint.</h2></div><span class="small-chip">Your call</span></div>
+   <div class="scenario-options" role="group" aria-label="Precomputed validation scenario">
+    <button class="scenario selected" data-scenario="primary" aria-pressed="true"><span class="radio"></span><span><strong>Let eligible jobs move</strong><small>Registered fleet & mobility assumptions</small></span><span class="scenario-number" id="primary-number">—</span></button>
+    <button class="scenario" data-scenario="small" aria-pressed="false"><span class="radio"></span><span><strong>Keep large jobs in Utah</strong><small>Only jobs of 8 GPUs or fewer may move</small></span><span class="scenario-number" id="small-number">—</span></button>
+    <button class="scenario" data-scenario="capacity" aria-pressed="false"><span class="radio"></span><span><strong>Give destinations more room</strong><small>1,024 spare GPU slots per destination</small></span><span class="scenario-number" id="capacity-number">—</span></button>
+   </div>
+   <p class="scenario-explanation" id="scenario-explanation" aria-live="polite">Each selection loads a computed scenario. No interpolated savings.</p>
+  </section>
+ </div>
+ <section class="storage-banner">
+  <div class="storage-icon" aria-hidden="true"><svg viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="6" y="7" width="18" height="20" rx="4"/><path d="M12 7V4h6v3M17 12l-5 6h6l-4 5"/></svg></div>
+  <div><p class="eyebrow">THE NEXT QUESTION</p><h2>Move what can move. Shift energy for what stays.</h2><p>Explore storage as a complement for work that must remain in Utah.</p></div>
+  <button class="button" data-open="storage">Explore the concept <span aria-hidden="true">↗</span></button><span class="badge storage-badge">Illustrative · not evaluated here</span>
+ </section>
+ <footer><span>Design prototype · simulated advance-reservation scheduling · exact declared runtimes · runtime uncertainty untested</span><button class="footer-link" data-open="evidence">Data & assumptions ↗</button><span>Map: Electricity Maps contributors, AGPL-3.0 · Natural Earth</span></footer>
+</main>
+<dialog id="detail-dialog" aria-labelledby="dialog-title"><div class="dialog-top"><span class="eyebrow">GRIDPILOT / CONCEPT 01</span><button id="close-dialog" class="icon-button" aria-label="Close details">×</button></div><div id="dialog-content"></div></dialog>
+<script src="data.js"></script><script src="app.js"></script>
+</body></html>
