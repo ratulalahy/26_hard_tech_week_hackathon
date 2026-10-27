@@ -406,8 +406,32 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - Last hour present: 2026-10-27T05Z.
 - **Evidence:** `docs/reviews/2026-10-27-spec-claude-r3.md`.
 
-## D-053 · 2026-10-27 ~04:30 MT · G2 visual direction: round-3 layouts with the Utah palette
+## D-053 · 2026-10-27 04:41 MT · G2 visual direction: round-3 layouts with the Utah palette
 - **Decided by:** owner; the palette construction is the lead's.
 - **Decision:** the round-3 dashboard concepts are kept ("dashboard looks good"). The colour changes to meaningful, Utah-warm colour: a diverging carbon scale (green cleaner, sand at the assumed US-average 380 g/kWh, Utah orange to canyon red dirtier), a deep-blue router action, a neutral caution hatch for rush hour, and a warm salt-flat ground.
 - **Evidence:** the owner's G2 message; validator results in `docs/design/tokens.md`; screenshots in `docs/design/concepts/shots/round4/`.
 - **Open:** source the US-average midpoint from EIA. Which layouts Task 8 builds first is to be confirmed by the owner.
+
+## D-054 · 2026-10-27 ~06:00 MT · Illustrative job: criterion v2, the GPU-hour-weighted median
+- **Decided by:** lead (Claude), on the Task 7 reviewer's proposal.
+- **Decision:** the §11 literal rule (the job nearest the median GPU-hours) picks a 1-GPU, 203 s SFT job, because the median of the eligible set is 0.056 GPU-h. The story instead shows the job at the GPU-hour-weighted median of the same eligible set: 5930563#c3, Pretrain, 72 GPUs, 103.6 h. The literal job is kept in the export as `illustrative_job_literal`.
+- **Why it doesn't search for wins:** the criterion uses only workload attributes and the policy-independent U replay; no outcome was consulted. The disclosure text is exported verbatim.
+- **Evidence:** `results/job-replay.json` (`illustrative_job.criterion`, `.disclosure`).
+
+## D-055 · 2026-10-27 ~06:15 MT · EIA consumption-basis CO₂ intensity is `modeled`; the colour midpoint is 356 g/kWh
+- **Decided by:** lead (Claude), as a ruling on a spec inconsistency flagged by the dashboard critic.
+- **Decision (label):** EIA's hourly consumption-basis CO₂ intensity is labelled **modeled** ("EIA estimate") in every export and in the UI, per spec §4, §11 and F7, which override F14.6's looser wording. EIA-930 demand, net load and solar stay **observed**.
+- **Decision (midpoint):** the diverging colour midpoint is the US 2024 average, 785 lb CO₂/MWh = **356 g/kWh**, from the EIA United States Electricity Profile 2024 (https://www.eia.gov/electricity/state/unitedstates/). It is exported in `results/grid-profile.json` with that provenance. It is a national generation-basis annual reference, not a consumption-basis hourly value, and the legend states this.
+- **Evidence:** Task 8 critique findings #10 and #11; `docs/design/tokens.md`.
+
+## D-056 · 2026-10-27 ~06:20 MT · Validation result recorded (registered run 20261027T122317Z)
+- **Decided by:** this is a record, not a choice. The numbers come from `make slice` at a clean commit; canonical metrics hash `f45821c0…`.
+- **Result (validation year, phase 0, conditional temporal block-resampling 95% intervals, b = 4):**
+  - Moving with S, K, W or L cuts attributed CO₂ by 22.4–22.6% against U (S: 22.62% [18.36, 26.82]).
+  - Waiting in Utah alone (time-only) saves 0.72–0.75%.
+  - G (carbon-blind earliest finish) saves 0.01%.
+  - Every policy is on time and above the relaxed bound (3,501.3 t).
+  - H2 (W vs L) is inconclusive.
+  - H3 is not supported: no dynamic search beats S, and K emits 10.0 t more than S.
+- **Interpretation (carried into the narrative):** placement dominates timing, mostly through moving work to BPAT. The top 1% of jobs (9,180) carry 94% of the energy.
+- **Evidence:** `results/metrics.json` (`framing`, `policies`, `workload`); `results/manifest.json` (claim frame and limitations).
