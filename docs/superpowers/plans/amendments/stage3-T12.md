@@ -40,7 +40,7 @@ Document it in AGENTS.md.
   Include the rule trace with each policy's values. It should come out as S.
 - **L configurations:** `max_leaf_nodes` per series, from the registered forecast run's `metrics.json`.
 - **Test fit:** `test_fit_at` 2025-10-29T00:00Z, `test_history_start` 2023-01-01.
-- **Test S ranking (B5):** the mean consumed-basis CI (fsum) over [2023-01-01, 2025-10-29), all pre-seal, from `load_carbon()`. Record each BA's mean and the window. (Validation used [2022-01-01, 2024-10-29), which is the same rule shifted.)
+- **Test S ranking (B5, with F05):** the mean consumed-basis CI (fsum) over rows from 2023-01-01 **published by fit_at**, i.e. `ts_utc + 1h + 96h <= 2025-10-29T00Z`, from `load_carbon()`, using T11's enveloped `s_ranking`. Record each BA's mean and the window. (Validation used [2022-01-01, 2024-10-29), which is the same rule shifted.)
 - **Scenario catalog for test:**
   - primary scenario only;
   - policies U, G, S, K, W, L and H, plus W and L time-only;
@@ -64,7 +64,7 @@ Document it in AGENTS.md.
 - **Steps 2 (rebuild) and 3 (completeness)** run on your branch. Their evidence files (`docs/evidence/rebuild-20261027.json`, `completeness-20261027.jsonl`) are committed in your PR.
 
 ## 6. Decision entry
-Add a D-061 draft to your report (the lead commits it), covering:
+Add a draft decision entry (next free ID, D-063 or later) to your report (the lead commits it), covering:
 - the rebuild result;
 - F_test;
 - the deployed policy;

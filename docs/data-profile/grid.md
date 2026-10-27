@@ -1,5 +1,8 @@
 # Grid data profile: EIA-930 and archived weather forecasts
 
+> **Correction (2026-10-27, D-062 / Astra F26):** where this profile says the marginal regression "identifies" marginal emissions or gives the "honest avoided-emissions answer", that wording is superseded. Per the approved spec (§10, F7), the regression is an **associational emissions-response proxy**, not a causal marginal factor. No avoided-emissions claim follows from it. Pitch materials use the spec's wording.
+
+
 Data recon for the experiment design. Written 2026-10-26 (MT); EIA data retrieved 2026-10-27 04:57Z.
 
 - **Seal.** Every statistic, figure and sample here uses hours before 2025-11-01T00:00Z only (train + validation, through `gridpilot.splits.drop_sealed`). The sealed test window appears in exactly two places, both completeness-only: §3.3 (row counts and missing hours per BA) and the weather null counts in §9.

@@ -4,7 +4,7 @@
 - the base text is Codex's proposal (`2026-10-26-gridpilot-design-codex.md`);
 - Claude's proposal (`2026-10-26-gridpilot-design-claude.md`) contributed the amendments tagged [R1]–[R6], listed in §14.
 
-Status: candidate for the fresh Astra soundness gate, then owner approval (G1). No experimental result is claimed, and the test seal stays closed.
+Status: **approved by the owner (G1, D-059, 2026-10-27)** after three gates (Astra r1 → F12, Sol r2 → F13, Claude r3 → F14). §15 is binding. The test seal opens once, after the configuration freeze (D-059).
 
 ## 1. The entry and the claim
 
