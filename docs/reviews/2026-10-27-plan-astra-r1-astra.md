@@ -171,7 +171,7 @@ The top five actions for the next 22 hours are:
 | **5** | Package and rehearse on the actual offline Mac; fix the forecast band and key display issues; repeat with final artifacts. | Owner + dashboard agent | **2–3 h** | First pass tonight; final pass before 14:00 |
 
 Verdict: not_ready
-## Dispositions (lead, 2026-10-27 ~16:00 MT)
+## Dispositions (lead, 2026-10-27 14:39 MT)
 
 | ID | Disposition |
 |---|---|

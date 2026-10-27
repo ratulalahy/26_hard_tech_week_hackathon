@@ -412,19 +412,19 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 - **Evidence:** the owner's G2 message; validator results in `docs/design/tokens.md`; screenshots in `docs/design/concepts/shots/round4/`.
 - **Open:** source the US-average midpoint from EIA. Which layouts Task 8 builds first is to be confirmed by the owner.
 
-## D-054 · 2026-10-27 ~06:00 MT · Illustrative job: criterion v2, the GPU-hour-weighted median
+## D-054 · 2026-10-27 06:45 MT · Illustrative job: criterion v2, the GPU-hour-weighted median
 - **Decided by:** lead (Claude), on the Task 7 reviewer's proposal.
 - **Decision:** the §11 literal rule (the job nearest the median GPU-hours) picks a 1-GPU, 203 s SFT job, because the median of the eligible set is 0.056 GPU-h. The story instead shows the job at the GPU-hour-weighted median of the same eligible set: 5930563#c3, Pretrain, 72 GPUs, 103.6 h. The literal job is kept in the export as `illustrative_job_literal`.
 - **Why it doesn't search for wins:** the criterion uses only workload attributes and the policy-independent U replay; no outcome was consulted. The disclosure text is exported verbatim.
 - **Evidence:** `results/job-replay.json` (`illustrative_job.criterion`, `.disclosure`).
 
-## D-055 · 2026-10-27 ~06:15 MT · EIA consumption-basis CO₂ intensity is `modeled`; the colour midpoint is 356 g/kWh
+## D-055 · 2026-10-27 06:45 MT · EIA consumption-basis CO₂ intensity is `modeled`; the colour midpoint is 356 g/kWh
 - **Decided by:** lead (Claude), as a ruling on a spec inconsistency flagged by the dashboard critic.
 - **Decision (label):** EIA's hourly consumption-basis CO₂ intensity is labelled **modeled** ("EIA estimate") in every export and in the UI, per spec §4, §11 and F7, which override F14.6's looser wording. EIA-930 demand, net load and solar stay **observed**.
 - **Decision (midpoint):** the diverging colour midpoint is the US 2024 average, 785 lb CO₂/MWh = **356 g/kWh**, from the EIA United States Electricity Profile 2024 (https://www.eia.gov/electricity/state/unitedstates/). It is exported in `results/grid-profile.json` with that provenance. It is a national generation-basis annual reference, not a consumption-basis hourly value, and the legend states this.
 - **Evidence:** Task 8 critique findings #10 and #11; `docs/design/tokens.md`.
 
-## D-056 · 2026-10-27 ~06:20 MT · Validation result recorded (registered run 20261027T122317Z)
+## D-056 · 2026-10-27 06:45 MT · Validation result recorded (registered run 20261027T122317Z)
 - **Decided by:** this is a record, not a choice. The numbers come from `make slice` at a clean commit; canonical metrics hash `f45821c0…`.
 - **Result (validation year, phase 0, conditional temporal block-resampling 95% intervals, b = 4):**
   - Moving with S, K, W or L cuts attributed CO₂ by 22.4–22.6% against U (S: 22.62% [18.36, 26.82]).
@@ -436,7 +436,7 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 - **Interpretation (carried into the narrative):** placement dominates timing, mostly through moving work to BPAT. The top 1% of jobs (9,180) carry 94% of the energy.
 - **Evidence:** `results/metrics.json` (`framing`, `policies`, `workload`); `results/manifest.json` (claim frame and limitations).
 
-## D-057 · 2026-10-27 07:50 MT · The registered validation run is preserved outside the agent worktree
+## D-057 · 2026-10-27 07:31 MT · The registered validation run is preserved outside the agent worktree
 - **Decided by:** lead (Claude), from the Stage 2 final review (finding A1).
 - **Decision:** the run directory `runs/slice/20261027T122317Z/` (178 MB; ledgers, bookings, truth_fill, forecasts, cohort, config) is preserved in three ways:
   - copied to the main checkout's `runs/slice/`, which is gitignored;
@@ -445,7 +445,7 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 - **Code reference:** the code commit 9c05198 was squash-merged into main as 2e6b6fc, so 9c05198 is tagged `run-20261027T122317Z` and the tag is pushed.
 - **File hashes:** `docs/evidence/run-20261027T122317Z.sha256` (25 files).
 
-## D-058 · 2026-10-27 ~07:55 MT · Extensions before the 21:00 cutoff: the robustness pack and key sensitivities
+## D-058 · 2026-10-27 09:59 MT · Extensions before the 21:00 cutoff: the robustness pack and key sensitivities
 - **Decided by:** owner.
 - **Run, on validation only:**
   - production-basis repricing;
@@ -458,7 +458,7 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - the missingness-blind scheduling sensitivity.
 - **Evidence:** the owner's answer in session; Stage 3 plan `docs/superpowers/plans/2026-10-27-stage3-freeze-test.md`.
 
-## D-059 · 2026-10-27 ~12:15 MT · G1: spec approved; the sealed test year may open once, after the freeze
+## D-059 · 2026-10-27 14:18 MT · G1: spec approved; the sealed test year may open once, after the freeze
 - **Decided by:** owner.
 - **Decision:**
   - The spec is approved: `docs/superpowers/specs/2026-10-27-gridpilot-design.md`, including §15 F1–F14.
@@ -466,7 +466,7 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - Any rerun needs a logged reason.
 - **Evidence:** the owner's answer in session ("Yes, after the freeze").
 
-## D-060 · 2026-10-27 ~12:15 MT · Seal-machinery rulings (T11)
+## D-060 · 2026-10-27 14:18 MT · Seal-machinery rulings (T11)
 - **Decided by:** lead (Claude).
 - **Decision:**
   1. Test forecast issues start at the test fit date 2025-10-29, as in spec §5 and as validation does. Only targets from 2025-11-01 are scored.
@@ -474,7 +474,7 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   3. The freeze record uses snapshot `8a1b36b24b91` (openmeteo final; nothing else changed).
 - **Note:** during T11 the implementer attempted `make slice WINDOW=test` against the real data, against its brief. The permission classifier blocked it, and it would have refused anyway (no freeze record). The lead verified that no `results/test_reads.jsonl`, `results/test/` or test carbon parquet exists anywhere.
 
-## D-061 · 2026-10-27 ~14:40 MT · Add an illustrative storage piece (the Torus link); pitch materials wait for test results
+## D-061 · 2026-10-27 14:25 MT · Add an illustrative storage piece (the Torus link); pitch materials wait for test results
 - **Decided by:** owner, on the lead's strategic review.
 - **Decision (storage):** add "Move what you can, store for what you can't".
   - The model: storage at the Utah cluster shifting energy from dirty to clean hours, run as a fixed training-derived daily schedule plus a daily hindsight bound, on validation-year profiles. Round-trip efficiency is assumed: 0.85, swept 0.75–0.90.
@@ -484,7 +484,7 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 - **Why:** the judges are an energy-storage company. Our results show that waiting fails in Utah, and that moving needs large jobs to be mobile. Storage is the natural complement for work that cannot move.
 - **Brief:** `docs/superpowers/plans/amendments/stage3-T10b.md`.
 
-## D-062 · 2026-10-27 ~16:00 MT · S ranking applies the forecast publication envelope (Astra F05)
+## D-062 · 2026-10-27 14:39 MT · S ranking applies the forecast publication envelope (Astra F05)
 - **Decided by:** lead (Claude), on the owner-requested Astra strategy review.
 - **Decision:** S's clean-region ranking uses only carbon rows published by its fit time (`ts_utc + 1h + 96h ≤ fit_at`), the same envelope as the forecasts. This applies to validation (fit_at 2024-10-29) and test (fit_at 2025-10-29).
 - **Lead check:**
@@ -495,7 +495,7 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 - **Also:** `docs/data-profile/grid.md` gets a correction notice (F26), and the spec status line is updated (F27).
 - **Evidence:** `docs/reviews/2026-10-27-plan-astra-r1-astra.md`.
 
-## D-063 · 2026-10-27 ~16:15 MT · Pitch drafting starts tonight; a water-footprint illustration is added, merged after the test run
+## D-063 · 2026-10-27 14:42 MT · Pitch drafting starts tonight; a water-footprint illustration is added, merged after the test run
 - **Decided by:** owner, on Astra F03 and F17.
 - **Decision (pitch):** this amends D-061. Draft tonight, with test-number placeholders:
   - the 4:30 narrative and demo script;
@@ -510,7 +510,7 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   It carries Astra's caveats: consumption ≠ withdrawal; production-side weighting, not flow tracing; PACE is not the Great Salt Lake watershed; no "water returned to the lake" claim. It is labelled modeled and illustrative, is not part of the frozen experiment, and **merges after the test run**.
 - **Future-work appendix:** temperature-dependent PUE, curtailment coincidence, wholesale cost, and health.
 
-## D-064 · 2026-10-27 ~16:30 MT · Post-test extras: mobility/capacity toggle, flexibility budget, and water
+## D-064 · 2026-10-27 14:46 MT · Post-test extras: mobility/capacity toggle, flexibility budget, and water
 - **Decided by:** owner, after comparing the two Astra strategy reviews (the lead's run and the owner's own session).
 - **Decision:** build all three on branches tonight. Merge them **after the test-year run**, so the freeze and the entry point's clean-HEAD check are unaffected.
   - **T15:** an interactive "large jobs must stay in Utah" / destination-capacity toggle over the already-computed validation scenarios, plus a flexibility-budget view (energy that can move, wait, must stay, or is capacity-blocked, sized by energy).
