@@ -15,7 +15,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from gridpilot.forecast import BA_TZ, fit_climatology
+from gridpilot.forecast import BA_TZ, climatology_table, fit_climatology, predict_climatology
 from gridpilot.sim import (
     Action,
     Capacity,
@@ -31,6 +31,8 @@ from gridpilot.sim.carbon_search import (
     PUE,
     CarbonSearch,
     job_energy_kwh,
+    load_forecasts,
+    tail_climatology,
     transfer_kwh,
 )
 from gridpilot.sim.engine import Job, SimContext
@@ -537,3 +539,96 @@ def test_carbon_search_ledger_invariants(jobs, masked, seed):
             bp = j.filter(pl.col("site") == "BPAT")
             lo, hi = T0 + timedelta(hours=1), T0 + timedelta(hours=3)
             assert not ((bp["start_ts"] < hi) & (bp["end_ts"] > lo)).any()
+
+
+# --------------------------------------------------------------------------- fix round 1
+
+
+def _near_tie(lower_first: bool):
+    """PACE-only job; hours 0 and 1 differ by 3e-8 kg at ~72,000 kg: inside the relative
+    tolerance 1e-9 + 1e-12·|kg| (≈ 7.3e-8), outside the absolute 1e-9."""
+    big, delta = 1e8, 3e-8 * 1000 / (GPU_KW * PUE)  # g/kWh difference giving 3e-8 kg
+    v0, v1 = (big - delta, big) if lower_first else (big, big - delta)
+    pol = h_policy(lambda ba, h: {0: v0, 1: v1}.get(h, 2e8))
+    job = mkjob(arr=0, dur=HOUR, gpus=1, flexible=False, delay=6 * HOUR)
+    return pol, job
+
+
+def test_tie_tolerance_is_relative():
+    pol, job = _near_tie(lower_first=False)
+    kg = pol.predicted_kg(job, [Action("PACE", T0_US), Action("PACE", T0_US + HOUR)],
+                          T0_US, "PACE")
+    assert 1e-9 < kg[0] - kg[1] < 1e-9 + 1e-12 * kg[0]
+    ctx = SimContext(sites=BIG)
+    # A tie: the earlier completion (start 0 = the booking) wins, so choose() returns None.
+    assert pol.choose(job, job.arrival_us, views(), ctx) is None
+
+
+def test_blocked_improvement_uses_relative_tolerance():
+    pol, job = _near_tie(lower_first=True)
+    ctx = SimContext(sites=BIG)
+    real = {s: Capacity(n) for s, n in BIG.items()}
+    real["PACE"].reserve(T0_US, T0_US + HOUR, 64)  # a pending booking holds hour 0
+    rv = {s: c.view() for s, c in real.items()}
+    actual = Action("PACE", T0_US + HOUR)
+    # The counterfactual would start at 0, better by 3e-8 kg: within tolerance, not blocked.
+    assert not pol.blocked(job, job.arrival_us, actual, rv, views(), ctx)
+
+
+def test_transfer_priced_on_the_rounded_duration():
+    """Transfer energy uses job.duration_us / 1e6, like the execution integral."""
+    pol = h_policy(lambda ba, h: {"PACE": 600.0, "BPAT": 100.0}.get(ba, 300.0))
+    j = mkjob(arr=0, dur=HOUR, gpus=8)
+    odd = Job(j.job_uid, j.arrival_us, j.duration_us, 1.0, j.gpus, j.job_type, j.flexible,
+              j.max_delay_us, j.mobile, j.deadline_us, j.booking)  # duration_s disagrees
+    s = T0_US + HOUR
+    kg = pol.predicted_kg(odd, [Action("BPAT", s)], odd.arrival_us, "PACE")[0]
+    exec_kg = 8 * GPU_KW * PUE * 100 / 1000
+    assert kg == pytest.approx(exec_kg + 0.5 * transfer_kwh(8, 3600) * PUE * 700 / 1000,
+                               rel=1e-12)
+
+
+def _run_dir(tmp_path, k_rows_shift: float = 0.0):
+    """A minimal Task 2 run: climatology.parquet plus the K rows it produced."""
+    rng = np.random.default_rng(3)
+    labels = pl.DataFrame({"ts_utc": [T0 - timedelta(days=60) + timedelta(hours=h)
+                                      for h in range(24 * 50)]}).with_columns(
+        pl.col("ts_utc").dt.cast_time_unit("us"),
+        pl.Series("value", rng.uniform(50, 800, 24 * 50)))
+    clims = {ba: fit_climatology(labels.with_columns(pl.col("value") * (1 + i / 10)),
+                                 BA_TZ[ba]) for i, ba in enumerate(CORE)}
+    pl.concat([climatology_table(c, ba, "ci_consumed") for ba, c in clims.items()]) \
+        .write_parquet(tmp_path / "climatology.parquet")
+    hours = pl.Series([T0 + timedelta(hours=h) for h in range(48)]).dt.cast_time_unit("us")
+    rows = []
+    for ba, c in clims.items():
+        for model in ("K", "W"):
+            v = predict_climatology(c, hours) + (k_rows_shift if model == "K" else 5.0)
+            rows.append(pl.DataFrame({"ba": ba, "target": "ci_consumed", "model": model,
+                                      "issue_ts": T0 - timedelta(hours=20),
+                                      "target_ts": hours, "value": v,
+                                      "evidence": "forecast"}))
+    pl.concat(rows).with_columns(pl.col("issue_ts").dt.cast_time_unit("us")) \
+        .write_parquet(tmp_path / "forecasts.parquet")
+    return clims, hours
+
+
+def test_tail_is_pinned_to_the_run(tmp_path):
+    """The tail is the run's climatology.parquet (not a refit), checked against its K rows;
+    loaders need an explicit run directory."""
+    clims, hours = _run_dir(tmp_path)
+    tail = tail_climatology(tmp_path)
+    for ba in CORE:
+        assert np.array_equal(predict_climatology(tail[ba], hours),
+                              predict_climatology(clims[ba], hours))
+    assert set(load_forecasts(tmp_path)["model"].unique()) == {"K", "W"}
+    with pytest.raises(TypeError):
+        tail_climatology()  # no implicit "latest run"
+    with pytest.raises(TypeError):
+        load_forecasts()
+
+
+def test_tail_must_reproduce_k_rows(tmp_path):
+    _run_dir(tmp_path, k_rows_shift=0.5)
+    with pytest.raises(ValueError, match="reproduce"):
+        tail_climatology(tmp_path)

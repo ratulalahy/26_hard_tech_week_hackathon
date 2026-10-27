@@ -103,9 +103,8 @@ def main() -> None:
         print(f"{policy.name}: {dt:6.1f} s ({dt / jobs.height * 1e6:5.1f} us/job)  "
               f"late={ledger['late'].sum()}  moved={ledger['moved'].mean():.2%} "
               f"(of mobile {mob.filter(pl.col('mobile'))['moved'].mean():.2%})  "
-              f"remote={ledger['transfer'].sum():,}  blocked={ledger['blocked'].sum():,} "
-              f"({ledger.filter('blocked').select(pl.col('gpus') * pl.col('duration_s'))
-                 .sum().item() / 3600:,.0f} GPU-h)")
+              f"remote={ledger['transfer'].sum():,}  "
+              f"fit_rejected={ledger['fit_rejected'].sum():,}")
         if args.diagnose:  # F14.7, in the engine
             t = time.perf_counter()
             d = simulate(jobs, policy, bookings=bookings, diagnose_blocked=True)

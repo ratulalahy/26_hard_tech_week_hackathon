@@ -287,8 +287,9 @@ class CapacityView:
     """Read-only access to a site's capacity, the only form policies receive.
 
     The view holds closures over the Capacity, never the Capacity itself or its bound
-    methods, so `reserve`/`release` are not reachable by attribute access, and the
-    view's own attributes cannot be reassigned.
+    methods, so there is no attribute path to the mutable Capacity (`reserve`,
+    `release`, `advance`), and the view's own attributes cannot be reassigned. This
+    guards against accidents, not against deliberate introspection of closure cells.
     """
 
     __slots__ = ("_horizon", "earliest_start", "fits", "max_in", "slots")

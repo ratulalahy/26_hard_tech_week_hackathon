@@ -66,6 +66,7 @@ EVIDENCE = {
     "wait_p50_s": "simulated", "wait_p95_s": "simulated", "wait_max_s": "simulated",
     "wait_mean_s": "simulated", "moved_share_jobs": "simulated",
     "moved_share_energy": "modeled", "blocked_jobs": "simulated", "blocked_kwh": "modeled",
+    "fit_rejected_jobs": "simulated", "fit_rejected_kwh": "modeled",
     "execution_kwh": "modeled", "transfer_kwh": "modeled", "transfer_it_kwh": "modeled",
     "energy_kwh": "modeled", "co2_kg": "modeled", "execution_co2_kg": "modeled",
     "transfer_co2_kg": "modeled", "co2_kg_per_1000_gpu_h": "modeled",
@@ -254,7 +255,7 @@ def _source_col(jobs: pl.DataFrame) -> str:
 
 def _joined(ledger: pl.DataFrame, jobs: pl.DataFrame) -> pl.DataFrame:
     need = ["job_uid", "site", "start_ts", "end_ts", "arrival_ts", "deadline_ts", "moved",
-            "blocked"]
+            "blocked", "fit_rejected"]
     missing = [c for c in need if c not in ledger.columns]
     if missing:
         raise ValueError(f"ledger is missing columns {missing}")
@@ -274,6 +275,7 @@ def _joined(ledger: pl.DataFrame, jobs: pl.DataFrame) -> pl.DataFrame:
     lcols = [
         "job_uid", "site", _us("start_ts").alias("s"), _us("end_ts").alias("e"),
         _us("arrival_ts").alias("arr"), _us("deadline_ts").alias("dl"), "moved", "blocked",
+        "fit_rejected",
         (pl.col("booking_site") if "booking_site" in ledger.columns
          else pl.lit(None, dtype=pl.Utf8)).alias("booking_site"),
         (pl.col("gpus").cast(pl.Int64) if "gpus" in ledger.columns
@@ -314,7 +316,8 @@ def job_accounting(
     The ledger must hold exactly the jobs in `jobs` (missing, unknown or duplicate rows
     raise), and its gpus and arrivals must match. Columns: job_uid, source_id, site,
     booking_site, arrival_ts, start_ts, end_ts, deadline_ts, gpus, wait_s, late, moved,
-    blocked, remote, requested_gpu_s, completed_gpu_s, execution_kwh, transfer_it_kwh,
+    blocked, fit_rejected, remote, requested_gpu_s, completed_gpu_s, execution_kwh,
+    transfer_it_kwh,
     transfer_kwh, energy_kwh, kwh_tier_ge2, execution_co2_kg, transfer_co2_kg, co2_kg.
     """
     tt = _truth(truth, mask)
@@ -376,6 +379,7 @@ def job_accounting(
         "late": pl.Series(late, dtype=pl.Boolean),
         "moved": f["moved"],
         "blocked": f["blocked"],
+        "fit_rejected": f["fit_rejected"],
         "remote": pl.Series(remote, dtype=pl.Boolean),
         "requested_gpu_us": pl.Series(gpus * req, dtype=pl.Int64),
         "completed_gpu_us": pl.Series(gpus * (e - s), dtype=pl.Int64),
@@ -440,7 +444,10 @@ def score(
       `energy_kwh` = execution + transfer. `kwh_share_tier_ge2` is the share of charged
       kWh priced on fill tiers 2–4 (F14.6).
     - CO₂ (kg, attributed operational, modeled): `co2_kg` = execution + transfer.
-    - F11/F12.7 diagnostics: moved and blocked counts and energy.
+    - F11/F12.7/F14.7 diagnostics: moved counts and energy; `blocked` (F14.7, only
+      non-zero for a `diagnose_blocked=True` ledger) counts and energy; and
+      `fit_rejected` (the engine's F12.7 bug signal: a returned action that did not
+      fit) counts and energy, which should be 0 for every registered policy.
     """
     a = job_accounting(ledger, jobs, truth, mask=mask, home=home)
     n = a.height
@@ -481,6 +488,7 @@ def score(
 
     moved = a.filter(pl.col("moved"))
     blocked = a.filter(pl.col("blocked"))
+    rejected = a.filter(pl.col("fit_rejected"))
     remote = a.filter(pl.col("remote"))
     late_jobs = late.height
     conserved = req_us == done_us
@@ -514,6 +522,8 @@ def score(
         "remote_energy_share": share(float(remote["energy_kwh"].sum()), energy),
         "blocked_jobs": blocked.height,
         "blocked_kwh": float(blocked["execution_kwh"].sum()),
+        "fit_rejected_jobs": rejected.height,
+        "fit_rejected_kwh": float(rejected["execution_kwh"].sum()),
         "evidence": dict(EVIDENCE),
     }
 

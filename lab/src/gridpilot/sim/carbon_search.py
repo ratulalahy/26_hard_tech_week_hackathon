@@ -44,6 +44,7 @@ from gridpilot.sim.capacity import CapacityView
 from gridpilot.sim.engine import (
     HOME,
     HOUR_US,
+    US,
     Action,
     Job,
     SimContext,
@@ -59,7 +60,8 @@ if TYPE_CHECKING:
 GPU_KW = 0.60  # active power per allocated GPU slot (assumed, F7)
 PUE = 1.20  # at each site (assumed, F7)
 TRANSFER_SHARE = 0.05  # transfer energy as a share of the job's IT energy (assumed, F7)
-TIE_KG = 1e-9
+TIE_KG = 1e-9  # absolute part of the tie / improvement tolerance
+TIE_REL = 1e-12  # relative part: tolerance = 1e-9 + 1e-12·|kg|
 SIGNALS = ("K", "W", "L", "H")
 TARGET = "ci_consumed"
 TRUTH_COL = "ci_consumed_g_kwh"
@@ -78,6 +80,12 @@ def transfer_kwh(gpus: float, duration_s: float) -> float:
     """Transfer IT energy, 5% of the job's IT energy (F7). It is charged half at home and
     half at the destination, each half times PUE, in the arrival hour."""
     return TRANSFER_SHARE * gpus * GPU_KW * duration_s / 3600
+
+
+def kg_tol(kg: float) -> float:
+    """Tie and F14.7 improvement tolerance at magnitude `kg`: 1e-9 + 1e-12·|kg| kg, so
+    large jobs' float rounding in the prefix sums never decides a choice."""
+    return TIE_KG + TIE_REL * abs(float(kg))
 
 
 def _us(ts: datetime) -> int:
@@ -362,7 +370,8 @@ class CarbonSearch:
         hi = sig.idx[home]
         remote = si != hi
         if remote.any():
-            half = 0.5 * transfer_kwh(job.gpus, job.duration_s) * PUE / 1000
+            # The same rounded µs duration as the execution integral.
+            half = 0.5 * transfer_kwh(job.gpus, job.duration_us / US) * PUE / 1000
             ci_home = sig.at(np.array([hi]), job.arrival_us)[0]
             kg[remote] += half * (ci_home + sig.at(si[remote], job.arrival_us))
         return kg
@@ -374,7 +383,7 @@ class CarbonSearch:
         m = None
         ties = []
         for i in np.argsort(kg, kind="stable"):
-            if m is not None and kg[i] > m + TIE_KG:
+            if m is not None and kg[i] > m + kg_tol(m):
                 break
             site, s = cands[i]
             if views[site].fits(s, s + d, g):
@@ -408,7 +417,7 @@ class CarbonSearch:
                 ctx: SimContext) -> bool:
         """F14.7: over the union of both views' candidates, filtered against the
         counterfactual ledger `cf`, the best choice differs from `actual` and predicts
-        more than 1e-9 kg less."""
+        more than `kg_tol(kg(actual))` = 1e-9 + 1e-12·|kg| less."""
         self._check_ctx(ctx)
         act = (actual.site, actual.start_us)
         cands = list(dict.fromkeys(self._cands(job, real, ctx) + self._cands(job, cf, ctx)
@@ -417,7 +426,8 @@ class CarbonSearch:
         i = self._best(job, cands, kg, cf, ctx.home)
         if i is None or cands[i] == act:
             return False
-        return bool(kg[cands.index(act)] - kg[i] > TIE_KG)
+        mine = kg[cands.index(act)]
+        return bool(mine - kg[i] > kg_tol(mine))
 
     # ------------------------------------------------------------------ helpers
 
@@ -442,7 +452,8 @@ class CarbonSearch:
 
 
 def latest_forecast_run(root: Path | None = None) -> Path:
-    """The newest `runs/forecast/<id>` directory holding a forecasts.parquet."""
+    """The newest `runs/forecast/<id>` directory holding a forecasts.parquet. A helper
+    for choosing a run by hand; the loaders never call it, they take an explicit run."""
     from gridpilot.paths import REPO_ROOT
 
     root = root or REPO_ROOT / "runs" / "forecast"
@@ -453,21 +464,48 @@ def latest_forecast_run(root: Path | None = None) -> Path:
     return runs[-1].parent
 
 
-def load_forecasts(run_dir: Path | None = None) -> pl.DataFrame:
-    """The ci_consumed rows of a Task 2 validation run (default: the newest)."""
-    run_dir = run_dir or latest_forecast_run()
+def load_forecasts(run_dir: Path) -> pl.DataFrame:
+    """The ci_consumed rows of the Task 2 validation run in `run_dir` (explicit, pinned)."""
     f = pl.read_parquet(Path(run_dir) / "forecasts.parquet").filter(pl.col("target") == TARGET)
     if f.height and (f["target_ts"].max() >= TEST_START or f["issue_ts"].max() >= TEST_START):
         raise ValueError(f"{run_dir}: forecasts reach the seal")
     return f
 
 
-def tail_climatology(bas: Sequence[str] | None = None) -> dict[str, Climatology]:
-    """Task 2's frozen K climatology per BA (fit at VAL_FIT_AT on pre-seal labels): the
-    modeled tail for hours beyond issued coverage."""
-    from gridpilot.data.eia_co2 import CORE_BAS
-    from gridpilot.forecast import VAL_FIT_AT, VAL_HISTORY_START, fit, load_series
+def tail_climatology(run_dir: Path, bas: Sequence[str] | None = None,
+                     atol: float = 1e-9) -> dict[str, Climatology]:
+    """The frozen K climatology per BA, loaded from `run_dir/climatology.parquet` (no
+    refit): the modeled tail for hours beyond issued coverage.
 
-    series = load_series(TARGET)
-    return {ba: fit(series, ba, TARGET, VAL_FIT_AT, VAL_HISTORY_START).clim
-            for ba in (bas or CORE_BAS)}
+    It is checked against the same run's K rows: predicting every K target hour must
+    reproduce the issued K value within `atol`, or this raises. The rebuilt
+    `Climatology.n` is 0 (the export does not carry the label count).
+    """
+    from gridpilot.forecast import Climatology as Clim
+    from gridpilot.forecast import predict_climatology
+
+    run_dir = Path(run_dir)
+    table = pl.read_parquet(run_dir / "climatology.parquet").filter(pl.col("target") == TARGET)
+    k_rows = load_forecasts(run_dir).filter(pl.col("model") == "K")
+    out: dict[str, Clim] = {}
+    for ba in (bas or sorted(table["ba"].unique())):
+        t = table.filter(pl.col("ba") == ba)
+        if t.height == 0:
+            raise ValueError(f"{run_dir}: no climatology for {ba}")
+        cells = tuple(t.filter(pl.col("level") == i)
+                      .select(*keys, pl.col("value").alias(f"k{i}"))
+                      for i, keys in enumerate(Clim.LEVELS))
+        median = t.filter(pl.col("level") == 3)["value"]
+        if median.len() != 1 or t["tz"].n_unique() != 1:
+            raise ValueError(f"{run_dir}: malformed climatology for {ba}")
+        clim = Clim(tz=t["tz"][0], cells=cells, ba_median=float(median[0]), n=0)
+        k = k_rows.filter(pl.col("ba") == ba)
+        if k.height == 0:
+            raise ValueError(f"{run_dir}: no K rows for {ba} to check the climatology against")
+        got = predict_climatology(clim, k["target_ts"])
+        worst = float(np.max(np.abs(got - k["value"].to_numpy())))
+        if not worst <= atol:
+            raise ValueError(f"{run_dir}: the climatology does not reproduce the run's K "
+                             f"rows for {ba} (max |diff| {worst:.3g})")
+        out[ba] = clim
+    return out

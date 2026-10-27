@@ -116,6 +116,7 @@ def ledger_frame(rows: list[dict], base: datetime = T0) -> pl.DataFrame:
             "moved": r.get("moved", False),
             "booking_site": "PACE",
             "blocked": r.get("blocked", False),
+            "fit_rejected": r.get("fit_rejected", False),
         })
     schema = {
         "job_uid": pl.Utf8, "site": pl.Utf8, "start_ts": pl.Datetime("us", "UTC"),
@@ -123,6 +124,7 @@ def ledger_frame(rows: list[dict], base: datetime = T0) -> pl.DataFrame:
         "deadline_ts": pl.Datetime("us", "UTC"), "gpus": pl.Int64,
         "arrival_ts": pl.Datetime("us", "UTC"), "duration_s": pl.Float64,
         "moved": pl.Boolean, "booking_site": pl.Utf8, "blocked": pl.Boolean,
+        "fit_rejected": pl.Boolean,
     }
     return pl.DataFrame(out, schema=schema).select(LEDGER_COLUMNS)
 
@@ -143,7 +145,8 @@ EX_JOBS = [
     {"job_uid": "c#c0", "at_min": 60, "dur_min": 60, "gpus": 1, "flexible": True},
 ]
 EX_LEDGER = [
-    {"job_uid": "a#c0", "at_min": 0, "start_min": 30, "dur_min": 90, "gpus": 2},
+    {"job_uid": "a#c0", "at_min": 0, "start_min": 30, "dur_min": 90, "gpus": 2,
+     "fit_rejected": True},
     {"job_uid": "b#c0", "at_min": 10, "start_min": 50, "dur_min": 120, "gpus": 4,
      "site": "CISO", "moved": True},
     {"job_uid": "c#c0", "at_min": 60, "start_min": 60, "dur_min": 60, "gpus": 1,
@@ -196,6 +199,10 @@ def test_score_hand_values():
     assert m["remote_jobs"] == 1
     assert m["blocked_jobs"] == 1
     assert m["blocked_kwh"] == pytest.approx(0.72)
+    # The engine's F12.7 bug signal is reported separately from F14.7's `blocked`.
+    assert m["fit_rejected_jobs"] == 1
+    assert m["fit_rejected_kwh"] == pytest.approx(2.16)
+    assert m["evidence"]["fit_rejected_jobs"] == "simulated"
     assert m["evidence"]["co2_kg"] == "modeled"
 
 
