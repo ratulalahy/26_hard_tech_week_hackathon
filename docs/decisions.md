@@ -351,3 +351,11 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 
   Anything else needs the owner's yes.
 - **Evidence:** `.claude/skills/codex-gates/SKILL.md`.
+
+## D-047 · 2026-10-27 02:15 MT · Rigid jobs pinned to their U placement (spec F11)
+- **Decided by:** lead (Claude), as an SDD ruling. It is reversible, and goes to the Astra gate as an explicit lens.
+- **Decision:** zero-slack jobs (`deadline − duration ≤ U start`, which covers all non-flexible jobs) are pre-booked at their U site and start in every policy run. The search window for flexible jobs is `[arrival, deadline − duration]`.
+- **Evidence:** the Task 4 implementer's slice benchmark found G with 11 late jobs and S with 5 at 1.0×, all on legal ledgers (PR #19 report).
+- **Alternatives rejected:**
+  - slack tolerance for rigid jobs, which breaks the owner's hard-deadline decision;
+  - reporting lateness and relying on the F1 fallback, which would make the headline carry late jobs that are a scheduling artifact.
