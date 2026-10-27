@@ -22,5 +22,8 @@ runs/
 .idea/
 .vscode/
 
-# Local tool binaries (pmtiles CLI etc.)
+# Local tool binaries (pmtiles CLI, the Impeccable engine cache etc.)
 .tools/
+# Impeccable working files (screenshots, critique snapshots, live state); config.json is shared
+**/.impeccable/*
+!**/.impeccable/config.json
