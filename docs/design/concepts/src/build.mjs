@@ -12,7 +12,7 @@ const geo = JSON.parse(readFileSync(join(here, 'geo_extra.json'), 'utf8'));
 const ground = 'data:image/webp;base64,' + readFileSync(join(here, 'ground.webp')).toString('base64');
 const html = tpl
   .replace('__DATA__', () => JSON.stringify(data))
-  .replace('__GEO__', () => JSON.stringify({ cities: geo.cities, anchors: geo.anchors }))
+  .replace('__GEO__', () => JSON.stringify({ cities: geo.cities, anchors: geo.anchors, hex: geo.hex }))
   .replace('__GROUND__', () => ground);
 mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, html);
