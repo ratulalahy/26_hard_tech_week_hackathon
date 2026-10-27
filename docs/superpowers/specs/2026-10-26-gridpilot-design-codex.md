@@ -1,0 +1,466 @@
+# GridPilot: when should a Utah AI job stay, wait, or travel?
+
+Independent experiment design, written 2026-10-27. Source checkout: main at 8e0ce4c after the requested rebase. Status: **proposal for reconciliation and the independent soundness gate; no experimental result or owner approval of this spec is claimed.**
+
+## 1. The entry and the claim
+
+Build one product: a day-ahead grid report connected to an AI batch-job scheduler. Start in PacifiCorp East (PACE), then visibly place eligible jobs in California (CISO) or Bonneville (BPAT), subject to finite compute capacity, deadlines, and transfer overhead. A national overview supplies context; these three regions receive the full experiment.
+
+The question is: **How much does knowing tomorrow's grid help an operator who already knows which regions are usually cleaner?**
+
+The strongest demonstration is a job that has a credible reason to stay, wait, or travel, accompanied by a complete accounting of the work. The aggregate result must distinguish:
+- the value of access to another location;
+- the value of allowing a delay;
+- the additional value of forecasting;
+- the conditions under which the apparent benefit disappears.
+
+A large saving relative to running everything in Utah does not establish forecasting skill. A forecast can lose to a fixed-region rule. Either outcome is acceptable evidence.
+
+Owner requirements remain fixed: emissions first; Utah/PACE first; **regional placement in the core**, as expressly required by the current owner instruction; offline MacBook Pro/Chrome delivery; experiments freeze Wednesday 2026-10-28 at **13:00 MT**, final displayed numbers by **14:00 MT**. A tagged, checkable build with real validation results is due Tuesday at **18:00 MT**. This proposal supersedes my earlier suggestion to leave regional placement until later. The test seal remains unchanged.
+
+The intended final wording is conditional on the actual result:
+
+> In simulation, using a public AI workload and historical grid data over [covered dates], this policy changed attributed operational CO2 by [signed result] while executing the same GPU-hours within [declared deadlines]. Its additional benefit over [strong simple policy] was [signed result]. Capacity, power, and transfer assumptions are visible.
+
+Do not substitute “useful training completed,” model quality, physically avoided CO2, a cloud-bill saving, or relieved transmission congestion for the quantities actually evaluated.
+
+## 2. What the profiles change
+
+The design uses the three committed profiles, rather than another author's design:
+- [Grid and weather](../../data-profile/grid.md)
+- [Workloads and prices](../../data-profile/workloads-prices.md)
+- [Offline geography](../../data-profile/geo.md)
+- [Owner decisions](../../brief.md) and [agent/evidence rules](../../../AGENTS.md)
+
+The following are **profile findings, not new measurements or held-out results**:
+
+| Finding and evidence class | Consequence |
+|---|---|
+| BPAT was cleaner than PACE in every profiled validation hour on the profile's production basis; its consumption estimate was substantially higher than its production estimate (**modeled**, grid §8). | Consumption-based intensity is primary. A capacity-constrained fixed clean-region baseline is mandatory. |
+| PACE's demand and carbon intensity had a negative validation correlation (**modeled statistic from observed/modeled inputs**, grid §8). | Carbon and grid-stress outcomes must remain separate; a low-carbon decision can increase stress exposure. |
+| Seren's jobs longer than a day carried 64.0% of its GPU-hours (**measured**, workload §1.2). | Preserve full durations and gang size. No hourly restart or free checkpointing in the main experiment. |
+| Cancelled Seren attempts carried 67.2% of GPU-hours (**measured**, workload §1.4). | Include their consumed budgets. Completed status is not a proxy for all energy, and consumed GPU-hours are not a quality-adjusted work metric. |
+| The BA demand forecast reaches EIA too late for our prior-day issue (**observed publication metadata**, grid §7). | It is a later-information diagnostic, not an input or an equal-information baseline. |
+| PACE has no pre-seal day-ahead price training history (**observed source availability**, workload §2). | Use consistent real-time wholesale marks for secondary accounting; do not train on the sealed EDAM regime. |
+| Weather is still being downloaded and fixed-lead archives require an issue-time audit (**observed source metadata**, grid §9). | The core model works without weather. Weather must earn inclusion before configuration freeze. |
+| Local vector/raster map assets already exist (**observed artifact inventory**, geo profile). | Spend visual effort on decisions and replay, rather than tile infrastructure. |
+
+I challenge two interpretations in the profiles. A high R-squared for a CO2/net-load regression does **not** identify causal marginal emissions. Also, repeating or resampling a short workload does **not** create independent evidence from additional real clusters.
+
+## 3. Pre-registered questions and success conditions
+
+**H1 — placement under limits.** A forecast-guided placement-and-delay policy reduces attributed CO2 relative to immediate execution at PACE, under the same fleet and workload. This establishes conditional operational opportunity, not forecast value.
+
+**H2 — forecast value.** With the same scheduler, feasible actions, power model, and jobs, learned forecasts improve realized attributed CO2 relative to seasonal forecasts. Compare the paired difference; do not conflate it with H1.
+
+**H3 — beyond a fixed clean destination.** Dynamic placement-and-delay improves on a capacity-constrained, training-ranked destination rule. This is the skeptical judge's main challenge.
+
+**H4 — limits.** The gain changes with destination capacity, acceptable waiting, transfer overhead, mobility, and the carbon-accounting basis. Find the boundary where a move ceases to help, rather than optimizing assumptions until the percentage looks large.
+
+A result qualifies as a deadline-preserving saving only if all policies in the stated comparison:
+1. receive exactly the same attempted-work cohort and declared budgets;
+2. execute every cohort GPU-second, including failed/cancelled attempts' declared budgets;
+3. have zero deadline misses, no discarded or rejected cohort jobs, no unfinished cohort work, and no capacity violations;
+4. reconcile energy and CO2 from the schedule ledger.
+
+These are hard eligibility conditions, not penalty weights in the objective. An infeasible policy is shown as infeasible. Its partial-execution carbon reduction is never shown as a saving. A feasible simple baseline can become the recommended policy if the learned policy fails. Do not shrink the primary cohort or relax deadlines after seeing test results.
+
+A forecast-improvement claim requires the paired uncertainty interval for the pre-registered H2 contrast to exclude zero in the favorable direction. Otherwise report the estimate and uncertainty as inconclusive or adverse. No minimum positive saving is assumed.
+
+## 4. Regions, data, and accounting boundary
+
+### Three routing regions and ten overview regions
+
+Core placement set: **PACE, CISO, BPAT**. This is a deliberately difficult test: the hero has substantial fossil generation, California has a changing daily mix, and the hydro destination provides a strong static alternative.
+
+Overview set: **PACE, CISO, BPAT, NEVP, AZPS, PSCO, ERCO, SWPP, MISO, PJM**. Overview regions have real historical demand/net load and clearly identified forecast channels. Only the core placement set has a routing-capacity assumption; the map must not imply GPUs are available in every overview region.
+
+Use EIA code CISO, with “CAISO” as the human-facing name. A job arc represents movement of a computation request, not electricity, a physical transmission path, or an existing data center. Site points are illustrative regional endpoints, labeled modeled. Do not infer a facility location from a BA polygon.
+
+### Frozen inputs
+
+Use source snapshot 05efabe781cc in [snapshot.json](../../../data/manifests/snapshot.json) as the starting inventory. It is not a blanket authorization to use a growing source. Record the exact manifest hashes and output-table hashes in each run. In particular, the weather manifest must be frozen separately before weather is used.
+
+Shared cache: /home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/data, read-only from this checkout. No downloads or cleaning writes are authorized for this planning task.
+
+### Primary carbon signal
+
+Primary truth and forecast target: **EIA's modeled consumption-based hourly CO2 intensity**, from the BA workbooks, converted to g CO2/kWh. This includes EIA's treatment of imports. It is an accounting estimate, with reporting and flow-model limitations, not a measured response to adding our load.
+
+Retain the workbook's original units, conversion, column identity, interval boundaries, and lineage. A conversion test must distinguish pounds from grams and kWh from MWh. Store production-based intensity alongside consumption-based intensity.
+
+The core simulation treats the workload as small enough not to change the historical grid mix or prices. No dispatch response, renewable additionality, contractual renewable matching, embodied emissions, or facility construction is modeled.
+
+Secondary carbon views:
+- Reprice the **same schedules** on EIA production-based intensity. This isolates accounting sensitivity.
+- A fuel-mix reconstruction is a separately named modeled diagnostic, with fixed factors and an explicit storage denominator. It never silently replaces missing consumption values.
+- Marginal analysis is a diagnostic described in §10. It cannot turn the primary number into “CO2 avoided.”
+
+Reject negative/nonfinite intensity values as invalid; zero can be valid. Record all rejection reasons. Do not cap high realized intensities or fill evaluation truth with a forecast.
+
+### Price and stress
+
+Use PACE ELAP_PACE-APND FMM/RTPD real-time prices, averaged only from complete constituent intervals, consistently across validation and test. California's NP15 price is a **hub proxy**, not a BA-average electricity rate. BPAT real-time ELAP accounting is optional only if its frozen source metadata and coverage are verified before opening test.
+
+Missing price is null with an explicit reason, never zero. Report a complete-fleet wholesale energy-cost scenario only when all destinations have comparable, verified marks. Otherwise show PACE-only time-shift cost and individually priced energy shares; do not label the partial total a fleet saving. No synthetic PACE day-ahead history, pre-EDAM DAM interpretation, cloud rental costs, or egress bill is required.
+
+Net load is demand minus wind and solar, using the harmonized parent fuel categories exactly once. It is a **grid-stress proxy**, not transmission congestion or available interconnection capacity.
+
+For each BA, fit an empirical net-load CDF and its 95th-percentile threshold on the training window. Freeze them before the period they score. The report shows forecast net load, its training-relative percentile, and whether it exceeds that threshold. Test values can exceed the training range; do not rescale using the test maximum.
+
+Secondary stress outcomes are execution energy in above-threshold hours, energy-weighted net-load percentile, and the change in those quantities. A positive stress change is a real tradeoff, not a reason to redefine the carbon objective.
+
+## 5. Time, splits, and what the scheduler is allowed to know
+
+### Seal and coverage
+
+Training/development values must be strictly before 2025-11-01T00:00Z. Validation reporting uses [2024-11-01T00:00Z, 2025-11-01T00:00Z). The sealed bounds remain **[2025-11-01T00:00Z, 2026-11-01T00:00Z)**.
+
+The common evaluation cutoff F is the earlier of the sealed end and the last complete UTC day supported by the frozen core carbon/demand snapshot. Choose it from completeness metadata, not favorable outcomes. The profile's currently established grid cutoff is 2026-10-25T00:00Z; verify consumption-intensity completeness before locking F. An earlier legitimate cutoff must be documented. Do not claim a full twelve months.
+
+Only the approved evaluation entry point may open sealed values, after the reconciled spec is approved and code/configuration hashes are frozen. Append an entry for each invocation to results/test_reads.jsonl, including purpose, time, code/config/input hashes and covered fields. This proposal does not open the seal.
+
+### Issue time and horizon
+
+Issue once daily at **10:00 America/Denver**, for the next Utah civil day. That day contains 23, 24, or 25 hours. The same UTC target intervals apply to every BA, with local clocks available for inspection.
+
+At an arrival time, the scheduler uses only forecast records whose issue time is at or before the arrival. Use the newest eligible record for each target hour. For long jobs extending beyond issued forecast coverage, use the frozen training calendar climatology for the entire uncovered tail and tag it as a modeled forecast component. Never ignore tail energy, truncate the job to a day, or use realized future intensity.
+
+Main forecast inputs obey these deliberately conservative availability envelopes (**assumed availability rules**, not archived receipt timestamps):
+- Demand: hour end plus 2 hours.
+- Fuel mix and total interchange: hour end plus 48 hours.
+- Consumed and generated carbon estimates, and bilateral interchange: hour end plus 96 hours.
+- Later-published BA demand forecasts: excluded from the operational input set.
+- Prices: not needed by the carbon scheduler. Any later price-forecast extension needs its own availability rule.
+
+These envelopes simplify the differing source schedules. The EIA documentation separately identifies slower bilateral-flow and imported/exported-carbon publication. Do not use the faster generation schedule for consumption intensity.
+
+The data is a **publication-lagged replay of a revised historical snapshot**. Publication delays are enforced, but historical revisions and retrospectively updated emission factors cannot be reconstructed from this bulk cache. State this limitation beside the forecast evaluation. Do not call it an exact reconstruction of information available to a historical operator.
+
+### Model fitting and selection
+
+Validation models are fitted at 2024-10-29T00:00Z, using target history from 2022-01-01 through the last label available under the target's envelope at that fit time. Test models are fitted once at 2025-10-29T00:00Z using the analogous history from 2023-01-01. The earlier fit dates permit forecasts covering the UTC/local-day boundary at the start of each evaluation period.
+
+All model weights, fit windows, scalers, thresholds, calibration residuals, lookup tables, and configuration choices are frozen for the corresponding evaluation. No model refitting on sealed outcomes. Lagged test observations may become inputs to later test forecasts under the pre-registered publication envelopes; this is authorized only through the logged evaluation entry point.
+
+Reconstruct features at each historical issue time, not by shifting a completed table indiscriminately. For example, a weekly target lag can be available while yesterday's value for a late target hour is not.
+
+Selection uses validation only, with a selection/calibration cutoff of 2025-10-24T00:00Z so those labels are available before the final fit and the first test forecast. Later pre-seal validation hours may be reported descriptively but cannot select the deployed policy, parameters, or calibration. Because the profiles already exposed the validation year, validation comparisons are development evidence, not an untouched confirmation set. Report this explicitly.
+
+## 6. Forecast experiment: make the decision signal earn its complexity
+
+Forecast four targets per core BA: demand MW, wind MW, solar MW, and consumed intensity g/kWh. Derive forecast net load by subtraction. Do not predict five inconsistent versions of the same quantity.
+
+Required candidates:
+1. **Last available value:** persistence using the publication envelopes.
+2. **Weekly seasonal:** median of the available target-hour lags at 168, 336, 504, and 672 hours. If none exists, use training calendar climatology.
+3. **Calendar climatology:** training median by BA, local month, local hour, and weekday/weekend; progressively back off to month/hour, hour, then BA median.
+4. **Histogram gradient boosting:** per BA and target, using scikit-learn HistGradientBoostingRegressor already in the project dependency family.
+
+The learned model uses target calendar features, forecast lead, available weekly target lags, latest available observations, trailing available means/ranges, and missingness indicators. Demand models can use recently published demand; carbon/generation models respect their slower envelopes. Use one explicit IANA zone per BA: PACE America/Denver, CISO and BPAT America/Los_Angeles. The overview zones are registered explicitly, rather than inferred from EIA's published local timestamp.
+
+Bound the search to two parameter sets (**assumed modeling choices**): max_leaf_nodes in {15, 31}, max_iter=200, learning_rate=0.05, min_samples_leaf=48, l2_regularization=1.0, squared-error loss, early_stopping=False, random_state=42. Do not let an internal random validation split select boosting iterations. Training medians for missing inputs and any scaling are fitted only on the stated training data; keeping native target units per BA avoids a pooled size imbalance.
+
+Clip physically nonnegative predictions at zero. Preserve unbounded high predictions and log clipping counts. Solar's zero-at-night rule must use a documented astronomical/calendar method or be omitted; do not infer the test year's night mask from realized solar output.
+
+Within the two boosting configurations, choose the learned candidate by validation-selection MAE. For the traffic report, also choose the best forecast family by that same MAE, breaking ties in favor of seasonal, climatology, persistence, then boosting. Keep all candidates' scores and identify exactly which forecasts each routing policy consumes. H2 compares the fixed learned candidate with the seasonal candidate in the **same scheduler**, even if the deployed choice is seasonal. Do not claim ML value when the selected system is using a simple forecast.
+
+Report:
+- MAE and signed bias in native units, normalized MAE using the training mean for demand/generation;
+- daily error distributions, peak-hour timing error for demand/net load, stress-event precision and recall;
+- carbon error weighted both uniformly and by an independently fixed reference execution profile;
+- decision regret using realized carbon for candidate actions under a common reservation state, identified as a diagnostic rather than the policy's achieved yearly result.
+
+Do not use MAPE for zero/near-zero wind, solar, or carbon. Prediction intervals may use 10th/90th percentiles of daily-forecast residuals before the validation-selection cutoff, frozen for test, with actual coverage and width reported. Such intervals are empirical and have no guaranteed conditional coverage. Do not call their score CRPS.
+
+The BA's published demand forecast appears only in a later-information comparison, with a visible publication caveat. PACE is scored as published; CISO/PJM reported and profile-suggested shifted diagnostics are separate. No headline “beat the utility forecast” based on a mismatched information set.
+
+**Weather experiment, optional:** only frozen Previous Runs archives, no observed/reanalysis or unsuffixed stitched nowcasts. Keep the weather-free candidate as the core. Use fixed-lead fields only after verifying, for every feature, that its latest possible initialization plus a conservative publication latency precedes the issue. Account for the source label versus stored hour-start offset. For far targets a field named previous_day2 is not automatically safe; use a larger available lead or omit the feature. A single Salt Lake City forecast is not evidence of BA-wide wind/solar conditions. Compare weather/no-weather on identical dates starting no earlier than the common honest archive coverage. Admit weather only by Tuesday 10:00 MT if its lineage audit and validation comparison finish; otherwise record its deferral. No new downloads are necessary for the core.
+
+## 7. Workload: preserve the expensive jobs and expose the assumptions
+
+### Primary trace and work definition
+
+Use **Acme Seren**. Keep every GPU attempt with finite, positive GPU count and finite, positive measured execution duration, regardless of final status. Do not deduplicate retries without a documented attempt identifier; do not invent checkpoint chains from cancelled records. Audit GPU request/count semantics and remove only explicitly logged malformed records.
+
+Each retained attempt becomes a **run-to-budget request**: its measured GPU count and duration define a declared service budget. The simulator knows this budget at arrival (**assumed**); it is not predicting a future failure or successful completion. Trace duration remains measured; its availability as a declared budget is assumed. The outcome is attempted GPU-work delivered, not equal model quality.
+
+Primary jobs are non-preemptive gang jobs: all requested GPUs run together at one site for the full measured duration. No cross-region execution after starting, no intra-job splitting, and no checkpointing in the main experiment.
+
+### Replay calendar
+
+Avoid week-block resampling in the primary replay because the energy-heavy multi-day attempts cross block boundaries. Use the continuous Seren arrival sequence as one cycle:
+- Source cycle starts at 2023-03-06T00:00:00+08:00 and lasts 161 days, an integer number of weeks wholly inside the profiled source span.
+- Select attempts by submission within that cycle, retaining their complete durations even when execution extends past the source-cycle boundary. If the actual source schema contradicts this support, fail the input audit and correct the source-only boundary before configuration freeze.
+- Remove the UTC+8 wall-clock offset and anchor the first cycle to Monday 2024-01-01 00:00 **fixed UTC−07:00** for the primary calendar. Repeat the whole 161-day cycle in order; duplicate IDs include the cycle number. This preserves within-cycle elapsed timing, weekday, burst structure and long durations.
+- Fixed UTC−07 is a stated synthetic business clock. In summer, replayed arrivals appear one hour later on Utah's civil clock. A civil-time alignment is a separate sensitivity, with DST gap/fold handling logged.
+- Pre-register phase offsets of 0, 49, and 98 days, all whole weeks. Phase zero is primary; the other phases are workload-alignment sensitivities, not additional independent clusters or independent grid years.
+
+Use mapped **submission** times as arrivals, not measured historical start times. Historical queue time is descriptive only; it is not secretly supplied as a future start reservation. The simulator creates its own queue and schedule.
+
+No load multiplier in the primary result. The whole-cycle repetition and US-clock mapping are **simulated**. State the number of unique source attempts, repeated instances, GPU-hours, and fraction of energy in long and large attempts.
+
+### Flexibility and hardware assumptions
+
+Assumption registry, frozen before test:
+
+| Parameter | Primary choice, labeled assumed | Required sensitivity |
+|---|---|---|
+| Flexible request eligibility | Pretrain, SFT, MLLM, Eval are candidates; SHA-256 of source attempt ID and seed 42 selects half of candidate requests. The same flag persists across repeated instances. | No flexible jobs; all candidates flexible. Report realized job and GPU-hour shares, not “50% of energy.” |
+| Allowed start delay | Eligible Pretrain/SFT/MLLM: 6 h; eligible Eval: 1 h; other requests: 0 h. | Batch delay 0 h and 24 h; Eval remains bounded at 1 h. |
+| Mobility | Flexible jobs may be placed before execution at any core site with enough GPUs. Software/data compatibility and site-equivalent A100-class throughput are assumed. | Restrict mobility to jobs requesting at most 8 GPUs; this exposes the energy cost of multi-node data gravity. |
+| Home GPU capacity | 2,288 GPU slots, from the profiled Seren cluster, treated as an assumed replay capacity. | 1.25× home capacity, rounded to an 8-GPU node. |
+| Destination spare capacity | 512 slots each in CISO and BPAT. These are spare compute reservations, not inferred grid headroom. | 0 and 1,024 each. The zero case is time-only. |
+| Remote transfer time | 30 min before execution; no delay for staying home. | 0 and 120 min. Transfer time consumes the same deadline slack as waiting. |
+| Remote transfer energy | 5% of the job's modeled full active IT energy, half attributed at the source and half at the destination. Book this energy at arrival, when staging begins, under an assumed instantaneous accounting convention. | 0% and 20%. No actual dataset sizes or network power were measured. |
+| Active IT power | 0.60 kW per allocated GPU slot, including its host allocation. | 0.40 and 0.80 kW; changing GPU generation does not imply faster work. |
+| PUE | 1.20 at each site. | Remote PUE 1.10 and 1.56 with home fixed. |
+| Idle IT power | 0.20 kW per provisioned slot, as a meter-accounting sensitivity. | 0 and 0.30 kW; no claim of automatically powering servers down. |
+
+A request's deadline is arrival plus declared execution duration plus allowed start delay. Transfer plus queueing must fit in the latter. An inflexible job has no discretionary delay; capacity overload is therefore visible as a deadline failure, not silently absorbed.
+
+The primary workload is not guaranteed to fit the recorded cluster when replayed at submission times. **That is an input feasibility question to answer on validation**, rather than a reason to use historical future starts. If the recorded capacity makes the primary cohort infeasible, report that case. The pre-registered 1.25× capacity case may provide a separate feasible planning result, but must be called a larger-capacity scenario; it cannot replace the primary result unnoticed.
+
+Declared runtime is a consequential assumption. Add a stress replay in which actual service is 25% longer than declared, with fixed original deadlines and no rescheduling of running jobs. Update reservations as overruns become known; report capacity/deadline failures and completed GPU-hours. This case measures fragility; it is not an excuse to retune.
+
+## 8. Scheduler and fair comparators
+
+### Core policy: deterministic reservation search
+
+Maintain an event-time reservation ledger. At each arrival, expose only that request, earlier requests/reservations, and forecasts already issued. Future arrivals and realized future grid values are unavailable to operational policies.
+
+Process simultaneous arrivals by deadline, then stable attempt ID. Already running jobs and committed reservations are immutable. For a flexible job:
+1. Enumerate its immediate start, every UTC-hour boundary up to its latest allowed start, and reservation-release instants within that window, at each allowed site.
+2. A remote start must follow transfer time. Require enough simultaneous GPUs throughout the full execution interval and finish by the deadline.
+3. Integrate forecast intensity over the complete job interval, using exact overlap with hourly intensity and the registered tail climatology. Include the transfer-energy attribution.
+4. Choose the minimum predicted total CO2 action. Break numeric ties within 1e-9 kg by earlier completion, staying at PACE, then lexical BA code and start time. Reserve it immediately.
+5. If no feasible action exists, retain the job in a late-work queue, schedule it at its earliest available legal site, finish its full budget, and mark the policy infeasible. Never drop it or call a late schedule feasible.
+
+For inflexible jobs, use the immediate PACE action if feasible; otherwise finish the budget late and record failure. The chosen policy is an implementable heuristic, not a globally optimal scheduler. Reserving a flexible job can disadvantage a later unknown arrival: the zero-miss eligibility test is essential, and a production admission guarantee is outside this prototype.
+
+Capacity is checked against exact overlapping execution intervals, not hourly mean GPU use. Energy uses exact measured durations, not durations rounded up to an hour. Several minute-long jobs may share an hour but may not overlap above the slot cap.
+
+### Required comparison table
+
+All policies have the same fleet, transfer overhead, job flags, power assumptions, deadlines, and input visibility unless explicitly marked hindsight. Unused destination slots are still part of the fixed fleet in the idle sensitivity.
+
+| ID | Policy | Purpose |
+|---|---|---|
+| U | Earliest feasible execution at PACE, stable FIFO with the specified simultaneous-arrival tie break; no intentional carbon delay. | Local operational reference. “Run immediately” is descriptive only where capacity permits it. |
+| G | Earliest feasible execution across the core sites, ordered by earliest finish then home then BA code; no carbon input. | Separates extra capacity access from carbon-aware placement. |
+| S | Fixed clean-region priority: rank by training mean consumed intensity, try earliest feasible completion at each ranked site with the same remote overhead and deadlines, then home/late handling. | Strong “just use the usually clean region” baseline. |
+| K | Exact same carbon reservation search as the learned policy, driven only by frozen calendar climatology. | Cost of sophisticated prediction versus a calendar rule. |
+| W | Same search, driven by available weekly seasonal forecasts. | Main equal-information forecast baseline. |
+| L | Same search, driven by the fixed learned forecasts. | H2 candidate; failure or underperformance is publishable. |
+| H | Same search with realized carbon substituted for predicted carbon, with future arrivals still hidden. | Hindsight heuristic diagnostic, **not** a certified optimum or upper-bound ordering check. |
+
+Run a PACE-only restriction of W and L (time-only), and a zero-discretionary-delay restriction of W and L (place-only). For place-only, remote staging is pre-completed with zero transfer latency **in every compared policy in that specific sensitivity**, while its energy charge remains; label that additional assumption. Otherwise a zero-wait request could never travel under the main transfer model. Do not compare differently defined feasible sets as if they isolate forecast skill.
+
+The deployed product policy is chosen from U/G/S/K/W/L by validation: first require the hard feasibility conditions, then minimize aggregate attributed CO2; tie-break on lower mean wait, then simpler policy order U, G, S, K, W, L. Preserve L as a separate experimental candidate even if deployment selects S or W. Freeze that choice before unsealing.
+
+### Hindsight ceiling and certification
+
+For every job, find its minimum realized CO2 over every continuous start time within its legal window and allowed sites, including transfer overhead, **while ignoring competition for slots**. This start set contains the operational policy's candidates. With piecewise-constant hourly intensity and transfer energy booked at arrival, the execution integral is piecewise linear in start time: evaluate both window endpoints, each hourly boundary, and each hourly boundary minus the job duration within the window. The minimum over this finite set is exact for the stated relaxation. Sum the independent minima to obtain C_relaxed, a lower bound on full-cohort CO2. Therefore C_U − C_relaxed is an **optimistic upper bound on possible reduction**, not an achievable schedule.
+
+Verify every feasible policy's realized CO2 is at least this lower bound within numeric tolerance. Do not assert that H beats L: greedy choices can interact with capacity.
+
+On deterministic small benchmark cohorts, additionally formulate binary job/action assignments with one action per job and interval-capacity constraints, and solve with scipy.optimize.milp/HiGHS. Enumerate all allowed hourly actions and their exact capacity breakpoints. Use a 30-second time limit; save status, feasible objective if any, dual bound and gap. Only a certified optimum at the declared tolerance is called an optimum. A time-limited incumbent is a feasible hindsight schedule, not a bound on every other policy.
+
+The exact small benchmark is a verification instrument, not evidence of year-long global optimality. If its action set differs from the operational search, display that difference; compare ordering only on the intersecting or explicitly matched feasible set.
+
+## 9. Continuous evaluation, uncertainty, and runtime limits
+
+Let R_max be the longest retained source attempt duration, computed from trace data alone. Let W_max include the largest allowed delay in the registered scenario family. Use a warm-up of at least R_max + W_max before the evaluation start. Execute this warm-up once with carbon-blind policy U, without any later-fitted forecast or grid-dependent choice, then clone its entire running/queued/reservation state for every policy at evaluation start. This common initial state avoids leaking later-fitted model information into warm-up decisions. From that point each policy maintains its own continuous state on the same arrival stream.
+
+For primary scoring, stop new arrivals at A = F − R_max − W_max. Score cohort requests arriving in [test_start, A), and execute them to completion no later than F for a feasible policy. Stop the entire arrival stream at A, not just the favorable job classes. Report the actual arrival window and the later execution/drain window. Long-job drain can shorten the scored arrival window materially.
+
+Warm-up requests remain in the capacity ledger until they finish; their energy and work are reported separately from the scored cohort. No daily or weekly queue reset. If an infeasible policy needs execution after F to finish, its completion ledger can record that remaining work structurally, but no unavailable realized carbon may be invented; its carbon claim is ineligible.
+
+Before evaluation, form one common hourly truth-availability mask across the core carbon signals. Do not remove different hours for different policies. For a missing truth hour, fail the primary total and report the coverage gap; optionally publish a separately labeled complete-coverage cohort using a common, policy-independent exclusion of every job whose **possible** execution window touches any such hour. Never fill truth with a forecast. Register this exclusion rule before test; disclose excluded jobs, GPU-hours and calendar coverage. It cannot become the headline if it omits substantial energy without a clear qualification.
+
+Primary phase-zero metrics for every policy/scenario:
+- total completed GPU-seconds versus requested; retained original-status mix;
+- deadline misses by jobs and GPU-hours; wait p50/p95/max; unfinished/backlogged GPU-hours; rejection and capacity-violation counts;
+- execution energy and transfer energy, home/remote energy share;
+- attributed CO2 in kg and kg per 1,000 completed GPU-hours;
+- absolute and percentage CO2 change versus U, and incremental change versus S and W;
+- production-basis repricing, stress exposure, and supported wholesale cost separately;
+- forecast error, scheduler runtime, and fallback/infeasibility counts.
+
+Use total differences and ratio-of-total savings, not means of daily percentages. When a reference total is zero, the percentage is null, not infinity. Positive reduction is C_reference − C_policy; also retain the signed raw difference.
+
+For router uncertainty, assign each completed job's **full** energy/emissions/wait to its arrival UTC week, preserving cross-week execution in the ledger. Bootstrap paired contiguous blocks of 4 arrival weeks, 2,000 replicates, seed 20261027; compute percentile 95% intervals for ratio-of-totals savings and paired absolute differences. Repeat block lengths 2 and 8 as an uncertainty sensitivity. The schedule is simulated once continuously; resampling never resets queues or pretends the resampled schedule is physically executable.
+
+These intervals describe variation across calendar/workload alignment conditional on the replay and modeling assumptions. They do not cover emissions-factor error or represent a population of independent clusters. Report the number of weeks and the number of unique source cycles; flag intervals unstable under block length or dominated by a single long campaign. Phase offsets are a separate sensitivity and must not be pooled as independent years. Forecast uncertainty uses paired daily errors, with temporal dependence acknowledged.
+
+Keep the primary test scenario and contrasts above fixed. Secondary stress, cost, production basis and sensitivity views are exploratory; do not mine their best subgroup for a new headline.
+
+Runtime discipline (**assumed engineering budgets**, not measured performance):
+- Benchmark a fixed two-week validation arrival slice before full sweeps, including long-job tail integration.
+- Core phase-zero validation policies plus a short replay must finish early enough to put real artifacts in the Tuesday 18:00 build.
+- Build only one-axis endpoint sensitivities around the primary scenario; no factorial grid. Reuse forecast arrays and prefix integrals of hourly intensity. Use a reservation interval structure rather than rescanning the entire schedule per candidate.
+- Log wall time and memory for feature building, each fit, forecasting, each replay and serialization. Forecast every target hour once per issued scenario, rather than per job.
+- If full execution threatens the deadline, prioritize primary phase-zero core policies, their time/place restrictions, and the capacity/overhead limits. Mark unrun sensitivity cases explicitly. Regional movement, the fixed-clean-region comparator, and work accounting remain core.
+
+## 10. Sensitivity that can change the interpretation
+
+The most useful dashboard view is a **stay / wait / travel boundary**, backed only by computed scenarios. Precompute the primary case and the individual endpoint changes in §7. A control selects a registered run; it does not fabricate intermediate solver results.
+
+For a candidate move, display:
+- expected source and destination carbon attribution;
+- extra transfer energy and staging delay;
+- the GPU capacity needed for the entire run;
+- the latest completion time and remaining slack;
+- realized outcome and forecast error when replaying history.
+
+Compute the transfer-energy break-even point from the complete execution-carbon difference and the source/destination transfer-intensity mix booked at arrival. If staying already has lower modeled CO2, show “no positive transfer allowance.” Label this boundary **modeled**, identify the power/PUE/carbon basis, and avoid treating an uncertain threshold as a measured network property.
+
+Required interpretation checks:
+1. **Static-region challenge:** S versus L, including remote occupancy/saturation. A large U-to-L difference with a negligible S-to-L difference means location access explains the gain.
+2. **Long-job challenge:** report results by duration and GPU-size bands with each band's energy share. Do not headline counts of tiny jobs moved.
+3. **Mobility challenge:** the single-node restriction tests whether the result depends on moving large pre-training jobs with assumed pre-staged data.
+4. **Idle-power challenge:** main job attribution uses full active-slot energy. Recompute policy differences with active-minus-idle power, retaining transfer energy, to represent an always-on identical fleet whose fixed idle baseline cancels. Do not add the full idle baseline on top of full active-slot energy for occupied GPUs. Absolute whole-facility emissions require a separate, common-window ledger including all background work.
+5. **Deadline/runtime challenge:** show the overrun stress case and any infeasibility prominently. Do not promise a production SLO from declared-runtime simulation.
+6. **Carbon-basis challenge:** same schedules, consumption and production basis side by side. Hydro's low production intensity is not the same as delivered consumption intensity.
+
+For a marginal diagnostic, fit first-difference production-emissions/net-load regressions on **training only**, with predefined local 6-hour blocks, an intercept, sample count, coefficient interval, R-squared, and residual diagnostics. Require both consecutive observations and no imputed/spike inputs. Freeze coefficients before validation/test.
+
+Call the result an **associational emissions-response proxy**. Neither a high R-squared nor a positive coefficient makes it a causal marginal factor. Imports, storage and dispatch confounding remain. Do not sum an invented fleet-wide “avoided emissions” figure where destination response is unidentified. A PACE-only temporal repricing is a labeled sensitivity; unknown destination response stays unknown. An optional assumed-factor break-even chart may show what destination marginal factor would be required, but its factors are labeled assumed and it is not a test result.
+
+PAI 2020 is a useful second-trace extension only after the core is complete: audit attempt/task multiplicity, fractional GPUs, missing end times, and supported work units first. Its incomplete durations prevent silently treating it as an equivalent full-load replication. No second trace or 2026 spot-share assumption is needed for the primary claim; the latter's additional terms are unnecessary for this build.
+
+## 11. The visible product and offline evidence contract
+
+### Story mode
+
+Default to a legible 2D map with a synchronized carbon chart, capacity bars, and job execution lanes. A mild camera tilt can introduce the region, but quantitative comparisons use flat geometry and readable scales. Avoid encoding carbon and stress in the same color or height.
+
+A 4–5 minute path:
+1. **Utah now / tomorrow:** show observed history ending at the issue cutoff, then a visibly different forecast segment. Toggle carbon versus net-load stress to reveal that they answer different questions.
+2. **One request:** open its declared budget, gang size, deadline, allowed sites and assumptions. Compare stay, wait and travel as concrete feasible actions.
+3. **Place the work:** replay local and chosen-policy schedules side by side. Arcs move job requests; slot bars show where capacity prevents the tempting move. Long jobs remain visible across midnight.
+4. **Count the result:** show equal completed GPU-hours and deadline status beside signed carbon differences. Compare U, S, W and L, with uncertainty and the data period.
+5. **Challenge it:** choose the capacity, overhead or mobility sensitivity. Show the precomputed result, including loss of benefit or infeasibility. Open the evidence drawer to trace the headline to its run.
+
+Choose the illustrative job from validation, not by searching held-out successes. Use this deterministic rule: among validation flexible jobs with a feasible remote action in the primary replay, select the job nearest the median GPU-hours of that set, breaking ties by stable ID. If it has no visually distinct action choices, use the smallest stable-ID job with two feasible site choices and disclose that illustration criterion. The test aggregate is not replaced by that example.
+
+A held-out replay day, if supplied, is the first complete Monday after test start with the required assets, chosen from completeness only. Do not search for the best-looking test day.
+
+### Results contract
+
+Small, versioned JSON artifacts in results/ feed the static UI. Full prediction and schedule ledgers remain Parquet in versioned run directories, with inspectable excerpts exported for the demo.
+
+Required artifacts:
+- manifest.json: schema version, run IDs, source/config/code hashes, split and coverage, model fit/issue rules, reproducibility command, assumptions, artifact hashes and provenance registry.
+- metrics.json: one record per scenario/policy/contrast, work/feasibility/energy/carbon metrics, uncertainty method and interval, covered dates, evaluation status.
+- forecast-replay.json: issue time, target interval, BA, observed history/forecast/realized channels and quality flags.
+- job-replay.json: stable source/mapped IDs, request attributes, declared/realized-budget distinction, available actions, reservations, transfers and decision explanation.
+- scenarios.json: the exact computed scenario catalog, parameters and unavailable-case reasons.
+- claims.json: each user-facing claim's text template, referenced metric IDs, comparison and limitations.
+- test_reads.jsonl: append-only sealed evaluation audit.
+
+Every numeric data field exported to results, UI or slides resolves to exactly one evidence class through a mandatory field registry or a scalar envelope. A compact scalar envelope is:
+
+~~~json
+{
+  "value": null,
+  "unit": "kg_CO2",
+  "evidence": "simulated",
+  "provenance_id": "registered_run_and_metric",
+  "status": "not_evaluated",
+  "reason": "No experiment has been run for this proposal."
+}
+~~~
+
+The registry covers series, intervals, counts, uncertainty endpoints, map geometry/positions and scenario parameters as well as headline scalars. Dates, IDs, schema versions and display constants are metadata, not quantitative evidence; they still have type/schema definitions. A derived field's top-level label reflects its meaning and links to input labels. Examples:
+- EIA demand: observed.
+- EIA's estimated historical consumption intensity: modeled.
+- Source-trace duration: measured; its remapped request budget: assumed with measured lineage.
+- Predicted intensity, including a climatology tail: forecast, with model provenance.
+- Chosen power/PUE/capacity: assumed.
+- Energy calculated from a request budget and assumed power: modeled.
+- CO2 and completion outcomes from a schedule: simulated.
+- A deterministic break-even calculation from modeled inputs: modeled.
+
+Use null plus reason for unavailable values. A missing field must not be inferred to be zero. No placeholder number may resemble a finished result. Formatting a g/kWh value as kg/MWh preserves both its numeric conversion and label.
+
+### Laptop delivery
+
+Use Vite/React/TypeScript, ECharts for quantitative plots, and deck.gl/MapLibre for local map assets. Use a single theme and system/self-hosted fonts. These choices are proposed technology, not evidence that the packages are installed or tested.
+
+Bundle JS, styles, fonts, licensed map layers, raster relief and result JSON locally. Preserve asset attributions and the geometry source license materials. The existing processed geography is enough; no new map-data search is necessary.
+
+Deliver a release archive with the built static directory and a documented localhost static-server launcher. The laptop must not require Node dependencies, a Python analysis environment, a GPU, SSH, remote APIs, or an experiment backend. A launcher may use a runtime already verified on the owner's Mac; identify and rehearse that prerequisite. Do not promise double-click file-URL support for a fetch-based app.
+
+Use a relative deployment base and resolve asset paths against it, rather than relying on the profile examples' root-absolute paths. Provide a screenshot/video fallback and an inspectable metrics table for WebGL failure. A recording is a fallback, never presented as a live calculation.
+
+Offline acceptance means the exact release loads in Chrome on the actual MacBook, with browser cache cleared and external network disconnected, and every story beat and registered scenario works. Collect a network log showing only local requests. Localhost serving is compatible with an offline demo. A Linux browser check cannot substitute for that laptop rehearsal.
+
+## 12. Execution gates and verification
+
+These are implementation targets; commands for new entry points become required only when their code lands. None below is claimed to exist merely because it appears here.
+
+| Gate and deadline (MT) | Required evidence |
+|---|---|
+| Reconciled spec and frozen inputs, Tuesday morning | Owner-approved reconciled decisions; fresh soundness review; input hashes; no sealed values read. Separate weather status. |
+| Forecast/router validation, Tuesday daytime | Exact as-of feature audit; capacity and complete-work ledgers; all U/G/S/K/W/L comparisons; declared-runtime caveat; common input cohorts. |
+| Checkable version, Tuesday 18:00 | Tagged clean commit, real validation metrics in an offline-capable dashboard, PACE-to-destination routing visible, reproducible run reference. |
+| Configuration freeze, Tuesday evening | Selected models/policy, fitted transforms, scenario catalog, replay mapping, claims, source and config hashes fixed before test entry point runs. |
+| Sealed evaluation and audit, overnight to Wednesday morning | Logged test reads; no test-directed selection; all signed outcomes and failures retained; independent results audit against actual ledgers. |
+| Experiment freeze, Wednesday 13:00 | Final clean run hashes and artifact checksums. Later runs only for documented bugs, with old/new results retained and logged. |
+| Presentation lock, Wednesday 14:00 | Numbers trace to frozen artifacts; actual-Mac offline rehearsal; short story plus question-ready evidence drawer. |
+
+No elaborate serving architecture, foundation-model installation, live LLM explanation, battery simulation, RL training, or hardware measurement is a dependency. An optional model must improve a registered validation comparison and pass the same availability/reproducibility rules; model size is not a success metric.
+
+Implementation verification must include:
+- Boundary and DST tests for hour-ending to hour-start conversion, civil-day horizons, and half-open splits.
+- A sentinel future feature that provokes the availability guard; delayed consumed-carbon and bilateral-flow fields tested separately.
+- Target/imputation tests preventing the BA forecast from reappearing as demand truth; source spike rules use neighboring hours only when both are already available.
+- Synthetic jobs crossing midnight, DST, a forecast horizon, an arrival-cycle seam, and the evaluation/drain boundary.
+- A long gang job whose hourly-average occupancy would hide a capacity violation; exact interval checking must reject it.
+- Missing carbon truth, missing price, unavailable forecast tails, no legal action, and runtime overrun.
+- Work and energy conservation, unit conversion, full versus incremental idle accounting, and transfer charges. A same-site transfer has no remote overhead.
+- Exhaustive tiny scheduling examples versus the MILP and relaxed lower bound; mutate a constraint to demonstrate the test detects an illegal schedule.
+- Paired comparison invariants and a known negative saving that remains negative in export and UI.
+- Export validation for every numeric field's evidence/provenance, null handling, finite values, and metric-to-headline links.
+- A clean rebuild with canonical hashes of sorted, rounded ledgers and stated numeric tolerances, not Parquet byte equality.
+- Browser checks for every story beat, disabled unavailable scenarios, wrong asset base paths, network failures, and the actual laptop rehearsal.
+
+The existing repository test command is:
+
+~~~sh
+cd lab
+uv run pytest
+~~~
+
+New implementation entry points must document the exact command, environment lock, clean commit and output run directory for: source audit; validation forecasts; validation replay; configuration freeze; sealed evaluation; export; web build; release packaging; and offline verification. Do not place guessed future CLI commands in AGENTS.md.
+
+When code is implemented, tests for new correctness behavior must demonstrate failure under a relevant mutation. This document itself needs link, consistency, and whitespace checks rather than tests that merely restate its prose. No production deployment, database migration, or public-hosting gate is required for a private offline hackathon artifact.
+
+## 13. Judge-facing answers and remaining limits
+
+**“Why not always use Bonneville?”** That is baseline S. If it wins, say so. The map shows finite spare GPUs and the jobs too large to fit. Forecast value is the incremental comparison, not the entire location difference.
+
+**“Did you actually save CO2?”** We changed an attributed estimate in simulation. The historical mix is held fixed. Causal avoided emissions need a validated dispatch-response model or an intervention; this entry has neither.
+
+**“Did you just finish less work?”** Open the common-cohort budget, completion, deadline and energy reconciliation. Any failure disqualifies that savings claim.
+
+**“You knew how long a failed job would run?”** The experiment replays measured attempts as declared run-to-budget requests. That is an assumption, exposed with an overrun stress test. It does not predict failures or guarantee equal model quality.
+
+**“Did you add a free data center?”** Every policy gets the same stated fleet and spare-capacity assumptions. G isolates capacity access. Transfers, destination saturation, PUE and idle-power sensitivity remain visible.
+
+**“Did you use tomorrow's weather or revised history?”** Core forecasts need no weather and enforce publication envelopes. The bulk history is revised, so the replay is not an archived-vintage reconstruction. Optional weather has a separate initialization/publication audit.
+
+**“What does this have to do with Torus?”** Flexible-work placement addresses hour-scale demand shaping and regional energy differences. Storage can address other timescales, but this study does not model Torus devices, dispatch a battery, or prove additional physical grid capacity.
+
+No numerical benefit has been estimated in this proposal. The principal remaining risks are workload infeasibility at submission-time replay, assumed runtime/mobility, revised-data availability, consumption-intensity quality, and too little incremental value over a fixed clean-region policy. Each has a comparison or explicit qualification above. A negative result narrows the product's honest use case; it does not authorize changing the test.
+
+## Sources checked for this proposal
+
+The data profiles and frozen manifests are the quantitative source of record. External references checked 2026-10-27 support method choices, not experimental outcomes:
+
+- [EIA: About the EIA-930 data](https://www.eia.gov/electricity/930-content/about.html): source timing, modeled carbon methods and revision limitations. This design deliberately uses conservative availability envelopes rather than claiming archived receipt times.
+- [Sukprasert et al., On the Limitations of Carbon-Aware Temporal and Spatial Workload Shifting in the Cloud, EuroSys 2024](https://arxiv.org/abs/2306.06502): motivates testing strong simple policies and practical constraints.
+- [SciPy mixed-integer linear programming reference](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.milp.html): solver status, time limits and objective bounds must accompany certification claims.
+- [scikit-learn histogram gradient boosting reference](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.HistGradientBoostingRegressor.html): the proposed bounded forecast family; installed versions and runtime remain implementation checks.
+- [Open-Meteo Previous Runs reference](https://open-meteo.com/en/docs/previous-runs-api): lead-relative archives need explicit issue-time and publication checks.
