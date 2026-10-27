@@ -46,7 +46,7 @@ export function Story() {
     },
     {
       t: 'One job: stay, wait or move',
-      body: <>A {fmt(ij.gpus.value)}-GPU {ij.job_type} job of {ij.declared_duration_s.value < 3600 ? `${fmt(ij.declared_duration_s.value / 60, 1)} minutes` : `${fmt(ij.declared_duration_s.value / 3600, 1)} hours`} ({fmt(ij.declared_gpu_h.value, ij.declared_gpu_h.value < 1 ? 2 : 1)} GPU-h), arriving {fmtDate(ij.arrival, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}. It may start up to {fmt(ij.max_delay_s.value / 3600)} h late. Moving it adds a transfer delay but lands it on a cleaner grid.{ij.disclosure ? <> <span className="ink-3">{ij.disclosure}</span></> : null}</>,
+      body: <>A {fmt(ij.gpus.value)}-GPU {ij.job_type} job of {ij.declared_duration_s.value < 3600 ? `${fmt(ij.declared_duration_s.value / 60, 1)} minutes` : `${fmt(ij.declared_duration_s.value / 3600, 1)} hours`} ({fmt(ij.declared_gpu_h.value, ij.declared_gpu_h.value < 1 ? 2 : 1)} GPU-h), arriving {fmtDate(ij.arrival, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}. It may start up to {fmt(ij.max_delay_s.value / 3600)} h late. Moving it adds a transfer delay but lands it on a cleaner grid. It was picked by a rule registered in advance: the job at the GPU-hour-weighted median of the eligible flexible jobs.{ij.disclosure ? <details className="t-12 ink-3" style={{ marginTop: 8 }}><summary className="cursor-pointer fw-500">How this job was chosen (source text)</summary><span>{ij.disclosure}</span></details> : null}</>,
       ev: <><Ev e="measured">job size</Ev><Ev e="modeled">option CO₂</Ev><Ev e="simulated">placements</Ev></>,
     },
     {

@@ -86,7 +86,7 @@ export function MethodDrawer() {
                   <ul style={{ margin: '4px 0 0', paddingLeft: 16 }}>{man.limitations.map((l: string) => <li key={l} style={{ marginBottom: 4 }}>{l}</li>)}</ul>
                   {man.not_before_18?.length ? <><div className="fw-500" style={{ marginTop: 8 }}>Not yet run</div><ul style={{ margin: '4px 0 0', paddingLeft: 16 }}>{man.not_before_18.map((l: string) => <li key={l}>{l}</li>)}</ul></> : null}
                   <div className="fw-500" style={{ marginTop: 8 }}>Framing, as written in the metrics</div>
-                  <p style={{ margin: '4px 0 0' }}>{typeof m.framing?.placement_vs_timing === 'string' ? m.framing.placement_vs_timing : JSON.stringify(m.framing)}</p>
+                  {Object.values((m.framing ?? {}) as Record<string, string>).map((t) => <p key={t} style={{ margin: '4px 0 0' }}>{t}</p>)}
                   <div className="fw-500" style={{ marginTop: 8 }}>Forecast issue rule</div>
                   <p style={{ margin: '4px 0 0' }}>{fr.issue_rule}</p>
                 </div>

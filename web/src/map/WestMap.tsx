@@ -132,9 +132,19 @@ export function WestMap(p: MapProps) {
     const z = m.getZoom(), q = props.current;
     const W = m.getContainer().clientWidth, H = m.getContainer().clientHeight;
     const pad = q.padding ?? { top: 0, bottom: 0, left: 0, right: 0 };
-    const inside = (ll: [number, number]) => { const pt = m.project(ll); return pt.x > pad.left - 24 && pt.x < W - pad.right + 24 && pt.y > pad.top - 24 && pt.y < H - pad.bottom + 8; };
-    for (const l of labels.current) l.el.style.display = (z >= l.minZoom && (l.always || inside(l.ll))) ? '' : 'none';
-    for (const a of arcEls.current) a.mk.getElement().style.display = inside(a.ll) ? '' : 'none';
+    const box0 = m.getContainer().getBoundingClientRect();
+    // a label shows only if its whole box sits in the window the docks leave free
+    const fits = (node: HTMLElement) => {
+      const r = node.getBoundingClientRect();
+      return r.left >= box0.left + pad.left - 32 && r.right <= box0.right - pad.right + 64 && r.top >= box0.top + pad.top - 32 && r.bottom <= box0.top + H - pad.bottom + 16;
+    };
+    void W;
+    for (const l of labels.current) {
+      if (z < l.minZoom) { l.el.style.display = 'none'; continue; }
+      l.el.style.display = '';
+      if (!l.always && !fits(l.el)) l.el.style.display = 'none';
+    }
+    for (const a of arcEls.current) { const n = a.mk.getElement(); n.style.display = ''; if (!fits(n)) n.style.display = 'none'; }
   };
 
   useEffect(() => {
