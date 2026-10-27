@@ -5,6 +5,8 @@ description: Use when a spec, plan, risky branch, result set or dashboard screen
 
 # Codex gates
 
+**Ask the owner before every Codex run** (Sol or Astra, wrapper or `codex exec`). Codex usage spends the owner's limited credits (owner, 2026-10-27). If the owner can't be asked, use a fresh-context Claude reviewer instead and record that.
+
 ## Who
 
 - **Sol 6.1** (the `review` profile) is the default reviewer. Use it freely for:
