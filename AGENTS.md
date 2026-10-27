@@ -16,7 +16,7 @@ The owner approved emissions-first scheduling, with deadlines and identical comp
 
 Key documents:
 - the brief: `docs/brief.md`;
-- the approved plan: `docs/plan/2026-10-26-hackathon-plan.md`;
+- the approved plan: `docs/plan/2026-10-27-plan-v2.md` (v1 kept as history);
 - the independent design proposals: under `docs/superpowers/specs/`; only the owner-approved, reconciled spec authorizes implementation and test evaluation.
 
 ## Roles
@@ -27,7 +27,7 @@ Key documents:
 - **Codex reviews** run through `scripts/review.sh` in separate fresh sessions, and never edit.
 - **Between agents:** `docs/HANDOFF.md`. Each topic has one source of truth:
   - rules: here;
-  - decisions: `docs/brief.md`;
+  - decisions: `docs/decisions.md` is the log of every decision (D-xxx, with evidence); `docs/brief.md` keeps the bounty and the owner's product decisions table;
   - the plan: `docs/plan/`;
   - the design: the approved, reconciled spec. Independent proposal files are alternatives, not parallel sources of implementation requirements.
   - do not create separate `CONTEXT.md` or `PLAN.md` copies; conversation decisions belong in the brief, execution changes in the plan, and status in the handoff.
