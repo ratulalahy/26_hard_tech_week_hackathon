@@ -48,3 +48,18 @@ export const consumptionSpan = range(consumption);
 const mob = SWL.map((p) => Math.round(100 * sav(ext.sensitivities.mobility_le_8gpus.policies[p])));
 export const mobilityAbout = `about ${Math.min(...mob) === Math.max(...mob) ? mob[0] : `${Math.min(...mob)}–${Math.max(...mob)}`}%`;
 export const lCommonSupport = cell(ext.common_support.by_policy.L.vs_U['4']);
+
+/** T10b: results/storage.json. The story's storage headline and combined number, as printed. */
+export const storage = JSON.parse(readFileSync(join(results, 'storage.json'), 'utf8'));
+const sz: number[] = storage.assumptions.sizes_mwh.value;
+const E: number = storage.headline.e_mwh.value, iE = sz.indexOf(E);
+const cutA: number = storage.cases.U.strategies.A['0.85'].cut_frac.value[iE];
+/** e.g. "A 4 MWh, 1 MW battery cuts the Utah cluster's CO₂ by 3.5%" */
+export const storageHeadline = `${/^(8|11|18)/.test(String(E)) ? 'An' : 'A'} ${E} MWh, ${E * storage.assumptions.p_over_e.value} MW battery cuts the Utah cluster's CO₂ by ${pct(cutA)}%`;
+export const storageCombined = `cuts ${pct(storage.combined.move_and_store_cut_frac.A.value[iE])}%`;
+export const storageRushN = String(storage.rush.n_hours.value);
+export const storageRushDays = String(storage.rush.n_days.value);
+/** two significant figures, as the beat rounds "about X t" */
+const flat = -storage.cases.U.strategies.A['0.85'].flat_marginal_cut_t.value[iE];
+const p10 = Math.pow(10, Math.floor(Math.log10(Math.abs(flat))) - 1);
+export const storageFlatT = (Math.round(flat / p10) * p10).toLocaleString('en-US');

@@ -1,7 +1,7 @@
 // Offline acceptance (Task 8 Step 1): the built dist/, served on localhost, makes no request to any other
 // host, and every view renders a value that comes from results/metrics.json.
 import { expect, test, type Page } from '@playwright/test';
-import { consumptionSpan, lCommonSupport, mobilityAbout, placementRange, sProduction, sTonnes, timeOnlyRange, uTonnes } from './expected';
+import { consumptionSpan, lCommonSupport, mobilityAbout, placementRange, sProduction, sTonnes, storageCombined, storageFlatT, storageHeadline, storageRushDays, storageRushN, timeOnlyRange, uTonnes } from './expected';
 
 const LOCAL = new Set(['127.0.0.1', 'localhost', '[::1]']);
 
@@ -56,12 +56,14 @@ test('every view renders registered values with zero non-localhost requests', as
 
   await page.goto('./#story');
   await expect(page.getByTestId('story-result')).toContainText(placementRange);
-  // T10: story 6 shows the D-058 checks from results/extensions.json
+  // T10b (F18, fix r1): story 6 is the storage illustration, from results/storage.json
   await page.goto('./#story-6');
-  await expect(page.getByTestId('story-extensions')).toContainText(sProduction);
-  await expect(page.getByTestId('story-extensions')).toContainText(lCommonSupport);
-  await expect(page.getByTestId('story-checks')).toContainText(`still cut ${consumptionSpan}`);
-  await expect(page.getByTestId('story-checks')).toContainText('production basis flatters hydro-heavy destinations');
+  await expect(page.getByTestId('storage-headline')).toContainText(storageHeadline);
+  await expect(page.getByTestId('storage-combined')).toContainText(storageCombined);
+  await expect(page.getByTestId('storage-skeptic')).toContainText(`On a flat marginal basis it may add about ${storageFlatT} t: storage only helps if charging carbon ÷ η < displaced carbon.`);
+  await expect(page.getByTestId('storage-curve')).toBeVisible();
+  await expect(page.getByTestId('storage-import')).toBeVisible();
+  await expect(page.getByText('illustrative · not the registered result')).toBeVisible();
 
   await page.getByRole('banner').getByRole('button', { name: 'Method & evidence' }).click();
   const drawer = page.getByRole('dialog');
@@ -72,6 +74,15 @@ test('every view renders registered values with zero non-localhost requests', as
   await expect(drawer.getByTestId('policy-table')).toContainText(sTonnes);
   await expect(drawer.getByTestId('policy-table')).toContainText(uTonnes);
   await expect(drawer.getByTestId('method-extensions')).toContainText(sProduction);
+  // T10: the D-058 checks, moved from the story to the drawer (F18)
+  await expect(drawer.getByTestId('method-extensions')).toContainText(lCommonSupport);
+  await expect(drawer.getByTestId('method-checks')).toContainText(`still cut ${consumptionSpan}`);
+  await expect(drawer.getByTestId('method-checks')).toContainText('production basis flatters hydro-heavy destinations');
+  await expect(drawer.getByTestId('method-storage')).toContainText('not part of the registered experiment'.replace(/^./, (c) => c.toUpperCase()));
+  await expect(drawer.getByTestId('storage-relief')).toContainText('W weekly profile');
+  await expect(drawer.getByTestId('method-rush')).toContainText(`${storageRushN} hours on ${storageRushDays} days`);
+  await expect(drawer.getByTestId('method-breakeven')).toContainText('On our rough reference the charging hours are no cleaner on the margin');
+  await expect(drawer.getByTestId('storage-rush-sens')).toBeVisible();
 
   await page.waitForLoadState('networkidle');
   expect(errors, 'page errors').toEqual([]);

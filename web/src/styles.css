@@ -176,5 +176,8 @@ table.tbl-stacked tbody.em td { font-weight: 600; }
   *, *::before, *::after { transition-duration: 0ms !important; animation: none !important; scroll-behavior: auto !important; }
 }
 
+/* a neutral label chip (no evidence shape): "illustrative · not the registered result" (T10b) */
+.chip-neutral { display: inline-flex; align-items: center; font-size: 11px; line-height: 16px; font-weight: 500; color: var(--ink-2); padding: 2px 8px; border-radius: var(--r-8); box-shadow: inset 0 0 0 1px var(--hair-3); background: var(--surface-2); white-space: nowrap; }
+
 /* tight tables below 1000 px of height (story 5) */
 .tight table.tbl td { padding-top: 3px; padding-bottom: 3px; }

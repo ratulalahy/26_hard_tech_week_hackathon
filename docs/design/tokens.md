@@ -20,6 +20,7 @@ The owner's G2 feedback on round 3: "only more meaningful color would be helpful
 | Token | Hex | Meaning |
 |---|---|---|
 | route | `#1157a4` (soft `#dfedfe`) | the router's action: move arc, job hours, chosen option. It is the only blue, and arcs carry a white casing. |
+| stored | `#14706b` | energy held in the illustrative battery (T10b): a dashed outline only, never a fill. Charge and discharge are not the router's action, so they wear ink (outline = charge, solid = discharge), never the route blue. |
 | rush | `#4a3a30`, fill `#eadfd3` | rush hour or grid stress. It is a neutral caution hatch, never a hue. |
 | solar | `#f4d846`, mark `#ddbc1a` | solar generation: a fill only, always labelled. |
 | ink | `#2d1d14` / `#5b493f` / `#6c594f` | text and the net-load line |

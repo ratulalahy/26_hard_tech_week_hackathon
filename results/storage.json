@@ -1,0 +1,4418 @@
+{
+ "schema_version": "gridpilot.results.v1",
+ "kind": "illustrative",
+ "note": "not part of the registered experiment; validation-year profiles; storage not simulated in the scheduler",
+ "title": "Move what you can, store for what you can't",
+ "registered_run_id": "20261027T160656Z",
+ "mobility_run_id": "20261027T173750Z",
+ "site": "PACE",
+ "local_tz": "America/Denver",
+ "window": {
+  "start": "2024-11-01T00:00:00Z",
+  "end": "2025-10-17T18:00:00Z",
+  "n_hours": {
+   "value": 8418,
+   "unit": "hours",
+   "evidence": "measured",
+   "provenance_id": "storage:window:n_hours",
+   "status": "ok",
+   "reason": null
+  },
+  "arrivals_end": "2025-10-16T07:49:42Z",
+  "drain": "arrivals stop at A; the window runs on until the last cohort job ends, so the cluster's load falls over the final hours (the drain)",
+  "rule": "the registered cohort window: eval_start to the last hour a cohort job (U, or W under mobility ≤ 8 GPUs) still runs"
+ },
+ "assumptions": {
+  "sizes_mwh": {
+   "value": [
+    0,
+    1,
+    2,
+    4,
+    8,
+    12,
+    16,
+    24
+   ],
+   "unit": "MWh",
+   "evidence": "assumed",
+   "provenance_id": "storage:sizes",
+   "status": "ok",
+   "reason": null
+  },
+  "p_over_e": {
+   "value": 0.25,
+   "unit": "1/h",
+   "evidence": "assumed",
+   "provenance_id": "storage:p_over_e",
+   "status": "ok",
+   "reason": null
+  },
+  "etas": {
+   "value": [
+    0.75,
+    0.85,
+    0.9
+   ],
+   "unit": "fraction",
+   "evidence": "assumed",
+   "provenance_id": "storage:etas",
+   "status": "ok",
+   "reason": null
+  },
+  "eta_default": {
+   "value": 0.85,
+   "unit": "fraction",
+   "evidence": "assumed",
+   "provenance_id": "storage:eta_default",
+   "status": "ok",
+   "reason": null
+  },
+  "connection_mw": {
+   "value": 1.64736,
+   "unit": "MW",
+   "evidence": "assumed",
+   "provenance_id": "storage:connection",
+   "status": "ok",
+   "reason": null
+  },
+  "kw_per_gpu": {
+   "value": 0.6,
+   "unit": "kW",
+   "evidence": "assumed",
+   "provenance_id": "storage:kw_per_gpu",
+   "status": "ok",
+   "reason": null
+  },
+  "pue": {
+   "value": 1.2,
+   "unit": "ratio",
+   "evidence": "assumed",
+   "provenance_id": "storage:pue",
+   "status": "ok",
+   "reason": null
+  },
+  "losses": "round-trip losses charged on the charging side (stores η × grid draw)",
+  "power_limit": "charging ≤ min(P, connection − cluster load); discharge ≤ min(P, cluster load); connection = 2,288 GPUs × 0.60 kW × PUE 1.20",
+  "state_of_charge": "chronological over the whole window, starting empty; energy left at the end is valued at zero",
+  "ignored": "degradation, self-discharge, auxiliary loads, capital cost",
+  "load": "cohort jobs only (warm-up occupancy not included), exact hourly overlap"
+ },
+ "schedule": {
+  "rule": "charge in the 6 local hours with the lowest training-mean CI, discharge in the 6 highest of the rest, every day",
+  "train_window": [
+   "2022-01-01T00:00:00Z",
+   "2024-10-29T00:00:00Z"
+  ],
+  "train_profile_g_kwh": {
+   "value": [
+    649.1509208076301,
+    646.7527940703546,
+    644.696865878718,
+    642.705428316821,
+    643.6487464273355,
+    646.2683582869603,
+    648.7135492474409,
+    625.0493450418892,
+    566.9980566184729,
+    516.4176176259942,
+    494.73448443324634,
+    483.3811039762323,
+    478.8310090183359,
+    478.31188931595466,
+    479.8270610754797,
+    487.72009134568566,
+    508.87723615085343,
+    539.5594827648476,
+    578.0852597609388,
+    620.0952513785138,
+    646.7266579236177,
+    650.8297907092094,
+    650.060900609388,
+    651.9001466392725
+   ],
+   "unit": "g/kWh",
+   "evidence": "modeled",
+   "provenance_id": "storage:train_profile",
+   "status": "ok",
+   "reason": null
+  },
+  "train_n_hours": {
+   "value": [
+    1032,
+    1034,
+    1029,
+    1032,
+    1032,
+    1032,
+    1032,
+    1032,
+    1032,
+    1032,
+    1032,
+    1032,
+    1032,
+    1032,
+    1032,
+    1032,
+    1032,
+    1033,
+    1032,
+    1032,
+    1032,
+    1032,
+    1032,
+    1032
+   ],
+   "unit": "hours",
+   "evidence": "measured",
+   "provenance_id": "storage:train_n",
+   "status": "ok",
+   "reason": null
+  },
+  "charge_hours": {
+   "value": [
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
+   "unit": "local_hour",
+   "evidence": "assumed",
+   "provenance_id": "storage:charge",
+   "status": "ok",
+   "reason": null
+  },
+  "discharge_hours": {
+   "value": [
+    0,
+    1,
+    6,
+    21,
+    22,
+    23
+   ],
+   "unit": "local_hour",
+   "evidence": "assumed",
+   "provenance_id": "storage:discharge",
+   "status": "ok",
+   "reason": null
+  }
+ },
+ "validation_profile_g_kwh": {
+  "value": [
+   661.6078610761153,
+   662.0687459088153,
+   657.8421352314723,
+   651.449716977225,
+   650.5174544027972,
+   656.6256863712614,
+   664.601288802706,
+   633.109141494362,
+   540.0904805993757,
+   463.41840511709233,
+   431.46126663471864,
+   419.6261941472526,
+   418.29806702157225,
+   417.10222741855773,
+   419.10894583129044,
+   430.3496820629416,
+   467.02557101049035,
+   513.6275707794287,
+   561.8338429436719,
+   621.333889128218,
+   656.0964302645796,
+   658.5705643491498,
+   657.5202556960232,
+   660.9847670259915
+  ],
+  "unit": "g/kWh",
+  "evidence": "modeled",
+  "provenance_id": "storage:validation_profile",
+  "status": "ok",
+  "reason": null
+ },
+ "strategy_labels": {
+  "A": "fixed daily schedule (training-year hours, no forecasts)",
+  "B": "hindsight heuristic (sees each day's actual carbon in advance; one possible plan, not a limit)"
+ },
+ "break_even": {
+  "rule": "storage cuts CO₂ only if charging intensity / η < displaced intensity",
+  "train_charge_ci_g_kwh": {
+   "value": 483.80093986082244,
+   "unit": "g/kWh",
+   "evidence": "modeled",
+   "provenance_id": "storage:be:charge_ci",
+   "status": "ok",
+   "reason": null
+  },
+  "train_discharge_ci_g_kwh": {
+   "value": 649.5680170138826,
+   "unit": "g/kWh",
+   "evidence": "modeled",
+   "provenance_id": "storage:be:dis_ci",
+   "status": "ok",
+   "reason": null
+  },
+  "train_charge_ci_over_eta_g_kwh": {
+   "value": [
+    645.06791981443,
+    569.1775763068499,
+    537.5565998453583
+   ],
+   "unit": "g/kWh",
+   "evidence": "modeled",
+   "provenance_id": "storage:be:charge_over_eta",
+   "status": "ok",
+   "reason": null
+  },
+  "marginal_threshold": {
+   "kind": "threshold scenario (no defensible hourly marginal assignment)",
+   "source": "docs/data-profile/grid.md §8: PACE ΔCO₂/Δnet-load OLS slopes, all hours 618 g/kWh and by local 6-hour block (00–06, 06–12, 12–18, 18–24 h), validation year, R² 0.47. An associational reference, not a causal marginal factor, and not the spec §10 training-only proxy (not built), so it gives no defensible hourly assignment.",
+   "required_discharge_over_charge": {
+    "value": [
+     1.3333333333333333,
+     1.1764705882352942,
+     1.1111111111111112
+    ],
+    "unit": "ratio",
+    "evidence": "assumed",
+    "provenance_id": "storage:be:m_ratio",
+    "status": "ok",
+    "reason": null
+   },
+   "reference_blocks_g_kwh": {
+    "value": [
+     497.0,
+     658.0,
+     498.0,
+     550.0
+    ],
+    "unit": "g/kWh",
+    "evidence": "modeled",
+    "provenance_id": "storage:be:m_blocks",
+    "status": "ok",
+    "reason": null
+   },
+   "reference_charge_hours_g_kwh": {
+    "value": 551.3333333333334,
+    "unit": "g/kWh",
+    "evidence": "modeled",
+    "provenance_id": "storage:be:m_ch",
+    "status": "ok",
+    "reason": null
+   },
+   "reference_discharge_hours_g_kwh": {
+    "value": 550.3333333333334,
+    "unit": "g/kWh",
+    "evidence": "modeled",
+    "provenance_id": "storage:be:m_dis",
+    "status": "ok",
+    "reason": null
+   },
+   "flat_g_kwh": {
+    "value": 618.0,
+    "unit": "g/kWh",
+    "evidence": "modeled",
+    "provenance_id": "storage:be:m_flat",
+    "status": "ok",
+    "reason": null
+   },
+   "flat_rule": "−(charged − delivered) × 618 g/kWh: losses plus energy left stored at the end; per strategy and η in cases.*.strategies (flat_marginal_cut_t)"
+  }
+ },
+ "rush": {
+  "rule": "validation hours with PACE net load ≥ the training years' 99% quantile (training-derived threshold)",
+  "threshold_mw": {
+   "value": 7207.329999999998,
+   "unit": "MW",
+   "evidence": "observed",
+   "provenance_id": "storage:rush:threshold",
+   "status": "ok",
+   "reason": null
+  },
+  "n_hours": {
+   "value": 12,
+   "unit": "hours",
+   "evidence": "measured",
+   "provenance_id": "storage:rush:n",
+   "status": "ok",
+   "reason": null
+  },
+  "n_days": {
+   "value": 9,
+   "unit": "days",
+   "evidence": "measured",
+   "provenance_id": "storage:rush:n_days",
+   "status": "ok",
+   "reason": null
+  },
+  "n_train_hours": {
+   "value": 24768,
+   "unit": "hours",
+   "evidence": "measured",
+   "provenance_id": "storage:rush:n_train",
+   "status": "ok",
+   "reason": null
+  },
+  "by_local_hour": {
+   "value": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    3,
+    7,
+    1,
+    0,
+    0
+   ],
+   "unit": "hours",
+   "evidence": "measured",
+   "provenance_id": "storage:rush:by_hour",
+   "status": "ok",
+   "reason": null
+  },
+  "sensitivity": [
+   {
+    "quantile": {
+     "value": 0.95,
+     "unit": "fraction",
+     "evidence": "assumed",
+     "provenance_id": "storage:rush:q0.95",
+     "status": "ok",
+     "reason": null
+    },
+    "threshold_mw": {
+     "value": 6125.299999999996,
+     "unit": "MW",
+     "evidence": "observed",
+     "provenance_id": "storage:rush:q0.95:thr",
+     "status": "ok",
+     "reason": null
+    },
+    "n_hours": {
+     "value": 269,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "storage:rush:q0.95:n",
+     "status": "ok",
+     "reason": null
+    },
+    "n_days": {
+     "value": 83,
+     "unit": "days",
+     "evidence": "measured",
+     "provenance_id": "storage:rush:q0.95:days",
+     "status": "ok",
+     "reason": null
+    },
+    "relief": {
+     "S": {
+      "PACE": {
+       "value": -0.28452617620817866,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.95:S:PACE",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 0.04321612565055762,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.95:S:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "BPAT": {
+       "value": 0.23885524907063196,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.95:S:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 0.004619545724907062,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.95:S:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "W": {
+      "PACE": {
+       "value": -0.28670702973977713,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.95:W:PACE",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 0.05725934423791822,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.95:W:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "BPAT": {
+       "value": 0.23718011003717474,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.95:W:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 0.007222565799256505,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.95:W:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     }
+    }
+   },
+   {
+    "quantile": {
+     "value": 0.98,
+     "unit": "fraction",
+     "evidence": "assumed",
+     "provenance_id": "storage:rush:q0.98",
+     "status": "ok",
+     "reason": null
+    },
+    "threshold_mw": {
+     "value": 6786.66,
+     "unit": "MW",
+     "evidence": "observed",
+     "provenance_id": "storage:rush:q0.98:thr",
+     "status": "ok",
+     "reason": null
+    },
+    "n_hours": {
+     "value": 67,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "storage:rush:q0.98:n",
+     "status": "ok",
+     "reason": null
+    },
+    "n_days": {
+     "value": 32,
+     "unit": "days",
+     "evidence": "measured",
+     "provenance_id": "storage:rush:q0.98:days",
+     "status": "ok",
+     "reason": null
+    },
+    "relief": {
+     "S": {
+      "PACE": {
+       "value": -0.2928068746268655,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.98:S:PACE",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 0.03470937014925373,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.98:S:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "BPAT": {
+       "value": 0.2465239582089552,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.98:S:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 0.0003832358208955224,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.98:S:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "W": {
+      "PACE": {
+       "value": -0.28978913134328343,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.98:W:PACE",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 0.06055971641791044,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.98:W:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "BPAT": {
+       "value": 0.241697647761194,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.98:W:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 0.001529644776119403,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.98:W:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     }
+    }
+   },
+   {
+    "quantile": {
+     "value": 0.99,
+     "unit": "fraction",
+     "evidence": "assumed",
+     "provenance_id": "storage:rush:q0.99",
+     "status": "ok",
+     "reason": null
+    },
+    "threshold_mw": {
+     "value": 7207.329999999998,
+     "unit": "MW",
+     "evidence": "observed",
+     "provenance_id": "storage:rush:q0.99:thr",
+     "status": "ok",
+     "reason": null
+    },
+    "n_hours": {
+     "value": 12,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "storage:rush:q0.99:n",
+     "status": "ok",
+     "reason": null
+    },
+    "n_days": {
+     "value": 9,
+     "unit": "days",
+     "evidence": "measured",
+     "provenance_id": "storage:rush:q0.99:days",
+     "status": "ok",
+     "reason": null
+    },
+    "relief": {
+     "S": {
+      "PACE": {
+       "value": -0.2631490333333335,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.99:S:PACE",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 0.03267003333333333,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.99:S:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "BPAT": {
+       "value": 0.22446755,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.99:S:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 0.0,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.99:S:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "W": {
+      "PACE": {
+       "value": -0.25478636666666665,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.99:W:PACE",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 0.03636718333333334,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.99:W:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "BPAT": {
+       "value": 0.23725681666666665,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.99:W:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 0.0,
+       "unit": "MW",
+       "evidence": "simulated",
+       "provenance_id": "storage:rush:q0.99:W:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     }
+    }
+   }
+  ],
+  "peak_hour_utc": "2025-07-09T02:00:00Z",
+  "peak_net_load_mw": {
+   "value": 8173.0,
+   "unit": "MW",
+   "evidence": "observed",
+   "provenance_id": "storage:rush:peak",
+   "status": "ok",
+   "reason": null
+  }
+ },
+ "peak_relief": {
+  "rule": "each site's cluster load (cohort, registered ledgers) during the rush hours and at PACE's net-load peak hour; change vs U; MW = MWh per hour",
+  "run_id": "20261027T160656Z",
+  "policies": {
+   "U": {
+    "PACE": {
+     "rush_mean_mw": {
+      "value": 1.11610285,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:PACE:rush_mean_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_mw": {
+      "value": 1.1595378,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:PACE:at_peak_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_change_vs_U_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:PACE:rush_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_change_vs_U_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:PACE:at_peak_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "CISO": {
+     "rush_mean_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:CISO:rush_mean_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:CISO:at_peak_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_change_vs_U_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:CISO:rush_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_change_vs_U_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:CISO:at_peak_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "BPAT": {
+     "rush_mean_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:BPAT:rush_mean_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:BPAT:at_peak_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_change_vs_U_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:BPAT:rush_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_change_vs_U_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:BPAT:at_peak_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "NEVP": {
+     "rush_mean_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:NEVP:rush_mean_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:NEVP:at_peak_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_change_vs_U_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:NEVP:rush_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_change_vs_U_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:U:NEVP:at_peak_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "S": {
+    "PACE": {
+     "rush_mean_mw": {
+      "value": 0.8529538166666666,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:PACE:rush_mean_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_mw": {
+      "value": 1.0247056,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:PACE:at_peak_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_change_vs_U_mw": {
+      "value": -0.2631490333333335,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:PACE:rush_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_change_vs_U_mw": {
+      "value": -0.13483220000000007,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:PACE:at_peak_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "CISO": {
+     "rush_mean_mw": {
+      "value": 0.03267003333333333,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:CISO:rush_mean_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:CISO:at_peak_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_change_vs_U_mw": {
+      "value": 0.03267003333333333,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:CISO:rush_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_change_vs_U_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:CISO:at_peak_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "BPAT": {
+     "rush_mean_mw": {
+      "value": 0.22446755,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:BPAT:rush_mean_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_mw": {
+      "value": 0.1361602,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:BPAT:at_peak_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_change_vs_U_mw": {
+      "value": 0.22446755,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:BPAT:rush_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_change_vs_U_mw": {
+      "value": 0.1361602,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:BPAT:at_peak_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "NEVP": {
+     "rush_mean_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:NEVP:rush_mean_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:NEVP:at_peak_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_change_vs_U_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:NEVP:rush_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_change_vs_U_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:S:NEVP:at_peak_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "W": {
+    "PACE": {
+     "rush_mean_mw": {
+      "value": 0.8613164833333334,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:PACE:rush_mean_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_mw": {
+      "value": 1.0247056,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:PACE:at_peak_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_change_vs_U_mw": {
+      "value": -0.25478636666666665,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:PACE:rush_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_change_vs_U_mw": {
+      "value": -0.13483220000000007,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:PACE:at_peak_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "CISO": {
+     "rush_mean_mw": {
+      "value": 0.03636718333333334,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:CISO:rush_mean_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:CISO:at_peak_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_change_vs_U_mw": {
+      "value": 0.03636718333333334,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:CISO:rush_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_change_vs_U_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:CISO:at_peak_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "BPAT": {
+     "rush_mean_mw": {
+      "value": 0.23725681666666665,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:BPAT:rush_mean_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_mw": {
+      "value": 0.18027680000000001,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:BPAT:at_peak_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_change_vs_U_mw": {
+      "value": 0.23725681666666665,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:BPAT:rush_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_change_vs_U_mw": {
+      "value": 0.18027680000000001,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:BPAT:at_peak_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "NEVP": {
+     "rush_mean_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:NEVP:rush_mean_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:NEVP:at_peak_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_change_vs_U_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:NEVP:rush_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "at_peak_change_vs_U_mw": {
+      "value": 0.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:relief:W:NEVP:at_peak_change_vs_U_mw",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   }
+  }
+ },
+ "cases": {
+  "U": {
+   "label": "Every job in Utah (U local)",
+   "source": "20261027T160656Z/ledger_U",
+   "energy_mwh": {
+    "value": 8233.6421426,
+    "unit": "MWh",
+    "evidence": "simulated",
+    "provenance_id": "storage:U:energy",
+    "status": "ok",
+    "reason": null
+   },
+   "mean_load_mw": {
+    "value": 0.9780995655262533,
+    "unit": "MW",
+    "evidence": "simulated",
+    "provenance_id": "storage:U:mean_load",
+    "status": "ok",
+    "reason": null
+   },
+   "load_hours": {
+    "value": [
+     0.0,
+     1.0223908027829083,
+     2.0447816055658166,
+     4.089563211131633,
+     8.179126422263266,
+     12.268689633394901,
+     16.358252844526532,
+     24.537379266789802
+    ],
+    "unit": "h",
+    "evidence": "simulated",
+    "provenance_id": "storage:U:load_hours",
+    "status": "ok",
+    "reason": null
+   },
+   "base_co2_t": {
+    "value": 4669.68612331725,
+    "unit": "t_CO2",
+    "evidence": "simulated",
+    "provenance_id": "storage:U:base_co2",
+    "status": "ok",
+    "reason": null
+   },
+   "strategies": {
+    "A": {
+     "0.75": {
+      "co2_t": {
+       "value": [
+        4669.68612331725,
+        4637.1906429707415,
+        4609.088780451458,
+        4576.944667407393,
+        4571.652667213275,
+        4567.634493328655,
+        4564.682134570995,
+        4568.053703690483
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.75:co2_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_t": {
+       "value": [
+        0.0,
+        32.49548034650832,
+        60.59734286579211,
+        92.7414559098566,
+        98.03345610397496,
+        102.05162998859585,
+        105.0039887462547,
+        101.63241962676682
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.75:cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_frac": {
+       "value": [
+        0.0,
+        0.0069588146801233385,
+        0.01297674860055583,
+        0.019860318972354175,
+        0.020993585760392387,
+        0.02185406626775601,
+        0.02248630549747999,
+        0.021764293561248867
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.75:cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "shifted_mwh": {
+       "value": [
+        0.0,
+        339.40132655,
+        620.3178117,
+        893.0462834,
+        945.6067960499998,
+        968.5075290499999,
+        982.2585732499999,
+        998.2585732499999
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.75:shifted_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "losses_mwh": {
+       "value": [
+        0.0,
+        113.25877551666665,
+        207.3145313666667,
+        299.01542780000005,
+        317.66482214999996,
+        325.2983998166668,
+        330.03091575,
+        338.03091575
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.75:losses_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "terminal_soc_mwh": {
+       "value": [
+        0.0,
+        0.375,
+        1.6257824000000003,
+        4.0,
+        7.3876704,
+        7.3876704,
+        7.834174000000003,
+        15.834174000000003
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.75:terminal_soc_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "charge_ci_g_kwh": {
+       "value": [
+        null,
+        422.03002764593714,
+        420.7843676953201,
+        416.47671000003663,
+        415.9269639230872,
+        415.0951129744758,
+        414.4878132479545,
+        415.3040188071413
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.75:charge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "discharge_ci_g_kwh": {
+       "value": [
+        null,
+        659.0719584689971,
+        660.2038360371164,
+        661.6379389631157,
+        662.5744641527664,
+        663.0518760218184,
+        663.9587342894231,
+        664.3316957808055
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.75:discharge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "flat_marginal_cut_t": {
+       "value": [
+        -0.0,
+        -70.22567326929997,
+        -129.12511390780003,
+        -187.26353438040005,
+        -200.8824403959,
+        -205.59999139390007,
+        -208.80062546550002,
+        -218.68862546550002
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.75:flat_marginal_cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "flat_marginal_cut_frac": {
+       "value": [
+        -0.0,
+        -0.013801155496999003,
+        -0.02537641424633109,
+        -0.03680211291091096,
+        -0.03947857909298881,
+        -0.04040569950148598,
+        -0.04103470662174174,
+        -0.042977953574049474
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.75:flat_marginal_cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "throughput_mwh_per_day": {
+       "value": [
+        0.0,
+        0.967644551817534,
+        1.7685468615823237,
+        2.546104870705631,
+        2.6959566530292225,
+        2.761247409978617,
+        2.8004520976478973,
+        2.846068633642195
+       ],
+       "unit": "MWh/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.75:throughput_mwh_per_day",
+       "status": "ok",
+       "reason": null
+      },
+      "cycles_per_day": {
+       "value": [
+        null,
+        0.967644551817534,
+        0.8842734307911618,
+        0.6365262176764077,
+        0.3369945816286528,
+        0.2301039508315514,
+        0.17502825610299358,
+        0.11858619306842479
+       ],
+       "unit": "full_cycles/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.75:cycles_per_day",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      }
+     },
+     "0.85": {
+      "co2_t": {
+       "value": [
+        4669.68612331725,
+        4614.518066938625,
+        4565.45057776711,
+        4505.687942457083,
+        4491.663602097346,
+        4484.976920141813,
+        4479.513192214996,
+        4479.099965980342
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.85:co2_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_t": {
+       "value": [
+        0.0,
+        55.16805637862441,
+        104.23554555013962,
+        163.99818086016643,
+        178.02252121990455,
+        184.7092031754367,
+        190.17293110225444,
+        190.5861573369084
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.85:cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_frac": {
+       "value": [
+        0.0,
+        0.011814082343383315,
+        0.02232174557293217,
+        0.035119743924815545,
+        0.0381230165194574,
+        0.03955495043941477,
+        0.04072499223291681,
+        0.04081348345561176
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.85:cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "shifted_mwh": {
+       "value": [
+        0.0,
+        339.69696646,
+        638.9649282700001,
+        968.5814221899999,
+        1047.9265368299998,
+        1076.9198727799999,
+        1096.79408597,
+        1117.87293721
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.85:shifted_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "losses_mwh": {
+       "value": [
+        0.0,
+        60.02152349294117,
+        113.06306658882347,
+        171.6320156805882,
+        186.33997708764718,
+        191.5486696905883,
+        195.27872393823532,
+        200.41028592176474
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.85:losses_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "terminal_soc_mwh": {
+       "value": [
+        0.0,
+        0.425,
+        1.7257824000000004,
+        4.0,
+        8.0,
+        8.522588800000001,
+        9.785349680000003,
+        17.785349680000014
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.85:terminal_soc_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "charge_ci_g_kwh": {
+       "value": [
+        null,
+        421.6745191853287,
+        421.19806740971677,
+        416.73089615709927,
+        416.15195343825735,
+        415.65369368982294,
+        414.6865028586081,
+        414.8969252110875
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.85:charge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "discharge_ci_g_kwh": {
+       "value": [
+        null,
+        659.1120681557073,
+        659.997381978578,
+        661.6142510456548,
+        663.2088541054035,
+        664.3904544636154,
+        665.6089304805134,
+        666.369920294204
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.85:discharge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "flat_marginal_cut_t": {
+       "value": [
+        -0.0,
+        -37.355951518637646,
+        -70.93950867509291,
+        -108.5405856906035,
+        -120.10210584016596,
+        -123.64403774718357,
+        -126.72959749606942,
+        -134.84490280189067
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.85:flat_marginal_cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "flat_marginal_cut_frac": {
+       "value": [
+        -0.0,
+        -0.007341407659703499,
+        -0.013941442559777771,
+        -0.021331023699935486,
+        -0.02360316051169537,
+        -0.024299241456638077,
+        -0.02490563350540283,
+        -0.02650050024312369
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.85:flat_marginal_cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "throughput_mwh_per_day": {
+       "value": [
+        0.0,
+        0.9684874311047755,
+        1.8217104155951536,
+        2.761458081796151,
+        2.987673661667854,
+        3.0703346337277257,
+        3.1269966813114753,
+        3.1870931923307197
+       ],
+       "unit": "MWh/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.85:throughput_mwh_per_day",
+       "status": "ok",
+       "reason": null
+      },
+      "cycles_per_day": {
+       "value": [
+        null,
+        0.9684874311047755,
+        0.9108552077975768,
+        0.6903645204490377,
+        0.37345920770848173,
+        0.2558612194773105,
+        0.1954372925819672,
+        0.13279554968044666
+       ],
+       "unit": "full_cycles/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.85:cycles_per_day",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      }
+     },
+     "0.90": {
+      "co2_t": {
+       "value": [
+        4669.68612331725,
+        4605.188714242852,
+        4546.8072521043605,
+        4473.454268995096,
+        4453.893133475226,
+        4445.621582510528,
+        4439.559437379043,
+        4436.911118480343
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.90:co2_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_t": {
+       "value": [
+        0.0,
+        64.49740907439777,
+        122.87887121288944,
+        196.23185432215408,
+        215.7929898420237,
+        224.0645408067219,
+        230.12668593820743,
+        232.77500483690667
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.90:cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_frac": {
+       "value": [
+        0.0,
+        0.013811936685067841,
+        0.026314160731128283,
+        0.042022493405350116,
+        0.04621145493366238,
+        0.047982784043641674,
+        0.0492809751792761,
+        0.049848105138070406
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.90:cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "shifted_mwh": {
+       "value": [
+        0.0,
+        339.80435204,
+        645.7213058,
+        1000.25390662,
+        1094.27088432,
+        1126.15515074,
+        1149.06336302,
+        1176.48797474
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.90:shifted_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "losses_mwh": {
+       "value": [
+        0.0,
+        37.80603911555552,
+        71.94412091111116,
+        111.58376740222226,
+        122.47454270222224,
+        126.1383554155556,
+        128.8693667266666,
+        132.8054346955555
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.90:losses_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "terminal_soc_mwh": {
+       "value": [
+        0.0,
+        0.45,
+        1.7757824000000002,
+        4.0,
+        8.0,
+        9.090048000000001,
+        10.76093752000001,
+        18.760937520000002
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.90:terminal_soc_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "charge_ci_g_kwh": {
+       "value": [
+        null,
+        421.83064198319664,
+        421.5135534869806,
+        417.1329635082248,
+        416.40559110186706,
+        415.67785178936225,
+        414.98680511490454,
+        414.70340357074747
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.90:charge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "discharge_ci_g_kwh": {
+       "value": [
+        null,
+        659.1288935510725,
+        659.9334542048867,
+        661.5165666456571,
+        663.2579224490073,
+        664.5565190451438,
+        665.6878796297483,
+        665.9852709667161
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.90:discharge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "flat_marginal_cut_t": {
+       "value": [
+        -0.0,
+        -23.642232173413316,
+        -45.55890024626669,
+        -71.43076825457335,
+        -80.63326738997335,
+        -83.57115331081337,
+        -86.29152802443997,
+        -93.66801802921331
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.90:flat_marginal_cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "flat_marginal_cut_frac": {
+       "value": [
+        -0.0,
+        -0.004646308213666805,
+        -0.008953498589608614,
+        -0.014037987733788428,
+        -0.015846516091239944,
+        -0.016423886425169978,
+        -0.016958510198571065,
+        -0.01840818068001365
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.90:flat_marginal_cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "throughput_mwh_per_day": {
+       "value": [
+        0.0,
+        0.9687935909907343,
+        1.8409730742694226,
+        2.851757395923022,
+        3.1198029488809693,
+        3.2107060605559514,
+        3.276018141183179,
+        3.354206627911618
+       ],
+       "unit": "MWh/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.90:throughput_mwh_per_day",
+       "status": "ok",
+       "reason": null
+      },
+      "cycles_per_day": {
+       "value": [
+        null,
+        0.9687935909907343,
+        0.9204865371347113,
+        0.7129393489807555,
+        0.38997536861012116,
+        0.2675588383796626,
+        0.2047511338239487,
+        0.1397586094963174
+       ],
+       "unit": "full_cycles/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:A:0.90:cycles_per_day",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      }
+     }
+    },
+    "B": {
+     "0.75": {
+      "co2_t": {
+       "value": [
+        4669.68612331725,
+        4626.25338179209,
+        4586.510181009006,
+        4537.354393290306,
+        4531.340588279133,
+        4531.340588279133,
+        4531.340588279133,
+        4531.340588279133
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.75:co2_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_t": {
+       "value": [
+        0.0,
+        43.43274152516015,
+        83.17594230824336,
+        132.33173002694454,
+        138.34553503811733,
+        138.34553503811733,
+        138.34553503811733,
+        138.34553503811733
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.75:cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_frac": {
+       "value": [
+        0.0,
+        0.009300998049587627,
+        0.017811891444463268,
+        0.028338463556719477,
+        0.029626302793096394,
+        0.029626302793096394,
+        0.029626302793096394,
+        0.029626302793096394
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.75:cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "shifted_mwh": {
+       "value": [
+        0.0,
+        282.4120647,
+        542.4881689,
+        886.4321582,
+        951.7342287,
+        951.7342287,
+        951.7342287,
+        951.7342287
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.75:shifted_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "losses_mwh": {
+       "value": [
+        0.0,
+        94.13735490000003,
+        180.8293896333333,
+        295.47738606666655,
+        317.24474289999984,
+        317.24474289999984,
+        317.24474289999984,
+        317.24474289999984
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.75:losses_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "terminal_soc_mwh": {
+       "value": [
+        0.0,
+        0.0,
+        4.831690603168682e-16,
+        4.575895218295045e-15,
+        6.394884621840902e-15,
+        6.394884621840902e-15,
+        6.394884621840902e-15,
+        6.394884621840902e-15
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.75:terminal_soc_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "charge_ci_g_kwh": {
+       "value": [
+        null,
+        386.85072725314217,
+        388.03930694032266,
+        392.12940265155197,
+        395.33573553557744,
+        395.33573553557744,
+        395.33573553557744,
+        395.33573553557744
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.75:charge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "discharge_ci_g_kwh": {
+       "value": [
+        null,
+        669.5930591529334,
+        670.7087956536723,
+        672.1249991857545,
+        672.4758350122626,
+        672.4758350122626,
+        672.4758350122626,
+        672.4758350122626
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.75:discharge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "flat_marginal_cut_t": {
+       "value": [
+        -0.0,
+        -58.17688532820002,
+        -111.75256279339999,
+        -182.60502458919993,
+        -196.0572511121999,
+        -196.0572511121999,
+        -196.0572511121999,
+        -196.0572511121999
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.75:flat_marginal_cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "flat_marginal_cut_frac": {
+       "value": [
+        -0.0,
+        -0.011433258000483558,
+        -0.02196226001829021,
+        -0.03588659562186916,
+        -0.03853030498600478,
+        -0.03853030498600478,
+        -0.03853030498600478,
+        -0.03853030498600478
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.75:flat_marginal_cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "throughput_mwh_per_day": {
+       "value": [
+        0.0,
+        0.8051662571632215,
+        1.5466519426942267,
+        2.5272477781895937,
+        2.7134261687811834,
+        2.7134261687811834,
+        2.7134261687811834,
+        2.7134261687811834
+       ],
+       "unit": "MWh/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.75:throughput_mwh_per_day",
+       "status": "ok",
+       "reason": null
+      },
+      "cycles_per_day": {
+       "value": [
+        null,
+        0.8051662571632215,
+        0.7733259713471133,
+        0.6318119445473984,
+        0.3391782710976479,
+        0.22611884739843194,
+        0.16958913554882396,
+        0.11305942369921597
+       ],
+       "unit": "full_cycles/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.75:cycles_per_day",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      }
+     },
+     "0.85": {
+      "co2_t": {
+       "value": [
+        4669.68612331725,
+        4605.480879414912,
+        4545.629680344319,
+        4463.884487486461,
+        4446.936303581707,
+        4446.936303581707,
+        4446.936303581707,
+        4446.936303581707
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.85:co2_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_t": {
+       "value": [
+        0.0,
+        64.20524390233774,
+        124.05644297293108,
+        205.80163583078982,
+        222.74981973554287,
+        222.74981973554287,
+        222.74981973554287,
+        222.74981973554287
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.85:cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_frac": {
+       "value": [
+        0.0,
+        0.013749370344559184,
+        0.026566334373840934,
+        0.04407183489338948,
+        0.04770124026608151,
+        0.04770124026608151,
+        0.04770124026608151,
+        0.04770124026608151
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.85:cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "shifted_mwh": {
+       "value": [
+        0.0,
+        347.33643718,
+        675.55558272,
+        1181.97976821,
+        1357.78155262,
+        1357.78155262,
+        1357.78155262,
+        1357.78155262
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.85:shifted_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "losses_mwh": {
+       "value": [
+        0.0,
+        61.29466538470588,
+        119.21569106823532,
+        208.58466497823525,
+        239.60850928588235,
+        239.60850928588235,
+        239.60850928588235,
+        239.60850928588235
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.85:losses_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "terminal_soc_mwh": {
+       "value": [
+        0.0,
+        0.0,
+        9.379164112033323e-16,
+        1.8474111129762605e-15,
+        9.379164112033323e-16,
+        9.379164112033323e-16,
+        9.379164112033323e-16,
+        9.379164112033323e-16
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.85:terminal_soc_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "charge_ci_g_kwh": {
+       "value": [
+        null,
+        408.0541175050261,
+        410.1060190314506,
+        416.6821742273901,
+        422.3561932982178,
+        422.3561932982178,
+        422.3561932982178,
+        422.3561932982178
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.85:charge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "discharge_ci_g_kwh": {
+       "value": [
+        null,
+        664.9139656050538,
+        666.1138440969575,
+        664.330361968964,
+        660.9438784632503,
+        660.9438784632503,
+        660.9438784632503,
+        660.9438784632503
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.85:discharge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "flat_marginal_cut_t": {
+       "value": [
+        -0.0,
+        -37.88010320774824,
+        -73.67529708016941,
+        -128.9053229565494,
+        -148.07805873867528,
+        -148.07805873867528,
+        -148.07805873867528,
+        -148.07805873867528
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.85:flat_marginal_cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "flat_marginal_cut_frac": {
+       "value": [
+        -0.0,
+        -0.007444416981347017,
+        -0.014479095520975566,
+        -0.025333219657317885,
+        -0.029101156588549445,
+        -0.029101156588549445,
+        -0.029101156588549445,
+        -0.029101156588549445
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.85:flat_marginal_cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "throughput_mwh_per_day": {
+       "value": [
+        0.0,
+        0.9902678180470421,
+        1.9260315972059872,
+        3.369863915067712,
+        3.8710806917177476,
+        3.8710806917177476,
+        3.8710806917177476,
+        3.8710806917177476
+       ],
+       "unit": "MWh/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.85:throughput_mwh_per_day",
+       "status": "ok",
+       "reason": null
+      },
+      "cycles_per_day": {
+       "value": [
+        null,
+        0.9902678180470421,
+        0.9630157986029936,
+        0.842465978766928,
+        0.48388508646471845,
+        0.32259005764314563,
+        0.24194254323235923,
+        0.16129502882157282
+       ],
+       "unit": "full_cycles/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.85:cycles_per_day",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      }
+     },
+     "0.90": {
+      "co2_t": {
+       "value": [
+        4669.68612331725,
+        4595.076766585149,
+        4525.042121297925,
+        4424.934863084622,
+        4399.198020821098,
+        4399.174606750922,
+        4399.174606750922,
+        4399.174606750922
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.90:co2_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_t": {
+       "value": [
+        0.0,
+        74.60935673210118,
+        144.64400201932435,
+        244.75126023262834,
+        270.48810249615184,
+        270.51151656632777,
+        270.51151656632777,
+        270.51151656632777
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.90:cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_frac": {
+       "value": [
+        0.0,
+        0.015977381511693596,
+        0.03097510158061163,
+        0.052412786163615215,
+        0.057924257723772354,
+        0.057929271780297276,
+        0.057929271780297276,
+        0.057929271780297276
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.90:cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "shifted_mwh": {
+       "value": [
+        0.0,
+        385.23179636,
+        751.08464382,
+        1326.95510982,
+        1578.44010098,
+        1579.6778302199998,
+        1579.6778302199998,
+        1579.6778302199998
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.90:shifted_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "losses_mwh": {
+       "value": [
+        0.0,
+        42.80353292888892,
+        83.45384931333328,
+        147.43945664666663,
+        175.38223344222223,
+        175.5197589133333,
+        175.5197589133333,
+        175.5197589133333
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.90:losses_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "terminal_soc_mwh": {
+       "value": [
+        0.0,
+        0.0,
+        2.842170943040401e-17,
+        3.666400516522117e-15,
+        9.379164112033323e-16,
+        9.379164112033323e-16,
+        9.379164112033323e-16,
+        9.379164112033323e-16
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.90:terminal_soc_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "charge_ci_g_kwh": {
+       "value": [
+        null,
+        423.79976389297684,
+        425.59284399392874,
+        430.68188452474413,
+        437.5697876255909,
+        437.6848140971227,
+        437.6848140971227,
+        437.6848140971227
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.90:charge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "discharge_ci_g_kwh": {
+       "value": [
+        null,
+        664.5625585468106,
+        665.4610992874069,
+        662.9811996962522,
+        657.5528385637817,
+        657.5611983648623,
+        657.5611983648623,
+        657.5611983648623
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.90:discharge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "flat_marginal_cut_t": {
+       "value": [
+        -0.0,
+        -26.452583350053352,
+        -51.57447887563997,
+        -91.11758420763998,
+        -108.38622026729334,
+        -108.47121100843998,
+        -108.47121100843998,
+        -108.47121100843998
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.90:flat_marginal_cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "flat_marginal_cut_frac": {
+       "value": [
+        -0.0,
+        -0.005198614682004205,
+        -0.010135714896030254,
+        -0.017906954673658982,
+        -0.021300686914095156,
+        -0.021317389786132734,
+        -0.021317389786132734,
+        -0.021317389786132734
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.90:flat_marginal_cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "throughput_mwh_per_day": {
+       "value": [
+        0.0,
+        1.0983087565502494,
+        2.141367480598717,
+        3.7831934706200996,
+        4.500185605074839,
+        4.503714412601568,
+        4.503714412601568,
+        4.503714412601568
+       ],
+       "unit": "MWh/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.90:throughput_mwh_per_day",
+       "status": "ok",
+       "reason": null
+      },
+      "cycles_per_day": {
+       "value": [
+        null,
+        1.0983087565502494,
+        1.0706837402993585,
+        0.9457983676550249,
+        0.5625232006343549,
+        0.375309534383464,
+        0.281482150787598,
+        0.187654767191732
+       ],
+       "unit": "full_cycles/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:U:B:0.90:cycles_per_day",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      }
+     }
+    }
+   },
+   "charge_headroom_mw": {
+    "value": [
+     0.2842345999999998,
+     0.6158109999999999,
+     1.1293734
+    ],
+    "unit": "MW",
+    "evidence": "simulated",
+    "provenance_id": "storage:U:headroom",
+    "status": "ok",
+    "reason": null
+   },
+   "import_at_headline": {
+    "A": {
+     "before_by_hour_mw": {
+      "value": [
+       0.9801857811965812,
+       0.9866559318181818,
+       0.9945442142857143,
+       1.000358026210826,
+       0.9958224757834758,
+       0.9862821498575499,
+       0.972082625071225,
+       0.9610395082621083,
+       0.9553072313390313,
+       0.9562756900284901,
+       0.9645334723646724,
+       0.9748712603988604,
+       0.9822196988571428,
+       0.9824760794285713,
+       0.9744078565714285,
+       0.9783768068571428,
+       0.9894579291428571,
+       0.9874441062857142,
+       0.9811462774928775,
+       0.9842226706552706,
+       0.9823009373219374,
+       0.9705820262108261,
+       0.964388413105413,
+       0.9695043396011396
+      ],
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:A:before_by_hour_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "after_by_hour_mw": {
+      "value": [
+       0.6265936007692309,
+       0.8164450801136363,
+       0.9945442142857143,
+       1.000358026210826,
+       0.9958224757834758,
+       0.9862821498575499,
+       0.8996025557549857,
+       0.9610395082621083,
+       0.9553072313390313,
+       0.9562756900284901,
+       1.5805431929277696,
+       1.5605765404390814,
+       1.5620909180504199,
+       1.5578559322352938,
+       1.496891210420168,
+       1.3646751600336133,
+       0.9894579291428571,
+       0.9874441062857142,
+       0.9811462774928775,
+       0.9842226706552706,
+       0.9823009373219374,
+       0.11758123059829058,
+       0.2043624355840456,
+       0.41980791407407414
+      ],
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:A:after_by_hour_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_before_mw": {
+      "value": 1.11610285,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:A:rush_before_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_after_mw": {
+      "value": 1.0363707,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:A:rush_after_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "peak_before_mw": {
+      "value": 1.6391664,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:A:peak_before_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "peak_after_mw": {
+      "value": 1.64736,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:A:peak_after_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rebound_mw": {
+      "value": 0.5443451179213074,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:A:rebound_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rebound_max_mw": {
+      "value": 1.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:A:rebound_max_mw",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "B": {
+     "before_by_hour_mw": {
+      "value": [
+       0.9801857811965812,
+       0.9866559318181818,
+       0.9945442142857143,
+       1.000358026210826,
+       0.9958224757834758,
+       0.9862821498575499,
+       0.972082625071225,
+       0.9610395082621083,
+       0.9553072313390313,
+       0.9562756900284901,
+       0.9645334723646724,
+       0.9748712603988604,
+       0.9822196988571428,
+       0.9824760794285713,
+       0.9744078565714285,
+       0.9783768068571428,
+       0.9894579291428571,
+       0.9874441062857142,
+       0.9811462774928775,
+       0.9842226706552706,
+       0.9823009373219374,
+       0.9705820262108261,
+       0.964388413105413,
+       0.9695043396011396
+      ],
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:B:before_by_hour_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "after_by_hour_mw": {
+      "value": [
+       1.02128623294788,
+       1.0325549962901068,
+       1.0472430027899158,
+       1.0481866182319421,
+       1.0263571713557902,
+       0.987721371069214,
+       0.9377162224920395,
+       0.9361049039902798,
+       1.0429726542718283,
+       1.2408340324786322,
+       1.3749253947712416,
+       1.4642734727668845,
+       1.5053736046722688,
+       1.49765461697479,
+       1.4596751826554621,
+       1.4002696218487394,
+       1.2353644271596638,
+       1.0086168449159663,
+       0.8188545667018602,
+       0.6259110213675213,
+       0.34093743997151,
+       0.30590468635327633,
+       0.34494652968660966,
+       0.371382193019943
+      ],
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:B:after_by_hour_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_before_mw": {
+      "value": 1.11610285,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:B:rush_before_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_after_mw": {
+      "value": 0.4610540575,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:B:rush_after_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "peak_before_mw": {
+      "value": 1.6391664,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:B:peak_before_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "peak_after_mw": {
+      "value": 1.64736,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:B:peak_after_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rebound_mw": {
+      "value": 0.4742691116359769,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:B:rebound_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rebound_max_mw": {
+      "value": 1.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:U:import:B:rebound_max_mw",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   }
+  },
+  "mobility_le_8gpus_W": {
+   "label": "Jobs that stay in Utah when only jobs of 8 GPUs or fewer may move (W)",
+   "source": "mobility_le_8gpus/20261027T173750Z/ledger_W",
+   "energy_mwh": {
+    "value": 7892.374687199999,
+    "unit": "MWh",
+    "evidence": "simulated",
+    "provenance_id": "storage:mobility_le_8gpus_W:energy",
+    "status": "ok",
+    "reason": null
+   },
+   "mean_load_mw": {
+    "value": 0.9375593593727727,
+    "unit": "MW",
+    "evidence": "simulated",
+    "provenance_id": "storage:mobility_le_8gpus_W:mean_load",
+    "status": "ok",
+    "reason": null
+   },
+   "load_hours": {
+    "value": [
+     0.0,
+     1.066599133167419,
+     2.133198266334838,
+     4.266396532669676,
+     8.532793065339352,
+     12.79918959800903,
+     17.065586130678703,
+     25.59837919601806
+    ],
+    "unit": "h",
+    "evidence": "simulated",
+    "provenance_id": "storage:mobility_le_8gpus_W:load_hours",
+    "status": "ok",
+    "reason": null
+   },
+   "base_co2_t": {
+    "value": 4443.362537914308,
+    "unit": "t_CO2",
+    "evidence": "simulated",
+    "provenance_id": "storage:mobility_le_8gpus_W:base_co2",
+    "status": "ok",
+    "reason": null
+   },
+   "strategies": {
+    "A": {
+     "0.75": {
+      "co2_t": {
+       "value": [
+        4443.362537914308,
+        4411.138462925551,
+        4383.286737047603,
+        4353.291536665379,
+        4346.559789185274,
+        4341.448551370934,
+        4337.859564293215,
+        4340.67275245395
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.75:co2_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_t": {
+       "value": [
+        0.0,
+        32.22407498875726,
+        60.075800866704434,
+        90.07100124892872,
+        96.80274872903433,
+        101.91398654337414,
+        105.50297362109274,
+        102.68978546035756
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.75:cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_frac": {
+       "value": [
+        0.0,
+        0.007252182263723878,
+        0.013520346439006464,
+        0.020270909807689832,
+        0.021785921788518535,
+        0.022936230315163987,
+        0.02374394902978484,
+        0.023110827573515895
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.75:cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "shifted_mwh": {
+       "value": [
+        0.0,
+        337.41580865000003,
+        615.17289955,
+        869.6799394,
+        923.4728498,
+        952.0671155999999,
+        975.1330631,
+        993.0719544999998
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.75:shifted_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "losses_mwh": {
+       "value": [
+        0.0,
+        112.59693621666665,
+        205.59956065000003,
+        291.2266464666667,
+        310.2868400666667,
+        319.81826200000006,
+        327.83598516666655,
+        336.48228229999995
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.75:losses_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "terminal_soc_mwh": {
+       "value": [
+        0.0,
+        0.375,
+        1.6257824000000003,
+        4.0,
+        7.3876704,
+        7.3876704,
+        8.3748924,
+        16.374892399999997
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.75:terminal_soc_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "charge_ci_g_kwh": {
+       "value": [
+        null,
+        422.309870182465,
+        420.84957028313295,
+        416.8424627274077,
+        415.6428911427358,
+        414.82786349087206,
+        414.59149558618634,
+        415.2951061079447
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.75:charge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "discharge_ci_g_kwh": {
+       "value": [
+        null,
+        659.2081916526173,
+        660.2724992658812,
+        661.9142345011593,
+        663.4486612325807,
+        664.4406486700312,
+        665.729677082436,
+        666.2634696177453
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.75:discharge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "flat_marginal_cut_t": {
+       "value": [
+        -0.0,
+        -69.81665658189998,
+        -128.0652620049,
+        -182.45006751640005,
+        -196.3228474684,
+        -202.2132662232,
+        -207.77832233619992,
+        -218.06573396459999
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.75:flat_marginal_cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "flat_marginal_cut_frac": {
+       "value": [
+        -0.0,
+        -0.014314061444635496,
+        -0.02625639953284047,
+        -0.037406567499319414,
+        -0.04025081462260999,
+        -0.04145848941138954,
+        -0.04259945718389924,
+        -0.04470861922866768
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.75:flat_marginal_cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "throughput_mwh_per_day": {
+       "value": [
+        0.0,
+        0.9619837737704919,
+        1.75387854468995,
+        2.479486641197434,
+        2.632852030791162,
+        2.7143752404846753,
+        2.7801370295081966,
+        2.8312814098360652
+       ],
+       "unit": "MWh/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.75:throughput_mwh_per_day",
+       "status": "ok",
+       "reason": null
+      },
+      "cycles_per_day": {
+       "value": [
+        null,
+        0.9619837737704919,
+        0.876939272344975,
+        0.6198716602993585,
+        0.3291065038488952,
+        0.22619793670705626,
+        0.1737585643442623,
+        0.11797005874316939
+       ],
+       "unit": "full_cycles/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.75:cycles_per_day",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      }
+     },
+     "0.85": {
+      "co2_t": {
+       "value": [
+        4443.362537914308,
+        4388.46699530495,
+        4339.803316527392,
+        4284.621481373959,
+        4271.9308879734035,
+        4262.519401646266,
+        4257.234806490942,
+        4257.573820396824
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.85:co2_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_t": {
+       "value": [
+        0.0,
+        54.89554260935821,
+        103.55922138691601,
+        158.74105654034858,
+        171.43164994090424,
+        180.84313626804203,
+        186.1277314233659,
+        185.78871751748397
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.85:cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_frac": {
+       "value": [
+        0.0,
+        0.012354504531409651,
+        0.023306498288912115,
+        0.03572543432723381,
+        0.03858151309466938,
+        0.040699613125182645,
+        0.041888936550906176,
+        0.041812639849255304
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.85:cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "shifted_mwh": {
+       "value": [
+        0.0,
+        338.2234946,
+        634.4031102199999,
+        941.4762343899998,
+        1014.1617634699999,
+        1052.6243698199999,
+        1079.48061882,
+        1103.7411124399998
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.85:shifted_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "losses_mwh": {
+       "value": [
+        0.0,
+        59.76149904705887,
+        112.25803987411773,
+        166.84874724529405,
+        180.38148767117644,
+        187.2612279917647,
+        192.3081412835292,
+        198.0011695694119
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.85:losses_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "terminal_soc_mwh": {
+       "value": [
+        0.0,
+        0.425,
+        1.7257824000000004,
+        4.0,
+        8.0,
+        8.522588800000001,
+        10.265515120000002,
+        18.265515119999996
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.85:terminal_soc_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "charge_ci_g_kwh": {
+       "value": [
+        null,
+        421.8808215495446,
+        421.17159562562443,
+        417.3590552133367,
+        416.71633666772533,
+        415.08140405930027,
+        414.3771196951898,
+        414.84821726392585
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.85:charge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "discharge_ci_g_kwh": {
+       "value": [
+        null,
+        659.259577181152,
+        660.0827346915307,
+        661.7054549119732,
+        663.1595594176092,
+        664.086999359053,
+        664.5618983577293,
+        664.4598000973436
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.85:discharge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "flat_marginal_cut_t": {
+       "value": [
+        -0.0,
+        -37.19525641108238,
+        -70.44200216540474,
+        -105.58452579759172,
+        -116.41975938078704,
+        -120.99439877731058,
+        -125.19051965738106,
+        -133.65281113805653
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.85:flat_marginal_cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "flat_marginal_cut_frac": {
+       "value": [
+        -0.0,
+        -0.0076259049313346025,
+        -0.01444227203999562,
+        -0.021647318331500368,
+        -0.02386879679910497,
+        -0.02480670578264493,
+        -0.025667009541762754,
+        -0.027401978905050875
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.85:flat_marginal_cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "throughput_mwh_per_day": {
+       "value": [
+        0.0,
+        0.9642865134711333,
+        1.808704519515324,
+        2.684180283364219,
+        2.89140916171062,
+        3.001067340898075,
+        3.0776354064718463,
+        3.146802886500356
+       ],
+       "unit": "MWh/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.85:throughput_mwh_per_day",
+       "status": "ok",
+       "reason": null
+      },
+      "cycles_per_day": {
+       "value": [
+        null,
+        0.9642865134711333,
+        0.904352259757662,
+        0.6710450708410548,
+        0.3614261452138275,
+        0.2500889450748396,
+        0.1923522129044904,
+        0.13111678693751483
+       ],
+       "unit": "full_cycles/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.85:cycles_per_day",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      }
+     },
+     "0.90": {
+      "co2_t": {
+       "value": [
+        4443.362537914308,
+        4379.140796390219,
+        4321.218887710622,
+        4253.281162301071,
+        4235.966577215263,
+        4226.181111650662,
+        4221.732168345642,
+        4222.306953216963
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.90:co2_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_t": {
+       "value": [
+        0.0,
+        64.2217415240882,
+        122.1436502036862,
+        190.08137561323682,
+        207.3959606990451,
+        217.1814262636453,
+        221.63036956866551,
+        221.05558469734527
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.90:cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_frac": {
+       "value": [
+        0.0,
+        0.014453410221672697,
+        0.02748901291791055,
+        0.042778723093448066,
+        0.04667545331477627,
+        0.04887771916211662,
+        0.049878975140456965,
+        0.04974961705490447
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.90:cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "shifted_mwh": {
+       "value": [
+        0.0,
+        338.39262688,
+        641.42625894,
+        972.57792262,
+        1056.6396594,
+        1094.61195018,
+        1118.71590086,
+        1142.3985327999999
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.90:shifted_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "losses_mwh": {
+       "value": [
+        0.0,
+        37.64918076444446,
+        71.46689348222225,
+        108.50865806888893,
+        118.29329548888886,
+        122.63355535333321,
+        125.54741414888883,
+        129.0677065866667
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.90:losses_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "terminal_soc_mwh": {
+       "value": [
+        0.0,
+        0.45,
+        1.7757824000000002,
+        4.0,
+        8.0,
+        9.090048000000001,
+        11.210826480000005,
+        19.210826479999994
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.90:terminal_soc_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "charge_ci_g_kwh": {
+       "value": [
+        null,
+        421.95610036611674,
+        421.5332046384037,
+        417.79890655992733,
+        416.87307755183446,
+        415.710917370495,
+        415.14202507366207,
+        416.284559849748
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.90:charge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "discharge_ci_g_kwh": {
+       "value": [
+        null,
+        659.248277819709,
+        660.0919913296182,
+        661.5710140886072,
+        662.978013279237,
+        664.1463251954211,
+        664.0027611325962,
+        663.8178334412985
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.90:discharge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "flat_marginal_cut_t": {
+       "value": [
+        -0.0,
+        -23.54529371242668,
+        -45.263973695213345,
+        -69.53035068657336,
+        -78.04925661213332,
+        -81.40518687235992,
+        -84.5165927086533,
+        -91.63613343520001
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.90:flat_marginal_cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "flat_marginal_cut_frac": {
+       "value": [
+        -0.0,
+        -0.004827340600825051,
+        -0.009280182300646292,
+        -0.014255361982668864,
+        -0.016001938642587976,
+        -0.016689983506100514,
+        -0.01732789509482943,
+        -0.018787568880523065
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.90:flat_marginal_cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "throughput_mwh_per_day": {
+       "value": [
+        0.0,
+        0.9647687152672845,
+        1.8287277517890237,
+        2.7728522384034213,
+        3.0125150660014257,
+        3.120775339073414,
+        3.1894965099358514,
+        3.2570164869565215
+       ],
+       "unit": "MWh/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.90:throughput_mwh_per_day",
+       "status": "ok",
+       "reason": null
+      },
+      "cycles_per_day": {
+       "value": [
+        null,
+        0.9647687152672845,
+        0.9143638758945118,
+        0.6932130596008553,
+        0.3765643832501782,
+        0.26006461158945116,
+        0.19934353187099071,
+        0.13570902028985507
+       ],
+       "unit": "full_cycles/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:A:0.90:cycles_per_day",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      }
+     }
+    },
+    "B": {
+     "0.75": {
+      "co2_t": {
+       "value": [
+        4443.362537914308,
+        4400.233880778608,
+        4361.488426590002,
+        4317.482175039649,
+        4313.51333198089,
+        4313.51333198089,
+        4313.51333198089,
+        4313.51333198089
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.75:co2_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_t": {
+       "value": [
+        0.0,
+        43.128657135699875,
+        81.87411132430564,
+        125.88036287465971,
+        129.84920593341812,
+        129.84920593341812,
+        129.84920593341812,
+        129.84920593341812
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.75:cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_frac": {
+       "value": [
+        0.0,
+        0.009706310652730185,
+        0.018426160509229333,
+        0.02832997798413886,
+        0.02922318510484825,
+        0.02922318510484825,
+        0.02922318510484825,
+        0.02922318510484825
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.75:cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "shifted_mwh": {
+       "value": [
+        0.0,
+        280.8440162,
+        537.52183355,
+        851.1873902499999,
+        895.3327703499999,
+        895.3327703499999,
+        895.3327703499999,
+        895.3327703499999
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.75:shifted_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "losses_mwh": {
+       "value": [
+        0.0,
+        93.61467206666666,
+        179.1739445166667,
+        283.72913008333325,
+        298.4442567833334,
+        298.4442567833334,
+        298.4442567833334,
+        298.4442567833334
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.75:losses_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "terminal_soc_mwh": {
+       "value": [
+        0.0,
+        0.0,
+        4.831690603168682e-16,
+        1.8474111129762605e-15,
+        8.44124770082999e-15,
+        8.44124770082999e-15,
+        8.44124770082999e-15,
+        8.44124770082999e-15
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.75:terminal_soc_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "charge_ci_g_kwh": {
+       "value": [
+        null,
+        387.0169867018109,
+        388.06716702634674,
+        391.33133952915466,
+        393.7368053076377,
+        393.7368053076377,
+        393.7368053076377,
+        393.7368053076377
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.75:charge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "discharge_ci_g_kwh": {
+       "value": [
+        null,
+        669.5906605290083,
+        669.7406301820354,
+        669.6630748524763,
+        670.0113954413196,
+        670.0113954413196,
+        670.0113954413196,
+        670.0113954413196
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.75:discharge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "flat_marginal_cut_t": {
+       "value": [
+        -0.0,
+        -57.85386733719999,
+        -110.72949771130003,
+        -175.34460239149993,
+        -184.43855069210002,
+        -184.43855069210002,
+        -184.43855069210002,
+        -184.43855069210002
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.75:flat_marginal_cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "flat_marginal_cut_frac": {
+       "value": [
+        -0.0,
+        -0.011861407469477175,
+        -0.022702158934148724,
+        -0.03594977954398065,
+        -0.037814253454965314,
+        -0.037814253454965314,
+        -0.037814253454965314,
+        -0.037814253454965314
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.75:flat_marginal_cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "throughput_mwh_per_day": {
+       "value": [
+        0.0,
+        0.8006956983606557,
+        1.5324927542409124,
+        2.4267637640769775,
+        2.5526237215965786,
+        2.5526237215965786,
+        2.5526237215965786,
+        2.5526237215965786
+       ],
+       "unit": "MWh/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.75:throughput_mwh_per_day",
+       "status": "ok",
+       "reason": null
+      },
+      "cycles_per_day": {
+       "value": [
+        null,
+        0.8006956983606557,
+        0.7662463771204562,
+        0.6066909410192444,
+        0.3190779651995723,
+        0.21271864346638156,
+        0.15953898259978616,
+        0.10635932173319078
+       ],
+       "unit": "full_cycles/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.75:cycles_per_day",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      }
+     },
+     "0.85": {
+      "co2_t": {
+       "value": [
+        4443.362537914308,
+        4379.508098287653,
+        4320.765148762773,
+        4246.16428770885,
+        4234.229291154983,
+        4234.229291154983,
+        4234.229291154983,
+        4234.229291154983
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.85:co2_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_t": {
+       "value": [
+        0.0,
+        63.85443962665461,
+        122.597389151535,
+        197.19825020545815,
+        209.13324675932526,
+        209.13324675932526,
+        209.13324675932526,
+        209.13324675932526
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.85:cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_frac": {
+       "value": [
+        0.0,
+        0.014370747172169202,
+        0.027591129039198678,
+        0.04438040977363553,
+        0.04706643785530302,
+        0.04706643785530302,
+        0.04706643785530302,
+        0.04706643785530302
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.85:cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "shifted_mwh": {
+       "value": [
+        0.0,
+        346.16923259,
+        672.31621065,
+        1158.82160353,
+        1291.2359865499998,
+        1291.2359865499998,
+        1291.2359865499998,
+        1291.2359865499998
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.85:shifted_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "losses_mwh": {
+       "value": [
+        0.0,
+        61.08868810411769,
+        118.64403717352938,
+        204.49793003470592,
+        227.86517409705883,
+        227.86517409705883,
+        227.86517409705883,
+        227.86517409705883
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.85:losses_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "terminal_soc_mwh": {
+       "value": [
+        0.0,
+        0.0,
+        1.3926637620897964e-15,
+        2.842170943040401e-17,
+        1.8474111129762605e-15,
+        1.8474111129762605e-15,
+        1.8474111129762605e-15,
+        1.8474111129762605e-15
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.85:terminal_soc_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "charge_ci_g_kwh": {
+       "value": [
+        null,
+        408.365261073624,
+        410.49043959216,
+        417.0276466139688,
+        421.5659348226249,
+        421.5659348226249,
+        421.5659348226249,
+        421.5659348226249
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.85:charge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "discharge_ci_g_kwh": {
+       "value": [
+        null,
+        664.8899008532446,
+        665.2807144841964,
+        660.7921223924409,
+        657.9235372052118,
+        657.9235372052118,
+        657.9235372052118,
+        657.9235372052118
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.85:discharge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "flat_marginal_cut_t": {
+       "value": [
+        -0.0,
+        -37.75280924834473,
+        -73.32201497324117,
+        -126.37972076144825,
+        -140.82067759198236,
+        -140.82067759198236,
+        -140.82067759198236,
+        -140.82067759198236
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.85:flat_marginal_cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "flat_marginal_cut_frac": {
+       "value": [
+        -0.0,
+        -0.007740216414609974,
+        -0.01503274259975879,
+        -0.025910823819143364,
+        -0.028871560604771442,
+        -0.028871560604771442,
+        -0.028871560604771442,
+        -0.028871560604771442
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.85:flat_marginal_cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "throughput_mwh_per_day": {
+       "value": [
+        0.0,
+        0.9869400786600142,
+        1.9167960389166072,
+        3.3038392117747684,
+        3.681357053599429,
+        3.681357053599429,
+        3.681357053599429,
+        3.681357053599429
+       ],
+       "unit": "MWh/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.85:throughput_mwh_per_day",
+       "status": "ok",
+       "reason": null
+      },
+      "cycles_per_day": {
+       "value": [
+        null,
+        0.9869400786600142,
+        0.9583980194583036,
+        0.8259598029436921,
+        0.46016963169992864,
+        0.3067797544666191,
+        0.23008481584996432,
+        0.15338987723330955
+       ],
+       "unit": "full_cycles/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.85:cycles_per_day",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      }
+     },
+     "0.90": {
+      "co2_t": {
+       "value": [
+        4443.362537914308,
+        4369.123090980091,
+        4300.2531209204435,
+        4207.889785061943,
+        4188.972742502667,
+        4188.950185561069,
+        4188.950185561069,
+        4188.950185561069
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.90:co2_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_t": {
+       "value": [
+        0.0,
+        74.23944693421758,
+        143.1094169938648,
+        235.47275285236444,
+        254.38979541164124,
+        254.41235235323944,
+        254.41235235323944,
+        254.41235235323944
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.90:cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "cut_frac": {
+       "value": [
+        0.0,
+        0.01670794275748321,
+        0.03220745905217981,
+        0.0529942697322407,
+        0.057251640675498545,
+        0.057256717223136896,
+        0.057256717223136896,
+        0.057256717223136896
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.90:cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "shifted_mwh": {
+       "value": [
+        0.0,
+        383.68007101999996,
+        747.2449311600001,
+        1308.72378002,
+        1516.8187980599998,
+        1518.02843126,
+        1518.02843126,
+        1518.02843126
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.90:shifted_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "losses_mwh": {
+       "value": [
+        0.0,
+        42.631119002222256,
+        83.02721457333327,
+        145.41375333555555,
+        168.53542200666666,
+        168.66982569555543,
+        168.66982569555543,
+        168.66982569555543
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.90:losses_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "terminal_soc_mwh": {
+       "value": [
+        0.0,
+        0.0,
+        4.831690603168682e-16,
+        2.756905814749189e-15,
+        9.379164112033323e-16,
+        9.379164112033323e-16,
+        9.379164112033323e-16,
+        9.379164112033323e-16
+       ],
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.90:terminal_soc_mwh",
+       "status": "ok",
+       "reason": null
+      },
+      "charge_ci_g_kwh": {
+       "value": [
+        null,
+        424.07271582141794,
+        425.90153648451974,
+        431.63887214647366,
+        438.0206094298233,
+        438.1371409029644,
+        438.1371409029644,
+        438.1371409029644
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.90:charge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "discharge_ci_g_kwh": {
+       "value": [
+        null,
+        664.6850079912239,
+        664.7400053833649,
+        659.5242257175317,
+        654.4022788087196,
+        654.4129765719864,
+        654.4129765719864,
+        654.4129765719864
+       ],
+       "unit": "g/kWh",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.90:discharge_ci_g_kwh",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      },
+      "flat_marginal_cut_t": {
+       "value": [
+        -0.0,
+        -26.346031543373353,
+        -51.31081860631996,
+        -89.86569956137332,
+        -104.15489080011999,
+        -104.23795227985326,
+        -104.23795227985326,
+        -104.23795227985326
+       ],
+       "unit": "t_CO2",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.90:flat_marginal_cut_t",
+       "status": "ok",
+       "reason": null
+      },
+      "flat_marginal_cut_frac": {
+       "value": [
+        -0.0,
+        -0.005401557920376259,
+        -0.010519928141271392,
+        -0.018424588175139516,
+        -0.02135420943458254,
+        -0.021371238997193998,
+        -0.021371238997193998,
+        -0.021371238997193998
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.90:flat_marginal_cut_frac",
+       "status": "ok",
+       "reason": null
+      },
+      "throughput_mwh_per_day": {
+       "value": [
+        0.0,
+        1.0938847356236634,
+        2.1304203311760515,
+        3.731215338617249,
+        4.3245012061582315,
+        4.327949910933714,
+        4.327949910933714,
+        4.327949910933714
+       ],
+       "unit": "MWh/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.90:throughput_mwh_per_day",
+       "status": "ok",
+       "reason": null
+      },
+      "cycles_per_day": {
+       "value": [
+        null,
+        1.0938847356236634,
+        1.0652101655880257,
+        0.9328038346543123,
+        0.5405626507697789,
+        0.36066249257780947,
+        0.2704968694333571,
+        0.18033124628890473
+       ],
+       "unit": "full_cycles/day",
+       "evidence": "simulated",
+       "provenance_id": "storage:mobility_le_8gpus_W:B:0.90:cycles_per_day",
+       "status": "ok",
+       "reason": "no storage (E = 0) or no energy dispatched"
+      }
+     }
+    }
+   },
+   "charge_headroom_mw": {
+    "value": [
+     0.28193777999999997,
+     0.6080312999999999,
+     1.1283223400000002
+    ],
+    "unit": "MW",
+    "evidence": "simulated",
+    "provenance_id": "storage:mobility_le_8gpus_W:headroom",
+    "status": "ok",
+    "reason": null
+   },
+   "import_at_headline": {
+    "A": {
+     "before_by_hour_mw": {
+      "value": [
+       0.8973488683760682,
+       0.9044949943181818,
+       0.9109376954285714,
+       0.9244673264957264,
+       0.9279838193732193,
+       0.9178773794871794,
+       0.9161772364672364,
+       0.9206250945868947,
+       0.9360259156695157,
+       0.9374452638176638,
+       0.9521787219373219,
+       0.9693784484330483,
+       0.9774776611428572,
+       0.988463177142857,
+       0.9894183508571428,
+       0.9889649491428572,
+       0.9874119662857143,
+       0.968539372,
+       0.9497533076923076,
+       0.9372679025641025,
+       0.9211150438746438,
+       0.9021968313390313,
+       0.8868396290598292,
+       0.8898372706552705
+      ],
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:A:before_by_hour_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "after_by_hour_mw": {
+      "value": [
+       0.549246422051282,
+       0.692720725,
+       0.9109376954285714,
+       0.9244673264957264,
+       0.9279838193732193,
+       0.9178773794871794,
+       0.8032710770940171,
+       0.9206250945868947,
+       0.9360259156695157,
+       0.9374452638176638,
+       1.5750319775096364,
+       1.559519602714932,
+       1.5600108607394956,
+       1.531757596537815,
+       1.4581254592268909,
+       1.3560414897142856,
+       0.9874119662857143,
+       0.968539372,
+       0.9497533076923076,
+       0.9372679025641025,
+       0.9211150438746438,
+       0.09679381886039884,
+       0.18685401321937326,
+       0.38634364544159555
+      ],
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:A:after_by_hour_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_before_mw": {
+      "value": 1.04483555,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:A:rush_before_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_after_mw": {
+      "value": 0.9615022166666667,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:A:rush_after_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "peak_before_mw": {
+      "value": 1.6416,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:A:peak_before_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "peak_after_mw": {
+      "value": 1.64736,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:A:peak_after_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rebound_mw": {
+      "value": 0.5291745868864386,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:A:rebound_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rebound_max_mw": {
+      "value": 1.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:A:rebound_max_mw",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "B": {
+     "before_by_hour_mw": {
+      "value": [
+       0.8973488683760682,
+       0.9044949943181818,
+       0.9109376954285714,
+       0.9244673264957264,
+       0.9279838193732193,
+       0.9178773794871794,
+       0.9161772364672364,
+       0.9206250945868947,
+       0.9360259156695157,
+       0.9374452638176638,
+       0.9521787219373219,
+       0.9693784484330483,
+       0.9774776611428572,
+       0.988463177142857,
+       0.9894183508571428,
+       0.9889649491428572,
+       0.9874119662857143,
+       0.968539372,
+       0.9497533076923076,
+       0.9372679025641025,
+       0.9211150438746438,
+       0.9021968313390313,
+       0.8868396290598292,
+       0.8898372706552705
+      ],
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:B:before_by_hour_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "after_by_hour_mw": {
+      "value": [
+       0.9401966061002177,
+       0.9499923341243316,
+       0.9652284923630251,
+       0.9739185902362997,
+       0.960241333179152,
+       0.9209106068543658,
+       0.8835097400083793,
+       0.8967400754064019,
+       1.027938577717446,
+       1.2220458576504107,
+       1.3661533654767888,
+       1.4464287861907155,
+       1.4896906619159662,
+       1.4938367520672269,
+       1.4523099524033614,
+       1.395633408,
+       1.2176324593613443,
+       0.9643160991310924,
+       0.7523521322004358,
+       0.5650028666951566,
+       0.30794479159544164,
+       0.27737159376068377,
+       0.2988904876068376,
+       0.3226012468376068
+      ],
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:B:after_by_hour_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_before_mw": {
+      "value": 1.04483555,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:B:rush_before_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rush_after_mw": {
+      "value": 0.41090174000000007,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:B:rush_after_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "peak_before_mw": {
+      "value": 1.6416,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:B:peak_before_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "peak_after_mw": {
+      "value": 1.64736,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:B:peak_after_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rebound_mw": {
+      "value": 0.463247786617787,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:B:rebound_mw",
+      "status": "ok",
+      "reason": null
+     },
+     "rebound_max_mw": {
+      "value": 1.0,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage:mobility_le_8gpus_W:import:B:rebound_max_mw",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   }
+  }
+ },
+ "combined": {
+  "rule": "move small, store for big: (U − (W under mobility ≤ 8 GPUs − storage cut on its Utah load)) / U over the registered cohort window, η 0.85; Utah execution, remote execution and transfer energy each counted once; ratio of totals, not the registered 4-week-block estimate",
+  "U_co2_t": {
+   "value": 4669.686123317239,
+   "unit": "t_CO2",
+   "evidence": "simulated",
+   "provenance_id": "storage:combined:U",
+   "status": "ok",
+   "reason": null
+  },
+  "W_mob_co2_t": {
+   "value": 4487.381741796949,
+   "unit": "t_CO2",
+   "evidence": "simulated",
+   "provenance_id": "storage:combined:W_mob",
+   "status": "ok",
+   "reason": null
+  },
+  "W_mob_utah_exec_co2_t": {
+   "value": 4443.362537914302,
+   "unit": "t_CO2",
+   "evidence": "simulated",
+   "provenance_id": "storage:combined:W_mob_utah",
+   "status": "ok",
+   "reason": null
+  },
+  "move_only_cut_frac": {
+   "value": 0.03903996472267926,
+   "unit": "fraction",
+   "evidence": "simulated",
+   "provenance_id": "storage:combined:move_only",
+   "status": "ok",
+   "reason": null
+  },
+  "move_and_store_cut_frac": {
+   "A": {
+    "value": [
+     0.03903996472267926,
+     0.0507956890175622,
+     0.061216877399917165,
+     0.07303391042873081,
+     0.0757515649060173,
+     0.07776700793122261,
+     0.07889868895126723,
+     0.07882609008767572
+    ],
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "storage:combined:A",
+    "status": "ok",
+    "reason": null
+   },
+   "B": {
+    "value": [
+     0.03903996472267926,
+     0.05271421132949271,
+     0.06529384687106755,
+     0.08126940905744602,
+     0.08382525461937188,
+     0.08382525461937188,
+     0.08382525461937188,
+     0.08382525461937188
+    ],
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "storage:combined:B",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  "flat_marginal_storage_cut_t": {
+   "A": {
+    "value": [
+     -0.0,
+     -37.19525641108238,
+     -70.44200216540474,
+     -105.58452579759172,
+     -116.41975938078704,
+     -120.99439877731058,
+     -125.19051965738106,
+     -133.65281113805653
+    ],
+    "unit": "t_CO2",
+    "evidence": "simulated",
+    "provenance_id": "storage:combined:flat:A",
+    "status": "ok",
+    "reason": null
+   },
+   "B": {
+    "value": [
+     -0.0,
+     -37.75280924834473,
+     -73.32201497324117,
+     -126.37972076144824,
+     -140.82067759198236,
+     -140.82067759198236,
+     -140.82067759198236,
+     -140.82067759198236
+    ],
+    "unit": "t_CO2",
+    "evidence": "simulated",
+    "provenance_id": "storage:combined:flat:B",
+    "status": "ok",
+    "reason": null
+   }
+  }
+ },
+ "headline": {
+  "rule": "illustrative selection (lead ruling, T10b fix round 1): 4 MWh / 1 MW, sized to the charging room the site connection leaves free; not an optimum",
+  "e_mwh": {
+   "value": 4.0,
+   "unit": "MWh",
+   "evidence": "simulated",
+   "provenance_id": "storage:headline:e",
+   "status": "ok",
+   "reason": null
+  },
+  "plateau_rule": "the smallest size whose fixed-schedule (A) cut, U load, η 0.85, is at least 90% of A's largest cut over the size grid",
+  "plateau_e_mwh": {
+   "value": 8,
+   "unit": "MWh",
+   "evidence": "simulated",
+   "provenance_id": "storage:headline:plateau",
+   "status": "ok",
+   "reason": null
+  }
+ },
+ "sensitivity": {
+  "connection_plus_25": {
+   "rule": "the site connection × 1.25 (2.059 MW), U load, η 0.85",
+   "connection_mw": {
+    "value": 2.0591999999999997,
+    "unit": "MW",
+    "evidence": "assumed",
+    "provenance_id": "storage:sens:conn",
+    "status": "ok",
+    "reason": null
+   },
+   "A": {
+    "cut_frac": {
+     "value": [
+      0.0,
+      0.011823182232950634,
+      0.023375425828193193,
+      0.044819313605828484,
+      0.054710031337637154,
+      0.055145477802552204,
+      0.05534005025182003,
+      0.055629382292405403
+     ],
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "storage:sens:conn:A:cut_frac",
+     "status": "ok",
+     "reason": null
+    },
+    "cut_t": {
+     "value": [
+      0.0,
+      55.21055000666063,
+      109.15590161654539,
+      209.29212680174132,
+      255.4786741436161,
+      257.51207245827743,
+      258.4206647246033,
+      259.77175453955584
+     ],
+     "unit": "t_CO2",
+     "evidence": "simulated",
+     "provenance_id": "storage:sens:conn:A:cut_t",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "B": {
+    "cut_frac": {
+     "value": [
+      0.0,
+      0.013760127155850512,
+      0.027275174262844665,
+      0.05077809238921767,
+      0.06114783670575413,
+      0.06116589209967056,
+      0.06116589209967056,
+      0.06116589209967056
+     ],
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "storage:sens:conn:B:cut_frac",
+     "status": "ok",
+     "reason": null
+    },
+    "cut_t": {
+     "value": [
+      0.0,
+      64.255474834756,
+      127.36650276626554,
+      237.11775339845101,
+      285.54120453572926,
+      285.62551755815184,
+      285.62551755815184,
+      285.62551755815184
+     ],
+     "unit": "t_CO2",
+     "evidence": "simulated",
+     "provenance_id": "storage:sens:conn:B:cut_t",
+     "status": "ok",
+     "reason": null
+    }
+   }
+  }
+ },
+ "power_quality": "Fast power-quality buffering (seconds to minutes) is a future interface, outside the hourly model."
+}
