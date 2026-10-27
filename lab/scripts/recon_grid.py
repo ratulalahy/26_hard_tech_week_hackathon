@@ -23,7 +23,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 
-from gridpilot.data.eia930 import INTERIM_EIA_DIR, PARTITION_FUELS, RAW_EIA_DIR
+from gridpilot.data.eia930 import (
+    INTERIM_EIA_DIR,
+    PARTITION_FUELS,
+    RAW_EIA_DIR,
+    add_demand_clean,
+)
 from gridpilot.paths import REPO_ROOT
 from gridpilot.splits import TEST_END, TEST_START, VALIDATION_START, drop_sealed
 
@@ -123,18 +128,12 @@ def add_derived(pre: pl.DataFrame) -> pl.DataFrame:
     gen_total = pl.sum_horizontal([e.fill_null(0) for e in adj.values()])
     emis = pl.sum_horizontal([adj[f].fill_null(0).clip(lower_bound=0) * ef for f, ef in EF.items()])
     emis_sens = emis + adj["other"].fill_null(0).clip(lower_bound=0) * EF_OTHER_SENS
-    # Isolated single-hour spikes survive EIA's adjustment (e.g. PACE 2021-09-13 21Z: 12,566 MW
-    # reported vs 6,512 MW = NG - TI). Rule: > 15% from the mean of both neighbours while the
-    # neighbours agree within 10%. Flagged hours are nulled in demand_clean_mw.
-    prev = pl.col("demand_adj_mw").shift(1).over("ba")
-    nxt = pl.col("demand_adj_mw").shift(-1).over("ba")
-    nb = (prev + nxt) / 2
-    spike = (((pl.col("demand_adj_mw") - nb).abs() / nb) > 0.15) & (((prev - nxt).abs() / nb) < 0.10)
-    pre = pre.sort("ba", "ts_utc").with_columns(spike.fill_null(False).alias("d_spike"))
-    clean = pl.when(pl.col("d_spike") | (pl.col("demand_adj_mw") <= 0)).then(None).otherwise(pl.col("demand_adj_mw"))
+    # Isolated single-hour spikes: the rule lives in gridpilot.data.eia930.add_demand_clean
+    # (flagged hours and non-positive demand are nulled in demand_clean_mw).
+    pre = add_demand_clean(pre)
+    clean = pl.col("demand_clean_mw")
     return pre.with_columns(
         local.alias("ts_local"),
-        clean.alias("demand_clean_mw"),
         (clean - pl.col("gen_wind_adj_mw").fill_null(0)
          - pl.col("gen_solar_adj_mw").fill_null(0)).alias("net_load_mw"),
         pl.when(any_fuel).then(gen_total).otherwise(None).alias("gen_fuel_total_mw"),

@@ -317,3 +317,35 @@ def build_interchange(out_path: Path = INTERIM_EIA_DIR / "interchange.parquet") 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     df.sort("ba", "diba", "ts_utc").write_parquet(out_path, compression="zstd")
     return df
+
+
+# --------------------------------------------------------------------------------------------
+# Demand cleaning (moved from scripts/recon_grid.py so package code need not import scripts/)
+# --------------------------------------------------------------------------------------------
+
+# Isolated single-hour spikes survive EIA's adjustment (e.g. PACE 2021-09-13 21Z: 12,566 MW
+# reported vs 6,512 MW = NG - TI). Rule: > 15% from the mean of both neighbours while the
+# neighbours agree within 10%. Neighbours are the previous and next ROWS of the same BA, so the
+# frame should be a dense hourly grid. The flag at hour t uses hour t+1: a forecaster must apply
+# it only to data already published at the issue time (see gridpilot.forecast).
+SPIKE_JUMP = 0.15
+SPIKE_NEIGHBOUR_AGREE = 0.10
+
+
+def demand_spike(col: str = "demand_adj_mw", by: str = "ba") -> pl.Expr:
+    """True where ``col`` is an isolated single-hour spike (rows must be sorted by time)."""
+    prev = pl.col(col).shift(1).over(by)
+    nxt = pl.col(col).shift(-1).over(by)
+    nb = (prev + nxt) / 2
+    spike = (((pl.col(col) - nb).abs() / nb) > SPIKE_JUMP) & (
+        ((prev - nxt).abs() / nb) < SPIKE_NEIGHBOUR_AGREE)
+    return spike.fill_null(False)
+
+
+def add_demand_clean(df: pl.DataFrame, col: str = "demand_adj_mw", by: str = "ba",
+                     out: str = "demand_clean_mw") -> pl.DataFrame:
+    """Sort by (``by``, ts_utc); add ``d_spike`` and ``out``: ``col`` with spikes and
+    non-positive hours nulled."""
+    df = df.sort(by, "ts_utc").with_columns(demand_spike(col, by).alias("d_spike"))
+    clean = pl.when(pl.col("d_spike") | (pl.col(col) <= 0)).then(None).otherwise(pl.col(col))
+    return df.with_columns(clean.alias(out))

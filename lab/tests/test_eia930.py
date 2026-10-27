@@ -6,6 +6,7 @@ import pytest
 from gridpilot.data.eia930 import (
     PARTITION_FUELS,
     TIDY_FUELS,
+    add_demand_clean,
     column_name,
     file_name,
     normalize_header,
@@ -139,3 +140,12 @@ def test_hour_beginning_timestamps_respect_the_seal(tmp_path):
     kept = drop_sealed(df)
     assert kept["ts_utc"].to_list() == [datetime(2025, 10, 31, 23, tzinfo=UTC)]
     assert df.filter(pl.col("ts_utc") >= TEST_START).height == 1
+
+
+def test_demand_spike_rule():
+    ts = [datetime(2024, 1, 1, h, tzinfo=UTC) for h in range(6)]
+    df = pl.DataFrame({"ba": "PACE", "ts_utc": ts,
+                       "demand_adj_mw": [1000.0, 1000.0, 2000.0, 1000.0, 0.0, 1500.0]})
+    out = add_demand_clean(df.reverse())  # sorts by time first
+    assert out["d_spike"].to_list() == [False, False, True, False, False, False]
+    assert out["demand_clean_mw"].to_list() == [1000.0, 1000.0, None, 1000.0, None, 1500.0]
