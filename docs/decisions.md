@@ -371,3 +371,11 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - pins (D-047);
   - a slack tolerance, which breaks hard deadlines;
   - accepting lateness, which would make the headline carry a scheduling artifact.
+
+## D-049 · 2026-10-27 02:45 MT · Astra spec gate r1: not_ready → fixes F12
+- **Decided by:** lead (Claude). Every finding is dispositioned; the claim reframing goes to the owner at G1.
+- **Decision:** 22 findings, of which 10 are important and 12 minor. 21 are fixed and 1 is deferred (A3); none is rejected.
+  - The main reframing: the experiment is an **advance-reservation scheduling scenario** (F11 bookings and the F3 closure calendar are both assumed and advance-known), with baseline-relative deadlines and exact declared runtimes. It is not a historical online-router claim.
+  - Causal sensitivities (shadow-U, carbon-blind scheduling on common support) are deferred until after 18:00.
+- **Evidence:** `docs/reviews/2026-10-27-spec-astra-r1-astra.md`.
+- **Alternatives rejected:** adopting shadow U as the primary design. If no job moves away from PACE, it makes time-only savings exactly zero by construction, so it would answer a different question.
