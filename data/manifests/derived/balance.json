@@ -1,0 +1,29 @@
+{
+  "output": "interim/eia930/balance.parquet",
+  "output_sha256": "f63d0c2703c6e42a1bbdabc9ff746ab0405cbc72b1c5a9dad8c6251ef29d0e86",
+  "inputs_sha256": {
+    "raw/eia930/EIA930_BALANCE_2019_Jan_Jun.csv": "02548d6bc49f3cffba1e66eb83a42e1d40194b1301f0f872baf2945e615af1b0",
+    "raw/eia930/EIA930_BALANCE_2019_Jul_Dec.csv": "5ec5c85be997c6c56bdcf42be3443a4bb6eb0851d704065c11c02eac0d3c48d1",
+    "raw/eia930/EIA930_BALANCE_2020_Jan_Jun.csv": "fff83ed20365e69933bdd6ebde06afaa8083930c613363c438844b0fd52034cf",
+    "raw/eia930/EIA930_BALANCE_2020_Jul_Dec.csv": "47788a718c26eae5a2453e3471c2b9e7d1a11062a0de70e2dca803163de5a754",
+    "raw/eia930/EIA930_BALANCE_2021_Jan_Jun.csv": "40b183f333e0f3edc1b9a2ed48b792eff00fd477915dae79ce5784e862380f7f",
+    "raw/eia930/EIA930_BALANCE_2021_Jul_Dec.csv": "66afadcab6865f74cebd6db82e363a66976846241c040cba66baf240afcd669b",
+    "raw/eia930/EIA930_BALANCE_2022_Jan_Jun.csv": "d3d315a0c29d9527a1c64cf6ddcdcc5c0b7281fddd99199bd70f06d242e503d5",
+    "raw/eia930/EIA930_BALANCE_2022_Jul_Dec.csv": "267575c29ef40f386bcf3bc3993013b9ce13a3a154b89b702559a75dd742976d",
+    "raw/eia930/EIA930_BALANCE_2023_Jan_Jun.csv": "a0e14e9c07ab4cc1de3e384c7be890b0c61d9de3fe04ad3ae5ec739f1f35ec1b",
+    "raw/eia930/EIA930_BALANCE_2023_Jul_Dec.csv": "c719fc1b513eec8982ce209b6e3173fc64b2d0d243f83d3bf0d8d1adf6222de2",
+    "raw/eia930/EIA930_BALANCE_2024_Jan_Jun.csv": "26768c495c3ba987e29d79df2e40d4e741f9dbcff086f53c12ff774465756a10",
+    "raw/eia930/EIA930_BALANCE_2024_Jul_Dec.csv": "a602a8e577cfdd2fa3083413eaa4dd8ba7f0d2b26a2986f8f6d22917465ea49f",
+    "raw/eia930/EIA930_BALANCE_2025_Jan_Jun.csv": "fac4bb991dfa1dab3b4b35300ccab54ac99be13a40ce91954db8ddafb2816242",
+    "raw/eia930/EIA930_BALANCE_2025_Jul_Dec.csv": "1146158b972439db7c7f4cc7d0491e07644ddbf244d03b8ecb44cb2c833d10f1",
+    "raw/eia930/EIA930_BALANCE_2026_Jan_Jun.csv": "1b3eaf7b0af08393f4d1593125b0c0f502f93e036d961b7dd6d50fc8e618582f",
+    "raw/eia930/EIA930_BALANCE_2026_Jul_Dec.csv": "b5f2247b9ad4fc9d0bec3c1d182903c74b57567086e28928d603391d4dbce0dd"
+  },
+  "code": "gridpilot.data.eia930.build_balance",
+  "lab_tree": "0dd46c18a331efe117806efc9ead70c4c81cb180",
+  "rebuild": {
+    "evidence": "docs/evidence/rebuild-20261027.json",
+    "clone_commit": "ef5b66f9e59ad57db594eb2007dd98a0312ebce6",
+    "data_dir": "/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild/data"
+  }
+}
