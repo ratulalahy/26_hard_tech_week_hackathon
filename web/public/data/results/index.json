@@ -1,5 +1,6 @@
 {
  "files": [
+  "case-days.json",
   "extensions.json",
   "flexibility-budget.json",
   "forecast-replay.json",

@@ -110,3 +110,27 @@ export const waterWithSpan = mspan(water.headline.change_with_hydro_gal.value);
 export const waterCaveats: string[] = water.caveats;
 /** the window in days, as the UI rounds it (not annualised) */
 export const waterDays = String(Math.round(water.window.n_hours.value / 24));
+
+/** T16: results/case-days.json. Per day: the date button, the rank, the peak and the Utah-cluster numbers, as printed. */
+export const caseDays = JSON.parse(readFileSync(join(results, 'case-days.json'), 'utf8'));
+const hr = (h: number) => `${h % 12 === 0 ? 12 : h % 12} ${h < 12 ? 'AM' : 'PM'}`;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const caseExpect = (caseDays.days as any[]).map((d) => ({
+  button: new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' }).format(new Date(d.date + 'T12:00:00Z')),
+  rank: `Rank ${d.rank.value} of ${caseDays.days_considered.n.value} days`,
+  cluster: `${hr(d.peak.hour_index.value)} peak hour, ${d.policies.U.utah_cluster_at_peak_mw.value.toFixed(2)} → ${d.policies.S.utah_cluster_at_peak_mw.value.toFixed(2)} MW`,
+  peak: `net load peaked at ${Number(d.peak.net_load_mw.value).toLocaleString('en-US')} MW at ${hr(d.peak.hour_index.value)}`,
+  slc: `${Math.round(d.weather.PACE_SLC.tmax_f.value)} °F high`,
+  context: (d.context as { kind: string; sentence: string }[]).find((c) => c.kind === 'none')?.sentence ?? '',
+  scale: (() => {
+    const u: number = d.policies.U.utah_cluster_at_peak_mw.value;
+    const peak: number = d.peak.net_load_mw.value; // unrounded, as the story line prints it (T20 merge fix)
+    return `Scale: about ${u < 1.5 ? u.toFixed(1) : Math.round(u)} MW against a ${peak.toLocaleString('en-US')} MW peak; illustrative.`;
+  })(),
+  // the Sep 2 caveat: a Utah workload under 60% of the other chosen days'
+  small: (() => {
+    const e = (x: any) => Object.values(x.policies.U.energy_mwh_by_site).reduce((a: number, v: any) => a + v.value, 0) as number;
+    const others = (caseDays.days as any[]).filter((x) => x.date !== d.date).map(e);
+    return e(d) / Math.max(...others) < 0.6;
+  })(),
+}));

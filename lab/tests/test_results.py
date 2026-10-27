@@ -27,7 +27,7 @@ from gridpilot.results import (
 
 ARTIFACTS = ("manifest.json", "metrics.json", "forecast-replay.json", "job-replay.json",
              "grid-profile.json", "workload-profile.json", "extensions.json", "storage.json",
-             "scenario-flows.json", "flexibility-budget.json")
+             "scenario-flows.json", "flexibility-budget.json", "case-days.json")
 
 
 # --------------------------------------------------------------------------- env()
@@ -283,6 +283,51 @@ def test_storage_evidence_classes():
     u = met["policies"]["U"]["metrics"]["co2_kg"]["value"] / 1000
     assert abs(sto["cases"]["U"]["base_co2_t"]["value"] - u) < 1e-6 * u
     assert abs(sto["combined"]["U_co2_t"]["value"] - u) < 1e-6 * u
+
+
+def test_case_days_evidence_classes_and_rule():
+    """T16 (D-066): the case study is illustrative and validation-only; the three days are the
+    pre-registered top 3 by PACE daily maximum net load, in rank order; grid series observed,
+    carbon modeled, policy outcomes simulated, weather forecast (descriptive); every context
+    source is labelled context, and each day has one."""
+    _committed()
+    cd = json.loads((RESULTS_DIR / "case-days.json").read_text())
+    man = json.loads((RESULTS_DIR / "manifest.json").read_text())
+    assert cd["kind"] == "illustrative" and cd["window"] == "validation"
+    assert cd["registered_run_id"] == man["run_id"]
+    assert man["case_days"]["canonical_sha256"] == canonical_hash(cd)
+    assert "D-066" in cd["rule"] and "earlier date" in cd["rule"]
+    days = cd["days"]
+    assert [d["rank"]["value"] for d in days] == [1, 2, 3]
+    top = [(r["date"], r["max_net_load_mw"]["value"]) for r in cd["ranking_top10"]]
+    assert top == sorted(top, key=lambda x: (-x[1], x[0]))
+    assert [d["date"] for d in days] == [t[0] for t in top[:3]]
+    assert all("2024-11-01" <= d["date"] < "2025-10-24" for d in days)
+    assert "context, not evidence" in cd["context_note"]
+    for d in days:
+        assert d["peak"]["net_load_mw"]["value"] == max(d["pace"]["net_load_mw"]["value"])
+        for k in ("demand_mw", "wind_mw", "solar_mw", "net_load_mw"):
+            assert d["pace"][k]["evidence"] == "observed", k
+        assert d["pace"]["ci_g_kwh"]["evidence"] == "modeled"
+        for p in ("U", "S", "W"):
+            pol = d["policies"][p]
+            for k in ("utah_cluster_mw", "co2_t", "utah_cluster_at_peak_mw", "moved_energy_mwh"):
+                assert pol[k]["evidence"] == "simulated", (p, k)
+        for w in d["weather"].values():
+            for k in ("tmax_f", "tmin_f", "cdd_65f", "hdd_65f"):
+                assert w[k]["evidence"] == "forecast", k
+        assert d["context"] and all("sentence" in c and "kind" in c for c in d["context"])
+        assert all(c["kind"] == "none" or c["url"].startswith("https://") for c in d["context"])
+    # execution and transfer each reconcile to the registered run; the total equals co2_kg
+    met = json.loads((RESULTS_DIR / "metrics.json").read_text())
+    for p in ("U", "S", "W"):
+        c = cd["accounting_check"][p]
+        for k in ("execution", "transfer", "total"):
+            assert abs(c[k]["sliced_kg"]["value"] - c[k]["accounting_kg"]["value"]) < 1e-3, (p, k)
+        tot = met["policies"][p]["metrics"]["co2_kg"]["value"]
+        assert abs(c["total"]["accounting_kg"]["value"] - tot) < 1e-6 * tot, p
+    assert cd["accounting_check"]["U"]["transfer"]["accounting_kg"]["value"] == 0
+    assert cd["accounting_check"]["S"]["transfer"]["accounting_kg"]["value"] > 0
 
 
 def test_manifest_carries_claim_frame():

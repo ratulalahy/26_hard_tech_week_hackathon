@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { EChart } from '../components/EChart';
 import { Panel, Strip, useWidth } from '../components/charts';
 import { Ev, EvCI } from '../components/ui';
+import { ToughDays } from '../components/caseDays';
 import { Legend } from './ControlRoom';
 import { C, ci2c } from '../lib/color';
 import { CORE, REGION, asNum, dayCurve, loadMonth, own, pname, yearMean, type Json } from '../lib/data';
@@ -45,6 +46,7 @@ export function Ribbon() {
         </div>
       </div>
 
+      <div className="grid min-h-0" style={{ gridTemplateColumns: data!.caseDays ? 'minmax(0,1fr) minmax(600px,0.8fr)' : 'minmax(0,1fr)', gap: 16 }}>
       <Panel className="flex flex-col min-h-0" style={{ padding: '12px 0 8px' }}>
         <div className="flex items-baseline justify-between" style={{ padding: '0 16px' }}>
           <span className="t-15">Utah · PacifiCorp East, a {lm.short} weekday</span>
@@ -53,6 +55,8 @@ export function Ribbon() {
         <div className="flex-1 min-h-0"><LoadChart rush={rush} clean={clean} dem={dem} net={net} sol={jul.solar_mw.value} month={lm.short} /></div>
         <CarbonRibbon curve={curve} />
       </Panel>
+      {data!.caseDays && <div className="flex min-h-0"><ToughDays /></div>}
+      </div>
 
       <div className="grid min-h-0" style={{ gridTemplateColumns: '1.25fr 1fr 1fr', gap: 16 }}>
         <ForecastPanel />

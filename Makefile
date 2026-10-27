@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test data notebooks profile slice need-run-dir ext-runs extensions storage flows water web freeze
+.PHONY: test data notebooks profile slice need-run-dir ext-runs extensions storage flows water case-days web freeze
 
 test:
 	cd lab && uv run pytest
@@ -78,6 +78,12 @@ flows: need-run-dir
 # against the committed data/manifests/water.json.
 water: need-run-dir
 	cd lab && uv run python scripts/export_water.py --registered-run $(RUN_DIR)
+
+# "Utah's toughest grid days" (Stage 3 T16, D-066; validation only, illustrative):
+# results/case-days.json and the manifest's `case_days` pointer. The pre-registered top 3
+# validation days by PACE daily maximum net load, day-sliced from RUN_DIR's ledgers.
+case-days: need-run-dir
+	cd lab && uv run python scripts/export_case_days.py --registered-run $(RUN_DIR)
 
 # The dashboard's validation-year grid context (Task 8): results/grid-profile.json.
 # RUN_DIR: the registered slice run (default runs/slice/<results/manifest.json run_id>).

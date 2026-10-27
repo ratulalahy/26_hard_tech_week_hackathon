@@ -1,7 +1,7 @@
 // Offline acceptance (Task 8 Step 1): the built dist/, served on localhost, makes no request to any other
 // host, and every view renders a value that comes from results/metrics.json.
 import { expect, test, type Page } from '@playwright/test';
-import { waterCaveats, waterDays, waterExSpan, waterWithSpan, bpatGpuH, budgetHeadline, consumptionSpan, exact, fixtureManifest, placementRange, sMovedExec, sRemoteExec, testOwn, testPlacementRange, testWaitPhrase, lCommonSupport, sAbout, sMobility, sOwn, sOwnCI, sProduction, sTonnes, storageCombined, storageFlatT, storageHeadline, storageRushDays, storageRushN, testSOwn, testTimeOnlyRange, timeOnlyRange, uTonnes } from './expected';
+import { caseExpect, waterCaveats, waterDays, waterExSpan, waterWithSpan, bpatGpuH, budgetHeadline, consumptionSpan, exact, fixtureManifest, placementRange, sMovedExec, sRemoteExec, testOwn, testPlacementRange, testWaitPhrase, lCommonSupport, sAbout, sMobility, sOwn, sOwnCI, sProduction, sTonnes, storageCombined, storageFlatT, storageHeadline, storageRushDays, storageRushN, testSOwn, testTimeOnlyRange, timeOnlyRange, uTonnes } from './expected';
 import { openTestYear, serveTestFixture } from './fixture-route';
 
 const LOCAL = new Set(['127.0.0.1', 'localhost', '[::1]']);
@@ -69,6 +69,29 @@ test('every view renders registered values with zero non-localhost requests', as
   await expect(page.getByTestId('ribbon-own-W_time')).toContainText('W wait-only'); // M9: each policy's own estimate
   await expect(page.getByTestId('forecast-chart')).toBeVisible();
   await expect(page.getByText('retrospective ±week MAE; not a prediction interval').first()).toBeVisible();
+  // T16 (D-066): the toughest-days card, one pre-registered day at a time
+  const days = page.getByRole('radiogroup', { name: 'Toughest days' }).getByRole('radio');
+  await expect(days).toHaveCount(3);
+  for (const [i, e] of caseExpect.entries()) {
+    await expect(days.nth(i)).toHaveText(e.button);
+    await days.nth(i).click();
+    await expect(days.nth(i)).toHaveAttribute('aria-checked', 'true');
+    await expect(page.getByTestId('case-story')).toContainText(e.rank);
+    await expect(page.getByTestId('case-story')).toContainText(e.cluster);
+    await expect(page.getByTestId('case-temp')).toContainText(e.peak);
+    await expect(page.getByTestId('case-temp')).toContainText(e.slc);
+    await expect(page.getByTestId('case-context')).toContainText('Context, not evidence');
+    await expect(page.getByTestId('case-context')).toContainText(e.context);
+    await expect(page.getByTestId('case-chart')).toBeVisible();
+    // fix round 1: totals include transfer; "by day" is explained; the scale note; SLC only
+    await expect(page.getByTestId('case-days').locator('..')).toContainText('CO₂ incl. transfer, by day');
+    await expect(page.getByTestId('case-note')).toContainText('CO₂ counted in the hour the job ran, transfer at arrival; a job spanning midnight is split between days. Not comparable to the annual saving.');
+    await expect(page.getByTestId('case-note')).toContainText(e.scale);
+    await expect(page.getByTestId('case-temp')).toContainText('Salt Lake City only');
+    if (e.small) await expect(page.getByTestId('case-note')).toContainText("This day's Utah workload was about half");
+    // every cited source is fully visible (no clamp)
+    for (const a of await page.getByTestId('case-context').getByRole('link').all()) await expect(a).toBeInViewport({ ratio: 1 });
+  }
 
   await page.goto('./#story');
   await expect(page.getByTestId('story-result')).toContainText(exact(sOwn));
