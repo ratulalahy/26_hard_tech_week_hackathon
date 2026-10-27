@@ -13,8 +13,8 @@ P1,Pitch,Draft 4:30 script + Q&A + one-pager + deck outline,Claude agent,done,AS
 O1,Owner,Review pitch drafts,Owner,next,P1,Tue 16:00,Tue 21:00,,comments,Tonight; anytime
 O2,Owner,Mac check: make web + preview in Chrome,Owner,next,,Tue 15:00,Tue 21:00,,ok / issues,git pull && make web && cd web && npm run preview
 O3,Owner,Decide: high effort for freeze/test/audit agents?,Owner,done,,Tue 15:00,Tue 18:00,Tue 15:29,,"Owner: yes, high effort for T12/T12r/T13/AD agents"
-T15,Post-test,Mobility/capacity toggle + flexibility budget + Astra copy fixes,Claude agent,in progress,P1,Tue 14:50,Tue 18:30,,PR #61 (merge after T13),Fix round after review (honesty/layout); merge after T13
-T15r,Review,Re-check T15 fixes,Claude reviewer,next,T15,Tue 15:54,Tue 19:00,,,Merge after T13
+T15,Post-test,Mobility/capacity toggle + flexibility budget + Astra copy fixes,Claude agent,done,P1,Tue 14:50,Tue 18:30,Tue 16:17,PR #61 (merge after T13),Fixes verified; PR #61 merges after T13
+T15r,Review,Re-check T15 fixes,Claude reviewer,done,T15,Tue 15:54,Tue 19:00,Tue 16:17,,Merge after T13
 T12,Freeze,make data + independent rebuild + freeze writer,Claude agent,in progress,T11r;T10br,Tue 15:44,Tue 19:30,,docs/evidence/rebuild-20261027.json,High effort if owner agrees (O3). Any hash mismatch stops the freeze
 T12r,Review,Review rebuild + freeze record,Claude reviewer,queued,T12,Tue 20:30,Tue 21:15,,review note,
 FZ,Freeze,Write freeze.json on main + tag config-freeze,Claude lead,queued,T12r,Tue 21:15,Tue 21:30,,tag config-freeze,Go/no-go check
