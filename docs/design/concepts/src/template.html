@@ -1,0 +1,1041 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gridpilot concepts, round 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..700&family=Funnel+Sans:ital,wght@0,300..700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ───────────────────────── Tokens: one meaning per colour ───────────────────────── */
+:root{
+  color-scheme: light;
+  /* atmosphere + neutrals (cool, soft) */
+  --sky-0:#f5f8f9; --sky-1:#e9eff2; --sky-2:#dfe8ec; --ocean:#dce6eb;
+  --ink:#1c2832; --ink-2:#424f5a; --ink-3:#4e5a64;
+  --hair:rgba(28,40,50,.13); --hair-2:rgba(28,40,50,.07);
+  /* carbon intensity: one "smoke" ramp, light = clean, dark = dirty (0 → 750 g/kWh) */
+  --smoke-0:#f4f6f8; --smoke-1:#dce0e4; --smoke-2:#c5cad0; --smoke-3:#afb5bc;
+  --smoke-4:#9aa0a8; --smoke-5:#858c94; --smoke-6:#717880; --smoke-7:#5f656b;
+  /* grid stress / rush hour: one soft warm tone, bands + outlines only */
+  --rush:#c76a5f; --rush-fill:#f6c2c6; --rush-wash:rgba(246,194,198,.30);
+  /* solar: pale gold, fill only */
+  --solar:#eed780; --solar-mark:#cfae42;
+  /* our router's action: one calm accent */
+  --route:#2256bb; --route-soft:#dce5f5; --route-wash:rgba(34,86,187,.09);
+  /* glass */
+  --glass:rgba(255,255,255,.60); --glass-strong:rgba(255,255,255,.78);
+  --glass-edge:rgba(255,255,255,.80);
+  --glass-shadow:
+     inset 0 1px 0 rgba(255,255,255,.75),
+     0 0 0 1px rgba(28,40,50,.055),
+     0 2px 4px rgba(28,40,50,.04),
+     0 14px 32px -14px rgba(28,40,50,.20),
+     0 40px 80px -40px rgba(28,40,50,.18);
+  --blur:blur(22px) saturate(160%);
+  --r-sheet:24px; --r-dock:20px; --r-inner:12px;
+  --display:'Funnel Display', ui-sans-serif, system-ui, sans-serif;
+  --ui:'Funnel Sans', ui-sans-serif, system-ui, sans-serif;
+  --foot:24px; --top:76px;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  font-family:var(--ui); color:var(--ink); font-size:14px; line-height:1.45;
+  font-variant-numeric:tabular-nums; -webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(1100px 700px at 8% -12%, #ffffff 0%, rgba(255,255,255,0) 62%),
+    radial-gradient(900px 640px at 104% 108%, #d9e5ea 0%, rgba(217,229,234,0) 70%),
+    linear-gradient(180deg, var(--sky-0) 0%, var(--sky-1) 100%);
+  background-attachment:fixed; overflow:hidden;
+}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--route);outline-offset:2px;border-radius:8px}
+.glass{
+  background:var(--glass); -webkit-backdrop-filter:var(--blur); backdrop-filter:var(--blur);
+  border:1px solid var(--glass-edge); box-shadow:var(--glass-shadow);
+}
+.glass.strong{background:var(--glass-strong)}
+.hide{display:none!important}
+
+/* ── type scale (≈ 1.25, Bringhurst-style) ── */
+.h-xl{font-family:var(--display);font-weight:380;font-size:clamp(30px,2.55vw,44px);line-height:1.06;letter-spacing:-.018em;margin:0}
+.h-l{font-family:var(--display);font-weight:420;font-size:clamp(22px,1.75vw,30px);line-height:1.12;letter-spacing:-.012em;margin:0}
+.h-m{font-family:var(--display);font-weight:480;font-size:18px;line-height:1.2;letter-spacing:-.006em;margin:0}
+.lede{font-size:15px;color:var(--ink-2);max-width:68ch;margin:6px 0 0}
+.small{font-size:12.5px;color:var(--ink-3)}
+.num{font-family:var(--display);font-weight:400;letter-spacing:-.02em}
+.unit{font-size:.5em;color:var(--ink-3);letter-spacing:0;margin-left:.2em;font-family:var(--ui)}
+
+/* ── evidence labels: neutral ink + a shape that encodes the label ── */
+.ev{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-3);white-space:nowrap;font-weight:450}
+.ev::before{content:"";width:8px;height:8px;border-radius:50%;flex:none;box-sizing:border-box}
+.ev.obs::before{background:var(--ink-2)}
+.ev.mod::before{background:linear-gradient(90deg,var(--ink-2) 50%,transparent 50%);border:1.4px solid var(--ink-2)}
+.ev.sim::before{border:1.6px solid var(--ink-2)}
+.ev.asm::before{border:1.4px dashed var(--ink-2);border-radius:2px;transform:rotate(45deg);width:7px;height:7px}
+
+/* ── top bar ── */
+.topbar{position:fixed;z-index:30;top:14px;left:16px;right:16px;height:52px;border-radius:18px;
+  display:flex;align-items:center;gap:18px;padding:0 10px 0 18px}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand b{font-family:var(--display);font-weight:520;font-size:19px;letter-spacing:-.01em}
+.brand span{font-size:12.5px;color:var(--ink-3);white-space:nowrap}
+.tabs{position:relative;display:flex;gap:2px;padding:4px;border-radius:14px;background:rgba(28,40,50,.05);margin:0 auto}
+.tabs a{position:relative;z-index:1;text-decoration:none;color:var(--ink-2);font-size:13.5px;font-weight:480;padding:7px 14px;border-radius:10px;white-space:nowrap;transition:color .2s}
+.tabs a[aria-current="page"]{color:var(--ink)}
+.tabs .thumb{position:absolute;z-index:0;top:4px;bottom:4px;border-radius:10px;background:rgba(255,255,255,.92);
+  box-shadow:0 1px 2px rgba(28,40,50,.10),0 0 0 1px rgba(28,40,50,.04)}
+body.live .tabs .thumb{transition:left .32s var(--ease),width .32s var(--ease)}
+.skeptic{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:12px;border:0;background:none;cursor:pointer;font-size:13px;color:var(--ink-2)}
+.skeptic .sw{width:34px;height:20px;border-radius:10px;background:rgba(28,40,50,.16);position:relative;transition:background .25s}
+.skeptic .sw::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .25s var(--ease)}
+.skeptic[aria-pressed="true"] .sw{background:var(--ink-2)}
+.skeptic[aria-pressed="true"] .sw::after{transform:translateX(14px)}
+
+/* ── shared world (relief map) ── */
+.scene{position:fixed;inset:0;z-index:0;pointer-events:none;transition:opacity .45s var(--ease),transform .6s var(--ease),filter .45s}
+.scene svg{position:absolute;display:block}
+body[data-view="control"] .scene{opacity:1;pointer-events:auto}
+body[data-view="ribbon"] .scene{opacity:.7;transform:translate(18vw,10vh) scale(1.25)}
+body[data-view="cockpit"] .scene{opacity:.7;transform:translate(-24vw,12vh) scale(1.3)}
+body[data-view="story"] .scene{opacity:.6;transform:translate(22vw,4vh) scale(1.1)}
+body[data-view="system"] .scene{opacity:.5;transform:translate(26vw,6vh) scale(1.05)}
+@media (prefers-reduced-motion:reduce){.scene,.tabs .thumb,*{transition:none!important;animation:none!important}}
+
+/* ── views ── */
+.view{position:fixed;inset:0;z-index:5;display:none}
+.view.on{display:block}
+.footer{position:fixed;z-index:40;left:22px;right:22px;bottom:4px;height:18px;font-size:clamp(10px,.68vw,11px);color:var(--ink-3);display:flex;gap:16px;white-space:nowrap;overflow:hidden}
+.footer b{font-weight:520;color:var(--ink-2)}
+
+/* segmented control (run now / wait / move) */
+.seg{display:inline-flex;padding:3px;border-radius:12px;background:rgba(28,40,50,.06);gap:2px}
+.seg button{border:0;background:none;padding:7px 13px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:480;color:var(--ink-2);display:flex;align-items:center;gap:7px}
+.seg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(28,40,50,.12)}
+.seg button[aria-pressed="true"][data-mode]{box-shadow:0 1px 2px rgba(28,40,50,.12), inset 0 -2px 0 var(--route)}
+.chipbtn{border:1px solid var(--hair);background:rgba(255,255,255,.55);border-radius:999px;padding:4px 11px;font-size:12.5px;cursor:pointer;color:var(--ink-2)}
+.chipbtn[aria-pressed="true"]{border-color:var(--route);color:var(--ink);background:#fff;box-shadow:inset 0 0 0 1px var(--route)}
+
+/* tooltip */
+.tip{position:fixed;z-index:60;pointer-events:none;padding:8px 10px;border-radius:10px;font-size:12.5px;max-width:260px;opacity:0;transition:opacity .12s;line-height:1.35}
+.tip.on{opacity:1}
+
+/* ───────── 1. Control room ───────── */
+#v-control{pointer-events:none}
+#v-control > *{pointer-events:auto}
+#v-control .dock{position:absolute;top:var(--top);border-radius:var(--r-dock);overflow:hidden;display:flex;flex-direction:column}
+#v-control .dock-l{left:16px;width:clamp(300px,21vw,370px);bottom:calc(var(--foot) + 16px + var(--tl-h) + 14px)}
+#v-control .dock-r{right:16px;width:clamp(318px,22vw,388px);bottom:calc(var(--foot) + 16px + var(--tl-h) + 14px)}
+#v-control{--tl-h:clamp(178px,19vh,212px)}
+.dock-head{padding:20px 22px 14px}
+.dock-head .h-l{font-size:clamp(22px,1.62vw,28px)}
+.dock-sub{font-size:13px;color:var(--ink-2);margin-top:6px}
+.region-list{list-style:none;margin:0;padding:4px 10px 10px;overflow:auto;flex:1}
+.region{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 12px;border-radius:14px;cursor:pointer;border:1px solid transparent;transition:background .2s,border-color .2s}
+.region:hover{background:rgba(255,255,255,.55)}
+.region[aria-pressed="true"]{background:rgba(255,255,255,.7);border-color:rgba(34,86,187,.35)}
+.region .nm{font-weight:520;font-size:14px;display:flex;align-items:center;gap:8px}
+.region .nm i{font-style:normal;font-weight:420;color:var(--ink-3);font-size:12px}
+.region .val{font-family:var(--display);font-size:22px;letter-spacing:-.02em;text-align:right;line-height:1}
+.region .val small{font-family:var(--ui);font-size:11px;color:var(--ink-3);margin-left:3px;letter-spacing:0}
+.region .strip{grid-column:1/-1;height:16px;margin-top:6px}
+.region .meta{grid-column:1/-1;font-size:12px;color:var(--ink-3);display:flex;justify-content:space-between}
+.region.faded{opacity:.8;cursor:default}
+.region.hero{background:rgba(255,255,255,.45)}
+.sw-dot{width:12px;height:12px;border-radius:4px;flex:none;box-shadow:inset 0 0 0 1px rgba(28,40,50,.12)}
+.dock-foot{padding:10px 22px 16px;border-top:1px solid var(--hair-2)}
+.legend-ramp svg{display:block}
+
+.planner{padding:20px 22px;display:flex;flex-direction:column;gap:14px;flex:1;min-height:0}
+.job-line{font-family:var(--display);font-size:20px;line-height:1.3;letter-spacing:-.01em;font-weight:400}
+.job-line b{font-weight:520}
+.outcomes{display:flex;flex-direction:column;gap:12px}
+.oc{display:grid;grid-template-columns:1fr auto;gap:3px 8px;align-items:baseline;padding:10px 12px;border-radius:14px;border:1px solid transparent;cursor:pointer;background:none;text-align:left;width:100%}
+.oc:hover{background:rgba(255,255,255,.5)}
+.oc[aria-pressed="true"]{background:rgba(255,255,255,.72);border-color:rgba(34,86,187,.38)}
+.oc .lbl{font-weight:520;font-size:13.5px}
+.oc .lbl i{font-style:normal;font-weight:420;color:var(--ink-3);font-size:12px;margin-left:4px}
+.oc .v{font-family:var(--display);font-size:20px;letter-spacing:-.02em}
+.oc .bar{grid-column:1/-1;height:14px}
+.oc .d{grid-column:1/-1;font-size:12px;color:var(--ink-3);display:flex;justify-content:space-between}
+.verdict{border-radius:14px;padding:12px 14px;background:var(--route-wash);border:1px solid rgba(34,86,187,.18);font-size:13.5px;color:var(--ink)}
+.verdict b{font-weight:560}
+.skeptic-note{border-radius:14px;padding:11px 14px;background:rgba(28,40,50,.05);border:1px dashed rgba(28,40,50,.25);font-size:12.5px;color:var(--ink-2)}
+
+.timeline{position:absolute;left:16px;right:16px;bottom:calc(var(--foot) + 16px);height:var(--tl-h);border-radius:var(--r-dock);display:flex;align-items:stretch;padding:12px 18px 10px 12px;gap:12px}
+.tl-ctl{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;width:88px;flex:none;border-right:1px solid var(--hair-2);padding-right:10px}
+.play{width:42px;height:42px;border-radius:50%;border:1px solid var(--hair);background:rgba(255,255,255,.85);cursor:pointer;display:grid;place-items:center;box-shadow:0 1px 2px rgba(28,40,50,.08)}
+.play svg{width:14px;height:14px}
+.tl-hour{font-family:var(--display);font-size:19px;letter-spacing:-.01em}
+.tl-svg{flex:1;min-width:0;position:relative;cursor:ew-resize;touch-action:none}
+.tl-svg svg{position:absolute;inset:0;width:100%;height:100%}
+
+@media (max-height:1000px){
+  #v-control .region.faded{display:none}
+  #v-control .region{padding:8px 12px}
+  #v-control .dock-head{padding:16px 20px 10px}
+  #v-control .planner{gap:10px;padding:16px 20px}
+  #v-control .oc{padding:8px 12px}
+  #cr-hours-wrap{display:none}
+}
+/* ───────── 2. Day ribbon ───────── */
+#v-ribbon .wrap{position:absolute;top:var(--top);left:16px;right:16px;bottom:calc(var(--foot) + 12px);display:grid;grid-template-rows:auto 1fr auto;gap:14px}
+.title-row{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding:6px 8px 0}
+.sheet{border-radius:var(--r-sheet);position:relative;overflow:hidden}
+#rib-hero{min-height:0}
+#rib-hero svg,#rib-neigh svg,#rib-year svg{display:block;width:100%;height:100%}
+.rib-bottom{display:grid;grid-template-columns:1.62fr 1fr;gap:14px;height:clamp(260px,29vh,322px)}
+.sheet-head{position:absolute;top:16px;left:20px;right:20px;display:flex;justify-content:space-between;align-items:baseline;gap:12px;pointer-events:none}
+.sheet-head > *{pointer-events:auto}
+
+/* ───────── 3. Decision cockpit ───────── */
+#v-cockpit .wrap{position:absolute;top:var(--top);left:16px;right:16px;bottom:calc(var(--foot) + 12px);display:grid;grid-template-columns:1fr clamp(400px,31vw,540px);gap:14px}
+.ck-main{display:grid;grid-template-rows:auto 1fr;gap:14px;min-height:0}
+.sentence{padding:28px 34px 24px;border-radius:var(--r-sheet)}
+.sentence p{font-family:var(--display);font-weight:340;font-size:clamp(26px,2.2vw,38px);line-height:1.34;letter-spacing:-.015em;margin:0;max-width:44ch}
+.scrub{display:inline-flex;align-items:baseline;gap:2px;border:0;background:rgba(255,255,255,.7);border-radius:12px;padding:0 10px 2px;margin:0 2px;cursor:ew-resize;
+  font-family:var(--display);font-weight:500;font-size:inherit;letter-spacing:-.02em;color:var(--ink);box-shadow:inset 0 -2px 0 var(--route),0 1px 2px rgba(28,40,50,.08);touch-action:none;user-select:none}
+.scrub:hover{background:#fff}
+.sentence .hint{margin-top:14px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.ck-out{border-radius:var(--r-sheet);padding:22px 30px 18px;display:flex;flex-direction:column;min-height:0}
+.ck-out .top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+#ck-lanes{flex:1;min-height:0;margin-top:10px}
+#ck-lanes svg{display:block;width:100%;height:100%}
+.ck-side{display:grid;grid-template-rows:1fr auto;gap:14px;min-height:0}
+.ck-map{border-radius:var(--r-sheet);position:relative;overflow:hidden;min-height:0}
+.ck-map svg{position:absolute;inset:0;width:100%;height:100%}
+.ck-map .cap{position:absolute;left:18px;top:16px;right:18px}
+.ck-day{border-radius:var(--r-sheet);padding:16px 18px 12px;height:clamp(200px,22vh,240px);display:flex;flex-direction:column}
+#ck-day{flex:1;min-height:0}
+#ck-day svg{display:block;width:100%;height:100%}
+
+/* ───────── 4. Story scroll ───────── */
+#v-story .scroller{position:absolute;top:70px;left:0;right:0;bottom:var(--foot);overflow-y:auto;scroll-behavior:smooth}
+#v-story .grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(360px,1fr);gap:28px;padding:6px 24px 0 16px}
+.sticky{position:sticky;top:6px;height:calc(100vh - 70px - var(--foot) - 18px);border-radius:var(--r-sheet);overflow:hidden}
+.sticky svg{display:block;width:100%;height:100%}
+.sticky .cap{position:absolute;left:26px;top:22px;right:26px}
+.steps{padding:0 8px 34vh 0}
+.step{min-height:calc(100vh - 70px - var(--foot));display:flex;flex-direction:column;justify-content:center;padding:20px 0}
+.step .card{padding:26px 28px;border-radius:var(--r-dock);transition:opacity .3s,background .3s;opacity:.5}
+.step.on .card{opacity:1;background:var(--glass-strong)}
+.step .n{font-family:var(--display);font-size:13px;color:var(--ink-3);display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.step .n::after{content:"";height:1px;flex:1;background:var(--hair)}
+.step p{color:var(--ink-2);font-size:15px;max-width:52ch;margin:10px 0 0}
+.step .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.step:last-child{min-height:calc(100vh - 70px - var(--foot))}
+.story-rail{position:fixed;z-index:6;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px}
+.story-rail i{width:6px;height:6px;border-radius:50%;background:rgba(28,40,50,.2)}
+.story-rail i.on{background:var(--ink-2);height:18px;border-radius:3px}
+
+/* ───────── 5. Design system ───────── */
+#v-system .scroller{position:absolute;top:70px;left:0;right:0;bottom:var(--foot);overflow-y:auto}
+#v-system .inner{padding:6px 16px 24px;display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.ds{border-radius:var(--r-dock);padding:22px 24px}
+.ds h3{font-family:var(--display);font-weight:500;font-size:17px;margin:0 0 4px}
+.ds .why{font-size:13px;color:var(--ink-2);margin:0 0 14px;max-width:60ch}
+.tok{display:flex;gap:12px;align-items:center;margin:8px 0}
+.tok .s{width:44px;height:30px;border-radius:9px;box-shadow:inset 0 0 0 1px rgba(28,40,50,.10);flex:none}
+.tok code{font-size:12px;color:var(--ink-3);font-family:var(--ui)}
+.tok b{font-weight:520;font-size:13.5px;display:block}
+.ramp{display:flex;border-radius:10px;overflow:hidden;height:46px;box-shadow:inset 0 0 0 1px rgba(28,40,50,.08)}
+.ramp div{flex:1;display:flex;align-items:flex-end;padding:5px 6px;font-size:11px}
+pre.val{font-size:11.5px;line-height:1.5;background:rgba(255,255,255,.6);border-radius:12px;padding:12px 14px;margin:8px 0 0;white-space:pre-wrap;color:var(--ink-2);font-family:var(--ui)}
+.typespec{display:flex;flex-direction:column;gap:10px}
+</style>
+</head>
+<body data-view="control">
+
+<div class="scene" id="scene" aria-hidden="true"><svg id="world"></svg></div>
+
+<header class="topbar glass strong">
+  <div class="brand"><b>Gridpilot</b><span>Tomorrow's grid, for AI jobs · concepts, round 2</span></div>
+  <nav class="tabs" id="tabs" aria-label="Dashboard concepts">
+    <span class="thumb" id="thumb"></span>
+    <a href="#control">Control room</a>
+    <a href="#ribbon">Day ribbon</a>
+    <a href="#cockpit">Decision cockpit</a>
+    <a href="#story">Story scroll</a>
+    <a href="#system">Design system</a>
+  </nav>
+  <button class="skeptic" id="skeptic" aria-pressed="false" title="Show the marginal-intensity caveat">
+    <span class="sw" aria-hidden="true"></span>Skeptic mode
+  </button>
+</header>
+
+<!-- 1 · CONTROL ROOM -->
+<section class="view" id="v-control" aria-label="Control room">
+  <aside class="dock dock-l glass strong">
+    <div class="dock-head">
+      <h1 class="h-l" id="cr-title">Moving beats waiting</h1>
+      <div class="dock-sub" id="cr-sub"></div>
+    </div>
+    <ul class="region-list" id="cr-regions"></ul>
+    <div class="dock-foot legend-ramp" id="cr-legend"></div>
+  </aside>
+  <aside class="dock dock-r glass strong">
+    <div class="planner">
+      <div>
+        <div class="small" style="display:flex;justify-content:space-between"><span>Plan a run</span><span class="ev sim">simulated</span></div>
+        <div class="job-line" id="cr-job"></div>
+      </div>
+      <div class="seg" role="group" aria-label="Router action" data-seg="mode">
+        <button data-mode="now">Run now</button><button data-mode="wait">Wait</button><button data-mode="move">Move</button>
+      </div>
+      <div class="outcomes" id="cr-outcomes"></div>
+      <div id="cr-verdict"></div>
+      <div id="cr-hours-wrap" style="margin-top:6px"><div class="small" style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Where the job's hours land</span><span class="ev mod">modeled</span></div><div id="cr-hours"></div></div>
+    </div>
+  </aside>
+  <div class="timeline glass strong" id="cr-tl">
+    <div class="tl-ctl">
+      <button class="play" id="cr-play" aria-label="Play the day"><svg viewBox="0 0 14 14"><path d="M3 1.5v11l9.5-5.5z" fill="#1c2832"/></svg></button>
+      <div class="tl-hour" id="cr-hour">7 PM</div>
+      <div class="small" style="text-align:center;line-height:1.25">July<br>weekday</div>
+    </div>
+    <div class="tl-svg" id="cr-tlsvg" role="slider" tabindex="0" aria-label="Hour of day" aria-valuemin="0" aria-valuemax="23"></div>
+  </div>
+</section>
+
+<!-- 2 · DAY RIBBON -->
+<section class="view" id="v-ribbon" aria-label="Day ribbon">
+  <div class="wrap">
+    <div class="title-row">
+      <div>
+        <h1 class="h-xl">In Utah, the clean hours aren't the rush hours</h1>
+        <p class="lede">A July weekday on PacifiCorp East. Carbon is lowest from 9 AM to 5 PM while the sun is up. The grid's rush comes after sunset, from 7 to 11 PM, when net load peaks at 8 PM.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        <span class="small">Where the 8-hour job arriving at <span class="arr-lbl">7 PM</span> runs</span>
+        <div class="seg" role="group" aria-label="Router action" data-seg="mode">
+          <button data-mode="now">Run now</button><button data-mode="wait">Wait</button><button data-mode="move">Move</button>
+        </div>
+      </div>
+    </div>
+    <div class="sheet glass" id="rib-hero"></div>
+    <div class="rib-bottom">
+      <div class="sheet glass" id="rib-neigh"></div>
+      <div class="sheet glass" id="rib-year"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 · DECISION COCKPIT -->
+<section class="view" id="v-cockpit" aria-label="Decision cockpit">
+  <div class="wrap">
+    <div class="ck-main">
+      <div class="sentence glass strong">
+        <p id="ck-sentence"></p>
+        <div class="hint"><span class="small">Drag a number sideways, or focus it and use the arrow keys.</span><span class="ev asm">assumed 0.7 kWh per GPU-hour</span><span class="ev mod">carbon: July average day</span></div>
+      </div>
+      <div class="ck-out glass">
+        <div class="top">
+          <div><h2 class="h-l" id="ck-verdict"></h2><div class="dock-sub" id="ck-verdict-sub"></div></div>
+          <div class="seg" role="group" aria-label="Router action" data-seg="mode">
+            <button data-mode="now">Run now</button><button data-mode="wait">Wait</button><button data-mode="move">Move</button>
+          </div>
+        </div>
+        <div id="ck-lanes"></div>
+      </div>
+    </div>
+    <div class="ck-side">
+      <div class="ck-map glass" id="ck-map"></div>
+      <div class="ck-day glass strong">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="h-m">Where the hours land</span><span class="ev mod">modeled carbon</span></div>
+        <div id="ck-day"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 · STORY SCROLL -->
+<section class="view" id="v-story" aria-label="Story scroll">
+  <div class="scroller" id="st-scroller">
+    <div class="grid">
+      <div class="sticky glass" id="st-visual"></div>
+      <div class="steps" id="st-steps">
+        <div class="step" data-step="1"><div class="card glass">
+          <div class="n">1 of 6 · Rush hour</div>
+          <h2 class="h-l">Utah's grid has a rush hour, and it comes after sunset</h2>
+          <p>On a July weekday, demand peaks at 5 PM. Then the sun sets and solar drops away, so the load the rest of the fleet must carry, the net load, keeps climbing to 8 PM.</p>
+          <div class="row"><span class="ev obs">observed · EIA-930, July 2025 weekdays</span></div>
+        </div></div>
+        <div class="step" data-step="2"><div class="card glass">
+          <div class="n">2 of 6 · Predictable</div>
+          <h2 class="h-l">It happens at the same hours, every summer</h2>
+          <p>All of the year's 100 highest net-load hours fall between June and September, between 3 PM and 11 PM. A traffic report can see them coming.</p>
+          <div class="row"><span class="ev obs">observed · validation year</span></div>
+        </div></div>
+        <div class="step" data-step="3"><div class="card glass">
+          <div class="n">3 of 6 · Move vs wait</div>
+          <h2 class="h-l">Waiting helps. Moving helps far more.</h2>
+          <p>An 8-hour, 64-GPU job arrives at 7 PM. Run now in Utah: 658 g/kWh. Wait for 9 AM: 439, a third cleaner. Send it to Northwest hydro: 46, which is 93% cleaner.</p>
+          <div class="row"><div class="seg" role="group" aria-label="Router action" data-seg="mode"><button data-mode="now">Run now</button><button data-mode="wait">Wait</button><button data-mode="move">Move</button></div><span class="ev sim">simulated · perfect foresight</span></div>
+        </div></div>
+        <div class="step" data-step="4"><div class="card glass">
+          <div class="n">4 of 6 · What it's worth</div>
+          <h2 class="h-l">One run, three footprints</h2>
+          <p id="st-worth"></p>
+          <div class="row"><span class="ev asm">assumed 0.7 kWh per GPU-hour</span><span class="ev sim">simulated</span></div>
+        </div></div>
+        <div class="step" data-step="5"><div class="card glass">
+          <div class="n">5 of 6 · Clean is not rush</div>
+          <h2 class="h-l">So the router chases clean hours, not quiet ones</h2>
+          <p>In Utah the dirtiest hours are coal nights, and the rush is the early evening. They barely overlap. An emissions-first router moves work from nights into the midday solar stretch, not out of the 7–11 PM rush.</p>
+          <div class="row"><span class="ev mod">modeled carbon</span><span class="ev obs">observed load</span></div>
+        </div></div>
+        <div class="step" data-step="6"><div class="card glass">
+          <div class="n">6 of 6 · Tomorrow</div>
+          <h2 class="h-l">Every evening, a report for tomorrow</h2>
+          <p>The product publishes a day-ahead report: when Utah's grid will be clean, when it will be jammed, and where a job should go instead. This preview fills it with the July average day; the forecast will replace it.</p>
+          <div class="row"><span class="ev mod">layout preview · July average day stands in for the forecast</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+  <div class="story-rail" id="st-rail" aria-hidden="true"></div>
+</section>
+
+<!-- 5 · DESIGN SYSTEM -->
+<section class="view" id="v-system" aria-label="Design system">
+  <div class="scroller"><div class="inner" id="ds"></div></div>
+</section>
+
+<div class="footer" id="footer">
+  <span><b>Data:</b> EIA-930 hourly balance and CO₂, validation year Nov 2024–Oct 2025 (pre-test). Jobs simulated, perfect foresight.</span>
+  <span>BA boundaries © Electricity Maps contributors (AGPL-3.0). BA codes: U.S. EIA Form EIA-930. Basemap: Natural Earth.</span>
+</div>
+<div class="tip glass strong" id="tip" role="tooltip"></div>
+
+<script>
+const D = __DATA__;
+const G = __GEO__;
+const GROUND = "__GROUND__";
+
+/* ───────── colour ───────── */
+const SMOKE = ['#f4f6f8','#dce0e4','#c5cad0','#afb5bc','#9aa0a8','#858c94','#717880','#5f656b'];
+const CI_MAX = 750;
+const C = {ink:'#1c2832',ink2:'#424f5a',ink3:'#4e5a64',hair:'rgba(28,40,50,.13)',hair2:'rgba(28,40,50,.07)',
+  rush:'#c76a5f',rushFill:'#f6c2c6',solar:'#eed780',solarMark:'#cfae42',route:'#2256bb',routeSoft:'#dce5f5'};
+const toLin = c => c <= 0.04045 ? c/12.92 : ((c+0.055)/1.055)**2.4;
+const toSrgb = c => c <= 0.0031308 ? 12.92*c : 1.055*c**(1/2.4)-0.055;
+function hexToOklab(h){const [r,g,b]=[1,3,5].map(i=>toLin(parseInt(h.slice(i,i+2),16)/255));
+  const l=Math.cbrt(0.4122214708*r+0.5363325363*g+0.0514459929*b),m=Math.cbrt(0.2119034982*r+0.6806995451*g+0.1073969566*b),s=Math.cbrt(0.0883024619*r+0.2817188376*g+0.6299787005*b);
+  return [0.2104542553*l+0.7936177850*m-0.0040720468*s,1.9779984951*l-2.4285922050*m+0.4505937099*s,0.0259040371*l+0.7827717662*m-0.8086757660*s];}
+function oklabToHex([L,a,b]){const l=(L+0.3963377774*a+0.2158037573*b)**3,m=(L-0.1055613458*a-0.0638541728*b)**3,s=(L-0.0894841775*a-1.2914855480*b)**3;
+  const rgb=[4.0767416621*l-3.3077115913*m+0.2309699292*s,-1.2684380046*l+2.6097574011*m-0.3413193965*s,-0.0041960863*l-0.7034186147*m+1.7076147010*s];
+  return '#'+rgb.map(v=>Math.round(Math.max(0,Math.min(1,toSrgb(v)))*255).toString(16).padStart(2,'0')).join('');}
+const SMOKE_LAB = SMOKE.map(hexToOklab);
+function ci2c(v){ const t=Math.max(0,Math.min(1,v/CI_MAX))*(SMOKE.length-1); const i=Math.min(SMOKE.length-2,Math.floor(t)), f=t-i;
+  return oklabToHex(SMOKE_LAB[i].map((x,k)=>x+(SMOKE_LAB[i+1][k]-x)*f)); }
+function lumHex(h){const [r,g,b]=[1,3,5].map(i=>toLin(parseInt(h.slice(i,i+2),16)/255));return .2126*r+.7152*g+.0722*b}
+const onFill = h => lumHex(h) > 0.2 ? C.ink : '#ffffff';
+
+/* ───────── data + model ───────── */
+const CUR = D.july_ci_curves;               // modeled carbon, July average day
+const PJ = D.pace_july;                      // observed load, July weekdays
+const REG = {
+  PACE:{name:'Utah', full:'PacifiCorp East', pt:D.map.points.PACE},
+  BPAT:{name:'Northwest hydro', full:'Bonneville Power', pt:D.map.points.BPAT},
+  CISO:{name:'California', full:'California ISO', pt:G.anchors.CISO},
+  NEVP:{name:'Nevada', full:'NV Energy', pt:D.map.points.NEVP},
+  AZPS:{name:'Arizona', full:'Arizona Public Service', pt:D.map.points.AZPS},
+  PSCO:{name:'Colorado', full:'Public Service Co. of Colorado', pt:D.map.points.PSCO},
+};
+const DESTS = ['BPAT','CISO','NEVP'];
+const MEAN = D.ba_mean_ci;
+const KWH_PER_GPUH = 0.7;                    // assumed (plan v2)
+const MARG = [498, 658];                     // marginal proxy range, all hours
+const RUSH = [19,20,21,22], CLEAN = [9,10,11,12,13,14,15,16];
+const S = {view:'control', hour:19, mode:'move', dest:'BPAT', skeptic:false, gpus:64, hours:8, maxWait:24, step:1, playing:false};
+
+const wmean = (cv,s,H) => { let t=0; for(let i=0;i<H;i++) t+=cv[(s+i)%24]; return t/H; };
+function plan(){
+  const a=S.hour, H=S.hours, P=CUR.PACE;
+  const now = wmean(P,a,H);
+  let wait = {s:a,d:0,v:now};
+  for(let d=0; d<=S.maxWait; d++){ const v=wmean(P,(a+d)%24,H); if(v < wait.v-1e-9) wait={s:(a+d)%24,d,v}; }
+  const moves = Object.fromEntries(DESTS.map(k=>[k,wmean(CUR[k],a,H)]));
+  const kwh = S.gpus*H*KWH_PER_GPUH;
+  const cut = v => Math.round((1-v/now)*100);
+  return {a,H,now,wait,moves,move:moves[S.dest],kwh,cut,kg:v=>kwh*v/1000};
+}
+const fmtH = h => { h=((h%24)+24)%24; const s=h<12?'AM':'PM'; const k=h%12===0?12:h%12; return `${k} ${s}`; };
+const fmtSpan = (s,H) => `${fmtH(s)}–${fmtH(s+H)}`;
+const r0 = v => Math.round(v);
+const sig2 = v => { if(v<1) return v.toFixed(1); const p=Math.pow(10,Math.floor(Math.log10(v))-1); return (Math.round(v/p)*p).toLocaleString('en-US'); };
+const fmtN = v => Math.round(v).toLocaleString('en-US');
+
+/* ───────── svg helpers ───────── */
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const T = (x,y,txt,o={}) => `<text x="${x}" y="${y}" ${o.a?`text-anchor="${o.a}"`:''} font-size="${o.s||12}" fill="${o.c||C.ink3}" ${o.w?`font-weight="${o.w}"`:''} ${o.f==='d'?`font-family="Funnel Display"`:''} ${o.halo?'class="halo"':''} ${o.base?`dominant-baseline="${o.base}"`:''} ${o.ls?`letter-spacing="${o.ls}"`:''}>${esc(txt)}</text>`;
+const SVGDEFS = `<defs>
+ <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="${C.rushFill}" fill-opacity=".55"/><line x1="0" y1="0" x2="0" y2="6" stroke="${C.rush}" stroke-width="1.3" stroke-opacity=".75"/></pattern>
+ <pattern id="hatchm" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><line x1="0" y1="0" x2="0" y2="7" stroke="${C.ink2}" stroke-width="1" stroke-opacity=".45"/></pattern>
+ <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="6"/></filter>
+</defs>`;
+const svgOpen = (w,h,extra='') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" ${extra}><style>.halo{paint-order:stroke;stroke:rgba(255,255,255,.88);stroke-width:3.5px;stroke-linejoin:round}text{font-family:'Funnel Sans',sans-serif}</style>${SVGDEFS}`;
+const tip = (html) => `data-tip="${esc(html).replace(/"/g,'&quot;')}"`;
+
+/* ───────── map (shared world + small maps) ───────── */
+function arcPath(a,b,bend=0.22){ const mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2, dx=b[0]-a[0], dy=b[1]-a[1];
+  const cx=mx - dy*bend, cy=my + dx*bend; return `M${a[0]},${a[1]} Q${cx},${cy} ${b[0]},${b[1]}`; }
+function mapSVG({vb=[0,0,1000,1045], px=1000, hour=S.hour, focus=true, labels=true, cities=true, backdrop=false}={}){
+  const [x0,y0,w,h]=vb, k=w/px;   // map units per screen pixel, so text and strokes keep screen size
+  const p = plan();
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x0} ${y0} ${w} ${h}" preserveAspectRatio="xMidYMid slice"><style>.halo{paint-order:stroke;stroke:rgba(255,255,255,.92);stroke-width:${3.6*k}px;stroke-linejoin:round}text{font-family:'Funnel Sans',sans-serif}</style>${SVGDEFS}`;
+  s += `<image href="${GROUND}" x="0" y="0" width="1000" height="1045" preserveAspectRatio="none"/>`;
+  s += `<g style="mix-blend-mode:multiply">`;
+  for(const pa of D.map.paths){
+    const hourly = CUR[pa.code];
+    const v = hourly ? hourly[hour] : pa.ci;
+    if(v==null) continue;
+    const op = backdrop ? (hourly ? .45 : .16) : (hourly ? .8 : .24);
+    s += `<path d="${pa.d}" fill="${ci2c(v)}" fill-opacity="${op}" ${tip(`<b>${REG[pa.code]?REG[pa.code].name+' · ':''}${pa.code}</b><br>${hourly?`${fmtH(hour)}, July average day: <b>${r0(v)} g/kWh</b>`:`Year mean: <b>${r0(v)} g/kWh</b>`}<br><span class=small>modeled · EIA-930 CO₂</span>`)} style="pointer-events:all"/>`;
+  }
+  s += `</g><g fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="${1.1*k}" pointer-events="none">${D.map.paths.map(pa=>`<path d="${pa.d}"/>`).join('')}</g>`;
+  s += `<path d="${D.map.states_d}" fill="none" stroke="${C.ink}" stroke-opacity=".10" stroke-width="${.8*k}" pointer-events="none"/>`;
+  if(backdrop) return s + `</svg>`;
+  const pace = D.map.paths.find(x=>x.code==='PACE');
+  if(focus && pace) s += `<path d="${pace.d}" fill="none" stroke="${C.ink}" stroke-opacity=".5" stroke-width="${1.6*k}" stroke-linejoin="round" pointer-events="none"/>`;
+  if(cities){ for(const [n,[x,y]] of Object.entries(G.cities)){ if(['Los Angeles','San Francisco','Seattle','Phoenix','Denver','Boise'].includes(n)){
+      s += `<circle cx="${x}" cy="${y}" r="${2.2*k}" fill="${C.ink2}" stroke="#fff" stroke-width="${1*k}"/>`;
+      s += T(x+5*k,y+3.5*k,n,{s:10.5*k,c:C.ink3,halo:1});
+  }}}
+  // router action
+  const P0 = REG.PACE.pt;
+  if(S.mode==='move'){
+    for(const d of DESTS){ const sel=d===S.dest; const b=REG[d].pt; const path=arcPath(P0,b, d==='BPAT'?-.22:.2);
+      s += `<path d="${path}" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="${(sel?7:4)*k}" stroke-linecap="round"/>`;
+      s += `<path class="${sel?'arc-draw':''}" d="${path}" fill="none" stroke="${C.route}" stroke-opacity="${sel?1:.45}" stroke-width="${(sel?2.6:1.3)*k}" stroke-linecap="round" ${sel?'':`stroke-dasharray="${3*k} ${4*k}"`}/>`;
+      s += `<circle cx="${b[0]}" cy="${b[1]}" r="${(sel?6:4)*k}" fill="${C.route}" fill-opacity="${sel?1:.6}" stroke="#fff" stroke-width="${2*k}"/>`;
+    }
+  } else if(S.mode==='wait'){
+    s += `<circle cx="${P0[0]}" cy="${P0[1]}" r="${26*k}" fill="none" stroke="#fff" stroke-width="${5*k}" stroke-opacity=".85"/>`;
+    s += `<circle cx="${P0[0]}" cy="${P0[1]}" r="${26*k}" fill="none" stroke="${C.route}" stroke-width="${2.2*k}" stroke-dasharray="${4*k} ${3.5*k}"/>`;
+  }
+  s += `<circle cx="${P0[0]}" cy="${P0[1]}" r="${6*k}" fill="${S.mode==='now'?C.route:'#fff'}" stroke="${S.mode==='now'?'#fff':C.route}" stroke-width="${2.2*k}"/>`;
+  // labels: region name + hourly value
+  if(labels){
+    const lab = (code,dx,dy,anchor) => { const r=REG[code], [x,y]=r.pt, v=CUR[code][hour];
+      return T(x+dx*k,y+dy*k,r.name,{s:13*k,c:C.ink,w:560,halo:1,a:anchor}) + T(x+dx*k,y+(dy+15)*k,`${r0(v)} g/kWh at ${fmtH(hour)}`,{s:11.5*k,c:C.ink2,halo:1,a:anchor}); };
+    s += lab('PACE',14,-26,'start') + lab('BPAT',12,-4,'start') + lab('CISO',-6,30,'middle') + lab('NEVP',12,18,'start');
+  }
+  return s + `</svg>`;
+}
+function drawWorld(){
+  const el=document.getElementById('world');
+  const vh=innerHeight, vw=innerWidth;
+  const h=vh*1.02, w=h*1000/1045;
+  const dockL = Math.min(370,Math.max(300,vw*.21));
+  const left = Math.max(dockL+24, (vw-w)/2 - vw*0.01);
+  el.outerHTML = mapSVG({px:w, backdrop:S.view!=='control'}).replace('<svg ', `<svg id="world" style="left:${left}px;top:${(vh-h)/2+6}px;width:${w}px;height:${h}px" `);
+}
+
+/* ───────── shared pieces ───────── */
+function rampLegend(width=300, {skeptic=S.skeptic, title='Carbon intensity, g CO₂/kWh · lighter is cleaner'}={}){
+  const h=skeptic?66:44, x0=0, bw=width, y=18;
+  let s=svgOpen(width,h);
+  s+=T(0,11,title,{s:11.5,c:C.ink2});
+  const n=60; for(let i=0;i<n;i++){ s+=`<rect x="${x0+i*bw/n}" y="${y}" width="${bw/n+.6}" height="10" fill="${ci2c(i/(n-1)*CI_MAX)}"/>`; }
+  s+=`<rect x="${x0}" y="${y}" width="${bw}" height="10" rx="3" fill="none" stroke="rgba(28,40,50,.12)"/>`;
+  for(const v of [0,250,500,750]){ const x=x0+v/CI_MAX*bw; s+=T(Math.min(Math.max(x,6),bw-6),y+23,v,{s:10.5,a:v===0?'start':v===750?'end':'middle'}); }
+  if(skeptic){ const a=MARG[0]/CI_MAX*bw, b=MARG[1]/CI_MAX*bw; s+=`<path d="M${a},${y+40} v-4 H${b} v4" fill="none" stroke="${C.ink2}" stroke-width="1.2"/>`+T(a-8,y+40,'marginal proxy, every hour',{s:10.5,c:C.ink2,a:'end'}); }
+  return s+'</svg>';
+}
+function stripSVG(cv,w,h,{hour=null,job=null,rx=4,gap=1.5,labels=false}={}){
+  let s=svgOpen(w,h); const cw=w/24;
+  cv.forEach((v,i)=>{ const f=ci2c(v); s+=`<rect x="${i*cw+gap/2}" y="0" width="${cw-gap}" height="${h}" rx="${i===0||i===23?rx:1.5}" fill="${f}" ${tip(`${fmtH(i)}: <b>${r0(v)} g/kWh</b> <span class=small>modeled</span>`)}/>`; });
+  if(job){ for(let i=0;i<job.H;i++){ const k=(job.s+i)%24; s+=`<rect x="${k*cw+gap/2}" y="${h-3}" width="${cw-gap}" height="3" fill="${C.route}"/>`; } }
+  if(hour!=null) s+=`<rect x="${hour*cw-.5+gap/2}" y="-1" width="${cw-gap+1}" height="${h+2}" rx="2" fill="none" stroke="${C.ink}" stroke-width="1.5"/>`;
+  return s+'</svg>';
+}
+function barSVG(v,w,h,{max=CI_MAX,sel=false,skeptic=S.skeptic}={}){
+  let s=svgOpen(w,h); const bw=Math.max(3,v/max*w), y=(h-10)/2;
+  s+=`<rect x="0" y="${y}" width="${w}" height="10" rx="5" fill="rgba(28,40,50,.06)"/>`;
+  if(skeptic){ s+=`<rect x="${MARG[0]/max*w}" y="${y-2}" width="${(MARG[1]-MARG[0])/max*w}" height="14" rx="3" fill="url(#hatchm)" stroke="${C.ink2}" stroke-opacity=".5" stroke-width="1"/>`; }
+  s+=`<path d="M0,${y} H${bw-4} q4,0 4,4 v2 q0,4 -4,4 H0 Z" fill="${ci2c(v)}" stroke="${sel?C.route:'none'}" stroke-width="${sel?1.5:0}"/>`;
+  return s+'</svg>';
+}
+const segs = () => document.querySelectorAll('[data-seg="mode"] button');
+function syncSegs(){ segs().forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.mode===S.mode))); }
+
+/* ───────── 1 · CONTROL ROOM ───────── */
+function renderControl(){
+  const p=plan();
+  document.getElementById('cr-sub').innerHTML = `A Utah job arriving at <b>${fmtH(p.a)}</b>: waiting buys ${Math.max(0,p.cut(p.wait.v))}%, moving to Northwest hydro buys ${p.cut(p.moves.BPAT)}%. <span class="ev mod">modeled</span>`;
+  // regions
+  const rows = ['PACE','BPAT','CISO','NEVP'].map(code=>{
+    const v=CUR[code][S.hour], ym=MEAN[code], cutY=Math.round((1-ym/MEAN.PACE)*100);
+    const pressed = code!=='PACE' && S.mode==='move' && S.dest===code;
+    return `<li class="region ${code==='PACE'?'hero':''}" ${code!=='PACE'?`role="button" tabindex="0" data-dest="${code}" aria-pressed="${pressed}"`:''}>
+      <div class="nm"><span class="sw-dot" style="background:${ci2c(v)}"></span>${REG[code].name} <i>${code}</i></div>
+      <div class="val">${r0(v)}<small>g/kWh</small></div>
+      <div class="strip">${stripSVG(CUR[code], 300, 16, {hour:S.hour})}</div>
+      <div class="meta"><span>Year mean ${ym} g/kWh</span><span>${code==='PACE'?'the hero region':`${cutY}% cleaner than Utah`}</span></div></li>`; }).join('');
+  const faded = ['AZPS','PSCO'].map(code=>`<li class="region faded"><div class="nm"><span class="sw-dot" style="background:${ci2c(MEAN[code])}"></span>${REG[code].name} <i>${code}</i></div><div class="val">${MEAN[code]}<small>year mean</small></div><div class="meta"><span>No hourly profile in this preview</span><span>${Math.round((1-MEAN[code]/MEAN.PACE)*100)}% cleaner</span></div></li>`).join('');
+  document.getElementById('cr-regions').innerHTML = rows + faded;
+  document.querySelectorAll('#cr-regions .strip svg').forEach(s=>{s.setAttribute('width','100%');s.setAttribute('preserveAspectRatio','none');});
+  const lg=document.getElementById('cr-legend'); lg.innerHTML = rampLegend(lg.clientWidth-44 || 300);
+  // planner
+  document.getElementById('cr-job').innerHTML = `<b>${S.gpus} GPUs</b> for <b>${S.hours} hours</b>, arriving in Utah at <b>${fmtH(p.a)}</b>`;
+  const oc = [
+    {m:'now', l:'Run now', i:`Utah, ${fmtSpan(p.a,p.H)}`, v:p.now, d:'baseline'},
+    {m:'wait', l:'Wait', i:p.wait.d? `Utah, starts ${fmtH(p.wait.s)} (+${p.wait.d} h)`:'no cleaner start within 24 h', v:p.wait.v, d:`−${Math.max(0,p.cut(p.wait.v))}%`},
+    {m:'move', l:'Move', i:`${REG[S.dest].name}, ${fmtSpan(p.a,p.H)}`, v:p.move, d:`−${p.cut(p.move)}%`},
+  ];
+  const ow = document.getElementById('cr-outcomes').clientWidth-26 || 300;
+  document.getElementById('cr-outcomes').innerHTML = oc.map(o=>`<button class="oc" data-mode="${o.m}" aria-pressed="${S.mode===o.m}">
+     <span class="lbl">${o.l}<i>${o.i}</i></span><span class="v">${r0(o.v)}<span class="unit">g/kWh</span></span>
+     <span class="bar">${barSVG(o.v, ow, 14)}</span>
+     <span class="d"><span>≈ ${sig2(p.kg(o.v))} kg CO₂ for the run</span><span>${o.d}</span></span></button>`).join('');
+  const best = S.mode==='move' ? `<b>Move it.</b> ${REG[S.dest].name} runs this job at ${r0(p.move)} g/kWh, ${p.cut(p.move)}% below running now.`
+    : S.mode==='wait' ? `<b>Hold it until ${fmtH(p.wait.s)}.</b> Utah's solar hours bring it to ${r0(p.wait.v)} g/kWh, ${Math.max(0,p.cut(p.wait.v))}% below running now.`
+    : `<b>Run now</b> and the job averages ${r0(p.now)} g/kWh through Utah's ${p.a>=17||p.a<5?'coal night':'day'}.`;
+  document.getElementById('cr-verdict').innerHTML = S.skeptic
+    ? `<div class="skeptic-note"><b>Skeptic mode.</b> These are average-intensity figures. Utah's marginal proxy stays at ${MARG[0]}–${MARG[1]} g/kWh at every hour, so waiting changes far less at the margin. We never call these savings "avoided".</div>`
+    : `<div class="verdict">${best}</div>`;
+  document.getElementById('cr-hour').textContent = fmtH(S.hour);
+  // where the job's hours land: Utah vs the destination, same 24-hour axis as the timeline
+  const hl=document.getElementById('cr-hours'); const hw=hl.clientWidth;
+  if(hw){ const rows=[['PACE','Utah'],[S.dest,REG[S.dest].name]], lx=104, cw=(hw-lx)/24, rh=28; let q=svgOpen(hw,rows.length*(rh+8)+18);
+    rows.forEach(([c,nm],ri)=>{ const y=ri*(rh+8);
+      q+=T(0,y+rh/2+4,nm,{s:12,c:C.ink,w:520});
+      CUR[c].forEach((v,i)=>{ q+=`<rect x="${lx+i*cw+.75}" y="${y}" width="${cw-1.5}" height="${rh}" rx="3" fill="${ci2c(v)}" ${tip(`${nm}, ${fmtH(i)}: <b>${r0(v)} g/kWh</b> <span class=small>modeled</span>`)}/>`; });
+      const on=(S.mode==='move')===(ri===1); const js=S.mode==='wait'?p.wait.s:p.a;
+      if(on) for(let i=0;i<p.H;i++){ const k=(js+i)%24; q+=`<rect x="${lx+k*cw+.75}" y="${y+rh-4}" width="${cw-1.5}" height="4" rx="1.5" fill="${C.route}"/>`; }
+    });
+    for(let i=0;i<24;i+=6) q+=T(lx+i*cw+cw/2,rows.length*(rh+8)+12,fmtH(i),{s:10.5,a:'middle'});
+    hl.innerHTML=q+'</svg>'; }
+  renderTimeline();
+}
+function renderTimeline(){
+  const el=document.getElementById('cr-tlsvg'); const w=el.clientWidth, h=el.clientHeight; if(!w) return;
+  const lx=92, cw=(w-lx-8)/24, X=i=>lx+i*cw;
+  const p=plan();
+  const yR=20, hR=10, yL=yR+hR+6, yC=h-44, hC=22, hL=yC-10-yL, yA=h-3;
+  let s=svgOpen(w,h);
+  // aligned bands: rush wash through every row, clean bracket on top
+  s+=`<rect x="${X(19)}" y="${yR}" width="${cw*4}" height="${yC+hC-yR}" rx="5" fill="${C.rushFill}" fill-opacity=".26"/>`;
+  s+=`<rect x="${X(19)+1}" y="${yR}" width="${cw*4-2}" height="${hR}" rx="3" fill="url(#hatch)"/>`;
+  s+=T(X(19)+cw*2,yR-6,'Rush 7–11 PM',{s:11.5,a:'middle',c:C.ink,w:520});
+  s+=`<path d="M${X(9)+2},${yR+hR-1} v-5 H${X(17)-2} v5" fill="none" stroke="${C.ink3}" stroke-width="1.1"/>`;
+  s+=T(X(13),yR-6,'Cleanest 9 AM–5 PM',{s:11.5,a:'middle',c:C.ink,w:520});
+  // load: solar area + demand + net load (MW, one axis from zero)
+  const mx=9200, Y=v=>yL+hL-(v/mx)*hL;
+  const pts=a=>a.map((v,i)=>`${X(i)+cw/2},${Y(v)}`).join(' L');
+  s+=`<path d="M${X(0)+cw/2},${Y(0)} L${pts(PJ.solar.map(v=>Math.max(0,v)))} L${X(23)+cw/2},${Y(0)} Z" fill="${C.solar}" fill-opacity=".8"/>`;
+  s+=`<path d="M${pts(PJ.demand)}" fill="none" stroke="${C.ink3}" stroke-width="1.3" stroke-opacity=".75"/>`;
+  s+=`<path d="M${pts(PJ.net)}" fill="none" stroke="${C.ink}" stroke-width="2" stroke-linejoin="round"/>`;
+  s+=`<circle cx="${X(20)+cw/2}" cy="${Y(PJ.net[20])}" r="4" fill="${C.ink}" stroke="#fff" stroke-width="2"/>`;
+  s+=T(X(20)+cw/2-9,Y(PJ.net[20])-7,`Net-load peak 8 PM · ${fmtN(PJ.net[20])} MW`,{s:11,c:C.ink,halo:1,a:'end',w:500});
+  s+=T(X(2),Y(PJ.demand[2])-6,'Demand',{s:10.5,c:C.ink3,halo:1})+T(X(2),Y(PJ.net[2])+14,'Net load',{s:10.5,c:C.ink,halo:1,w:500});
+  s+=T(X(13),Y(700),'Solar',{s:10.5,a:'middle',c:'#6b5a1e',w:520});
+  s+=T(lx-12,yL+12,'Load',{s:11.5,c:C.ink,w:520,a:'end'})+T(lx-12,yL+26,'MW, observed',{s:10.5,a:'end'});
+  s+=T(lx-12,yC+10,'Carbon',{s:11.5,c:C.ink,w:520,a:'end'})+T(lx-12,yC+23,'modeled',{s:10.5,a:'end'});
+  // carbon strip
+  CUR.PACE.forEach((v,i)=>{ s+=`<rect x="${X(i)+1}" y="${yC}" width="${cw-2}" height="${hC}" rx="4" fill="${ci2c(v)}" ${tip(`${fmtH(i)} in Utah<br>carbon <b>${r0(v)} g/kWh</b> <span class=small>modeled</span><br>net load ${fmtN(PJ.net[i])} MW <span class=small>observed</span>`)}/>`; });
+  // the job's hours (router action)
+  const js = S.mode==='wait'? p.wait.s : p.a;
+  if(S.mode!=='move'){ for(let i=0;i<p.H;i++){ const k=(js+i)%24; s+=`<rect x="${X(k)+1}" y="${yC+hC+3}" width="${cw-2}" height="4" rx="2" fill="${C.route}"/>`; } }
+  // hour ticks
+  for(let i=0;i<24;i+=3) s+=T(X(i)+cw/2,yA,fmtH(i),{s:10.5,a:'middle'});
+  // cursor
+  const cx=X(S.hour)+cw/2;
+  s+=`<line x1="${cx}" x2="${cx}" y1="${yR}" y2="${yC+hC+8}" stroke="${C.ink}" stroke-width="1.4"/>`;
+  s+=`<circle cx="${cx}" cy="${Y(PJ.net[S.hour])}" r="4.5" fill="#fff" stroke="${C.ink}" stroke-width="2"/>`;
+  el.innerHTML=s+'</svg>';
+  el.setAttribute('aria-valuenow',S.hour); el.setAttribute('aria-valuetext',fmtH(S.hour));
+  el._geom={lx,cw};
+}
+/* ───────── 2 · DAY RIBBON ───────── */
+function renderRibbon(){
+  const p=plan();
+  document.querySelectorAll('.arr-lbl').forEach(e=>e.textContent=fmtH(p.a));
+  // hero
+  const el=document.getElementById('rib-hero'); const w=el.clientWidth, h=el.clientHeight; if(!w) return;
+  const lx=150, rx=110, cw=(w-lx-rx)/24, X=i=>lx+i*cw;
+  const top=64, yRush=top, hRush=18, yLoad=top+40, hLoad=Math.max(120,h-top-40-150), yCar=yLoad+hLoad+18, hCar=46, yJob=yCar+hCar+10, yAx=h-14;
+  let s=svgOpen(w,h);
+  s+=T(24,34,'Utah · PacifiCorp East, July weekday',{s:17,c:C.ink,w:500,f:'d'});
+  s+=T(w-24,34,'observed load · modeled carbon',{s:11.5,a:'end'});
+  // aligned bands across all rows
+  s+=`<rect x="${X(19)}" y="${yRush}" width="${cw*4}" height="${yCar+hCar-yRush}" rx="6" fill="${C.rushFill}" fill-opacity=".22"/>`;
+  s+=`<rect x="${X(9)}" y="${yRush}" width="${cw*8}" height="${yCar+hCar-yRush}" rx="6" fill="#fff" fill-opacity=".35"/>`;
+  // rush row
+  s+=`<rect x="${X(19)+1}" y="${yRush}" width="${cw*4-2}" height="${hRush}" rx="4" fill="url(#hatch)"/>`;
+  s+=T(lx-14,yRush+13,'Rush',{s:12.5,a:'end',c:C.ink,w:520});
+  s+=T(X(23)+10,yRush+13,'7–11 PM',{s:12,c:C.ink2});
+  s+=`<path d="M${X(9)+3},${yRush+hRush-4} v-6 H${X(17)-3} v6" fill="none" stroke="${C.ink3}" stroke-width="1.2"/>`;
+  s+=T(X(13),yRush+6,'Cleanest stretch, 9 AM–5 PM',{s:12,a:'middle',c:C.ink2,w:520});
+  // load chart: one MW axis
+  const mx=9500, Y=v=>yLoad+hLoad-(v/mx)*hLoad, pts=a=>a.map((v,i)=>`${X(i)+cw/2},${Y(v)}`).join(' L');
+  for(const g of [0,3000,6000,9000]){ s+=`<line x1="${lx}" x2="${X(24)}" y1="${Y(g)}" y2="${Y(g)}" stroke="${C.hair2}"/>`+T(lx-14,Y(g)+4,g?`${g/1000}k`:'0 MW',{s:11,a:'end'}); }
+  s+=`<path d="M${X(0)+cw/2},${Y(0)} L${pts(PJ.solar.map(v=>Math.max(0,v)))} L${X(23)+cw/2},${Y(0)} Z" fill="${C.solar}" fill-opacity=".8"/>`;
+  s+=`<path d="M${pts(PJ.demand)}" fill="none" stroke="${C.ink3}" stroke-width="1.5"/>`;
+  s+=`<path d="M${pts(PJ.net)}" fill="none" stroke="${C.ink}" stroke-width="2.2" stroke-linejoin="round"/>`;
+  PJ.net.forEach((v,i)=>{ s+=`<rect x="${X(i)}" y="${yLoad}" width="${cw}" height="${hLoad}" fill="transparent" ${tip(`${fmtH(i)}<br>demand ${fmtN(PJ.demand[i])} MW · net ${fmtN(v)} MW · solar ${fmtN(Math.max(0,PJ.solar[i]))} MW<br><span class=small>observed, July weekday mean</span>`)}/>`; });
+  s+=T(X(23)+cw/2+10,Y(PJ.demand[23])+4,'Demand',{s:12,c:C.ink2});
+  s+=T(X(23)+cw/2+10,Y(PJ.net[23])+4,'Net load',{s:12,c:C.ink,w:520});
+  s+=T(X(13),Y(1100),'Solar',{s:12,a:'middle',c:'#6b5a1e',w:520});
+  s+=`<circle cx="${X(17)+cw/2}" cy="${Y(PJ.demand[17])}" r="4" fill="${C.ink3}" stroke="#fff" stroke-width="2"/>`+T(X(17)+cw/2,Y(PJ.demand[17])-10,`Demand peaks 5 PM · ${fmtN(PJ.demand[17])} MW`,{s:11.5,a:'middle',c:C.ink2,halo:1});
+  s+=`<circle cx="${X(20)+cw/2}" cy="${Y(PJ.net[20])}" r="4.5" fill="${C.ink}" stroke="#fff" stroke-width="2"/>`+T(X(20)+cw/2-10,Y(PJ.net[20])-10,`Net load peaks 8 PM · ${fmtN(PJ.net[20])} MW`,{s:11.5,c:C.ink,halo:1,w:500,a:'end'});
+  // carbon ribbon
+  s+=T(lx-14,yCar+hCar/2+4,'Carbon',{s:12.5,a:'end',c:C.ink,w:520});
+  CUR.PACE.forEach((v,i)=>{ const f=ci2c(v); s+=`<rect x="${X(i)+1}" y="${yCar}" width="${cw-2}" height="${hCar}" rx="4" fill="${f}" ${tip(`${fmtH(i)}: <b>${r0(v)} g/kWh</b> <span class=small>modeled</span>`)}/>`;
+    if([4,6,12,20].includes(i)) s+=T(X(i)+cw/2,yCar+hCar/2+4,r0(v),{s:11,a:'middle',c:onFill(f),w:500}); });
+  if(S.skeptic){ s+=`<rect x="${X(0)}" y="${yCar+hCar+4}" width="${cw*24}" height="8" rx="3" fill="url(#hatchm)" stroke="${C.ink2}" stroke-opacity=".4"/>`;
+    s+=T(X(24)+10,yCar+hCar+12,`Marginal ${MARG[0]}–${MARG[1]}`,{s:11,c:C.ink2}); }
+  s+=T(X(24)+10,yCar+hCar/2-3,'g CO₂/kWh',{s:11,c:C.ink3}); s+=T(X(24)+10,yCar+hCar/2+11,'lighter = cleaner',{s:11,c:C.ink3});
+  // job row
+  const jy=yJob+(S.skeptic?10:0);
+  s+=T(lx-14,jy+12,'Your job',{s:12.5,a:'end',c:C.ink,w:520});
+  if(S.mode==='move'){ s+=`<rect x="${lx+1}" y="${jy+2}" width="${cw*.9}" height="12" rx="3" fill="${C.route}"/>`+T(lx+cw+6,jy+12,`Moved to ${REG[S.dest].name}, ${fmtSpan(p.a,p.H)} · ${r0(p.move)} g/kWh, ${p.cut(p.move)}% cleaner · its ribbon is below`,{s:12.5,c:C.ink,w:500}); }
+  else { const js=S.mode==='wait'?p.wait.s:p.a, je=js+p.H; const segs=je>24?[[js,24],[0,je-24]]:[[js,je]];
+    for(const [a,b] of segs) s+=`<rect x="${X(a)+1}" y="${jy+1}" width="${(b-a)*cw-2}" height="14" rx="5" fill="${C.route}"/>`;
+    const v=S.mode==='wait'?p.wait.v:p.now;
+    const txt=`${S.mode==='wait'?'Waits':'Runs now'}, ${fmtSpan(js,p.H)} · ${r0(v)} g/kWh${S.mode==='wait'?` · ${p.cut(v)}% cleaner`:''}${segs.length>1?' · continues past midnight':''}`;
+    const [a0,b0]=segs[0]; const rightRoom=X(24)-X(b0), leftRoom=X(a0)-lx;
+    s+= rightRoom>320 ? T(X(b0)+8,jy+12,txt,{s:12.5,c:C.ink,w:500}) : leftRoom>320 ? T(X(a0)-8,jy+12,txt,{s:12.5,c:C.ink,w:500,a:'end'}) : T(X(segs.at(-1)[1])+8,jy+12,txt,{s:12.5,c:C.ink,w:500}); }
+  for(let i=0;i<24;i+=2) s+=T(X(i)+cw/2,yAx,fmtH(i),{s:11,a:'middle'});
+  el.innerHTML=s+'</svg>';
+
+  // neighbours
+  const en=document.getElementById('rib-neigh'); const nw=en.clientWidth, nh=en.clientHeight;
+  const nlx=210, nrx=150, ncw=(nw-nlx-nrx)/24, NX=i=>nlx+i*ncw;
+  let n=svgOpen(nw,nh);
+  n+=T(22,32,'Same hours next door',{s:17,c:C.ink,w:500,f:'d'});
+  n+=T(nw-22,32,'modeled · July average day',{s:11.5,a:'end'});
+  const codes=['PACE','BPAT','CISO','NEVP'], rowH=Math.min(60,(nh-96)/4), y0=58;
+  codes.forEach((c,ri)=>{ const y=y0+ri*rowH, hh=rowH-12; const isDest=S.mode==='move'&&S.dest===c;
+    n+=T(22,y+hh/2,REG[c].name,{s:13.5,c:C.ink,w:520})+T(22,y+hh/2+14,c,{s:11});
+    CUR[c].forEach((v,i)=>{ n+=`<rect x="${NX(i)+1}" y="${y}" width="${ncw-2}" height="${hh}" rx="3" fill="${ci2c(v)}" ${tip(`${REG[c].name}, ${fmtH(i)}: <b>${r0(v)} g/kWh</b>`)}/>`; });
+    if(isDest){ for(let i=0;i<p.H;i++){ const k=(p.a+i)%24; n+=`<rect x="${NX(k)+1}" y="${y+hh-5}" width="${ncw-2}" height="5" rx="2" fill="${C.route}"/>`; }
+      n+=`<rect x="${nlx-6}" y="${y-5}" width="${ncw*24+12}" height="${hh+10}" rx="8" fill="none" stroke="${C.route}" stroke-width="1.5"/>`; }
+    const m=MEAN[c]; n+=T(NX(24)+14,y+hh/2,`${m} g/kWh`,{s:13,c:C.ink,w:500})+T(NX(24)+14,y+hh/2+14,c==='PACE'?'year mean':`${Math.round((1-m/MEAN.PACE)*100)}% cleaner`,{s:11.5,c:C.ink3});
+    if(DESTS.includes(c)) n+=`<rect x="0" y="${y-6}" width="${nw}" height="${hh+12}" fill="transparent" style="cursor:pointer" data-dest="${c}"/>`;
+  });
+  const ay=y0+rowH*4+8;
+  for(let i=0;i<24;i+=3) n+=T(NX(i)+ncw/2,ay,fmtH(i),{s:10.5,a:'middle'});
+  n+=T(22,nh-14,'Click a region to send the job there. Right column: year mean and how much cleaner than Utah.',{s:11.5});
+  en.innerHTML=n+'</svg>';
+
+  // year heatmap: clean ≠ rush all year
+  const ey=document.getElementById('rib-year'); const yw=ey.clientWidth, yh=ey.clientHeight;
+  const hx=46, hy=56, hw=yw-hx-20, hh=yh-hy-34, cwy=hw/24, chy=hh/12;
+  let y=svgOpen(yw,yh);
+  y+=T(22,32,'All year, the rush sits on the evening',{s:17,c:C.ink,w:500,f:'d'});
+  const MON=['Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct'];
+  // data rows are calendar months Jan..Dec; validation year runs Nov→Oct
+  const order=[10,11,0,1,2,3,4,5,6,7,8,9];
+  order.forEach((mi,ri)=>{ D.pace_ci_mh[mi].forEach((v,hr)=>{ y+=`<rect x="${hx+hr*cwy+.75}" y="${hy+ri*chy+.75}" width="${cwy-1.5}" height="${chy-1.5}" rx="2" fill="${ci2c(v)}" ${tip(`${MON[ri]} ${fmtH(hr)}: <b>${r0(v)} g/kWh</b><br>top-100 net-load hours here: ${D.pace_top100_netload_mh[mi][hr]}`)}/>`;
+      const c=D.pace_top100_netload_mh[mi][hr]; if(c){ const rr=Math.min(chy,cwy)/2*Math.min(.92,.4+Math.sqrt(c)/6); y+=`<circle cx="${hx+hr*cwy+cwy/2}" cy="${hy+ri*chy+chy/2}" r="${rr}" fill="none" stroke="#fff" stroke-width="4" pointer-events="none"/><circle cx="${hx+hr*cwy+cwy/2}" cy="${hy+ri*chy+chy/2}" r="${rr}" fill="${C.rushFill}" fill-opacity=".55" stroke="${C.rush}" stroke-width="1.8" pointer-events="none"/>`; } });
+    if(ri%2===0) y+=T(hx-8,hy+ri*chy+chy/2+4,MON[ri],{s:10.5,a:'end'}); });
+  for(let i=0;i<24;i+=6) y+=T(hx+i*cwy+cwy/2,yh-14,fmtH(i),{s:10.5,a:'middle'});
+  y+=`<circle cx="${yw-170}" cy="${28}" r="5" fill="none" stroke="${C.rush}" stroke-width="1.6"/>`+T(yw-160,32,'top-100 net-load hours',{s:11,c:C.ink2});
+  y+=T(yw-22,48,'observed · modeled',{s:10.5,a:'end'});
+  ey.innerHTML=y+'</svg>';
+}
+
+/* ───────── 3 · DECISION COCKPIT ───────── */
+const SCRUB = {gpus:{min:8,max:512,step:8,fmt:v=>v}, hours:{min:1,max:16,step:1,fmt:v=>v}, hour:{min:0,max:23,step:1,fmt:v=>fmtH(v)}, maxWait:{min:0,max:24,step:1,fmt:v=>v}};
+function renderCockpit(){
+  const p=plan();
+  const sc=(k,suffix='')=>`<button class="scrub" data-k="${k}" role="spinbutton" aria-valuenow="${S[k]}" aria-valuemin="${SCRUB[k].min}" aria-valuemax="${SCRUB[k].max}" aria-label="${k}">${SCRUB[k].fmt(S[k])}${suffix}</button>`;
+  const sent=document.getElementById('ck-sentence');
+  if(!sent.contains(document.activeElement)) sent.innerHTML = `Run ${sc('gpus')} GPUs for ${sc('hours')} hours, arriving in Utah at ${sc('hour')}. It can wait up to ${sc('maxWait')} hours.`;
+  else sent.querySelectorAll('.scrub').forEach(b=>{ const k=b.dataset.k; b.textContent=SCRUB[k].fmt(S[k]); b.setAttribute('aria-valuenow',S[k]); });
+  const best = [{k:'now',v:p.now},{k:'wait',v:p.wait.v},{k:'move',v:p.move}].sort((a,b)=>a.v-b.v)[0].k;
+  const V = S.mode==='move'?p.move:S.mode==='wait'?p.wait.v:p.now;
+  document.getElementById('ck-verdict').textContent = S.mode==='move' ? `Move it to ${REG[S.dest].name}: ${p.cut(p.move)}% cleaner` : S.mode==='wait' ? (p.wait.d?`Wait until ${fmtH(p.wait.s)}: ${p.cut(p.wait.v)}% cleaner`:`Waiting doesn't help within ${S.maxWait} h`) : `Run now: ${r0(p.now)} g/kWh, the baseline`;
+  document.getElementById('ck-verdict-sub').innerHTML = (best===S.mode?`This is the cleanest of the three. `:`The cleanest option is to ${best==='move'?'move':best==='wait'?'wait':'run now'}. `) + `Energy for the run ≈ ${fmtN(p.kwh)} kWh <span class="ev asm">assumed</span>` + (S.skeptic?` · <b>Skeptic:</b> averages, not "avoided" emissions.`:'');
+  // lanes
+  const el=document.getElementById('ck-lanes'); const w=el.clientWidth, h=el.clientHeight; if(!w) return;
+  const lx=250, rx=200, aw=w-lx-rx, X=v=>lx+v/CI_MAX*aw;
+  const lanes=[
+    {m:'now',t:'Run now in Utah',s:fmtSpan(p.a,p.H),v:p.now},
+    {m:'wait',t:'Wait in Utah',s:p.wait.d?`${fmtSpan(p.wait.s,p.H)} · starts ${p.wait.d} h later`:`no cleaner start within ${S.maxWait} h`,v:p.wait.v},
+    ...DESTS.map(d=>({m:'move',d,t:`Move to ${REG[d].name}`,s:`${fmtSpan(p.a,p.H)} · ${d}`,v:p.moves[d]})),
+  ];
+  const lanesH=Math.min(h*.58, 70*lanes.length+40), top=40, laneH=(lanesH-40)/lanes.length;
+  let s=svgOpen(w,h);
+  for(const g of [0,250,500,750]){ s+=`<line x1="${X(g)}" x2="${X(g)}" y1="${top-8}" y2="${top+laneH*lanes.length}" stroke="${C.hair2}"/>`+T(X(g),top-14,g,{s:11,a:'middle'}); }
+  s+=T(lx,top-30+4,'Average carbon intensity of the run, g CO₂/kWh',{s:11.5,c:C.ink2});
+  if(S.skeptic){ s+=`<rect x="${X(MARG[0])}" y="${top-6}" width="${X(MARG[1])-X(MARG[0])}" height="${laneH*lanes.length+6}" fill="url(#hatchm)" opacity=".7"/>`;
+    s+=T((X(MARG[0])+X(MARG[1]))/2,top+laneH*lanes.length+16,`Utah's marginal proxy: ${MARG[0]}–${MARG[1]} at every hour`,{s:11.5,a:'middle',c:C.ink2,w:500}); }
+  lanes.forEach((L,i)=>{ const y=top+i*laneH, cy=y+laneH/2; const sel = L.m===S.mode && (L.m!=='move'||L.d===S.dest);
+    if(sel) s+=`<rect x="8" y="${y+3}" width="${w-16}" height="${laneH-6}" rx="14" fill="#fff" fill-opacity=".72" stroke="${C.route}" stroke-opacity=".45"/>`;
+    s+=`<rect x="0" y="${y}" width="${w}" height="${laneH}" fill="transparent" style="cursor:pointer" data-lane="${L.m}" ${L.d?`data-dest="${L.d}"`:''}/>`;
+    s+=T(24,cy-3,L.t,{s:14,c:C.ink,w:540})+T(24,cy+14,L.s,{s:11.5});
+    const bw=Math.max(4,X(L.v)-lx), f=ci2c(L.v);
+    s+=`<path d="M${lx},${cy-11} H${lx+bw-4} q4,0 4,4 v14 q0,4 -4,4 H${lx} Z" fill="${f}" pointer-events="none"/>`;
+    if(L.m==='now') s+=`<line x1="${X(L.v)}" x2="${X(L.v)}" y1="${top-4}" y2="${top+laneH*lanes.length}" stroke="${C.ink}" stroke-opacity=".35" stroke-dasharray="2 3"/>`;
+    s+=T(lx+bw+8,cy+5,`${r0(L.v)}`,{s:16,c:C.ink,w:500,f:'d'});
+    const cut=p.cut(L.v);
+    s+=T(w-24,cy-3,L.m==='now'?'baseline':`${cut>0?'−':'+'}${Math.abs(cut)}%`,{s:16,a:'end',c:C.ink,w:500,f:'d'})+T(w-24,cy+14,`≈ ${sig2(p.kg(L.v))} kg CO₂`,{s:11.5,a:'end'});
+  });
+  // delay budget: what each extra hour of patience buys, against moving now
+  const by=top+laneH*lanes.length+(S.skeptic?52:44), bh=h-by-34, bx=lx, bw=aw-40, BX=d=>bx+d/24*bw, BY=c=>by+bh-(c/100)*bh;
+  s+=T(24,by+12,'What patience buys',{s:14,c:C.ink,w:540})+T(24,by+30,'Best cut from waiting, by',{s:11.5})+T(24,by+45,'allowed wait (hours)',{s:11.5});
+  for(const g of [0,50,100]) s+=`<line x1="${bx}" x2="${bx+bw}" y1="${BY(g)}" y2="${BY(g)}" stroke="${C.hair2}"/>`+T(bx-8,BY(g)+4,g+'%',{s:10.5,a:'end'});
+  const curve=[]; for(let d=0; d<=24; d++){ let best=p.now; for(let e=0;e<=d;e++){ best=Math.min(best,wmean(CUR.PACE,(p.a+e)%24,p.H)); } curve.push(Math.max(0,(1-best/p.now)*100)); }
+  let path=`M${BX(0)},${BY(curve[0])}`; for(let d=1; d<=24; d++) path+=` H${BX(d)} V${BY(curve[d])}`;
+  s+=`<path d="${path} H${BX(24)}" fill="none" stroke="${C.ink}" stroke-width="2" stroke-linejoin="round"/>`;
+  s+=T(BX(24)+8,BY(curve[24])+16,`Wait in Utah · up to ${Math.round(curve[24])}%`,{s:11.5,c:C.ink,w:560});
+  DESTS.forEach(d=>{ const c=Math.max(0,(1-p.moves[d]/p.now)*100), on=S.mode==='move'&&S.dest===d;
+    s+=`<line x1="${bx}" x2="${bx+bw}" y1="${BY(c)}" y2="${BY(c)}" stroke="${on?C.route:C.ink3}" stroke-width="${on?2:1.2}" stroke-dasharray="${on?'':'4 4'}"/>`;
+    s+=T(BX(24)+8,BY(c)-4,`Move to ${REG[d].name} · ${Math.round(c)}%`,{s:11.5,c:C.ink,w:on?560:420}); });
+  s+=T(bx+6,BY(100)-6,'Moving needs no wait at all',{s:11,c:C.ink3});
+  s+=`<line x1="${BX(S.maxWait)}" x2="${BX(S.maxWait)}" y1="${by-2}" y2="${by+bh}" stroke="${C.route}" stroke-width="1.5"/>`+`<circle cx="${BX(S.maxWait)}" cy="${BY(curve[S.maxWait])}" r="4.5" fill="${C.route}" stroke="#fff" stroke-width="2"/>`;
+  for(const d of [0,6,12,18,24]) s+=T(BX(d),by+bh+16,d+' h',{s:10.5,a:'middle'});
+  s+=T(24,h-6,'simulated · perfect foresight · a move runs at arrival, with no capacity limit in this preview',{s:11});
+  el.innerHTML=s+'</svg>';
+  // small map
+  const cm=document.getElementById('ck-map');
+  const mw=cm.clientWidth||500, mh=cm.clientHeight||700, vh=900, vw=vh*mw/mh;
+  cm.innerHTML = mapSVG({vb:[385-vw/2,40,vw,vh],px:mw,labels:true,cities:false}) + `<div class="cap glass strong" style="border-radius:14px;padding:10px 14px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span class="h-m">${S.mode==='move'?`Utah to ${REG[S.dest].name}`:S.mode==='wait'?'Held in Utah until '+fmtH(p.wait.s):'Runs in Utah now'}</span><span class="ev mod">carbon at ${fmtH(p.a)}</span></div></div>`;
+  // day strip
+  const dd=document.getElementById('ck-day'); const dw=dd.clientWidth, dh=dd.clientHeight;
+  const dlx=118, dcw=(dw-dlx-6)/24, DX=i=>dlx+i*dcw; let q=svgOpen(dw,dh);
+  const rows=[['PACE','Utah'],[S.dest,REG[S.dest].name]]; const rh=Math.min(46,(dh-64)/2);
+  q+=`<rect x="${DX(19)}" y="24" width="${dcw*4}" height="${rh*2+12}" rx="5" fill="${C.rushFill}" fill-opacity=".28"/><rect x="${DX(19)+1}" y="12" width="${dcw*4-2}" height="8" rx="2" fill="url(#hatch)"/>`+T(DX(19)-6,20,'Rush',{s:10.5,a:'end',c:C.ink2});
+  rows.forEach(([c,nm],ri)=>{ const y=28+ri*(rh+8);
+    q+=T(0,y+rh/2+4,nm,{s:12.5,c:C.ink,w:520});
+    CUR[c].forEach((v,i)=>{ q+=`<rect x="${DX(i)+1}" y="${y}" width="${dcw-2}" height="${rh}" rx="3" fill="${ci2c(v)}" ${tip(`${nm}, ${fmtH(i)}: <b>${r0(v)} g/kWh</b>`)}/>`; });
+    const on = (S.mode==='move'&&ri===1)||(S.mode!=='move'&&ri===0); const js=S.mode==='wait'?p.wait.s:p.a;
+    if(on) for(let i=0;i<p.H;i++){ const k=(js+i)%24; q+=`<rect x="${DX(k)+1}" y="${y+rh-5}" width="${dcw-2}" height="5" rx="2" fill="${C.route}"/>`; }
+  });
+  for(let i=0;i<24;i+=4) q+=T(DX(i)+dcw/2,dh-2,fmtH(i),{s:10.5,a:'middle'});
+  dd.innerHTML=q+'</svg>';
+}
+
+/* ───────── 4 · STORY SCROLL ───────── */
+function renderStory(){
+  const p=plan();
+  document.getElementById('st-worth').innerHTML = `With an assumed 0.7 kWh per GPU-hour, the run draws about ${fmtN(p.kwh)} kWh. Run now, it carries about ${sig2(p.kg(p.now))} kg of CO₂ on average. Waiting for the sun brings that to about ${sig2(p.kg(p.wait.v))} kg. Moving it to Northwest hydro brings it to about ${sig2(p.kg(p.moves.BPAT))} kg.` + (S.skeptic?` <b>Skeptic mode:</b> these are average-intensity footprints; at Utah's margin (${MARG[0]}–${MARG[1]} g/kWh all day) waiting changes much less.`:'');
+  const el=document.getElementById('st-visual'); const w=el.clientWidth, h=el.clientHeight; if(!w) return;
+  const step=S.step;
+  const caps={1:['Utah\'s net load peaks at 8 PM','observed · July weekday'],2:['The year\'s 100 highest net-load hours','observed · validation year'],3:['One job, three choices','modeled carbon · simulated job'],4:['Footprint of one 8-hour, 64-GPU run','simulated · assumed energy'],5:['Clean hours and rush hours, side by side','modeled carbon · observed load'],6:['Tomorrow in Utah','layout preview']};
+  let s=svgOpen(w,h);
+  s+=T(28,44,caps[step][0],{s:22,c:C.ink,w:440,f:'d',ls:'-.01em'})+T(w-28,44,caps[step][1],{s:11.5,a:'end'});
+  const lx=86, rx=120, top=96, bot=56, cw=(w-lx-rx)/24, X=i=>lx+i*cw;
+  const axis=()=>{ let a=''; for(let i=0;i<24;i+=3) a+=T(X(i)+cw/2,h-bot+22,fmtH(i),{s:11.5,a:'middle'}); return a; };
+  if(step===1||step===5){
+    const hL = step===1? h-top-bot-30 : (h-top-bot)*.52;
+    const mx=9500, Y=v=>top+hL-(v/mx)*hL, pts=a=>a.map((v,i)=>`${X(i)+cw/2},${Y(v)}`).join(' L');
+    s+=`<rect x="${X(19)}" y="${top-12}" width="${cw*4}" height="${(step===1?hL:hL+40+72)+12}" rx="8" fill="${C.rushFill}" fill-opacity=".3"/>`;
+    s+=`<rect x="${X(19)+1}" y="${top-12}" width="${cw*4-2}" height="14" rx="4" fill="url(#hatch)"/>`+T(X(21),top-18,'Rush 7–11 PM',{s:12.5,a:'middle',c:C.ink,w:520});
+    for(const g of [0,3000,6000,9000]) s+=`<line x1="${lx}" x2="${X(24)}" y1="${Y(g)}" y2="${Y(g)}" stroke="${C.hair2}"/>`+T(lx-10,Y(g)+4,g?`${g/1000}k`:'0 MW',{s:11,a:'end'});
+    s+=`<path d="M${X(0)+cw/2},${Y(0)} L${pts(PJ.solar.map(v=>Math.max(0,v)))} L${X(23)+cw/2},${Y(0)} Z" fill="${C.solar}" fill-opacity=".8"/>`+T(X(12)+cw/2,Y(900),'Solar',{s:12.5,a:'middle',c:'#6b5a1e',w:520});
+    s+=`<path d="M${pts(PJ.demand)}" fill="none" stroke="${C.ink3}" stroke-width="1.6"/>`+`<path d="M${pts(PJ.net)}" fill="none" stroke="${C.ink}" stroke-width="2.4"/>`;
+    s+=T(X(23)+cw/2+10,Y(PJ.demand[23])+4,'Demand',{s:12.5,c:C.ink2})+T(X(23)+cw/2+10,Y(PJ.net[23])+4,'Net load',{s:12.5,c:C.ink,w:520});
+    s+=`<circle cx="${X(20)+cw/2}" cy="${Y(PJ.net[20])}" r="5" fill="${C.ink}" stroke="#fff" stroke-width="2"/>`+T(X(20)+cw/2-10,Y(PJ.net[20])-12,`8 PM · ${fmtN(PJ.net[20])} MW`,{s:12.5,a:'end',c:C.ink,w:520,halo:1});
+    if(step===1) s+=`<circle cx="${X(17)+cw/2}" cy="${Y(PJ.demand[17])}" r="4.5" fill="${C.ink3}" stroke="#fff" stroke-width="2"/>`+T(X(17)+cw/2-10,Y(PJ.demand[17])-12,`Demand peaks 5 PM`,{s:12,a:'end',c:C.ink2,halo:1});
+    if(step===5){ const yC=top+hL+40, hC=60;
+      s+=`<rect x="${X(9)}" y="${yC-26}" width="${cw*8}" height="${hC+26}" rx="8" fill="#fff" fill-opacity=".5"/>`+T(X(13),yC-10,'Cleanest 9 AM–5 PM',{s:12.5,a:'middle',c:C.ink,w:520});
+      CUR.PACE.forEach((v,i)=>{ const f=ci2c(v); s+=`<rect x="${X(i)+1}" y="${yC}" width="${cw-2}" height="${hC}" rx="5" fill="${f}" ${tip(`${fmtH(i)}: ${r0(v)} g/kWh`)}/>`; if([3,13,21].includes(i)) s+=T(X(i)+cw/2,yC+hC/2+4,r0(v),{s:11.5,a:'middle',c:onFill(f),w:500}); });
+      s+=T(lx-10,yC+hC/2+4,'Carbon',{s:12,a:'end',c:C.ink,w:520});
+      if(S.skeptic) s+=T(X(24)+10,yC+hC/2+4,`marginal ${MARG[0]}–${MARG[1]}`,{s:11,c:C.ink2});
+      // the router's action: flexible work leaves the coal night for the solar stretch
+      const ya=yC+hC+14, night=CUR.PACE.slice(0,7), x0=X(3.5), x1=X(12.5);
+      s+=`<path d="M${X(0)+3},${ya} v6 H${X(7)-3} v-6" fill="none" stroke="${C.ink3}" stroke-width="1.2"/>`+T(X(3.5),ya+24,`Coal nights, ${r0(Math.min(...night))}–${r0(Math.max(...night))} g/kWh`,{s:12,a:'middle',c:C.ink2});
+      s+=`<path d="M${X(9)+3},${ya} v6 H${X(17)-3} v-6" fill="none" stroke="${C.ink3}" stroke-width="1.2"/>`;
+      const arc=`M${x0},${ya+34} C${x0+40},${ya+110} ${x1-40},${ya+110} ${x1},${ya+12}`;
+      s+=`<path d="${arc}" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"/><path d="${arc}" fill="none" stroke="${C.route}" stroke-width="2.6" stroke-linecap="round"/>`;
+      s+=`<path d="M${x1-8},${ya+21} L${x1},${ya+11} L${x1+8},${ya+21}" fill="none" stroke="${C.route}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+      s+=T(x1+16,ya+50,'An emissions-first router moves',{s:13,c:C.ink,w:540})+T(x1+16,ya+68,'flexible work into the solar stretch',{s:13,c:C.ink,w:540});
+      s+=T(X(21),ya+18,'Rush hours: not the target',{s:12,a:'middle',c:C.ink2});
+    }
+    s+=axis();
+  } else if(step===2){
+    const MON=['Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct'], order=[10,11,0,1,2,3,4,5,6,7,8,9];
+    const hh=(h-top-bot)/12;
+    s+=`<rect x="${X(15)}" y="${top-6}" width="${cw*8}" height="${hh*12+12}" rx="8" fill="${C.rushFill}" fill-opacity=".22"/>`;
+    order.forEach((mi,ri)=>{ D.pace_stress_mh[mi].forEach((v,hr)=>{ const c=D.pace_top100_netload_mh[mi][hr];
+        s+=`<rect x="${X(hr)+1}" y="${top+ri*hh+1}" width="${cw-2}" height="${hh-2}" rx="3" fill="${c?C.rushFill:'rgba(28,40,50,.05)'}" ${c?'':''} ${tip(`${MON[ri]} ${fmtH(hr)}: ${c} of the top-100 hours`)}/>`;
+        if(c) s+=`<rect x="${X(hr)+1}" y="${top+ri*hh+1}" width="${cw-2}" height="${hh-2}" rx="3" fill="url(#hatch)" opacity="${.35+Math.min(1,c/14)*.65}"/>`+T(X(hr)+cw/2,top+ri*hh+hh/2+4,c,{s:11,a:'middle',c:C.ink,w:520}); });
+      s+=T(lx-10,top+ri*hh+hh/2+4,MON[ri],{s:11.5,a:'end'}); });
+    s+=T(X(19),top+hh*12+40,'Number = how many of the top-100 net-load hours fell in that month and hour',{s:11.5,a:'middle'});
+    for(let i=0;i<24;i+=3) s+=T(X(i)+cw/2,top-14,fmtH(i),{s:11,a:'middle'});
+  } else if(step===3){
+    // curves for 4 regions in ink, job windows in route
+    const mx=750, hC=h-top-bot-20, Y=v=>top+hC-(v/mx)*hC, pts=a=>a.map((v,i)=>`${X(i)+cw/2},${Y(v)}`).join(' L');
+    for(const g of [0,250,500,750]) s+=`<line x1="${lx}" x2="${X(24)}" y1="${Y(g)}" y2="${Y(g)}" stroke="${C.hair2}"/>`+T(lx-10,Y(g)+4,g,{s:11,a:'end'});
+    s+=T(lx-10,top-16,'g CO₂/kWh',{s:11,a:'end'});
+    // smoke band under each value: background columns showing Utah's carbon
+    if(S.skeptic) s+=`<rect x="${lx}" y="${Y(MARG[1])}" width="${cw*24}" height="${Y(MARG[0])-Y(MARG[1])}" fill="url(#hatchm)"/>`+T(X(12),Y(MARG[1])-8,`Utah's marginal proxy stays ${MARG[0]}–${MARG[1]} at every hour`,{s:12,a:'middle',c:C.ink2,w:500,halo:1});
+    const win=(s0,H,cv,lab,on)=>{ let o=''; const xs=s0, xe=s0+H; const segs=xe>24?[[xs,24],[0,xe-24]]:[[xs,xe]];
+      for(const [a,b] of segs) o+=`<rect x="${X(a)}" y="${top-6}" width="${(b-a)*cw}" height="${hC+6}" rx="6" fill="${on?C.route:'#000'}" fill-opacity="${on?.08:0}" stroke="${on?C.route:'none'}" stroke-opacity=".35"/>`; return o; };
+    const pj=plan();
+    if(S.mode==='now') s+=win(pj.a,pj.H,CUR.PACE,'',1); if(S.mode==='wait') s+=win(pj.wait.s,pj.H,CUR.PACE,'',1); if(S.mode==='move') s+=win(pj.a,pj.H,CUR[S.dest],'',1);
+    const style={PACE:[2.6,C.ink,1],BPAT:[1.8,C.ink2,.9],CISO:[1.5,C.ink2,.75],NEVP:[1.5,C.ink2,.75]};
+    for(const c of ['NEVP','CISO','BPAT','PACE']){ const [sw,col,op]=style[c]; const hi=(S.mode==='move'&&c===S.dest);
+      s+=`<path d="M${pts(CUR[c])}" fill="none" stroke="${col}" stroke-opacity="${hi?1:op}" stroke-width="${hi?2.2:sw}" stroke-linejoin="round"/>`;
+      s+=T(X(24)+8,Y(CUR[c][23])+4,REG[c].name,{s:12.5,c:C.ink,w:c==='PACE'?560:440}); }
+    // the job's average over its window, drawn as a level across the window
+    const level=(s0,v,txt)=>{ let o=''; const segs=s0+pj.H>24?[[s0,24],[0,s0+pj.H-24]]:[[s0,s0+pj.H]];
+      for(const [a,b] of segs) o+=`<line x1="${X(a)+3}" x2="${X(b)-3}" y1="${Y(v)}" y2="${Y(v)}" stroke="#fff" stroke-width="7" stroke-linecap="round"/><line x1="${X(a)+3}" x2="${X(b)-3}" y1="${Y(v)}" y2="${Y(v)}" stroke="${C.route}" stroke-width="3" stroke-linecap="round"/>`;
+      const lx0=X(segs[0][0])+8; return o+T(lx0,top+14,txt,{s:13,c:C.ink,w:560,halo:1}); };
+    if(S.mode==='now') s+=level(pj.a,pj.now,`Run now · averages ${r0(pj.now)}`);
+    if(S.mode==='wait') s+=level(pj.wait.s,pj.wait.v,`Wait for ${fmtH(pj.wait.s)} · averages ${r0(pj.wait.v)} · ${pj.cut(pj.wait.v)}% cleaner`);
+    if(S.mode==='move') s+=level(pj.a,pj.move,`Move · averages ${r0(pj.move)} · ${pj.cut(pj.move)}% cleaner`);
+    s+=axis();
+  } else if(step===4){
+    const pj=plan(); const items=[['Run now in Utah',pj.now],['Wait for '+fmtH(pj.wait.s),pj.wait.v],['Move to Northwest hydro',pj.moves.BPAT]];
+    const maxKg=pj.kg(750), bx=270, bw=w-bx-170, rowH=Math.min(190,(h-top-bot-60)/3);
+    for(const g of [0,100,200]){ const gx=bx+pj.kg(0)+g/maxKg*bw; s+=`<line x1="${gx}" x2="${gx}" y1="${top+20}" y2="${top+40+rowH*3}" stroke="${C.hair2}"/>`+T(gx,top+58+rowH*3,`${g} kg`,{s:11,a:'middle'}); }
+    items.forEach(([lab,v],i)=>{ const y=top+40+i*rowH+rowH/2, kg=pj.kg(v), len=Math.max(6,kg/maxKg*bw);
+      s+=T(28,y-4,lab,{s:16,c:C.ink,w:540})+T(28,y+16,`${r0(v)} g/kWh average`,{s:12.5});
+      s+=`<path d="M${bx},${y-12} H${bx+len-4} q4,0 4,4 v16 q0,4 -4,4 H${bx} Z" fill="${ci2c(v)}"/>`;
+      s+=T(bx+len+14,y+9,`≈ ${sig2(kg)} kg CO₂`,{s:26,c:C.ink,w:360,f:'d',ls:'-.015em'}); });
+    s+=T(28,h-bot+10,`Bar colour is the run's average carbon intensity; length is CO₂ for ${fmtN(pj.kwh)} kWh (assumed 0.7 kWh per GPU-hour).`,{s:11.5});
+  } else if(step===6){
+    const P=CUR.PACE, avg=P.reduce((a,b)=>a+b)/24, mn=Math.min(...P), mxv=Math.max(...P), imn=P.indexOf(mn), imx=P.indexOf(mxv);
+    const L=28, R=w-28, W=R-L;
+    s+=T(L,top+24,'Clean from 9 AM to 5 PM. Jammed from 7 to 11 PM.',{s:30,c:C.ink,w:360,f:'d',ls:'-.015em'});
+    s+=T(L,top+56,'If a job can move tonight, send it to Northwest hydro.',{s:17,c:C.ink2});
+    const col=(x,lab,v,sub)=>T(x,top+112,lab,{s:12.5})+T(x,top+154,r0(v),{s:44,c:C.ink,w:320,f:'d',ls:'-.02em'})+T(x+String(r0(v)).length*23+6,top+154,'g/kWh',{s:12})+T(x,top+176,sub,{s:12});
+    s+=col(L,'Day average',avg,'all 24 hours')+col(L+W*.26,'Cleanest hour',mn,fmtH(imn))+col(L+W*.52,'Dirtiest hour',mxv,fmtH(imx));
+    // hour by hour, with the rush row and the clean bracket aligned
+    const ys=top+236, sc=W/24, hs=Math.max(56,(h-top-bot)*.22);
+    s+=T(L,ys-12,'Hour by hour',{s:13,c:C.ink,w:540});
+    s+=`<path d="M${L+9*sc+2},${ys-2} v-5 H${L+17*sc-2} v5" fill="none" stroke="${C.ink3}"/>`+T(L+13*sc,ys-12,'Cleanest 9 AM–5 PM',{s:11.5,a:'middle',c:C.ink2});
+    P.forEach((v,i)=>{ const f=ci2c(v); s+=`<rect x="${L+i*sc+1}" y="${ys}" width="${sc-2}" height="${hs}" rx="5" fill="${f}" ${tip(`${fmtH(i)}: ${r0(v)} g/kWh`)}/>`; });
+    s+=`<rect x="${L+19*sc+1}" y="${ys+hs+6}" width="${sc*4-2}" height="12" rx="3" fill="url(#hatch)"/>`+T(L+23*sc+8,ys+hs+16,'Rush',{s:11.5,c:C.ink2});
+    for(let i=0;i<24;i+=3) s+=T(L+i*sc+sc/2,ys+hs+36,fmtH(i),{s:11,a:'middle'});
+    // tonight's better places for a job arriving at the chosen hour
+    const yb=ys+hs+70, pj=plan();
+    s+=T(L,yb,`Better places tonight for an ${pj.H}-hour job starting ${fmtH(pj.a)}`,{s:13,c:C.ink,w:540});
+    const rows=[['PACE',pj.now],...DESTS.map(d=>[d,pj.moves[d]])], rh=Math.min(62,(h-bot-yb-24)/rows.length), bx=L+190, bw2=W-190-150;
+    rows.forEach(([c,v],i)=>{ const y=yb+16+i*rh; const len=Math.max(4,v/CI_MAX*bw2);
+      s+=T(L,y+rh/2+4,REG[c].name,{s:13,c:C.ink,w:c==='PACE'?560:440});
+      s+=`<path d="M${bx},${y+rh/2-9} H${bx+len-4} q4,0 4,4 v10 q0,4 -4,4 H${bx} Z" fill="${ci2c(v)}"/>`;
+      s+=T(bx+len+8,y+rh/2+4,`${r0(v)}`,{s:13,c:C.ink,w:500});
+      s+=T(R,y+rh/2+4,c==='PACE'?'staying put':`${pj.cut(v)}% cleaner`,{s:12.5,a:'end',c:C.ink2}); });
+    s+=T(L,h-bot+14,'Preview only: this card will carry the day-ahead forecast. Here it shows the July average day (modeled).',{s:11.5});
+  }
+  el.innerHTML=s+'</svg>';
+  document.querySelectorAll('.step').forEach(e=>e.classList.toggle('on',+e.dataset.step===step));
+  document.getElementById('st-rail').innerHTML=[1,2,3,4,5,6].map(i=>`<i class="${i===step?'on':''}"></i>`).join('');
+}
+
+/* ───────── 5 · DESIGN SYSTEM ───────── */
+function renderSystem(){
+  const tok=(hex,name,meaning)=>`<div class="tok"><span class="s" style="background:${hex}"></span><div><b>${name}</b><code>${hex}</code> · <span class="small">${meaning}</span></div></div>`;
+  const ramp = SMOKE.map((c,i)=>`<div style="background:${c};color:${onFill(c)}">${Math.round(i/(SMOKE.length-1)*CI_MAX)}</div>`).join('');
+  const glassDemo = `<div style="position:relative;height:150px;border-radius:16px;overflow:hidden;background:url(${GROUND}) 46% 48%/260% auto">
+      <div style="position:absolute;left:10%;top:0;width:34%;height:100%;background:${ci2c(640)};mix-blend-mode:multiply;opacity:.85"></div>
+      <div class="glass" style="position:absolute;left:22px;top:22px;right:52%;bottom:22px;border-radius:14px;padding:12px 14px"><b style="font-weight:540">Glass 0.60</b><div class="small">over the soft ground</div></div>
+      <div class="glass strong" style="position:absolute;left:52%;top:22px;right:22px;bottom:22px;border-radius:14px;padding:12px 14px"><b style="font-weight:540">Glass 0.78</b><div class="small">docked over the map</div></div></div>`;
+  document.getElementById('ds').innerHTML = `
+  <div class="ds glass strong" style="grid-column:span 12"><h1 class="h-xl">One meaning per colour, everywhere</h1><p class="lede">All four concepts draw from the same four colour roles. Carbon is always the smoke ramp. The rush is always the soft rose, drawn as a hatch. Solar is always pale gold. The router's action is always lake blue. Everything else is a cool, quiet neutral, so only the data carries colour.</p></div>
+  <div class="ds glass" style="grid-column:span 7"><h3>Carbon intensity: the smoke ramp</h3><p class="why">One sequential ramp from clear air to coal smoke, 0 → 750 g CO₂/kWh, interpolated in OKLab between eight steps. It is the same ramp on the map fills, strips, heatmaps and bars. Light means clean.</p>
+    <div class="ramp">${ramp}</div>
+    <div style="margin-top:14px">${rampLegend(560,{skeptic:true})}</div>
+    <pre class="val">validate_palette.js --ordinal, 8 steps, light, surface #ffffff
+[PASS] Lightness monotone · [PASS] Adjacent ΔL ≥ 0.06 · [PASS] Single hue (spread 8°)
+[FAIL] Light-end contrast 1.08:1. This is deliberate: 0 g/kWh is clear air, so the clean end sits
+       near the ground. Mitigation: hairline region outlines, 2 px gaps between cells, direct labels, tooltips.</pre></div>
+  <div class="ds glass" style="grid-column:span 5"><h3>Roles</h3><p class="why">Text never wears a data colour; it stays in ink. A coloured mark beside the text carries the identity.</p>
+    ${tok('#c76a5f','Rush hour, grid stress','hatched bands and outlines only, on fill #f6c2c6. Never a carbon value.')}
+    ${tok('#eed780','Solar','pale gold, used as a fill only and always labelled. Mark tone #cfae42.')}
+    ${tok('#2256bb','Our router\'s action','the job\'s hours, the move arc, the chosen outcome. Nothing else.')}
+    ${tok('#1c2832','Ink','text and the net-load line')}
+    ${tok('#4e5a64','Ink, muted','secondary text; at least 4.8:1 on every glass surface')}
+    ${tok('#e9eff2','Atmosphere','the cool ground the glass floats on')}</div>
+  <div class="ds glass" style="grid-column:span 7"><h3>Validator results</h3>
+    <pre class="val">Identity roles, all pairs: rush #c76a5f · solar mark #cfae42 · route #2256bb
+[PASS] Lightness band · [PASS] Chroma floor · [PASS] CVD ΔE 14.6 (deutan) · [PASS] Normal ΔE 18.7
+[WARN] Contrast: solar #cfae42 is 2.15:1, so solar is a fill and is always labelled "Solar".
+
+Route vs every smoke step it crosses (#9aa0a8, #858c94, #717880, #5f656b)
+[PASS] CVD ΔE 15.4–25.2 · [PASS] Normal ΔE 15.9–27.2. Route lines also carry a 2 px white casing.
+
+Rush vs the smoke mid-steps (#858c94, #717880)
+[WARN/FAIL] CVD ΔE 5.3–8.0. So the rush never relies on colour: it is always a diagonal hatch
+            in its own labelled row, or a ring with a white casing.</pre></div>
+  <div class="ds glass" style="grid-column:span 5"><h3>Type</h3><p class="why">Funnel Display carries findings and big numbers; Funnel Sans carries the interface. They are one superfamily, with soft corners and precise, tabular figures.</p>
+    <div class="typespec"><div class="h-xl">Moving beats waiting</div><div class="h-l">658 → 46 g/kWh</div><div>Funnel Sans 14: Utah's cleanest stretch is 9 AM–5 PM. 0123456789</div><div class="small">Muted 12.5: observed, modeled, simulated</div></div></div>
+  <div class="ds glass" style="grid-column:span 7"><h3>Glass</h3><p class="why">Panels are frosted glass on the shared relief world: white at 60–78%, blur 22 px with saturate 160%, a white hairline edge and a three-layer soft shadow. Panels docked over the map use the stronger glass, so muted text stays at 4.8:1 even above the darkest smoke.</p>${glassDemo}</div>
+  <div class="ds glass" style="grid-column:span 5"><h3>Evidence labels</h3><p class="why">Every number says where it comes from. The shape carries the label, so it reads without colour.</p>
+    <div style="display:flex;gap:18px;flex-wrap:wrap"><span class="ev obs">observed</span><span class="ev mod">modeled</span><span class="ev sim">simulated</span><span class="ev asm">assumed</span></div>
+    <p class="why" style="margin-top:14px">Observed: EIA-930 demand, net load and solar. Modeled: EIA hourly CO₂ per balancing authority, as g/kWh. Simulated: job outcomes, with perfect foresight. Assumed: 0.7 kWh per GPU-hour.</p></div>`;
+}
+
+/* ───────── router + interaction ───────── */
+const VIEWS=['control','ribbon','cockpit','story','system'];
+function parseHash(){ const h=location.hash.slice(1); const [v,st]=h.split('-'); return {v:VIEWS.includes(v)?v:'control', st:+st||null}; }
+function render(){
+  syncSegs();
+  document.getElementById('skeptic').setAttribute('aria-pressed',String(S.skeptic));
+  drawWorld();
+  if(S.view==='control') renderControl();
+  if(S.view==='ribbon') renderRibbon();
+  if(S.view==='cockpit') renderCockpit();
+  if(S.view==='story') renderStory();
+  if(S.view==='system') renderSystem();
+}
+function setView(v){
+  S.view=v; document.body.dataset.view=v;
+  document.querySelectorAll('.view').forEach(e=>e.classList.toggle('on',e.id==='v-'+v));
+  document.querySelectorAll('#tabs a').forEach(a=>{ const on=a.getAttribute('href')==='#'+v; if(on) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+  const a=document.querySelector(`#tabs a[href="#${v}"]`), th=document.getElementById('thumb');
+  th.style.left=a.offsetLeft+'px'; th.style.width=a.offsetWidth+'px';
+  render();
+}
+window.addEventListener('hashchange',()=>{ const {v,st}=parseHash(); if(st) S.step=st; setView(v); });
+function centreStep(n){ const el=document.querySelector(`.step[data-step="${n}"]`), sc=document.getElementById('st-scroller'); if(!el) return;
+  sc.style.scrollBehavior='auto'; sc.scrollTop=el.offsetTop-(sc.clientHeight-el.offsetHeight)/2; sc.style.scrollBehavior=''; }
+window.addEventListener('resize',()=>{ const keep=S.step; render(); if(S.view==='story'){ centreStep(keep); S.step=keep; renderStory(); } });
+document.addEventListener('click',e=>{
+  document.body.classList.add('live');
+  const b=e.target.closest('[data-mode]'); if(b && b.closest('[data-seg="mode"], #cr-outcomes')){ S.mode=b.dataset.mode; render(); return; }
+  const lane=e.target.closest('[data-lane]'); if(lane){ S.mode=lane.dataset.lane; if(lane.dataset.dest) S.dest=lane.dataset.dest; render(); return; }
+  const d=e.target.closest('[data-dest]'); if(d){ S.dest=d.dataset.dest; S.mode='move'; render(); return; }
+});
+document.addEventListener('keydown',e=>{ const d=e.target.closest&&e.target.closest('li[data-dest]'); if(d&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); S.dest=d.dataset.dest; S.mode='move'; render(); } });
+document.getElementById('skeptic').addEventListener('click',()=>{ S.skeptic=!S.skeptic; render(); });
+// timeline scrub
+(()=>{ const el=document.getElementById('cr-tlsvg'); let drag=false;
+  const at=x=>{ const g=el._geom; if(!g) return; const r=el.getBoundingClientRect(); const i=Math.floor((x-r.left-g.lx)/g.cw); S.hour=Math.max(0,Math.min(23,i)); render(); };
+  el.addEventListener('pointerdown',e=>{drag=true;el.setPointerCapture(e.pointerId);at(e.clientX)});
+  el.addEventListener('pointermove',e=>{ if(drag) at(e.clientX) });
+  el.addEventListener('pointerup',()=>drag=false);
+  el.addEventListener('keydown',e=>{ if(e.key==='ArrowRight'){S.hour=(S.hour+1)%24;render()} if(e.key==='ArrowLeft'){S.hour=(S.hour+23)%24;render()} });
+  let timer=null; const pb=document.getElementById('cr-play');
+  pb.addEventListener('click',()=>{ if(timer){clearInterval(timer);timer=null;pb.innerHTML='<svg viewBox="0 0 14 14"><path d="M3 1.5v11l9.5-5.5z" fill="#1c2832"/></svg>';return}
+    pb.innerHTML='<svg viewBox="0 0 14 14"><rect x="3" y="2" width="3" height="10" rx="1" fill="#1c2832"/><rect x="8.5" y="2" width="3" height="10" rx="1" fill="#1c2832"/></svg>';
+    timer=setInterval(()=>{S.hour=(S.hour+1)%24;render()},700); });
+})();
+// scrubbable numbers
+(()=>{ let st=null;
+  document.addEventListener('pointerdown',e=>{ const b=e.target.closest('.scrub'); if(!b) return; b.focus(); st={b,k:b.dataset.k,x:e.clientX,v:S[b.dataset.k]}; b.setPointerCapture(e.pointerId); });
+  document.addEventListener('pointermove',e=>{ if(!st) return; const c=SCRUB[st.k]; const n=Math.round((e.clientX-st.x)/14); let v=st.v+n*c.step;
+    if(st.k==='hour') v=((v%24)+24)%24; else v=Math.max(c.min,Math.min(c.max,v)); if(v!==S[st.k]){S[st.k]=v;render();} });
+  document.addEventListener('pointerup',()=>st=null);
+  document.addEventListener('keydown',e=>{ const b=e.target.closest&&e.target.closest('.scrub'); if(!b) return; const k=b.dataset.k,c=SCRUB[k];
+    const dir={ArrowRight:1,ArrowUp:1,ArrowLeft:-1,ArrowDown:-1}[e.key]; if(!dir) return; e.preventDefault(); let v=S[k]+dir*c.step;
+    if(k==='hour') v=((v%24)+24)%24; else v=Math.max(c.min,Math.min(c.max,v)); S[k]=v; render(); });
+})();
+// story steps
+(()=>{ const sc=document.getElementById('st-scroller');
+  const io=new IntersectionObserver(es=>{ for(const e of es){ if(e.isIntersecting){ const st=+e.target.dataset.step; if(st!==S.step){S.step=st; if(S.view==='story') renderStory();} } } },{root:sc,rootMargin:'-45% 0px -45% 0px'});
+  document.querySelectorAll('.step').forEach(s=>io.observe(s));
+})();
+// tooltip
+(()=>{ const t=document.getElementById('tip');
+  document.addEventListener('pointerover',e=>{ const n=e.target.closest('[data-tip]'); if(!n){t.classList.remove('on');return} t.innerHTML=n.getAttribute('data-tip').replace(/&lt;/g,'<').replace(/&amp;/g,'&'); t.classList.add('on'); });
+  document.addEventListener('pointermove',e=>{ if(!t.classList.contains('on')) return; const x=Math.min(innerWidth-t.offsetWidth-12,e.clientX+14), y=Math.max(8,e.clientY-t.offsetHeight-12); t.style.left=x+'px'; t.style.top=y+'px'; });
+})();
+// boot
+(()=>{ const {v,st}=parseHash(); if(st) S.step=st;
+  const q=new URLSearchParams(location.search); if(q.get('skeptic')==='1') S.skeptic=true; if(['now','wait','move'].includes(q.get('mode'))) S.mode=q.get('mode'); if(q.has('hour')) S.hour=Math.max(0,Math.min(23,+q.get('hour')||0)); if(DESTS.includes(q.get('dest'))) S.dest=q.get('dest');
+  const go=()=>{ setView(v); if(v==='story'&&st){ centreStep(st); S.step=st; renderStory(); } };
+  go(); if(document.fonts) document.fonts.ready.then(go);
+})();
+</script>
+</body>
+</html>
