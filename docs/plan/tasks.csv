@@ -15,17 +15,17 @@ O2,Owner,Mac check: make web + preview in Chrome,Owner,next,,Tue 15:00,Tue 21:00
 O3,Owner,Decide: high effort for freeze/test/audit agents?,Owner,done,,Tue 15:00,Tue 18:00,Tue 15:29,,"Owner: yes, high effort for T12/T12r/T13/AD agents"
 T15,Post-test,Mobility/capacity toggle + flexibility budget + Astra copy fixes,Claude agent,done,P1,Tue 14:50,Tue 18:30,Tue 16:17,PR #61 (merge after T13),Fixes verified; PR #61 merges after T13
 T15r,Review,Re-check T15 fixes,Claude reviewer,done,T15,Tue 15:54,Tue 19:00,Tue 16:17,,Merge after T13
-T12,Freeze,make data + independent rebuild + freeze writer,Claude agent,in progress,T11r;T10br,Tue 15:44,Tue 19:30,,docs/evidence/rebuild-20261027.json,High effort if owner agrees (O3). Any hash mismatch stops the freeze
-T12r,Review,Review rebuild + freeze record,Claude reviewer,queued,T12,Tue 20:30,Tue 21:15,,review note,
+T12,Freeze,make data + independent rebuild + freeze writer,Claude agent,done,T11r;T10br,Tue 15:44,Tue 19:30,Tue 16:33,docs/evidence/rebuild-20261027.json,"PR #82. Rebuild matches (metrics e6ad2635, 9 ledgers). F_test 2026-10-27T00Z (360 days). Deploy S. 505 tests pass"
+T12r,Review,Review rebuild + freeze record,Claude reviewer,in progress,T12,Tue 16:36,Tue 21:15,,review note,"Independent go/no-go review, high effort"
 FZ,Freeze,Write freeze.json on main + tag config-freeze,Claude lead,queued,T12r,Tue 21:15,Tue 21:30,,tag config-freeze,Go/no-go check
 T13,Test,Sealed test year: one logged run + export,Claude lead,queued,FZ,Tue 21:30,Tue 22:15,,results/test + test_reads.jsonl,Opened exactly once (D-059)
 AP,Audit,"Audit packet: final candidate, run IDs, hashes, read log, known deferrals",Claude lead,queued,T13,Tue 22:15,Tue 22:45,,docs/reviews/audit-packet.md,Astra F28
 T14,Post-test,Water footprint (illustrative),Claude agent,done,T10b,Tue 15:21,Tue 20:00,Tue 15:41,PR #69 (merge after T13),"Fixed: window in days, not ""a year"". Sign depends on hydro evaporation"
 T14r,Review,Review T14 (water),Claude reviewer,done,T14,Tue 16:19,Tue 21:00,Tue 16:25,,"Review: wording fix (""a year"" → 351-day window); fix round running"
 T16,Post-test,Utah's toughest grid days case study (pre-registered top-3 net-load days),Claude agent,done,T11,Tue 16:05,Tue 19:30,Tue 16:23,PR #80 (merge after T13),"Jul 8 (8,173 MW, 101°F), Jul 16, Sep 2; transfer-basis check in review"
-T16r,Review,Review T16 (toughest days),Claude reviewer,in progress,T16,Tue 16:25,Tue 22:30,,,Merge after T13; cut second if short
+T16r,Review,Review T16 (toughest days),Claude reviewer,done,T16,Tue 16:25,Tue 22:30,Tue 16:37,,Re-review: ready with minor fixes. Two copy fixes at merge (Sep 2 caveat; unrounded peak); rest to UI polish
 T17,Evidence,Assumptions vs reality: notebook + results/assumptions.json + drawer section,Claude agent,done,,Tue 15:41,Tue 18:00 (notebook) / 19:30 (UI),Tue 16:05,"PR #74 notebook, PR #75 drawer (both merge after T13)","Changes lab/tests, so it merges after the test to keep the freeze rebuild match. H ties S: S−H −0.5 t"
-T17r,Review,Review T17 (assumptions notebook),Claude reviewer,in progress,T17,,Tue 21:00,,,"Review: wording (H not a bound; not distinguishable), water source; fix round running"
+T17r,Review,Review T17 (assumptions notebook),Claude reviewer,done,T17,,Tue 21:00,Tue 16:35,,Re-review: ready with minor fixes (9 minors parked; PR refs vanish at merge-time regeneration)
 MG,Post-test,"Merge T14, T15, T16, T17 after review; rebuild dashboard with test view",Claude lead,queued,T13;T15;T14;T16;T17,Tue 22:15,Wed 00:30,,dashboard + artifact link,Merge order: T15 → T14 → T16 → T17 (each rebased; regenerate data + npm run data; tests)
 AU,Audit,Astra results audit (Codex),Codex,queued,AP,Tue 23:00,Wed 01:00,,docs/reviews/*results-audit*,Runs overnight; pre-approved
 AD,Audit,Disposition audit findings,Claude lead,queued,AU,Wed 07:00,Wed 09:00,,dispositions,
