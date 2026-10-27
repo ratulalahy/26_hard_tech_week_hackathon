@@ -46,6 +46,8 @@ Key documents:
 ## Commands
 
 - `cd lab && uv run pytest` runs the tests.
+- `make test` does the same from the repo root.
+- `make notebooks` re-executes the evidence notebooks in `notebooks/` in place and exports HTML copies to `docs/evidence/`. It reads the cached data through `GRIDPILOT_DATA_DIR` and takes about five minutes. Each notebook ends with the decisions it supports in `docs/decisions.md`.
 
 Every command listed here must work. Add a command when its target lands.
 
