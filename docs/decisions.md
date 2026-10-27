@@ -483,3 +483,14 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 - **Decision (pitch):** the deck, narrative and one-pager start Wednesday morning, after the test run and the Astra audit.
 - **Why:** the judges are an energy-storage company. Our results show that waiting fails in Utah, and that moving needs large jobs to be mobile. Storage is the natural complement for work that cannot move.
 - **Brief:** `docs/superpowers/plans/amendments/stage3-T10b.md`.
+
+## D-062 · 2026-10-27 ~16:00 MT · S ranking applies the forecast publication envelope (Astra F05)
+- **Decided by:** lead (Claude), on the owner-requested Astra strategy review.
+- **Decision:** S's clean-region ranking uses only carbon rows published by its fit time (`ts_utc + 1h + 96h ≤ fit_at`), the same envelope as the forecasts. This applies to validation (fit_at 2024-10-29) and test (fit_at 2025-10-29).
+- **Lead check:**
+  - The ordering is unchanged in both windows.
+  - Validation enveloped means: BPAT 87.3, CISO 202.4, NEVP 324.1, PACE 582.3 (registered: 87.5, 202.5, 324.1, 582.5).
+  - Test window: 95.5, 194.2, 312.6, 572.8.
+  - S uses only the order, so the validation schedules and numbers are unchanged. The manifest provenance is corrected in the T11 fix round.
+- **Also:** `docs/data-profile/grid.md` gets a correction notice (F26), and the spec status line is updated (F27).
+- **Evidence:** `docs/reviews/2026-10-27-plan-astra-r1-astra.md`.
