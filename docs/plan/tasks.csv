@@ -13,8 +13,8 @@ P1,Pitch,Draft 4:30 script + Q&A + one-pager + deck outline,Claude agent,done,AS
 O1,Owner,Review pitch drafts,Owner,next,P1,Tue 16:00,Tue 21:00,,comments,Tonight; anytime
 O2,Owner,Mac check: make web + preview in Chrome,Owner,next,,Tue 15:00,Tue 21:00,,ok / issues,git pull && make web && cd web && npm run preview
 O3,Owner,Decide: high effort for freeze/test/audit agents?,Owner,done,,Tue 15:00,Tue 18:00,Tue 15:29,,"Owner: yes, high effort for T12/T12r/T13/AD agents"
-T15,Post-test,Mobility/capacity toggle + flexibility budget + Astra copy fixes,Claude agent,done,P1,Tue 14:50,Tue 19:00,Tue 15:54,PR #61 (merge after T13),"46% of energy can move, 54% must stay; S 22.6% → 3.2% when big jobs are locked"
-T15r,Review,Review T15 (toggle + budget),Claude reviewer,in progress,T15,Tue 15:54,Tue 20:00,,,Merge after T13
+T15,Post-test,Mobility/capacity toggle + flexibility budget + Astra copy fixes,Claude agent,in progress,P1,Tue 14:50,Tue 18:30,,PR #61 (merge after T13),Fix round after review (honesty/layout); merge after T13
+T15r,Review,Re-check T15 fixes,Claude reviewer,next,T15,Tue 15:54,Tue 19:00,,,Merge after T13
 T12,Freeze,make data + independent rebuild + freeze writer,Claude agent,in progress,T11r;T10br,Tue 15:44,Tue 19:30,,docs/evidence/rebuild-20261027.json,High effort if owner agrees (O3). Any hash mismatch stops the freeze
 T12r,Review,Review rebuild + freeze record,Claude reviewer,queued,T12,Tue 20:30,Tue 21:15,,review note,
 FZ,Freeze,Write freeze.json on main + tag config-freeze,Claude lead,queued,T12r,Tue 21:15,Tue 21:30,,tag config-freeze,Go/no-go check
@@ -29,7 +29,7 @@ T17r,Review,Review T17 (assumptions notebook),Claude reviewer,queued,T17,,Tue 21
 MG,Post-test,"Merge T14, T15, T16, T17 after review; rebuild dashboard with test view",Claude lead,queued,T13;T15;T14;T16;T17,Tue 22:15,Wed 00:30,,dashboard + artifact link,
 AU,Audit,Astra results audit (Codex),Codex,queued,AP,Tue 23:00,Wed 01:00,,docs/reviews/*results-audit*,Runs overnight; pre-approved
 AD,Audit,Disposition audit findings,Claude lead,queued,AU,Wed 07:00,Wed 09:00,,dispositions,
-P2,Pitch,Fill test + storage numbers; build deck (Slides) + one-pager; operator playbook in one-pager,Claude agent,queued,AD;P1,Wed 08:00,Wed 11:00,,deck link + one-pager,
+P2,Pitch,Deck (Slides) + one-pager built TONIGHT with placeholders; Wed AM: swap in test numbers only,Claude agent,queued,AD;P1,Tue ~20:00,Wed 11:00,,deck link + one-pager,
 UI,Polish,Final dashboard copy + parked cosmetic fixes + screenshots,Claude agent,queued,AD,Wed 08:00,Wed 11:30,,dashboard,"Parked: storage label overlap, chip wrap, nested parens, hard-coded rush text"
 EF,Gate,Experiments freeze,All,queued,,Wed 13:00,Wed 13:00,,no new numbers,
 NL,Gate,Numbers and deck locked,All,queued,P2;UI,Wed 14:00,Wed 14:00,,final artifacts,
