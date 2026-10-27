@@ -1,67 +1,103 @@
 # GridPilot master plan: to judging (Wed 2026-10-28 17:00 MT)
 
-This is the plan that runs from now to judging. Supersedes the timeline parts of `2026-10-27-plan-v2.md` and the Stage 3 plan. The task list is `docs/plan/tasks.csv`, the single source of truth for status and times. The project board renders it.
+This is the master plan from now to judging. **The task list is `docs/plan/tasks.csv`**, the single source of truth for status and times. The project board renders it: `scripts/render_board.py` writes `docs/status/board.html` and the private board link. All times are MT, from the system clock (D-065). "ETA" is an estimate; "done" is a commit or report time.
 
-All times are MT, from the system clock (D-065 records the earlier clock drift). "ETA" is an estimate; "done" is a commit or report time.
+## 1. What we're solving
+An AI cluster in Utah (PACE, the balancing area serving much of Utah) runs around the clock on a coal-heavy grid. The operator has three kinds of flexibility: **wait** for cleaner hours, **move** work to cleaner regions, or **store** energy. Which one cuts emissions, by how much, and what limits it?
 
-## Goal
-Win the Torus bounty with an honest, rigorous and clear story.
+**Our proposition.** A day-ahead grid "traffic report", a router that uses it, and a planning lens for operators and the utility.
 
-> In a simulated replay, moving Utah's AI work to cleaner grids cuts attributed CO₂ by about 22.5%, while waiting in Utah alone saves under 1%. That holds only if the large jobs can move. Storage at the Utah site is how to treat the work that can't.
+**Validation findings** (simulated replay, attributed emissions):
+- Moving cuts about 22.5% (S: 22.6% [18.4, 26.8]). Waiting in Utah alone saves under 1%.
+- If only jobs of ≤ 8 GPUs can move: 3–4%. Moving small jobs plus 4 MWh of storage: about 7.3%.
+- On a flat marginal basis, storage adds CO₂.
+- Forecast choice shows no demonstrated benefit. The sealed test year confirms or corrects all of this once.
 
-The sealed test year confirms or corrects the result once, and every number is labelled.
+## 2. Data and periods
+| Data | Period | Use |
+|---|---|---|
+| EIA-930 hourly balance (demand, generation by fuel, interchange) | 2022 → Oct 27 2026 (snapshot) | stress, fuel mix, forecasts |
+| EIA hourly CO₂ per BA (PACE, CISO, BPAT, NEVP) | same | carbon truth (modeled, EIA estimate) |
+| Acme "Seren" GPU-cluster trace (2,288 GPUs, about 818k jobs, 2023) | replayed in a cycle onto 2024–26 | workload |
+| Electricity Maps BA shapes, Natural Earth | static | map |
+| Open-Meteo archived weather | 2024–26 | descriptive context only (T16) |
+| NREL and LBNL water references | static | water illustration (T14) |
 
-## Milestones
+**Splits:**
+- Training: up to Oct 2024.
+- **Validation:** Nov 2024 – Oct 2025. All results so far.
+- **Test, sealed:** Nov 2025 – Oct 2026. Opens once, after the freeze.
+
+## 3. Milestones
 | When | Milestone | Status |
 |---|---|---|
-| Tue 07:16 | `checkpoint-tue`: checkable build on validation data | done |
-| Tue 14:18 | Spec approved; test year may open once after the freeze (D-059) | done |
-| Tue ~18:30 | Seal machinery and storage piece reviewed and merged | in progress |
-| Tue ~21:30 | Freeze: independent rebuild matches, `config-freeze` tagged | planned |
+| Tue 07:16 | `checkpoint-tue` | done |
+| Tue 14:18 | Spec approved; test may open once (D-059) | done |
+| Tue 15:21 | Storage and peak relief merged (D-061, D-067) | done |
+| Tue ~16:30 | Seal machinery re-checked and merged | in progress |
+| Tue ~20:30 | Independent rebuild matches; freeze record ready | planned |
+| Tue ~21:30 | `config-freeze` tagged (go/no-go) | planned |
 | Tue ~22:15 | Test year run once, logged, exported | planned |
-| Wed ~01:00 | Astra results audit finished (overnight) | planned |
-| Wed ~11:00 | Deck and one-pager with test numbers; dashboard final | planned |
-| Wed 13:00 | **Experiments freeze**: no new numbers | fixed |
-| Wed 14:00 | **Numbers and deck locked** | fixed |
-| Wed 14:00–16:30 | Three timed rehearsals offline on the Mac | planned |
-| Wed 17:00 | Judging at Aernata | fixed |
+| Tue ~22:15 → Wed 00:30 | Post-test merges: toggle and budget, water, toughest days; dashboard test view | planned |
+| Wed ~01:00 | Astra results audit (overnight) | planned |
+| Wed 07:00–11:00 | Audit dispositions; deck, one-pager and dashboard final | planned |
+| **Wed 13:00** | **Experiments freeze** | fixed |
+| **Wed 14:00** | **Numbers and deck locked** | fixed |
+| Wed 14:00–16:30 | Three timed rehearsals on the Mac | planned |
+| **Wed 17:00** | **Judging** | fixed |
 
-## Critical path
-T11 seal fixes → re-check → T10b storage → review → T12 rebuild and freeze writer → review → freeze tag → T13 test run → audit → dispositions → deck numbers → lock → rehearse.
+## 4. Workstreams (IDs as in tasks.csv)
+- **Freeze and test (critical path):**
+  - T11 seal fixes → T11r re-check;
+  - T12 `make data`, independent rebuild and freeze writer → T12r review;
+  - FZ freeze tag;
+  - T13 one logged test run;
+  - AP audit packet → AU Astra audit → AD dispositions.
+- **Illustrative extras.** Validation only, labelled, merged after T13 unless noted:
+  - T15: mobility/capacity toggle, flexibility budget, and Astra copy fixes (D-064);
+  - T14: water footprint (D-063, D-064);
+  - T16: toughest grid days, with temperature context (D-066);
+  - T17: assumptions-vs-reality notebook (D-068), before the freeze if ready.
+- **Pitch:**
+  - P1 drafts (done);
+  - O1 owner review;
+  - P2 test and storage numbers, deck (Slides), one-pager with the operator playbook;
+  - R1 rehearsals.
+- **Dashboard:** MG merge and test view; UI final copy plus the parked cosmetic fixes.
 
-Anything not on this path, such as T14 water and T15 toggle/budget, is built in parallel and merged only after T13. That way it can never block the freeze or the test run.
-
-## Rules that govern the plan
-- **The seal:** the test year opens exactly once, through `make slice WINDOW=test`, at the frozen commit. Every read is logged. A rerun needs a logged reason (D-059).
-- **Freeze discipline:** no `lab/` change between the independent rebuild and the test run. Web and docs changes after the freeze would also block the entry point's clean-HEAD check, so they wait until T13 is done.
+## 5. Rules
+- **The seal:** the test opens exactly once, through `make slice WINDOW=test` at the frozen commit. Every read is logged; a rerun needs a logged reason (D-059).
+- **Freeze discipline:** no change anywhere between the rebuild and the test run except the freeze record. All extras wait until T13 is done.
 - **Honesty:**
   - "simulated replay";
   - "attributed, not avoided";
   - "deadlines met by construction";
   - S's own estimate and interval as the headline;
-  - the mobility caveat next to the headline;
-  - illustrative pieces (storage, peak relief, water) are labelled and kept apart from the registered result.
-- **Reviews:** every merge gets an independent review. The results audit is the last Codex run planned.
-- **Concurrency:** at most 3 agents at once.
-- **Hard stops:** experiments freeze Wed 13:00; numbers lock Wed 14:00. Anything unfinished is cut, and listed as not run.
+  - the mobility caveat next to it;
+  - illustrative pieces labelled and kept separate;
+  - negative results kept (D-068).
+- **Reviews:** every merge gets an independent review. Codex: the results audit only, unless the owner says otherwise.
+- **Concurrency:** at most 3 agents at once. The queue order is T12 > T17 > T16.
+- **Cut order if time is short:** T14 water, then T16 toughest days, then UI polish. Never cut the freeze, test, audit or rehearsal.
+- **Hard stops:** experiments freeze Wed 13:00; numbers lock Wed 14:00.
 
-## Owner actions
-| When | What |
-|---|---|
-| Tonight | Mac check: `git pull && make web && cd web && npm run preview`, then Chrome at http://127.0.0.1:4173. Look at map smoothness and fonts. |
-| Tonight | Read the pitch drafts in `docs/pitch/` once they land, about 16:00, and comment. |
-| Wed morning | Review the audit dispositions and the deck. |
-| Wed 14:00–16:30 | Rehearse three times. |
+## 6. Open owner items
+| ID | What | By |
+|---|---|---|
+| O1 | Read the pitch drafts (`docs/pitch/`) | tonight |
+| O2 | Mac check: `git pull && make web && cd web && npm run preview` | tonight |
+| O3 | High effort for the freeze, test and audit agents? (the lead recommends yes) | before T12, about 16:30 |
+| — | Optional: the live "tomorrow's traffic report" card for Thursday Oct 29 | Wed AM, if wanted |
 
-## Risks and mitigations
+## 7. Risks
 | Risk | Mitigation |
 |---|---|
-| The rebuild doesn't match | The freeze stops; fix and rebuild. The 21:30 target leaves room before midnight. |
-| The test run fails mid-way | The logged rerun path, with a reason (D-059). Results come no later than early Wed. |
-| The test numbers differ from validation | Report them honestly. Validation is development evidence; test is confirmatory. The pitch placeholders absorb either outcome. |
-| The demo fails on the Mac | Mac check tonight. Fallback: screenshots plus a short screen recording made Wed. |
-| Time pressure Wednesday | Pitch drafted tonight; the audit runs overnight. Cut order: water, then the toggle, then extra polish. |
-| Agent clock drift | Plans use system-clock times only (D-065). |
+| The rebuild doesn't match | Stop and fix; the slack before midnight covers it |
+| The test run fails mid-way | Logged rerun with a reason |
+| Test differs from validation | Report it honestly; the placeholders absorb either outcome |
+| The demo fails on the Mac | Mac check tonight; screenshot and recording fallback |
+| Wednesday time pressure | Pitch drafted tonight, audit overnight, cut order above |
+| Clock drift | System-clock times only (D-065) |
 
-## Decisions in force
-D-050 (claim frame), D-053 (Utah palette), D-058 (extensions), D-059 (spec approved; seal opens once), D-061 (storage), D-062 (S-ranking envelope), D-063 (pitch tonight; water), D-064 (toggle, budget, water after test). See `docs/decisions.md`.
+## 8. Decisions in force
+D-050 claim frame · D-053 palette · D-058 extensions · D-059 spec approved and the seal opens once · D-061 storage · D-062 S-ranking envelope · D-063 pitch tonight and water · D-064 toggle, budget and water after test · D-065 plan and clock · D-066 toughest days · D-067 storage headline · D-068 assumptions notebook. The full log is `docs/decisions.md`.
