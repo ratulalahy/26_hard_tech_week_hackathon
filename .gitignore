@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+# Node
+node_modules/
+web/dist/
+# Data: raw/interim/processed are rebuilt from sources; data/manifests/ is committed
+data/raw/
+data/interim/
+data/processed/
+# Experiment run directories (summaries that matter go to results/)
+runs/
+# Secrets and local settings
+.env
+.claude/settings.local.json
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

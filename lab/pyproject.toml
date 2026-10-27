@@ -1,0 +1,40 @@
+[project]
+name = "gridpilot"
+version = "0.1.0"
+description = "Grid traffic report and AI-job router (Hard Tech Week 2026, Torus bounty)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "duckdb",
+    "geopandas",
+    "gridstatus",
+    "httpx",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "polars",
+    "pyarrow",
+    "pydantic",
+    "pyogrio",
+    "pyyaml",
+    "scikit-learn",
+    "scipy",
+    "shapely",
+    "statsmodels",
+    "tqdm",
+]
+
+[dependency-groups]
+dev = ["hypothesis", "pytest", "ruff"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gridpilot"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
