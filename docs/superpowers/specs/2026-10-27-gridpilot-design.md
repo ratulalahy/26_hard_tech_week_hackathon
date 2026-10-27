@@ -624,7 +624,7 @@ The Mac offline rehearsal moves to Wed morning.
 - Benchmark on a 2-week slice first.
 
 ### F11. Baseline bookings: every job holds its U slot as a fallback (lead ruling during Stage 2, Task 4; revised after the task review)
-- **Observed** on a 2-week synthetic slice: under F1 deadlines, G and S miss deadlines (11 and 5 late jobs at 1.0×; 985 and 203 at 1.6×). Every ledger was legal on capacity.
+- **Simulated** on a 2-week synthetic slice (bench_sim_core.py): under F1 deadlines, G and S miss deadlines (11 and 5 late jobs at 1.0×; 985 and 203 at 1.6×). Every ledger was legal on capacity.
 - **Cause:** a zero-slack job's deadline equals its U finish, and greedy list scheduling is not monotone. Moving or advancing some jobs lets others backfill, which pushes a later job past its U finish. Small-slack flexible jobs are exposed the same way.
 - **Rule (bookings):**
   - Every job in the run holds a booking: its U site and interval, computed once per scenario from the U run (F1).
@@ -633,8 +633,63 @@ The Mac offline rehearsal moves to Wed morning.
   - If no such action fits, or the policy returns none, *j* runs on its booking.
   - Releasing only ever adds capacity, so no other booking can become infeasible. **Every policy is on time by construction.**
 - **Assumption (label: assumed, disclosed on the method page):** the baseline booking calendar is known in advance, as day-ahead reservations of the cluster's normal schedule. This is the one exception to §8's "future arrivals are unavailable". It is the same for every policy, and it carries no grid information, so the H1–H4 contrasts stay paired and fair.
-- **Consequence:** routing can use only capacity that the baseline schedule leaves free, plus capacity freed by earlier moves. Savings are therefore conservative.
+- **Consequence:** routing can use only capacity that the baseline schedule leaves free, plus capacity freed by earlier moves. The effect on realized savings is not signed (F12.7).
 - **The F1 fallback rule stays** as a guard. With bookings it should never fire; a fired fallback is a bug.
 - **Search window for flexible jobs:** starts lie in `[arrival, deadline − duration]`, capped by R_max.
 - **Arithmetic:** time in the engine and in capacity is integer microseconds, so bookings and tolerances are exact.
 - **F3 mask:** it is enforced inside the engine, for every policy and fallback. Bookings sit at PACE, which has no missing truth in validation.
+
+### F12. Astra gate r1 fixes (2026-10-27 ~02:45 MT; review: `docs/reviews/2026-10-27-spec-astra-r1-astra.md`)
+
+These override earlier sections where they differ. F11's motivating counts came from a **simulated** synthetic slice (`lab/scripts/bench_sim_core.py`, Poisson arrivals, PR #19); they are not validation grid or workload outcomes. F11 and F12 were written during Stage 2, after F1–F10.
+
+**F12.1 Truth support (A1, A2).**
+- F3's mask is an **assumed, advance-known closure calendar**. It is the same for every policy and disclosed beside the result, like F11.
+- A move is legal only if truth exists for every component it charges: execution hours at the site, and both arrival-hour transfer charges (home and destination) for a remote move. This rule applies identically to policies, H and C_relaxed.
+- **Deferred causal sensitivity:** scheduling ignores missingness; scoring uses common support, where every policy drops any job whose charged hours touch missing truth under any policy.
+
+**F12.2 Definitions (B1–B3).**
+- **Baseline queue window:** [arrival, U start].
+- **Deadline:** `max(U finish, arrival + duration + allowed delay)`.
+- **Discretionary slack:** deadline − U finish, which can be 0. F1's phrase "extra slack beyond U" means discretionary slack.
+- Carbon-driven choice inside the baseline queue window is allowed for every job, and its energy is reported separately.
+- **Place-only:** the earliest feasible start at each candidate site, with the site chosen by the policy and no choice among start times. It is deferred from the 18:00 core.
+- **S:** for each ranked destination in order (home is included in the ranking at its rank), take its earliest on-time feasible start. Use the first destination that has one; otherwise use the booking.
+- **Capacity scenarios** are complete scenarios. Report each one's U waiting, deadline distribution and U emissions.
+
+**F12.3 Cohort, legality and estimand (C1–C3).**
+- The scored cohort is every arrival in [eval_start, A) whose deadline is ≤ F. Set A to the largest arrival at which all permitted completions are ≤ F. These are workload-only quantities from U bookings, frozen before any grid outcome is computed.
+- Excluded arrivals are counted and disclosed.
+- The R_max cap on starts is removed. One legal-action set — [arrival, deadline − duration] at each legal site, plus the exact booking, under capacity, mobility, transfer and the F12.1 support rules — is shared by policies, the validator and C_relaxed.
+- Before any comparison, check every U booking against F and against PACE truth support. A failure is an **accounting-support failure**, not a scheduler bug.
+- **Estimand:** a finite replay initialised empty at a fixed timestamp, with a ≥ 15 d warm-up under U. One cloned initial state is used for every policy.
+
+**F12.4 Statistics (D1–D4).**
+- Intervals are called **conditional temporal block-resampling intervals**. They are conditional on this replay, alignment and model, assume weekly totals are dependent only within blocks, and do not cover alternative alignments (the cycle recurs every 23 weeks).
+- An interval that excludes zero is described as such, never as "confirmation".
+- **Frozen algorithm:**
+  - Weekly totals are taken by arrival week (Monday 00:00 America/Denver). Partial edge weeks are kept as they are.
+  - Circular block bootstrap with non-overlapping draw positions sampled uniformly from all n start indices (wrapping), concatenated, and trimmed to n weeks.
+  - The same sampled indices are used for every policy in a replicate. 2,000 replicates, seed 20261027, percentile 95%.
+- **H2 decision rule:** the W − L kg interval lies wholly on one side of zero at block lengths 2, 4 and 8.
+- **Influence diagnostic:** rank unique source attempts by declared GPU-hours, independent of policy, and remove every instance of the top k from both totals, on fixed schedules.
+
+**F12.5 Wording (E1–E3).**
+- Every headline carries "baseline-relative deadlines, exact declared runtimes; runtime uncertainty untested". Zero misses is never presented as production reliability.
+- R2 coefficient intervals are omitted.
+- The consumption-basis drawer states that EIA assigns Canadian and Mexican imports the average US emissions rate.
+
+**F12.6 Delivery (G1, G2).**
+- The Task 4 benchmark uses the real replay with every booking pre-reserved.
+- **18:00 fallback:** if the full validation year cannot finish by 15:00, the checkpoint uses the 13 full weeks ending at F_val, labelled with their actual coverage.
+- One independent clean rebuild of the selected core run, comparing canonical metrics and ledger invariants, is required **before freeze**.
+
+**F12.7 Bookings (H1–H3).**
+- F11 is an **advance-reservation scheduling scenario**. The booking calendar is synthesized from the complete replay, and its advance-knowledge horizon is the whole run. The result is not a historical online-router claim.
+- Bookings restrict rescheduling opportunity, and **their effect on realized policy savings is not signed**. Report reservation-blocked preferred actions, by count and energy.
+- Every carbon-search policy includes the exact booking as an explicit candidate.
+- **Deferred causal sensitivity: shadow U.** Real PACE occupancy must stay at or below the shadow-U occupancy of arrived jobs. Report it as "what is possible without advance reservations".
+
+**F12.8 Not changed.** The envelopes, the seal protocol, the H2 framing ("system-level forecast value"), and R1–R6, which Astra found sound.
+
+**F12.9 R4a (A3),** if ever revived, needs independence from the validation period used for selection, and an audit of republished target sources.
