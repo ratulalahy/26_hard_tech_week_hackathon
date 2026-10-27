@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { EvalWindow } from './copy';
 import type { Dest, Results, ResultsIndex } from './data';
 
-export type View = 'control' | 'cockpit' | 'ribbon' | 'story';
+export type View = 'control' | 'cockpit' | 'ribbon' | 'story' | 'outlook';
 export type Mode = 'now' | 'wait' | 'move';
 export const VIEWS: { id: View; label: string }[] = [
   { id: 'control', label: 'Control room' },
@@ -34,6 +34,7 @@ interface State {
 
 const parseView = (): View => {
   const h = location.hash.replace('#', '').split('-')[0];
+  if (h === 'outlook') return 'outlook'; // T19: a standalone page at #outlook, outside the tab bar (T21's nav mounts it)
   return (VIEWS.find((v) => v.id === h)?.id ?? 'control') as View;
 };
 
