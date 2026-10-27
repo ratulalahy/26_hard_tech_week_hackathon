@@ -35,4 +35,16 @@ const cell = (b: { saving: Env; saving_ci95: Env }) => {
   return `${pct(b.saving.value as number)}% [${pct(lo)}, ${pct(hi)}]`;
 };
 export const sProduction = cell(ext.repricing.by_policy.S.production.vs_U['4']);
+const sav = (b: { vs_U: Record<string, { saving: Env }> }) => b.vs_U['4'].saving.value as number;
+const SWL = ['S', 'W', 'L'];
+/** Story 6's robustness span: consumption-basis checks only (fix r1 I-2), e.g. "20.2–23.2%". */
+const consumption = [
+  ...SWL.map((p) => sav(ext.common_support.by_policy[p])),
+  ...['phase_49', 'phase_98'].flatMap((n) => SWL.map((p) => sav(ext.phases[n].policies[p]))),
+  ...['transfer_120min', 'batch_delay_24h'].flatMap((n) => SWL.map((p) => sav(ext.sensitivities[n].policies[p]))),
+];
+export const consumptionSpan = range(consumption);
+/** The control-room caveat (fix r1 M-14): S–L under 8-GPU mobility, whole percent, e.g. "3–4%". */
+const mob = SWL.map((p) => Math.round(100 * sav(ext.sensitivities.mobility_le_8gpus.policies[p])));
+export const mobilityAbout = `about ${Math.min(...mob) === Math.max(...mob) ? mob[0] : `${Math.min(...mob)}–${Math.max(...mob)}`}%`;
 export const lCommonSupport = cell(ext.common_support.by_policy.L.vs_U['4']);

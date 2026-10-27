@@ -23,6 +23,7 @@ from pathlib import Path
 
 import polars as pl
 
+from gridpilot.cohort import _batch_delay
 from gridpilot.sim import HOME, SITES, TRANSFER_S
 from gridpilot.splits import TEST_START
 
@@ -84,7 +85,6 @@ class Window:
 
 # --------------------------------------------------------------------------- Scenario
 
-BATCH_TYPES = ("Pretrain", "SFT", "MLLM")
 PHASES = (0, 49, 98)  # pre-registered workload alignments (spec §7)
 PRIMARY_POLICIES = ("U", "G", "S", "K", "W", "L", "H", "W_time", "L_time")
 EXTENSION_POLICIES = ("U", "S", "K", "W", "L")
@@ -110,8 +110,8 @@ class Scenario:
             raise ValueError("dest_slots must be >= 0")
         if not (self.transfer_s >= 0) or self.transfer_s != self.transfer_s:
             raise ValueError("transfer_s must be finite and >= 0")
-        if self.batch_delay_s < 0:
-            raise ValueError("batch_delay_s must be >= 0")
+        if self.batch_delay_s < 0 or self.batch_delay_s % 3600:
+            raise ValueError("batch_delay_s must be a whole number of hours >= 0")
         if self.mobility_max_gpus is not None and self.mobility_max_gpus < 1:
             raise ValueError("mobility_max_gpus must be None or >= 1")
         if self.name == "primary" and not self._knobs_default():
@@ -168,10 +168,8 @@ class Scenario:
         scenario returns the frame unchanged."""
         out = jobs
         if self.batch_delay_s != _DEFAULTS["batch_delay_s"]:
-            out = out.with_columns(
-                pl.when(pl.col("flexible") & pl.col("job_type").is_in(list(BATCH_TYPES)))
-                .then(pl.lit(self.batch_delay_s, dtype=pl.Int64))
-                .otherwise(pl.col("max_delay_s")).alias("max_delay_s"))
+            # the same rule as the registered F14.1 batch-delay scenarios (fix r1 M-10)
+            out = _batch_delay(self.batch_delay_s // 3600)(out)
         if self.mobility_max_gpus is not None:
             out = out.with_columns(
                 (pl.col("mobile") & (pl.col("gpus") <= self.mobility_max_gpus)).alias("mobile"))

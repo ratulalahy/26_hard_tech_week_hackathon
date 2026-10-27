@@ -247,8 +247,11 @@ def check_claim_frame(manifest: dict) -> None:
 
 # --------------------------------------------------------------------------- hashing
 
-CANONICAL_DROP_KEYS = frozenset({"provenance_id", "run_id"})
+# Run identity and build metadata never enter the canonical hash (T10 fix r1 M-1).
+CANONICAL_DROP_KEYS = frozenset({"provenance_id", "run_id", "wallclock_generated_at",
+                                 "export_git_sha", "export_git_clean"})
 CANONICAL_SIG_DIGITS = 10
+CANONICAL_ZERO_ABS = 1e-9  # |x| below this hashes as 0 (float noise around zero; M-2)
 
 
 def _canonical(x: Any) -> Any:
@@ -257,15 +260,17 @@ def _canonical(x: Any) -> Any:
     if isinstance(x, list):
         return [_canonical(v) for v in x]
     if isinstance(x, float):
-        r = float(f"{x:.{CANONICAL_SIG_DIGITS}g}")
-        return 0.0 if r == 0 else r  # -0.0 and 0.0 hash alike
+        if abs(x) < CANONICAL_ZERO_ABS:
+            return 0.0  # also makes -0.0 and 0.0 hash alike
+        return float(f"{x:.{CANONICAL_SIG_DIGITS}g}")
     return x
 
 
 def canonical_hash(obj: Any) -> str:
-    """sha256 of `obj` with floats rounded to 10 significant digits (Stage 3 T10; it was an
-    absolute 1e-6 before), provenance_id/run_id removed and keys sorted (F12.6:
-    reproduction by canonical values, not bytes)."""
+    """sha256 of `obj` with floats rounded to 10 significant digits after zeroing |x| < 1e-9
+    (Stage 3 T10; it was an absolute 1e-6 before), run identity and build metadata
+    (CANONICAL_DROP_KEYS) removed and keys sorted (F12.6: reproduction by canonical values,
+    not bytes)."""
     text = json.dumps(_canonical(obj), sort_keys=True, separators=(",", ":"),
                       ensure_ascii=False, allow_nan=False)
     return hashlib.sha256(text.encode()).hexdigest()

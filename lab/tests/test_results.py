@@ -202,7 +202,10 @@ def test_extensions_evidence_classes():
         elif leaf in ("saving", "saving_ci95", "diff_kg", "diff_kg_ci95", "co2_kg"):
             assert e["evidence"] == "simulated", path
     for k, v in ext["not_run"].items():
-        assert v["status"] == "not_run" and v["reason"] == "cut by owner (D-058)", k
+        assert v["status"] == "not_run" and v["reason"].startswith("cut by owner (D-058)"), k
+    assert ext["export_git_clean"] is True  # exported at a clean commit (fix r1 M-3)
+    rep = ext["primary_reproduction"]
+    assert rep["metrics_canonical_equal"] and all(rep["ledgers_equal"].values())
     blocks = {**ext["phases"], **ext["sensitivities"]}
     assert set(blocks) == {"phase_49", "phase_98", "dest_slots_0", "dest_slots_1024",
                            "transfer_120min", "batch_delay_24h", "mobility_le_8gpus"}
@@ -217,6 +220,8 @@ def test_extensions_evidence_classes():
         assert b["scenario"]["name"] == "primary"
     man = json.loads((RESULTS_DIR / "manifest.json").read_text())
     assert man["extensions"]["missing_runs"] == ext["missing_runs"]
+    assert man["extensions"]["canonical_sha256"] == canonical_hash(ext)
+    assert man["common_support_rerun"] == "see extensions.json#common_support"
 
 
 def test_manifest_carries_claim_frame():

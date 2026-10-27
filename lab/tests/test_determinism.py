@@ -126,7 +126,17 @@ def test_canonical_hash_rounds_to_ten_significant_digits():
     # Absolute noise far above 1e-6 on a large total is below 10 significant digits.
     assert canonical_hash(doc(big)) == canonical_hash(doc(big + 3e-5))
     assert canonical_hash(doc(big)) != canonical_hash(doc(big + 0.01))
-    # Tiny values keep their own 10 significant digits (no absolute floor).
+    # At or above 1e-9 a value keeps its own 10 significant digits ...
     assert canonical_hash(doc(1.234567890123e-9)) == canonical_hash(doc(1.2345678901e-9))
     assert canonical_hash(doc(1.2345e-9)) != canonical_hash(doc(1.2346e-9))
+    # ... below it, float noise around zero hashes as 0 (fix r1 M-2).
+    assert canonical_hash(doc(6.7e-13)) == canonical_hash(doc(-1.1e-11)) == canonical_hash(doc(0.0))
     assert canonical_hash(doc(0.0)) == canonical_hash(doc(-0.0))
+
+
+def test_canonical_hash_drops_run_identity_and_build_metadata():
+    a = {"run_id": "a", "wallclock_generated_at": "2026-10-27T17:00:00Z", "export_git_sha": "x",
+         "export_git_clean": True, "x": env(1.0, "kg", "simulated", "a:x")}
+    b = {"run_id": "b", "wallclock_generated_at": "2026-10-27T18:00:00Z", "export_git_sha": "y",
+         "export_git_clean": False, "x": env(1.0, "kg", "simulated", "b:x")}
+    assert canonical_hash(a) == canonical_hash(b)

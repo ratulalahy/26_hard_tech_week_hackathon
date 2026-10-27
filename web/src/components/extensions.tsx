@@ -73,9 +73,18 @@ export const PHRASE: Record<string, string> = {
 };
 export const listJoin = (xs: string[]) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
 
-/** Checks that keep the registered fleet and mobility (only the carbon basis, the cohort, the
- * workload alignment, the transfer time or the allowed delay change). */
-export const KEEPS_FLEET = ['production', 'common_support', 'phase_49', 'phase_98', 'transfer_120min', 'batch_delay_24h'];
+/** Consumption-basis checks that keep the registered fleet and mobility (only the cohort, the
+ * workload alignment, the transfer time or the allowed delay change). The production basis is
+ * reported on its own: it is a different carbon accounting, not a robustness check (fix r1 I-2). */
+export const CONSUMPTION_CHECKS = ['common_support', 'phase_49', 'phase_98', 'transfer_120min', 'batch_delay_24h'];
+
+/** The S–L range of one check row, rounded to whole percent: "4" or "3–4" (null if it did not run). */
+export function roundedSpan(rows: ExtRow[], id: string): string | null {
+  const s = placementSpan(rows, [id]);
+  if (!s) return null;
+  const [a, b] = s.map((x) => Math.round(x * 100));
+  return a === b ? `${a}` : `${a}–${b}`;
+}
 
 /** Lowest and highest S/W/L point saving over the given rows (null if none ran). */
 export function placementSpan(rows: ExtRow[], ids?: string[]): [number, number] | null {

@@ -61,7 +61,7 @@ export function MethodDrawer() {
             {data!.ext ? <Sec title="Robustness and sensitivity checks">
               <p className="t-12 ink-2" style={{ margin: '0 0 8px' }}>
                 Each row changes one choice and re-scores or re-runs the validation year; none replaces the registered result, and the two workload shifts are never pooled with it.
-                Production basis prices the same schedules on where electricity is generated rather than where it is used, which flatters hydro-heavy {'Northwest'} destinations.
+                Production basis prices the same schedules on where electricity is generated rather than where it is used, which flatters hydro-heavy Northwest destinations; an hour with no production value takes, in order, the consumption value for the same hour, our fuel-mix estimate, then the mean of the same hour over the previous 7 days.
                 The published-values row drops, from every policy, the {fmt(data!.ext.common_support.cohort.n_dropped.value)} jobs that touch a filled hour under any policy.
                 {mob ? <> Letting only jobs of 8 GPUs or fewer move leaves {pctRange(mob[0], mob[1])}%: most of the energy, and most of the saving, sits in large multi-node jobs, so the result depends on those jobs' data being ready at the destination.</> : null}
               </p>

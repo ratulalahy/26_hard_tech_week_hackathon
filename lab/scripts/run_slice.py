@@ -218,12 +218,18 @@ def _dt_us(t: datetime) -> int:
 def s_ranking() -> tuple[list[str], dict[str, float]]:
     """S's ranking: mean consumed CI over the training rows, ascending (PACE included).
     A lazy scan with the seal and the training filter, so no other row is loaded."""
-    r = (drop_sealed(pl.scan_parquet(CARBON_PATH))
-         .filter((pl.col("ts_utc") >= RANK_TRAIN[0]) & (pl.col("ts_utc") < RANK_TRAIN[1])
-                 & pl.col("ba").is_in(list(SITES)))
-         .group_by("ba").agg(pl.col("ci_consumed_g_kwh").mean().alias("m"))
-         .collect().sort("m", "ba"))
-    return r["ba"].to_list(), {b: float(m) for b, m in zip(r["ba"], r["m"], strict=True)}
+    rows = (drop_sealed(pl.scan_parquet(CARBON_PATH))
+            .filter((pl.col("ts_utc") >= RANK_TRAIN[0]) & (pl.col("ts_utc") < RANK_TRAIN[1])
+                    & pl.col("ba").is_in(list(SITES)))
+            .select("ba", "ts_utc", "ci_consumed_g_kwh").collect()
+            .drop_nulls("ci_consumed_g_kwh").sort("ba", "ts_utc"))
+    # Means as math.fsum / n, not a parallel group_by mean (T10 fix r1 M-4).
+    means = {}
+    for (ba,), g in rows.partition_by("ba", as_dict=True, maintain_order=True).items():
+        v = g["ci_consumed_g_kwh"].to_list()
+        means[ba] = math.fsum(v) / len(v)
+    order = sorted(means, key=lambda b: (means[b], b))
+    return order, {b: means[b] for b in order}
 
 
 def bound_gap(acc: pl.DataFrame, per: pl.DataFrame) -> dict:

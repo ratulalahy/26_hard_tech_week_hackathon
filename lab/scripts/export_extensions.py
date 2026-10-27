@@ -1,7 +1,7 @@
 """Stage 3 T10: `results/extensions.json`, the D-058 extensions (validation only).
 
     cd lab && uv run python scripts/export_extensions.py --registered-run <runs/slice/<id>>
-        [--ext-root <runs/ext>] [--repro-run <runs/slice/<id>>]
+        --repro-run <runs/slice/<id>> [--ext-root <runs/ext>] [--allow-missing]
 
 1. Production-basis repricing: the registered ledgers, unchanged, priced on EIA
    production-basis CI (the F14.6 tiers with production as tier 1) next to the registered
@@ -10,7 +10,8 @@
    tier-1 truth only under every policy; savings and intervals on that cohort.
 3. Phases 49 and 98 and the one-axis sensitivities: read from each extension's latest
    complete run directory `runs/ext/<name>/<UTC>/summary.json` (made by run_slice.py
-   --scenario <name>). A scenario with no complete run is exported as not_run.
+   --scenario <name>). A scenario with no complete run fails the export, unless
+   --allow-missing (the 21:00 hard stop, F9) exports it as not_run.
 4. The cut items (D-058) as not_run with their reason; `manifest.not_run` is updated.
 
 Every number is an evidence envelope: repricing, common support and policy outcomes are
@@ -23,6 +24,7 @@ import argparse
 import importlib.util
 import json
 import logging
+import math
 import subprocess
 import sys
 from datetime import UTC, datetime
@@ -44,6 +46,7 @@ from gridpilot.extensions import common_support_cohort, reprice
 from gridpilot.paths import REPO_ROOT, RESULTS_DIR
 from gridpilot.results import (
     LIMIT_PHASES,
+    LIMIT_SHADOW_U,
     SCHEMA_VERSION,
     canonical_hash,
     env,
@@ -73,6 +76,16 @@ CUT_ITEMS = {
     "all_candidates_flexible": "all candidates flexible (§7 flexibility share)",
     "home_capacity_1.25x": "1.25x home capacity runs (§7)",
 }
+CUT_REASON_S7 = "cut by owner (D-058): remaining §7 sensitivities"
+# §7 items with no knob in the registry; listed with the D-058 "remaining §7" reason (fix r1 M-6).
+CUT_ITEMS_S7 = {
+    "civil_time_dst_alignment": "civil-time (DST) alignment of the replay clock (§7)",
+    "runtime_overrun_25pct": "+25% runtime-overrun stress with fixed deadlines (§7)",
+}
+# M-7: the shadow-U limitation says what happened to it.
+LIMIT_SHADOW_U_CUT = ("The shadow-U sensitivity ('possible without advance reservations') was cut "
+                      "by the owner (D-058) and is not run.")
+COMMON_SUPPORT_NOTE = "see extensions.json#common_support"
 LIMIT_PHASES_RUN = ("Workload phase 0 is the registered result; phases 49 and 98 are "
                     "workload-alignment sensitivities (results/extensions.json), never pooled "
                     "with it (§9).")
@@ -168,7 +181,7 @@ def repricing_block(reg: dict, rp: dict, prod_fill: pl.DataFrame, metrics: dict)
         by_policy[p] = rec
     # The consumption basis is recomputed here; it must equal the registered metrics.
     reg_co2 = {p: metrics["policies"][p]["metrics"]["co2_kg"]["value"] for p in reg["ledgers"]}
-    same = all(f"{rp['consumption']['totals'][p]:.10g}" == f"{reg_co2[p]:.10g}"
+    same = all(math.isclose(rp["consumption"]["totals"][p], reg_co2[p], rel_tol=1e-9)
                for p in reg_co2)
     if not same:
         raise AssertionError("consumption-basis repricing does not reproduce metrics.json")
@@ -245,9 +258,20 @@ def latest_run(root: Path) -> Path | None:
     return runs[-1] if runs else None
 
 
-def run_block(name: str, run: Path, window: str = "validation") -> dict:
+def run_block(name: str, run: Path, window: str = "validation",
+              reg_cfg: dict | None = None) -> dict:
+    """One extension run's block. With `reg_cfg` (the registered run's config.json), the run
+    must use the registered forecasts and data snapshot and a clean tree (fix r1 M-12)."""
     s = json.loads((run / "summary.json").read_text())
     cfg = json.loads((run / "config.json").read_text())
+    if reg_cfg is not None:
+        r, g = cfg["reproducibility"], reg_cfg["reproducibility"]
+        if r["forecast_run"]["forecasts_sha256"] != g["forecast_run"]["forecasts_sha256"]:
+            raise AssertionError(f"{run}: forecasts differ from the registered run's")
+        if r["snapshot_id"] != g["snapshot_id"]:
+            raise AssertionError(f"{run}: data snapshot differs from the registered run's")
+        if not cfg["git_clean"]:
+            raise AssertionError(f"{run}: made from a dirty tree")
     if s["window"] != window:
         raise AssertionError(f"{run}: a {s['window']} run, not {window}")
     if s["scenario"]["name"] != name:
@@ -286,6 +310,29 @@ def run_block(name: str, run: Path, window: str = "validation") -> dict:
     }
 
 
+class MissingRunError(RuntimeError):
+    pass
+
+
+def collect_runs(ext_root: Path, window: str, *, reg_cfg: dict | None = None,
+                 allow_missing: bool = False,
+                 missing_reason: str = HARD_STOP_REASON) -> tuple[dict, list[str]]:
+    """Every extension's block from its latest complete run. A missing run raises unless
+    `allow_missing` (then it is not_run with `missing_reason`; fix r1 I-1)."""
+    blocks, missing = {}, []
+    for name in EXTENSIONS:
+        run = latest_run(ext_root / name)
+        if run is None:
+            missing.append(name)
+            blocks[name] = not_run_block(EXTENSIONS[name].note, missing_reason, EXTENSIONS[name])
+        else:
+            blocks[name] = run_block(name, run, window, reg_cfg)
+    if missing and not allow_missing:
+        raise MissingRunError(f"no complete run under {ext_root} for {missing}; pass "
+                              f"--allow-missing to export them as not_run")
+    return blocks, missing
+
+
 def not_run_block(item: str, reason: str, scenario: Scenario | None = None) -> dict:
     out = {"item": item, "status": "not_run", "reason": reason}
     if scenario is not None:
@@ -303,15 +350,19 @@ def reproduction_block(repro: Path, reg: dict, metrics: dict) -> dict:
             "metrics_canonical_sha256": {"registered": canonical_hash(metrics),
                                          "reproduction": canonical_hash(new)},
             "metrics_canonical_equal": canonical_hash(metrics) == canonical_hash(new),
-            "rule": "canonical_hash: floats to 10 significant digits, provenance/run ids "
-                    "dropped, keys sorted (T10)"}
+            "rule": "canonical_hash: |x| < 1e-9 as 0, else floats to 10 significant digits; "
+                    "run ids, provenance and build metadata dropped; keys sorted (T10)"}
 
 
 # --------------------------------------------------------------------------- build
 
 
-def build(reg_run: Path, ext_root: Path, repro: Path | None, missing_reason: str) -> dict:
+def build(reg_run: Path, ext_root: Path, repro: Path, missing_reason: str = HARD_STOP_REASON,
+          *, allow_missing: bool = False) -> dict:
+    git_sha, git_clean = _git("rev-parse", "HEAD"), _git("status", "--porcelain") == ""
     reg = load_registered(reg_run)
+    blocks, missing = collect_runs(ext_root, reg["window"].name, reg_cfg=reg["cfg"],
+                                   allow_missing=allow_missing, missing_reason=missing_reason)
     metrics = json.loads((RESULTS_DIR / "metrics.json").read_text())
     if metrics["run_id"] != reg["run_id"]:
         raise AssertionError(f"results/metrics.json is run {metrics['run_id']}, not the "
@@ -329,14 +380,6 @@ def build(reg_run: Path, ext_root: Path, repro: Path | None, missing_reason: str
     if len(cs["dropped"]) != want:
         raise AssertionError(f"common support drops {len(cs['dropped'])} jobs, the registered "
                              f"run {want}")
-    blocks, missing = {}, []
-    for name in EXTENSIONS:
-        run = latest_run(ext_root / name)
-        if run is None:
-            blocks[name] = not_run_block(EXTENSIONS[name].note, missing_reason, EXTENSIONS[name])
-            missing.append(name)
-        else:
-            blocks[name] = run_block(name, run, w.name)
     out = {
         "schema_version": SCHEMA_VERSION,
         "kind": "validation extensions (D-058): robustness and sensitivity evidence",
@@ -344,7 +387,8 @@ def build(reg_run: Path, ext_root: Path, repro: Path | None, missing_reason: str
                           "[2025-11-01, 2026-11-01) is never read",
         "note": EXT_NOTE,
         "registered_run_id": reg["run_id"],
-        "export_git_sha": _git("rev-parse", "HEAD"),
+        "export_git_sha": git_sha,
+        "export_git_clean": git_clean,
         "wallclock_generated_at": datetime.now(UTC).isoformat(),
         "reproduce": ("cd lab && uv run python scripts/run_slice.py --scenario <name> "
                       "--forecast-run <registered forecast run>; then "
@@ -353,17 +397,19 @@ def build(reg_run: Path, ext_root: Path, repro: Path | None, missing_reason: str
         "common_support": common_support_block(reg, cs, rp["consumption"]),
         "phases": {n: blocks[n] for n in PHASES},
         "sensitivities": {n: blocks[n] for n in SENSITIVITIES},
-        "not_run": {k: not_run_block(v, CUT_REASON) for k, v in CUT_ITEMS.items()},
+        "not_run": {**{k: not_run_block(v, CUT_REASON) for k, v in CUT_ITEMS.items()},
+                    **{k: not_run_block(v, CUT_REASON_S7) for k, v in CUT_ITEMS_S7.items()}},
         "missing_runs": missing,
+        "primary_reproduction": reproduction_block(repro, reg, metrics),
     }
-    if repro is not None:
-        out["primary_reproduction"] = reproduction_block(repro, reg, metrics)
     return out
 
 
 def manifest_not_run(missing: list[str]) -> list[dict]:
-    return rs.NOT_RUN + [{"item": f"{n} ({EXTENSIONS[n].note})", "reason": HARD_STOP_REASON}
-                         for n in missing]
+    return (rs.NOT_RUN
+            + [{"item": v, "reason": CUT_REASON_S7} for v in CUT_ITEMS_S7.values()]
+            + [{"item": f"{n} ({EXTENSIONS[n].note})", "reason": HARD_STOP_REASON}
+               for n in missing])
 
 
 def patch_manifest(path: Path, ext: dict, text: str) -> None:
@@ -374,9 +420,12 @@ def patch_manifest(path: Path, ext: dict, text: str) -> None:
     man = json.loads(path.read_text())
     man["not_run"] = manifest_not_run(ext["missing_runs"])
     phases_ok = all(ext["phases"][p]["status"] == "ok" for p in PHASES)
-    lim = [x for x in man["limitations"] if x not in (LIMIT_PHASES, LIMIT_PHASES_RUN)]
+    lim = [LIMIT_SHADOW_U_CUT if x == LIMIT_SHADOW_U else x for x in man["limitations"]
+           if x not in (LIMIT_PHASES, LIMIT_PHASES_RUN)]
     lim.append(LIMIT_PHASES_RUN if phases_ok else LIMIT_PHASES)
     man["limitations"] = lim
+    # M-8: the common-support rerun lives in extensions.json (metrics.json is unchanged).
+    man["common_support_rerun"] = COMMON_SUPPORT_NOTE
     man["extensions"] = {"artifact": "extensions.json",
                          "sha256": hashlib.sha256(text.encode()).hexdigest(),
                          "canonical_sha256": canonical_hash(ext),
@@ -388,12 +437,16 @@ def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--registered-run", required=True, type=Path)
     p.add_argument("--ext-root", type=Path, default=REPO_ROOT / "runs" / "ext")
-    p.add_argument("--repro-run", type=Path, default=None)
+    p.add_argument("--repro-run", required=True, type=Path,
+                   help="a primary run made by this code (primary_reproduction is required)")
+    p.add_argument("--allow-missing", action="store_true",
+                   help="export a scenario with no complete run as not_run (the 21:00 stop)")
     p.add_argument("--missing-reason", default=HARD_STOP_REASON)
     p.add_argument("--out", type=Path, default=RESULTS_DIR / "extensions.json")
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
-    ext = build(args.registered_run, args.ext_root, args.repro_run, args.missing_reason)
+    ext = build(args.registered_run, args.ext_root, args.repro_run, args.missing_reason,
+                allow_missing=args.allow_missing)
     text = write_json_atomic(args.out, ext)
     patch_manifest(args.out.parent / "manifest.json", ext, text)
     print(f"wrote {args.out}; missing runs: {ext['missing_runs'] or 'none'}")

@@ -55,7 +55,7 @@ export function IntervalChart({ m, rows, rowH, stacked = false }: { m: Json; row
           {[0, 0.1, 0.2, 0.3].map((g) => (
             <g key={g}>
               <line x1={X(g)} x2={X(g)} y1={top} y2={top + rows.length * rh} stroke={g === 0 ? 'rgba(110,62,30,.3)' : C.hair2} />
-              <text x={X(g)} y={top + rows.length * rh + 14} textAnchor={g === 0 && stacked ? 'start' : 'middle'} fontSize={11} fill={C.ink3}>{g * 100}%</text>
+              <text x={X(g)} y={top + rows.length * rh + 14} textAnchor={g === 0 && stacked ? 'start' : g === max ? 'end' : 'middle'} fontSize={11} fill={C.ink3}>{g * 100}%</text>
             </g>
           ))}
           {rows.map((p, i) => {

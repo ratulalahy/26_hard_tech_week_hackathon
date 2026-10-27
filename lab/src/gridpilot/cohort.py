@@ -15,6 +15,7 @@ grid scoring. The sensitivity scenarios contribute only to A (Task 7 amendment s
 from __future__ import annotations
 
 import hashlib
+import math
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -220,8 +221,8 @@ def prefix_cohort(
     return Cohort(
         A=A, F=F, first_failure=fails, jobs=cohort, bookings=bookings, warm=warm,
         n_stream=sj.height, n_excluded=excl.height,
-        excluded_gpu_h=float((excl["gpus"] * excl["duration_s"]).sum() / 3600)
-        if excl.height else 0.0,
+        excluded_gpu_h=math.fsum((excl["gpus"] * excl["duration_s"]).to_list()) / 3600
+        if excl.height else 0.0,  # order-free total (T10 fix r1 M-4)
         prefix_unchanged=unchanged, ids_hash=ids_hash(uids), booking_hash=booking_hash(bookings),
         max_booking_end=_dt(int(bookings["end_us"].max())) if bookings.height else None,
         max_deadline=_dt(int(bookings["deadline_us"].max())) if bookings.height else None,

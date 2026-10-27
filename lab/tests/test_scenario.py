@@ -140,6 +140,8 @@ def test_knob_validation():
     with pytest.raises(ValueError):
         Scenario(name="x", mobility_max_gpus=0)
     with pytest.raises(ValueError):
+        Scenario(name="x", batch_delay_s=5400)  # whole hours only (cohort._batch_delay)
+    with pytest.raises(ValueError):
         Scenario(name="primary", dest_slots=0)  # the name is reserved for the defaults
 
 

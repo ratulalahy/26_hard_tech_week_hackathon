@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { IntervalChart, Panel, PolicyTable, Strip, useWidth } from '../components/charts';
+import { extRows, roundedSpan } from '../components/extensions';
 import { Ev, EvCI, Icon } from '../components/ui';
 import { C, CI_MAX, CI_MID, ci2c } from '../lib/color';
 import { CORE, DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, headline, loadMonth, pname, pnote, yearMean, type Dest } from '../lib/data';
@@ -36,6 +37,7 @@ function ResultDock({ compact }: { compact: boolean }) {
   const { data, hour, month, dest, set } = useApp();
   const m = data!.metrics, g = data!.grid;
   const h = headline(m);
+  const mob = data!.ext ? roundedSpan(extRows(m, data!.ext), 'mobility_le_8gpus') : null;
   const pm = asNum(yearMean(g, 'PACE'))!;
   // the headline now carries the frame line, so below 1200 px the four sites drop their day strips (the timeline below still shows Utah's)
   const strips = useViewport().h >= 1200;
@@ -59,6 +61,9 @@ function ResultDock({ compact }: { compact: boolean }) {
         <div data-testid="hero-timing" className="t-13" style={{ marginTop: 8 }}>
           Waiting for cleaner hours in Utah alone: <b className="fw-600">{pctRange(h.timing.lo, h.timing.hi)}%</b> <span className="t-12 ink-3">(95% {pct(h.timing.ciLo)}–{pct(h.timing.ciHi)}%)</span> <Ev e="simulated" />
         </div>
+        {mob ? <div data-testid="hero-mobility" className="t-12 ink-2" style={{ marginTop: 4 }}>
+          The cut depends on moving large multi-node jobs: if only jobs of 8 GPUs or fewer could move, it would be about {mob}%. <Ev e="simulated" />
+        </div> : null}
       </div>
       <div style={{ padding: '0 16px 8px' }}>
         <div className="flex items-baseline justify-between t-12 ink-2" style={{ marginBottom: 4 }}>

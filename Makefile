@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test notebooks profile slice ext-runs extensions web
+.PHONY: test notebooks profile slice need-run-dir ext-runs extensions web
 
 test:
 	cd lab && uv run pytest
@@ -28,16 +28,27 @@ slice:
 # scenarios, one process each in parallel, into runs/ext/<name>/<UTC>/ with the registered run's
 # pinned forecasts; `extensions` writes results/extensions.json (production-basis repricing and
 # common support from RUN_DIR's ledgers, plus each extension's latest run) and manifest.not_run.
-# RUN_DIR: absolute path of the registered run (the run_id in results/manifest.json).
+# RUN_DIR (required): absolute path of the registered run, runs/slice/<run_id in
+# results/manifest.json>. EXT_ROOT defaults to the runs/ext next to it, so a worktree uses the
+# main checkout's runs. REPRO_RUN (required by `extensions`): a primary run made by this code
+# (`make slice`-style, --no-export), recorded as primary_reproduction. A missing extension run
+# fails the export; ALLOW_MISSING=1 exports it as not_run (the 21:00 hard stop, F9).
 EXT_NAMES := phase_49 phase_98 dest_slots_0 dest_slots_1024 transfer_120min batch_delay_24h mobility_le_8gpus
-EXT_ROOT ?= $(CURDIR)/runs/ext
-ext-runs:
-	mkdir -p $(EXT_ROOT) && cd lab && for n in $(EXT_NAMES); do \
+EXT_ROOT ?= $(abspath $(RUN_DIR)/../../ext)
+need-run-dir:
+	@test -n "$(RUN_DIR)" || { echo "RUN_DIR=<abs path of the registered run> is required"; exit 2; }
+ext-runs: need-run-dir
+	mkdir -p $(EXT_ROOT) && cd lab && pids=""; for n in $(EXT_NAMES); do \
 		uv run python scripts/run_slice.py --scenario $$n --out $(EXT_ROOT)/$$n \
 			--forecast-run $(RUN_DIR)/forecast/$(notdir $(RUN_DIR)) > $(EXT_ROOT)/$$n.log 2>&1 & \
-	done; wait
-extensions:
-	cd lab && uv run python scripts/export_extensions.py --registered-run $(RUN_DIR) --ext-root $(EXT_ROOT)
+		pids="$$pids $$!:$$n"; \
+	done; rc=0; for p in $$pids; do \
+		wait $${p%%:*} || { echo "extension $${p#*:} failed (see $(EXT_ROOT)/$${p#*:}.log)"; rc=1; }; \
+	done; exit $$rc
+extensions: need-run-dir
+	@test -n "$(REPRO_RUN)" || { echo "REPRO_RUN=<abs path of a primary run made by this code> is required"; exit 2; }
+	cd lab && uv run python scripts/export_extensions.py --registered-run $(RUN_DIR) \
+		--ext-root $(EXT_ROOT) --repro-run $(REPRO_RUN) $(if $(ALLOW_MISSING),--allow-missing,)
 
 # The dashboard's validation-year grid context (Task 8): results/grid-profile.json.
 # RUN_DIR: the registered slice run (default runs/slice/<results/manifest.json run_id>).

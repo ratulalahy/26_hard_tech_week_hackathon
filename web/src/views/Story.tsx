@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { IntervalChart, Panel, PolicyTable } from '../components/charts';
-import { ExtensionsTable, KEEPS_FLEET, PHRASE, extRows, listJoin, placementSpan } from '../components/extensions';
+import { CONSUMPTION_CHECKS, ExtensionsTable, PHRASE, extRows, listJoin, placementSpan } from '../components/extensions';
 import { Ev, EvCI, Icon } from '../components/ui';
 import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, VALIDATION_LINE, asNum, dayCurve, headline, loadMonth, plainLimitations, pname, type Core, type Json } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
@@ -49,9 +49,10 @@ export function Story() {
   }, [set]);
 
   const top1 = wl.top.find((t: Json) => Math.abs(t.fraction.value - 0.01) < 1e-9) ?? wl.top[1];
-  const xr = extRows(m, data!.ext), span = placementSpan(xr, KEEPS_FLEET);
+  const xr = extRows(m, data!.ext), span = placementSpan(xr, CONSUMPTION_CHECKS);
+  const spanProd = placementSpan(xr, ['production']);
   const spanMob = placementSpan(xr, ['mobility_le_8gpus']), spanBig = placementSpan(xr, ['dest_slots_1024']);
-  const keptRun = xr.filter((r) => KEEPS_FLEET.includes(r.id) && r.status === 'ok');
+  const keptRun = xr.filter((r) => CONSUMPTION_CHECKS.includes(r.id) && r.status === 'ok');
   const xRun = xr.filter((r) => r.group !== 'registered' && r.status === 'ok'), xMiss = xr.filter((r) => r.status !== 'ok');
   const wait0 = xr.find((r) => r.id === 'dest_slots_0' && r.status === 'ok');
   const w0 = [wait0?.cells.W?.v, wait0?.cells.L?.v].filter((v): v is number => typeof v === 'number');
@@ -84,7 +85,7 @@ export function Story() {
     },
     {
       t: 'Challenge it',
-      body: <>This is a simulated scheduling scenario on EIA's estimated emissions, with jobs running exactly as long as declared.{span ? <span data-testid="story-checks"> We checked it {xRun.length} more ways. {listJoin(keptRun.map((r) => PHRASE[r.id] ?? r.label)).replace(/^./, (c) => c.toUpperCase())}, {pname('S')}, {pname('W')} and {pname('L')} still cut <b className="fw-600">{pctRange(span[0], span[1])}%</b>. The result leans on moving large jobs: {spanMob ? <>if only jobs of 8 GPUs or fewer may move, the cut falls to <b className="fw-600">{pctRange(spanMob[0], spanMob[1])}%</b></> : 'the small-jobs-only check did not run'}{spanBig ? <>; twice the room at the destinations raises it to {pctRange(spanBig[0], spanBig[1])}%</> : null}{w0.length ? <>; with no room there, waiting alone saves {pctRange(Math.min(...w0), Math.max(...w0))}%</> : null}.{allOnTime ? ' No job was late in any run.' : ''}{xMiss.length ? ` ${xMiss.length} more check${xMiss.length > 1 ? 's' : ''} did not run (${xMiss[0].reason}).` : ''}</span> : null} Here is what the result does not say, and the method drawer lists every assumption and the run behind each number. {VALIDATION_LINE}</>,
+      body: <>This is a simulated scheduling scenario on EIA's estimated emissions, with jobs running exactly as long as declared.{span ? <span data-testid="story-checks"> We checked it {xRun.length} more ways. {listJoin(keptRun.map((r) => PHRASE[r.id] ?? r.label)).replace(/^./, (c) => c.toUpperCase())}, {pname('S')}, {pname('W')} and {pname('L')} still cut <b className="fw-600">{pctRange(span[0], span[1])}%</b>.{spanProd ? ` On production-basis carbon the cut is ${pctRange(spanProd[0], spanProd[1])}%; production basis flatters hydro-heavy destinations.` : ''} The result leans on moving large jobs: {spanMob ? <>if only jobs of 8 GPUs or fewer may move, the cut falls to <b className="fw-600">{pctRange(spanMob[0], spanMob[1])}%</b></> : 'the small-jobs-only check did not run'}{spanBig ? <>; twice the room at the destinations raises it to {pctRange(spanBig[0], spanBig[1])}%</> : null}{w0.length ? <>; with no room there, waiting alone saves {pctRange(Math.min(...w0), Math.max(...w0))}%</> : null}.{allOnTime ? ' No job was late in any run.' : ''}{xMiss.length ? ` ${xMiss.length} more check${xMiss.length > 1 ? 's' : ''} did not run (${xMiss[0].reason}).` : ''}</span> : null} Here is what the result does not say, and the method drawer lists every assumption and the run behind each number. {VALIDATION_LINE}</>,
       ev: <><Ev e="simulated">checks</Ev><Ev e="assumed">settings</Ev><button className="btn" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button></>,
     },
   ];
