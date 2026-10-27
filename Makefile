@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test notebooks profile slice need-run-dir ext-runs extensions storage web
+.PHONY: test notebooks profile slice need-run-dir ext-runs extensions storage outlook web
 
 test:
 	cd lab && uv run pytest
@@ -57,6 +57,13 @@ extensions: need-run-dir
 # runs/ext next to it) holds the mobility <= 8 GPUs run that results/extensions.json names.
 storage: need-run-dir
 	cd lab && uv run python scripts/export_storage.py --registered-run $(RUN_DIR) --ext-root $(EXT_ROOT)
+
+# The grid outlook (Stage 3 T19): results/outlook.json. Default: the validation-dated demo
+# (ISSUE=<validation date>, default 2025-06-15). LIVE=1: the live outlook from a fresh EIA download,
+# refused until a completed test run exists (results/test/manifest.json, T13); every read of the
+# fresh files is logged in results/outlook_reads.jsonl.
+outlook:
+	cd lab && uv run python scripts/outlook.py $(if $(LIVE),--live,$(if $(ISSUE),--issue $(ISSUE),))
 
 # The dashboard's validation-year grid context (Task 8): results/grid-profile.json.
 # RUN_DIR: the registered slice run (default runs/slice/<results/manifest.json run_id>).
