@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test notebooks profile slice need-run-dir ext-runs extensions storage web
+.PHONY: test notebooks profile slice need-run-dir ext-runs extensions storage water web
 
 test:
 	cd lab && uv run pytest
@@ -55,6 +55,12 @@ extensions: need-run-dir
 # runs/ext next to it) holds the mobility <= 8 GPUs run that results/extensions.json names.
 storage: need-run-dir
 	cd lab && uv run python scripts/export_storage.py --registered-run $(RUN_DIR) --ext-root $(EXT_ROOT)
+
+# The water illustration (Stage 3 T14, D-063; validation only): results/water.json and the
+# manifest's `water` pointer. RUN_DIR (required): the registered run. The source PDFs are checked
+# against the committed data/manifests/water.json.
+water: need-run-dir
+	cd lab && uv run python scripts/export_water.py --registered-run $(RUN_DIR)
 
 # The dashboard's validation-year grid context (Task 8): results/grid-profile.json.
 # RUN_DIR: the registered slice run (default runs/slice/<results/manifest.json run_id>).
