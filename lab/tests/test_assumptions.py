@@ -6,6 +6,7 @@ Every number in it must be read from a committed results file: each envelope's p
 pointer and checks the value, unit and evidence. The envelope and seal checks are in
 test_results.py (ARTIFACTS)."""
 
+import hashlib
 import json
 import re
 import subprocess
@@ -35,13 +36,20 @@ def doc():
     return json.loads(PATH.read_text())
 
 
-def _water():
+def _water_text() -> str | None:
+    """The water illustration's text: results/water.json once merged, else the T14 branch's
+    committed file (pending merge), else None. The notebook resolves it the same way."""
     p = RESULTS_DIR / "water.json"
     if p.exists():
-        return json.loads(p.read_text())
+        return p.read_text()
     r = subprocess.run(["git", "show", f"{WATER_REF}:results/water.json"], cwd=REPO_ROOT,
                        capture_output=True, text=True, check=False)
-    return json.loads(r.stdout) if r.returncode == 0 else None
+    return r.stdout if r.returncode == 0 else None
+
+
+def _water():
+    t = _water_text()
+    return json.loads(t) if t is not None else None
 
 
 def _sources():
@@ -101,20 +109,29 @@ def test_every_number_is_read_from_a_results_file(doc):
             m = re.fullmatch(r"derived:(\w+)\(([^,]+),([^,]+)\)", pid)
             assert m, f"{path}: bad derived provenance {pid}"
             a, b = _resolve(src, m.group(2)), _resolve(src, m.group(3))
-            if a is None or b is None:
-                assert "water.json" in pid, f"{path}: unresolvable {pid}"
-                continue
+            assert a is not None and b is not None, f"{path}: unresolvable {pid}"
             assert e["value"] == pytest.approx(OPS[m.group(1)](a[0], b[0]), rel=1e-12), path
         else:
             assert "#/" in pid, f"{path}: provenance_id is not a file#/pointer: {pid}"
             got = _resolve(src, pid)
-            if got is None:
-                assert pid.startswith("water.json#"), f"{path}: unknown source file in {pid}"
-                continue
+            assert got is not None, f"{path}: unresolvable source file in {pid}"
             assert e["value"] == pytest.approx(got[0], rel=1e-12, abs=0), f"{path}: {pid}"
             assert (e["unit"], e["evidence"]) == got[1:], f"{path}: {pid}"
         n_checked += 1
     assert n_checked > 50
+
+
+def test_water_source_hash_matches_the_resolved_source(doc):
+    """Water envelopes must come from the water file the notebook read: its recorded sha256 equals
+    the sha256 of the source resolved now (results/water.json, or the T14 ref while it is pending).
+    Water envelopes with no resolvable source fail; they never skip."""
+    uses_water = any("water.json#" in e["provenance_id"] for _, e in _envs(doc))
+    if not uses_water:
+        assert "water.json" not in doc["sources"]
+        return
+    text = _water_text()
+    assert text is not None, "water envelopes exist but no water.json source resolves"
+    assert doc["sources"]["water.json"]["sha256"] == hashlib.sha256(text.encode()).hexdigest()
 
 
 def test_register_rows_complete(doc):
