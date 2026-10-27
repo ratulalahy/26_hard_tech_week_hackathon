@@ -24,7 +24,16 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["hypothesis", "pytest", "ruff"]
+dev = [
+    "fastexcel>=0.21.0",
+    "hypothesis",
+    "ipykernel>=7.4.0",
+    "jupyter>=1.1.1",
+    "nbconvert>=7.17.2",
+    "nbformat>=5.11.1",
+    "pytest",
+    "ruff",
+]
 
 [build-system]
 requires = ["hatchling"]
