@@ -494,3 +494,18 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - S uses only the order, so the validation schedules and numbers are unchanged. The manifest provenance is corrected in the T11 fix round.
 - **Also:** `docs/data-profile/grid.md` gets a correction notice (F26), and the spec status line is updated (F27).
 - **Evidence:** `docs/reviews/2026-10-27-plan-astra-r1-astra.md`.
+
+## D-063 · 2026-10-27 ~16:15 MT · Pitch drafting starts tonight; a water-footprint illustration is added, merged after the test run
+- **Decided by:** owner, on Astra F03 and F17.
+- **Decision (pitch):** this amends D-061. Draft tonight, with test-number placeholders:
+  - the 4:30 narrative and demo script;
+  - the judge Q&A;
+  - the one-pager.
+
+  Fill and finalise after the test run and the audit.
+- **Decision (water):** add one outside-data piece, an illustrative water footprint, validation year only:
+  - generation-associated water consumption from NREL/TP-6A20-50900 factors × the EIA-930 fuel mix, shown with and without hydro evaporation;
+  - plus a direct data-center cooling range from the LBNL 2024 report.
+
+  It carries Astra's caveats: consumption ≠ withdrawal; production-side weighting, not flow tracing; PACE is not the Great Salt Lake watershed; no "water returned to the lake" claim. It is labelled modeled and illustrative, is not part of the frozen experiment, and **merges after the test run**.
+- **Future-work appendix:** temperature-dependent PUE, curtailment coincidence, wholesale cost, and health.
