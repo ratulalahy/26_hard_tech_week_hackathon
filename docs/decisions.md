@@ -562,3 +562,21 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 ## D-069 · 2026-10-27 15:29 MT · High effort for the freeze, test and audit-triage agents
 - **Decided by:** owner ("sounds good", in reply to the lead's recommendation).
 - **Decision:** the T12 rebuild and freeze writer, its review (T12r), the T13 test-run support, and the audit-dispositions work run at **high** effort. The lead and the other agents stay at their defaults.
+
+## D-071 · 2026-10-27 17:18 MT · Pre-registered test-year extras; freeze moves to ~22:00
+- **Decided by:** owner ("we have time and we should be hungry for ideas and push more"; selected the test-year extras, the live outlook, the fallback and Q&A drill, and the ten-region overview).
+- **Decision:** before the seal opens, register a fixed list of secondary, descriptive analyses on the test year. They run in the same single logged opening (T13) or from its outputs, and are reported whatever they show:
+  - the seven D-058 extension scenarios;
+  - storage;
+  - the toughest days (the D-066 rule);
+  - water (both hydro conventions);
+  - a seasonal split;
+  - forecast skill with L permutation importance;
+  - a validation → test drift table.
+
+  The specification is `docs/superpowers/plans/amendments/stage3-T20-test-year-extras.md`. The primary result, the deployed policy (S) and every frozen decision field are unchanged.
+- **Consequence:**
+  - The extras' code must be in the frozen `lab/` tree, so T15, T14, T16 and T17 now merge **before** the freeze, followed by T20 and then one final independent rebuild.
+  - The configuration freeze moves from about 18:00 to about 22:00, and the test opening follows it.
+  - The live outlook (T19) reads data inside the sealed window, so it runs only after the opening, as a logged read.
+- **Also corrected:** the T12 test cutoff uses value completeness, as spec §5 requires (T12r finding 1). This reverses the lead's earlier row-presence ruling and gives F_test 2026-10-25T00Z, 358 days.
