@@ -146,6 +146,35 @@ test('the test-year state shows only test numbers and no validation wording (syn
   expect(g.blocked, 'blocked non-localhost requests').toEqual([]);
 });
 
+test('the ten-region overview page renders results/overview.json offline (T18)', async ({ page }) => {
+  const { readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const ov = JSON.parse(readFileSync(join(process.cwd(), 'public', 'data', 'results', 'overview.json'), 'utf8'));
+  const g = guard(page);
+  await g.install();
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await page.goto('./#regions');
+  await expect(page.getByTestId('regions-table').locator('tbody tr')).toHaveCount(ov.order.length);
+  const dirtier = ov.order.filter((b: string) => ov.regions[b].alignment.rush_vs_mean_pct.value > 0).length;
+  await expect(page.getByTestId('regions-title')).toContainText(`${dirtier} of ${ov.order.length} regions`);
+  // the default ranking is by daily swing: the first row is the widest swing
+  const widest = [...ov.order].sort((a: string, b: string) => ov.regions[b].swing.median_g.value - ov.regions[a].swing.median_g.value)[0];
+  await expect(page.getByTestId('regions-table').locator('tbody tr').first()).toContainText(widest);
+  await expect(page.getByTestId('regions-sources')).toContainText('test year sealed');
+  await expect(page.locator('canvas.maplibregl-canvas')).toBeVisible();
+  await expect(page.locator('.mk-ov')).toHaveCount(ov.order.length);
+  // selecting a row drives the detail panel
+  await page.getByTestId('regions-table').getByRole('button', { name: /PJM/ }).click();
+  await expect(page.getByTestId('regions-detail')).toContainText('PJM Interconnection · PJM');
+  // and the page hands back to the App shell
+  await page.getByRole('link', { name: 'Back to the Utah dashboard' }).click();
+  await expect(page.getByTestId('hero-placement')).toContainText(placementRange);
+  await page.waitForLoadState('networkidle');
+  expect(errors, 'page errors').toEqual([]);
+  expect(g.blocked, 'blocked non-localhost requests').toEqual([]);
+});
+
 test('the synthetic test fixture is never published under public/', async () => {
   const { existsSync, readFileSync } = await import('node:fs');
   const { join } = await import('node:path');

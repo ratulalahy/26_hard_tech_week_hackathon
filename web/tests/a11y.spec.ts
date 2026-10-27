@@ -31,3 +31,17 @@ for (const s of STATES) {
     expect(summary).toEqual([]);
   });
 }
+
+// T18: the standalone ten-region overview page (#regions), with its map labels drawn and a row selected.
+test('axe regions', async ({ page }) => {
+  await page.goto('./#regions');
+  await page.getByTestId('regions-table').waitFor();
+  await page.locator('.mk-ov').first().waitFor({ state: 'attached' });
+  await page.getByRole('button', { name: /^\d+\s*CISO/ }).click();
+  await page.waitForTimeout(800);
+  const r = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+  const summary = r.violations.map((v) => `${v.id} [${v.impact}] ×${v.nodes.length}: ${v.help} — ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`);
+  console.log(`axe regions: ${r.violations.length} violations, ${r.passes.length} passes, ${r.incomplete.length} incomplete`);
+  for (const line of summary) console.log('  ' + line);
+  expect(summary).toEqual([]);
+});

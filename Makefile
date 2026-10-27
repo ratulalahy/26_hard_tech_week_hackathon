@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test notebooks profile slice need-run-dir ext-runs extensions storage web
+.PHONY: test notebooks profile slice need-run-dir ext-runs extensions storage overview web
 
 test:
 	cd lab && uv run pytest
@@ -57,6 +57,13 @@ extensions: need-run-dir
 # runs/ext next to it) holds the mobility <= 8 GPUs run that results/extensions.json names.
 storage: need-run-dir
 	cd lab && uv run python scripts/export_storage.py --registered-run $(RUN_DIR) --ext-root $(EXT_ROOT)
+
+# The ten-region overview (Stage 3 T18; validation only): results/overview.json, the existing
+# forecasters' day-ahead skill per region (consumed CO2 intensity, net load and its stress
+# percentile, against persistence and climatology), typical-day profiles, clean vs rush hours and
+# the median daily swing. Run directory: runs/overview/<UTC>/. About 10–15 minutes.
+overview:
+	cd lab && uv run python scripts/export_overview.py
 
 # The dashboard's validation-year grid context (Task 8): results/grid-profile.json.
 # RUN_DIR: the registered slice run (default runs/slice/<results/manifest.json run_id>).

@@ -6,7 +6,7 @@
 //    exists. A stale public/data/results/test/ is removed when results/test/ has no completed run, and the
 //    synthetic fixture in web/tests/fixtures is never copied here.
 // 2. the local map layers from $GRIDPILOT_DATA_DIR/processed/geo -> public/data/geo/, clipped to the
-//    western US view box and rounded to 3 decimals (about 100 m) to keep them small. Natural Earth
+//    western US view box (the overview's ten regions and the lower-48 states: the US box) and rounded to 3 decimals (about 100 m) to keep them small. Natural Earth
 //    (public domain) and Electricity Maps BA geometry (AGPL-3.0) attributions are written next to them.
 // Validation results only: this script never reads the sealed test window (it copies files).
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -21,6 +21,9 @@ const out = join(repo, 'web', 'public', 'data');
 const dataDir = process.env.GRIDPILOT_DATA_DIR ?? join(repo, 'data');
 const geo = join(dataDir, 'processed', 'geo');
 const BOX = [-130, 27, -97, 52.5]; // lon0, lat0, lon1, lat1: the West plus a margin
+// The ten-region overview (T18) reaches the East: its regions and the lower-48 states, unclipped by BOX.
+const US_BOX = [-126, 24, -66, 50];
+const OVERVIEW_BAS = new Set(['PACE', 'BPAT', 'CISO', 'NEVP', 'AZPS', 'PSCO', 'ERCO', 'SWPP', 'MISO', 'PJM']);
 
 const kb = (p) => (statSync(p).size / 1024).toFixed(0) + ' KB';
 
@@ -78,7 +81,7 @@ function bbox(coords, b = [Infinity, Infinity, -Infinity, -Infinity]) {
   for (const c of coords) bbox(c, b);
   return b;
 }
-const hits = (b) => !(b[2] < BOX[0] || b[0] > BOX[2] || b[3] < BOX[1] || b[1] > BOX[3]);
+const hits = (b, box = BOX) => !(b[2] < box[0] || b[0] > box[2] || b[3] < box[1] || b[1] > box[3]);
 // drop consecutive duplicate points created by rounding
 function dedupe(coords) {
   if (typeof coords[0] === 'number') return coords;
@@ -93,12 +96,12 @@ function dedupe(coords) {
   return coords.map(dedupe);
 }
 
-function layer(src, dst, { keep = () => true, props = null } = {}) {
+function layer(src, dst, { keep = () => true, props = null, box = BOX } = {}) {
   const g = JSON.parse(readFileSync(join(geo, src), 'utf8'));
   const features = [];
   for (const f of g.features) {
     if (!f.geometry || !keep(f)) continue;
-    if (!hits(bbox(f.geometry.coordinates))) continue;
+    if (!hits(bbox(f.geometry.coordinates), box)) continue;
     const p = props ? Object.fromEntries(props.filter((k) => k in f.properties).map((k) => [k, f.properties[k]])) : f.properties;
     features.push({ type: 'Feature', properties: p, geometry: { type: f.geometry.type, coordinates: dedupe(round(f.geometry.coordinates)) } });
   }
@@ -109,6 +112,9 @@ function layer(src, dst, { keep = () => true, props = null } = {}) {
 
 layer('ba_boundaries.geojson', 'ba.geojson', { props: ['code', 'name', 'region', 'approximate'] });
 layer('ba_points.geojson', 'ba_points.geojson', { props: ['code', 'name', 'label_lon', 'label_lat'] });
+layer('ba_boundaries.geojson', 'ba_overview.geojson', { props: ['code', 'name'], box: US_BOX, keep: (f) => OVERVIEW_BAS.has(f.properties.code) });
+layer('ba_points.geojson', 'ba_overview_points.geojson', { props: ['code', 'label_lon', 'label_lat'], box: US_BOX, keep: (f) => OVERVIEW_BAS.has(f.properties.code) });
+layer('basemap/states.geojson', 'states_us.geojson', { props: ['name', 'postal'], box: US_BOX, keep: (f) => !['AK', 'HI'].includes(f.properties.postal) });
 layer('basemap/states.geojson', 'states.geojson', { props: ['name', 'postal', 'label_lon', 'label_lat'] });
 layer('basemap/state_lines.geojson', 'state_lines.geojson', { props: [] });
 layer('basemap/countries.geojson', 'countries.geojson', { props: ['adm0_a3', 'name'] });
