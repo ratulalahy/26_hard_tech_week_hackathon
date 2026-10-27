@@ -943,7 +943,7 @@
  },
  "extensions": {
   "artifact": "extensions.json",
-  "sha256": "3b2744f496190fd33cd10bfcfe2f5fc577ee84257e51956694823ae11e741847",
+  "sha256": "340c80a8ff1789b86952c317ef352a04177889d6fbb97b330b27600287df9b98",
   "canonical_sha256": "52a55185f8ee48f3de92452aaed4bafa6bee477530fdfa8e6284b8436064cdca",
   "missing_runs": []
  },
