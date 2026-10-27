@@ -10,7 +10,7 @@ import type { Viewport } from '../lib/useViewport';
 import { useViewport } from '../lib/useViewport';
 
 export const dims = (vp: Viewport) => ({
-  left: vp.w >= 1600 ? 416 : 336,
+  left: vp.w >= 1400 ? 416 : 336,
   right: vp.w >= 1600 ? 376 : 344,
   tl: vp.h >= 1000 ? 184 : 164,
 });
@@ -152,7 +152,7 @@ function RouterDock({ compact }: { compact: boolean }) {
   return (
     <Panel over className="flex flex-col" style={{ height: '100%', padding: 0, overflow: 'hidden' }}>
       <div style={{ padding: compact ? '12px 16px 8px' : 16, overflow: 'auto', minHeight: 0, flexShrink: 1 }}>
-        <h2 className="t-15" style={{ margin: 0 }}>Every policy did the same work, with no late jobs</h2>
+        <h2 className="t-15" style={{ margin: 0 }}>Every policy did the same work; deadlines met by construction</h2>
         {!compact && <div className="t-12 ink-2" style={{ marginTop: 4 }}>Attributed CO₂, {fmt(m.cohort.n_jobs.value)} jobs, {fmt(m.cohort.declared_gpu_h.value / 1e6, 2)} M GPU-h. U − policy above zero: the policy emits less.</div>}
         {!compact && <div className="t-11 ink-3" style={{ marginTop: 4 }}>Key: S, K, W, L and H may move or delay work; G is carbon-blind; wait-only may not move. Hover a name for its rule.</div>}
         <div style={{ marginTop: 8 }}><PolicyTable m={m} compact testId="policy-table-compact" /></div>
