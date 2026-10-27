@@ -68,10 +68,9 @@ export function Story() {
             {steps.map((s, i) => (
               <div key={i} data-step={i + 1} className="flex flex-col justify-center" style={{ minHeight: 'calc(100vh - 100px)' }}>
                 <Panel style={{ opacity: step === i + 1 ? 1 : 0.55, transition: 'opacity 160ms var(--ease)' }}>
-                  <div className="t-12 ink-3" style={{ marginBottom: 8 }}>{i + 1} of {steps.length}</div>
                   <h2 className="t-20" style={{ margin: 0 }}>{s.t}</h2>
                   <p className="t-13 ink-2" style={{ margin: '8px 0 0', maxWidth: '62ch' }}>{s.body}</p>
-                  <div className="flex flex-wrap gap-3 items-center" style={{ marginTop: 12 }}>{s.ev}</div>
+                  <div className="flex flex-wrap gap-3 items-center" style={{ marginTop: 12 }}>{s.ev}<span className="t-11 ink-3 ml-auto">{i + 1} of {steps.length}</span></div>
                 </Panel>
               </div>
             ))}
@@ -86,8 +85,9 @@ function Visual({ step, rush, clean, curve }: { step: number; rush: [number, num
   const { data } = useApp();
   const g = data!.grid, m = data!.metrics;
   const jul = g.pace_july_weekday;
-  if (step === 2) return <YearHeat />;
-  if (step === 3) return <ForecastPanel />;
+  const fill = (n: React.ReactNode) => <div className="grid h-full" style={{ gridTemplateRows: 'minmax(0,1fr)' }}>{n}</div>;
+  if (step === 2) return fill(<YearHeat />);
+  if (step === 3) return fill(<ForecastPanel />);
   if (step === 4) return (
     <Panel className="h-full flex flex-col" style={{ gap: 16 }}>
       <span className="t-15">Saving in attributed CO₂ vs running local, with 95% intervals</span>

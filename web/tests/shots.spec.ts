@@ -16,7 +16,7 @@ const STATES: { name: string; hash: string; prep?: (p: Page) => Promise<void> }[
   { name: 'cockpit-wait', hash: '#cockpit', prep: async (p) => { await p.getByRole('group', { name: 'Router action' }).getByRole('button', { name: 'Wait' }).click(); } },
   { name: 'ribbon', hash: '#ribbon' },
   { name: 'story-1', hash: '#story' },
-  { name: 'story-4', hash: '#story', prep: async (p) => { await p.locator('[data-step="4"]').scrollIntoViewIfNeeded(); await p.waitForTimeout(600); } },
+  ...[2, 3, 4, 5, 6].map((n) => ({ name: `story-${n}`, hash: '#story', prep: async (p: Page) => { await p.locator(`[data-step="${n}"]`).evaluate((e) => e.scrollIntoView({ block: 'center' })); await p.waitForTimeout(800); } })),
   { name: 'method', hash: '#control', prep: async (p) => { await p.getByRole('button', { name: 'Method & evidence' }).click(); await p.waitForTimeout(300); } },
 ];
 
