@@ -13,7 +13,7 @@
   "EIA's consumption-basis intensity assigns imports from Canada and Mexico the average US emissions rate (EIA-930 convention).",
   "Zero deadline misses hold by construction under baseline bookings; they are not evidence of production reliability.",
   "The bookings' effect on realized savings is not signed.",
-  "The shadow-U sensitivity ('possible without advance reservations') is pending.",
+  "The shadow-U sensitivity ('possible without advance reservations') was cut by the owner (D-058) and is not run.",
   "Validation results are development evidence: the validation year was profiled before the design, and the same period selected the learned model's settings. The sealed test year is the confirmatory evaluation.",
   "EIA's 2025-26 emission factors may be a provisional vintage (F7).",
   "Baseline bookings are an assumed advance-reservation calendar synthesized from the whole U replay (F11, F12.7); the result is not a historical online-router claim.",
@@ -798,6 +798,14 @@
   {
    "item": "missingness-blind scheduling sensitivity",
    "reason": "cut by owner (D-058)"
+  },
+  {
+   "item": "civil-time (DST) alignment of the replay clock (§7)",
+   "reason": "cut by owner (D-058): remaining §7 sensitivities"
+  },
+  {
+   "item": "+25% runtime-overrun stress with fixed deadlines (§7)",
+   "reason": "cut by owner (D-058): remaining §7 sensitivities"
   }
  ],
  "artifacts": [
@@ -935,8 +943,9 @@
  },
  "extensions": {
   "artifact": "extensions.json",
-  "sha256": "5230dbd81da820a244f749ef140f752df266ac0d4ae161eeab27d0e80b442bca",
-  "canonical_sha256": "e36a3ef3caa35ac2f0ea1626ae360e994af7c31a81090744944c70e528a1192b",
+  "sha256": "3b2744f496190fd33cd10bfcfe2f5fc577ee84257e51956694823ae11e741847",
+  "canonical_sha256": "52a55185f8ee48f3de92452aaed4bafa6bee477530fdfa8e6284b8436064cdca",
   "missing_runs": []
- }
+ },
+ "common_support_rerun": "see extensions.json#common_support"
 }
