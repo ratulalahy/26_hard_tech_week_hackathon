@@ -39,3 +39,10 @@ The full text is in the gallery's Design system tab.
 - Solar against peach: ΔE 12.2. Solar is only ever a labelled area.
 
 Generator scripts: `docs/design/concepts/src/oklch.mjs` and `div2.mjs`.
+
+## Shared map as a backdrop
+
+Owner feedback on round 4: the backdrop map "is taking too much focus".
+
+- On every view except the map view (Control room), the shared relief and hex map is a watermark: opacity 0.14–0.18, `filter: saturate(.3) blur(1.5px)`.
+- A view's own small map (for example the Decision cockpit's inset) stays at full colour.

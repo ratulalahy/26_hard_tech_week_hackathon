@@ -103,10 +103,12 @@ body.live .tabs .thumb{transition:left .32s var(--ease),width .32s var(--ease)}
 .scene{position:fixed;inset:0;z-index:0;pointer-events:none;transition:opacity .45s var(--ease),transform .6s var(--ease),filter .45s}
 .scene svg{position:absolute;display:block}
 body[data-view="control"] .scene{opacity:1;pointer-events:auto}
-body[data-view="ribbon"] .scene{opacity:.7;transform:translate(18vw,10vh) scale(1.25)}
-body[data-view="cockpit"] .scene{opacity:.7;transform:translate(-24vw,12vh) scale(1.3)}
-body[data-view="story"] .scene{opacity:.6;transform:translate(22vw,4vh) scale(1.1)}
-body[data-view="system"] .scene{opacity:.5;transform:translate(26vw,6vh) scale(1.05)}
+/* off the map view, the West recedes to a faint, desaturated watermark: context, not content */
+body:not([data-view="control"]) .scene{filter:saturate(.3) blur(1.5px)}
+body[data-view="ribbon"] .scene{opacity:.18;transform:translate(18vw,10vh) scale(1.25)}
+body[data-view="cockpit"] .scene{opacity:.18;transform:translate(-24vw,12vh) scale(1.3)}
+body[data-view="story"] .scene{opacity:.16;transform:translate(22vw,4vh) scale(1.1)}
+body[data-view="system"] .scene{opacity:.14;transform:translate(26vw,6vh) scale(1.05)}
 @media (prefers-reduced-motion:reduce){.scene,.tabs .thumb,*{transition:none!important;animation:none!important}}
 
 /* ── views ── */
