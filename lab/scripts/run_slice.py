@@ -207,10 +207,9 @@ def bound_gap(acc: pl.DataFrame, per: pl.DataFrame) -> dict:
 
 
 def _tail(fc_dir):
-    """The frozen K tail; `run_dir` is passed explicitly when the API takes it."""
-    if "run_dir" in inspect.signature(tail_climatology).parameters:
-        return tail_climatology(list(SITES), run_dir=fc_dir)
-    return tail_climatology(list(SITES))
+    """The frozen K tail from the pinned run's climatology.parquet (checked by Task 5
+    against that run's K rows)."""
+    return tail_climatology(fc_dir, list(SITES))
 
 
 def build_policies(ranking, fc_dir, filled, mask):
@@ -413,6 +412,8 @@ def accounting(ledgers, policies, cj, bookings, warm, tt, eval_start, A) -> dict
     for name, led in ledgers.items():
         sites = policies[name][1]
         m = score(led, cj, tt, sites=sites, warm=warm)
+        if m["fit_rejected_jobs"] != 0:  # the engine's F12.7 signal: nonzero is a bug
+            raise AssertionError(f"{name}: {m['fit_rejected_jobs']} fit-rejected jobs")
         m["mobile_remote_share"] = mobile_remote_share(led, cj)
         acc = job_accounting(led, cj, tt)
         gaps[name] = {"primary": bound_gap(acc, per)}
@@ -480,7 +481,7 @@ METRIC_UNITS = {
     "transfer_co2_kg": "kg_CO2", "co2_kg": "kg_CO2", "co2_kg_per_1000_gpu_h": "kg_CO2/1000_GPU_h",
     "moved_jobs": "jobs", "moved_share_jobs": "fraction", "moved_share_energy": "fraction",
     "remote_jobs": "jobs", "remote_energy_share": "fraction", "blocked_jobs": "jobs",
-    "blocked_kwh": "kWh",
+    "blocked_kwh": "kWh", "fit_rejected_jobs": "jobs", "fit_rejected_kwh": "kWh",
 }
 
 
@@ -744,7 +745,10 @@ def build_artifacts(**k) -> dict:
         ],
         "inputs": {"data_manifests_sha256": m_inputs,
                    "carbon_hourly_sha256": _sha256(CARBON_PATH),
-                   "forecast_run": str(k["fc_dir"].name),
+                   "forecast_run": (str(k["fc_dir"]) if k["args"].forecast_run else
+                                    f"runs/slice/{run_id}/forecast/{k['fc_dir'].name}"),
+                   "forecast_run_pinned": "K/W/L forecasts and the K tail climatology are "
+                                          "read from this one run directory",
                    "forecast_metrics_run_id": k["fc_metrics"].get("run_id")},
         "split": {"window": k["args"].window, "init": iso(k["init"]),
                   "eval_start": iso(k["eval_start"]), "A": iso(coh.A), "F": iso(k["F"]),
