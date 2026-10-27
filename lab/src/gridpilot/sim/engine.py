@@ -17,9 +17,15 @@ every job is on time by construction; a late job raises, because it would be a b
 (arrival + duration + max_delay), then `job_uid`. The declared deadline, not the F1 one,
 keeps the order the same for every policy and for the U run that defines the bookings.
 
-**Mask (F3).** `closed` gives per-site closed intervals. No policy action may execute
-over a closed interval; the engine rejects one that does. Bookings are exempt: they sit
-at PACE, which has no missing truth in validation.
+**Mask (F3, F12.1).** `closed` gives per-site closed intervals (an assumed, advance-known
+closure calendar). No policy action may execute over a closed interval, and a remote
+move also needs its arrival instant open at home and at the destination, where its
+transfer energy is charged. The engine rejects an action that breaks either rule.
+Bookings are exempt: they sit at PACE, which has no missing truth in validation; the
+driver checks every booking against PACE support before any comparison (F12.3).
+
+**Legal starts (F12.3).** [arrival (+ transfer if remote), deadline − duration] at each
+legal site, plus the exact booking. There is no R_max cap.
 """
 
 from __future__ import annotations
@@ -47,7 +53,7 @@ JOB_COLUMNS = ["job_uid", "arrival_ts", "duration_s", "gpus", "job_type", "flexi
 BOOKING_COLUMNS = ["job_uid", "site", "start_us", "end_us", "deadline_us"]
 LEDGER_COLUMNS = [
     "job_uid", "site", "start_ts", "end_ts", "transfer", "late", "deadline_ts", "gpus",
-    "arrival_ts", "duration_s", "moved", "booking_site",
+    "arrival_ts", "duration_s", "moved", "booking_site", "blocked",
 ]
 
 Ledger = pl.DataFrame
@@ -56,7 +62,9 @@ Ledger = pl.DataFrame
 start_ts/end_ts are execution (after any transfer), datetime[us, UTC]; end_ts − start_ts
 is the duration rounded to the µs, and duration_s is the exact input value. `transfer`
 is True when the job ran away from home; `moved` when it did not run on its booking;
-`late` is always False under bookings (kept for the accounting contract).
+`blocked` (F12.7) when the policy returned a legal, on-time action that did not fit
+(another booking or an earlier move held its capacity), so the job fell back to its
+booking; `late` is always False under bookings (kept for the accounting contract).
 """
 
 
@@ -145,6 +153,15 @@ class SimContext:
     def is_open(self, site: str, start: int, duration: int) -> bool:
         return self.closure(site, start, duration) is None
 
+    def transfer_supported(self, job: Job, site: str) -> bool:
+        """F12.1: a remote move charges transfer energy at arrival at both ends, so the
+        arrival instant must be open at home and at `site`. Always True at home."""
+        if site == self.home:
+            return True
+        return self.is_open(self.home, job.arrival_us, 1) and self.is_open(
+            site, job.arrival_us, 1
+        )
+
     def earliest_start(
         self,
         job: Job,
@@ -152,7 +169,11 @@ class SimContext:
         capacities: Mapping[str, CapacityView],
         latest: int | None = None,
     ) -> int | None:
-        """Earliest start at `site` that fits and avoids closed intervals, or None."""
+        """Earliest start at `site` that fits and is supported by truth (F3, F12.1):
+        execution avoids closed intervals, and a remote move's arrival hour is open at
+        home and at `site`. None if there is none (by `latest`)."""
+        if not self.transfer_supported(job, site):
+            return None
         cap = capacities[site]
         s: int | None = self.ready_at(job, site)
         while s is not None:
@@ -238,8 +259,9 @@ class S:
     """Fixed clean-region priority.
 
     Try the sites in `ranking` (the training-window mean consumed intensity order,
-    cleanest first; Task 7 supplies it), then home: take the first whose earliest
-    feasible completion meets the deadline. Otherwise the job runs on its booking.
+    cleanest first, home included at its rank; Task 7 supplies it) and take the first
+    with an earliest on-time feasible start (F12.2). If home is missing from the ranking
+    it is tried last. Otherwise the job runs on its booking.
     """
 
     name = "S"
@@ -411,6 +433,7 @@ class _Run:
     start: np.ndarray
     late: np.ndarray
     moved: np.ndarray
+    blocked: np.ndarray
 
 
 def _run(
@@ -470,6 +493,7 @@ def _run(
     start_out = np.empty(n, dtype=np.int64)
     late_out = np.zeros(n, dtype=bool)
     moved_out = np.zeros(n, dtype=bool)
+    blocked_out = np.zeros(n, dtype=bool)
     cap_list = list(caps.values())
 
     for k in range(n):
@@ -486,10 +510,12 @@ def _run(
         action = policy.choose(job, now, views, ctx)
         if action is not None:
             _check_action(policy, job, action, ctx)
-            a_end = action.start_us + d
-            if booked and not (ctx.on_time(job, action.start_us)
-                               and caps[action.site].fits(action.start_us, a_end, g)):
-                action = None  # late or does not fit: run on the booking
+            if booked:
+                if not ctx.on_time(job, action.start_us):
+                    action = None  # late: run on the booking
+                elif not caps[action.site].fits(action.start_us, action.start_us + d, g):
+                    blocked_out[k] = True  # F12.7: reservation-blocked preferred action
+                    action = None
         if action is None:
             if not booked:
                 raise ValueError(f"job {job.job_uid} ({g} GPUs) fits no legal site "
@@ -505,7 +531,7 @@ def _run(
         if booked and late_out[k]:
             raise AssertionError(f"{policy.name}: {job.job_uid} is late under bookings (F11)")
 
-    return _Run(frame, site_out, start_out, late_out, moved_out)
+    return _Run(frame, site_out, start_out, late_out, moved_out, blocked_out)
 
 
 def _check_action(policy: Policy, job: Job, action: Action, ctx: SimContext) -> None:
@@ -523,6 +549,9 @@ def _check_action(policy: Policy, job: Job, action: Action, ctx: SimContext) -> 
     if not ctx.is_open(action.site, start, job.duration_us):
         raise ValueError(f"{policy.name}: {job.job_uid} at {action.site} touches a closed "
                          f"interval (F3)")
+    if not ctx.transfer_supported(job, action.site):
+        raise ValueError(f"{policy.name}: {job.job_uid} moves to {action.site} but its "
+                         f"arrival hour is closed at home or there (F12.1)")
 
 
 def _ts(us: np.ndarray | pl.Series) -> pl.Series:
@@ -550,6 +579,7 @@ def _ledger(r: _Run, home: str) -> Ledger:
         "duration_s": o["duration_s"],
         "moved": pl.Series(r.moved, dtype=pl.Boolean),
         "booking_site": bsite,
+        "blocked": pl.Series(r.blocked, dtype=pl.Boolean),
     }).select(LEDGER_COLUMNS)
 
 

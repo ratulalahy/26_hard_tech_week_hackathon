@@ -70,6 +70,7 @@ class _Counterfactual:
         self.free = {s: Capacity(n) for s, n in sites.items()}  # earlier placements only
         self.views = {s: c.view() for s, c in self.free.items()}
         self.blocked = 0
+        self.blocked_gpu_h = 0.0
         self.decisions = 0
 
     def choose(self, job, now, capacities, ctx):
@@ -80,6 +81,7 @@ class _Counterfactual:
         self.decisions += 1
         if want is not None and want != got and ctx.on_time(job, want.start_us):
             self.blocked += 1
+            self.blocked_gpu_h += job.gpus * job.duration_s / 3600
         return got
 
     def on_commit(self, job, action):
@@ -129,14 +131,17 @@ def main() -> None:
         print(f"{policy.name}: {dt:6.1f} s ({dt / jobs.height * 1e6:5.1f} us/job)  "
               f"late={ledger['late'].sum()}  moved={ledger['moved'].mean():.2%} "
               f"(of mobile {mob.filter(pl.col('mobile'))['moved'].mean():.2%})  "
-              f"remote={ledger['transfer'].sum():,}")
+              f"remote={ledger['transfer'].sum():,}  blocked={ledger['blocked'].sum():,} "
+              f"({ledger.filter('blocked').select(pl.col('gpus') * pl.col('duration_s'))
+                 .sum().item() / 3600:,.0f} GPU-h)")
         if args.diagnose:
             cf = _Counterfactual(policy, SITES)
             t = time.perf_counter()
             simulate(jobs, cf, bookings=bookings, on_commit=cf.on_commit)
             print(f"   counterfactual: preferred action blocked by bookings in "
                   f"{cf.blocked:,} of {cf.decisions:,} decisions "
-                  f"({cf.blocked / cf.decisions:.2%}); {time.perf_counter() - t:.1f} s")
+                  f"({cf.blocked / cf.decisions:.2%}, {cf.blocked_gpu_h:,.0f} GPU-h); "
+                  f"{time.perf_counter() - t:.1f} s")
 
 
 if __name__ == "__main__":

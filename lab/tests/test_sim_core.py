@@ -320,13 +320,17 @@ def test_fallback_runs_on_booking():
     led = simulate(jobs, _Prefer(360), sites, bookings=b)
     f = row(led, "F")
     assert minutes_after_t0(f["start_ts"]) == 0 and not f["moved"]
+    assert f["blocked"]  # F12.7: the returned action was rejected for capacity
     # [300, 360) fits around X's booking and meets F's 7 h deadline -> moved.
     led = simulate(jobs, _Prefer(300), sites, bookings=b)
     assert minutes_after_t0(row(led, "F")["start_ts"]) == 300 and row(led, "F")["moved"]
-    # A proposal that fits but is late (ends after 420 min), or None, also falls back.
+    assert not led["blocked"].any()
+    # A proposal that fits but is late (ends after 420 min), or None, also falls back,
+    # but neither counts as reservation-blocked.
     for pref in (460, None):
         led = simulate(jobs, _Prefer(pref), sites, bookings=b)
-        assert minutes_after_t0(row(led, "F")["start_ts"]) == 0 and not row(led, "F")["moved"]
+        f = row(led, "F")
+        assert minutes_after_t0(f["start_ts"]) == 0 and not f["moved"] and not f["blocked"]
 
 
 # --------------------------------------------------------------------------- F3 mask
@@ -352,6 +356,29 @@ def test_mask_closes_destination():
     # The engine rejects a masked action outright.
     with pytest.raises(ValueError, match="closed"):
         simulate(jobs, _At("CISO", 31, uid="x"), sites, bookings=b, closed=closed)
+
+
+def test_remote_move_needs_arrival_hour_support():
+    """F12.1: a remote move charges transfer energy in the arrival hour at both ends,
+    so that hour must have truth at home and at the destination."""
+    sites = {"PACE": 4, "CISO": 4, "BPAT": 4, "NEVP": 4}
+    jobs = jobs_frame([
+        {"job_uid": "blocker", "at_min": 0, "dur_min": 600, "gpus": 4},
+        {"job_uid": "x", "at_min": 50, "dur_min": 60, "gpus": 2, "flexible": True},
+    ])
+    b = u_bookings(jobs, sites)
+    r = row(simulate(jobs, G(), sites, bookings=b), "x")
+    assert (r["site"], minutes_after_t0(r["start_ts"])) == ("BPAT", 80)
+    # BPAT's arrival hour [0, 60) is closed; its execution hours [80, 140) are open.
+    closed = {"BPAT": [(T0_US, T0_US + HOUR)]}
+    r = row(simulate(jobs, G(), sites, bookings=b, closed=closed), "x")
+    assert (r["site"], minutes_after_t0(r["start_ts"])) == ("CISO", 80)
+    # Home's arrival hour closed: no remote move at all, so x runs on its PACE booking.
+    closed = {"PACE": [(T0_US, T0_US + HOUR)]}
+    r = row(simulate(jobs, G(), sites, bookings=b, closed=closed), "x")
+    assert r["site"] == "PACE" and not r["moved"]
+    with pytest.raises(ValueError, match="arrival hour"):
+        simulate(jobs, _At("CISO", 80, uid="x"), sites, bookings=b, closed=closed)
 
 
 def test_bookings_exempt_from_mask():
@@ -537,11 +564,11 @@ def test_ledger_schema_and_sites():
     ledger = run(jobs, G())
     assert ledger.columns == LEDGER_COLUMNS == [
         "job_uid", "site", "start_ts", "end_ts", "transfer", "late", "deadline_ts", "gpus",
-        "arrival_ts", "duration_s", "moved", "booking_site",
+        "arrival_ts", "duration_s", "moved", "booking_site", "blocked",
     ]
     for c in ("start_ts", "end_ts", "deadline_ts", "arrival_ts"):
         assert ledger.schema[c] == pl.Datetime("us", "UTC")
-    for c in ("transfer", "late", "moved"):
+    for c in ("transfer", "late", "moved", "blocked"):
         assert ledger.schema[c] == pl.Boolean
     assert ledger.schema["gpus"] == pl.Int64
     a = row(ledger, "a")
@@ -630,5 +657,7 @@ def test_ledger_invariants(jobs, masked):
             bp = j.filter(pl.col("site") == "BPAT")
             lo, hi = T0 + timedelta(minutes=30), T0 + timedelta(minutes=150)
             assert not ((bp["start_ts"] < hi) & (bp["end_ts"] > lo)).any()
+            # F12.1: nor does a move to BPAT arrive inside it (transfer charged there).
+            assert not ((bp["arrival_ts"] >= lo) & (bp["arrival_ts"] < hi)).any()
         if policy.name == "U":
             assert not ledger["moved"].any()
