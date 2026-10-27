@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { IntervalChart, Panel } from '../components/charts';
 import { CONSUMPTION_CHECKS, PHRASE, extRows, listJoin, placementSpan } from '../components/extensions';
-import { BudgetBar, BudgetHeadline, ScenarioToggle, arcsOf, budgetFacts, flowOf, kindOf, savingOf, scenarioOf } from '../components/flows';
+import { BudgetBar, BudgetHeadline, NoChangeNote, ScenarioToggle, arcsOf, budgetFacts, flowOf, kindOf, savingOf, scenarioOf } from '../components/flows';
 import { ImportChart, StorageCurve, hourSpans, storageFacts } from '../components/storage';
 import { Ev, EvCI, Icon } from '../components/ui';
 import { cap } from '../lib/copy';
 import { useCopy } from '../lib/useCopy';
-import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, aboutPct, asNum, dayCurve, loadMonth, own, plainLimitations, pname, waitPhrase, type Core, type Json } from '../lib/data';
+import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, loadMonth, own, plainLimitations, pname, waitPhrase, type Core, type Json } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
 import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange, sig2 } from '../lib/format';
 import { useViewport } from '../lib/useViewport';
@@ -78,18 +78,18 @@ export function Story() {
     },
     {
       t: copy.validationReadings ? 'The whole year: a simple ranking does well' : `${cap(copy.wholeYear)}: the aggregate`,
-      body: <span data-testid="story-result">{copy.over}, {pname('S')} {sOwn.v < 0 ? 'raised' : 'cut'} attributed CO₂ by <b className="fw-600">{pct(Math.abs(sOwn.v))}%</b> (its own 95% interval {pct(sOwn.lo)}–{pct(sOwn.hi)}%) against U local (stay in Utah), with {DEADLINES_MET} and the same declared work. Waiting in Utah alone cut {waitPhrase(m)}: about {aboutPct(sOwn.v)}% vs {waitPhrase(m)}. Compute follows cleaner power: {pct(topDest[1] / remoteTot, 0)}% of the energy S ran outside Utah ran in {REGION[topDest[0]].name === 'Northwest hydro' ? 'the Northwest' : REGION[topDest[0]].name}.{copy.validationReadings ? ' We found no demonstrated aggregate benefit from dynamic search in this replay; the forecast-driven policies land beside S.' : ''}<span className="block t-12 ink-3" style={{ marginTop: 8 }} data-testid="story-frame">{FRAME_LINE}</span></span>,
+      body: <span data-testid="story-result">{copy.over}, {pname('S')} {sOwn.v < 0 ? 'raised' : 'cut'} attributed CO₂ by <b className="fw-600">{pct(Math.abs(sOwn.v))}%</b> (its own 95% interval {pct(sOwn.lo)}–{pct(sOwn.hi)}%) against U local (stay in Utah), with {DEADLINES_MET} and the same declared work. Waiting in Utah alone cut {waitPhrase(m)}. Compute follows cleaner power: {pct(topDest[1] / remoteTot, 0)}% of the energy S ran outside Utah ran in {REGION[topDest[0]].name === 'Northwest hydro' ? 'the Northwest' : REGION[topDest[0]].name}.{copy.validationReadings ? ' We found no demonstrated aggregate benefit from dynamic search in this replay; the forecast-driven policies land beside S.' : ''}<span className="block t-12 ink-3" style={{ marginTop: 8 }} data-testid="story-frame">{FRAME_LINE}</span></span>,
       ev: <><Ev e="simulated">{fmt(m.cohort.n_jobs.value)} jobs, 95% intervals</Ev><button className="btn" onClick={() => set({ drawer: true })}><Icon name="doc" />Every policy, in the method drawer</button></>,
     },
     {
       t: 'Lock large jobs to Utah',
-      body: <span data-testid="story-lock">The largest {pct(top1.fraction.value, 0)}% of jobs use {pct(top1.energy_share.value, 0)}% of the energy. {mob && mobF ? <>If only jobs of 8 GPUs or fewer may move, {pname('S')}'s saving falls from {pct(sOwn.v)}% to <b className="fw-600">{pct(mob.v)}%</b> ({pct(mob.lo)}–{pct(mob.hi)}%, a scenario estimate), and only {pct(mobF.remote_energy_share.value, 1)}% of the energy runs outside Utah. </> : null}{bf ? <><BudgetHeadline p="S" /> </> : null}Whether large training jobs can move is the lever; in this study it is an assumption, not a measurement.{sc && shown ? <span className="block t-12 ink-2" style={{ marginTop: 8 }} data-testid="story-lock-shown">Shown: {sc.label}, {kindOf(sc)}: {pname(arcPolicy)} {pct(shown.v)}% ({pct(shown.lo)}–{pct(shown.hi)}%).</span> : null}</span>,
+      body: <span data-testid="story-lock">The largest {pct(top1.fraction.value, 0)}% of jobs use {pct(top1.energy_share.value, 0)}% of the energy. {mob && mobF ? <>If only jobs of 8 GPUs or fewer may move, {pname('S')}'s saving falls from {pct(sOwn.v)}% to <b className="fw-600">{pct(mob.v)}%</b> ({pct(mob.lo)}–{pct(mob.hi)}%, a scenario estimate), and only {pct(mobF.remote_execution_share.value, 1)}% of the execution energy runs outside Utah. </> : null}{bf ? <><BudgetHeadline p="S" /> </> : null}{!data!.flows && own(m, arcPolicy) ? <span data-testid="story-lock-own">{copy.over}, {pname(arcPolicy)} {own(m, arcPolicy)!.v < 0 ? 'raised' : 'cut'} attributed CO₂ by {pct(Math.abs(own(m, arcPolicy)!.v))}% (its own 95% interval {pct(own(m, arcPolicy)!.lo)}–{pct(own(m, arcPolicy)!.hi)}%); the mobility and capacity scenarios are not shown for this window. </span> : null}Whether large training jobs can move is the lever; in this study it is an assumption, not a measurement.{sc && shown ? <span className="block t-12 ink-2" style={{ marginTop: 8 }} data-testid="story-lock-shown">Shown: {sc.label}, {kindOf(sc)}: {pname(arcPolicy)} {pct(shown.v)}% ({pct(shown.lo)}–{pct(shown.hi)}%).</span> : null}</span>,
       ev: data!.flows ? <><Ev e="simulated">scenario runs, validation</Ev><Ev e="assumed">mobility rule</Ev></> : <Ev e="measured">job sizes</Ev>,
     },
     {
       t: "Move what you can, store for what you can't",
       body: sf ? <span data-testid="story-storage">Moving cuts {pct(sOwn.v)}% ({pname('S')}), but only if large multi-node jobs can move; {mob ? <>if only jobs of 8 GPUs or fewer may, it falls to {pct(mob.v)}% (a scenario estimate)</> : 'the small-jobs-only check did not run'}. For work that stays, a battery can shift its energy instead. <b className="fw-600" data-testid="storage-headline">{/^(8|11|18)/.test(String(sf.E)) ? 'An' : 'A'} {fmt(sf.E)} MWh, {fmt(sf.P)} MW battery cuts the Utah cluster's CO₂ by {pct(sf.cutA, 1)}%</b> on a fixed daily schedule; charging is limited to the roughly {fmt(sf.headroomLo, 1)}–{fmt(sf.headroomMid, 1)} MW the site connection leaves free. <span data-testid="storage-combined">Moving the small jobs and storing for the big ones cuts <b className="fw-600">{pct(sf.moveStoreA, 1)}%</b> against {pname('U')}.</span> <b className="fw-600 block" style={{ marginTop: 8 }} data-testid="storage-skeptic">On a flat marginal basis it may add about {sig2(sf.flatAddT)} t: storage only helps if charging carbon ÷ η &lt; displaced carbon.</b></span> : <>{copy.line}</>,
-      ev: <><span className="chip-neutral">illustrative · not the registered result</span><EvCI /><Ev e="simulated">dispatch</Ev><Ev e="assumed">battery, schedule</Ev><button className="btn" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button></>,
+      ev: !sf ? <Ev e="assumed">illustrative</Ev> : <><span className="chip-neutral">illustrative · not the registered result</span><EvCI /><Ev e="simulated">dispatch</Ev><Ev e="assumed">battery, schedule</Ev><button className="btn" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button></>,
     },
     {
       t: 'The evidence',
@@ -210,8 +210,11 @@ function LockLarge() {
         <WestMap id="map-story" variant="inset" interactive={false} ci={ci} context={context} hourLabel={fmtHour(hour)} arcs={arcs}
           bounds={[[-124.6, 31.8], [-104.0, 48.9]]} padding={{ top: 72, bottom: 16, left: 150, right: 120 }} />
         <div className="absolute flex items-baseline justify-between gap-2" style={{ left: 16, right: 16, top: 16 }}>
-          <span className="t-15 swap" key={`${scenario}-${arcPolicy}`}>{pname(arcPolicy)}: {shown ? `${pct(shown.v)}% less CO₂` : 'saving not run'} · {sc ? kindOf(sc) : 'registered result'}</span>
+          <span className="t-15 swap" key={`${scenario}-${arcPolicy}`}>{pname(arcPolicy)}: {shown ? `${pct(Math.abs(shown.v))}% ${shown.v < 0 ? 'more' : 'less'} CO₂` : 'saving not run'} · {sc ? kindOf(sc) : 'registered result'}</span>
           <Ev e="simulated" />
+        </div>
+        <div className="absolute panel over-map" style={{ left: 16, right: 16, top: 60, padding: '0 10px', borderRadius: 10, display: flowOf(data!.flows, scenario, arcPolicy)?.remote_execution_share.value === 0 && flowOf(data!.flows, scenario, arcPolicy)?.retimed_home_execution_share.value === 0 ? 'block' : 'none' }}>
+          <NoChangeNote f={flowOf(data!.flows, scenario, arcPolicy)} p={arcPolicy} testId="story-nochange" />
         </div>
         <div className="absolute t-11 ink-2" style={{ left: 16, top: 40, right: 16 }}>Arcs: GPU-hours run outside Utah, replay week {fmtDate(data!.jobs.week.start, { month: 'short', day: 'numeric' })}–{fmtDate(new Date(new Date(data!.jobs.week.end).getTime() - 1).toISOString(), { day: 'numeric' })}, {fmtDate(data!.jobs.week.start, { year: 'numeric' })}, a static weekly flow · Regions: typical {monthLabel(month, true).split(' ')[0]} day, {fmtHour(hour)} <EvCI /></div>
         <div className="absolute grid t-12 swap" key={`r-${scenario}-${arcPolicy}`} style={{ left: 16, right: 16, bottom: 12, gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 12 }} data-testid="story-work-rows">
@@ -221,7 +224,7 @@ function LockLarge() {
         </div>
       </Panel>
       <Panel style={{ padding: tight ? 12 : 16 }}>
-        <div className="flex items-baseline justify-between gap-2"><span className="t-15">Flexibility budget, registered run: {pname('S')}</span><span className="flex gap-2"><Ev e="simulated" /><Ev e="assumed">flags</Ev></span></div>
+        <div className="flex items-baseline justify-between gap-2"><span className="t-15">Flexibility budget (registered run): {pname('S')}{sc && !sc.registered ? <span className="t-12 fw-500" data-testid="story-budget-toggle-note"> · the toggle does not change this bar</span> : null}</span><span className="flex gap-2"><Ev e="simulated" /><Ev e="assumed">flags</Ev></span></div>
         <div className="t-13" style={{ margin: '4px 0 8px' }}><BudgetHeadline p="S" /></div>
         <BudgetBar p="S" rows={!tight} testId="budget-story" />
       </Panel>
@@ -233,7 +236,7 @@ function LockLarge() {
 function StorageBeat() {
   const { data } = useApp();
   const sto = data!.storage;
-  if (!sto) return <Panel><span className="t-13 ink-3">The storage illustration was not exported (results/storage.json is missing).</span></Panel>;
+  if (!sto) return <Panel><span className="t-13 ink-3">The storage illustration is not shown for this window.</span></Panel>;
   const f = storageFacts(sto);
   return (
     <div className="grid h-full" style={{ gridTemplateRows: 'minmax(0,1.15fr) minmax(0,1fr)', gap: 16 }}>

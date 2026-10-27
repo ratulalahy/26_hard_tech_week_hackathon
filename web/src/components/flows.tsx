@@ -11,10 +11,10 @@ import { useWidth } from './charts';
 import { Ev } from './ui';
 
 export const SCENARIOS: { id: ScenarioId; label: string; short: string }[] = [
-  { id: 'registered', label: 'All flexible jobs (registered)', short: 'All flexible (registered)' },
-  { id: 'mobility_le_8gpus', label: 'Only jobs ≤ 8 GPUs', short: 'Only ≤ 8 GPUs' },
-  { id: 'dest_slots_0', label: 'No remote capacity (wait only)', short: 'No remote room (wait only)' },
-  { id: 'dest_slots_1024', label: 'Double remote capacity', short: 'Double remote room' },
+  { id: 'registered', label: 'All flexible jobs (registered)', short: 'All flexible' },
+  { id: 'mobility_le_8gpus', label: 'Only jobs ≤ 8 GPUs', short: '≤ 8 GPUs' },
+  { id: 'dest_slots_0', label: 'No remote capacity (wait only)', short: 'Wait only' },
+  { id: 'dest_slots_1024', label: 'Double remote capacity', short: '2× remote room' },
 ];
 
 /** One scenario's block from scenario-flows.json (null if the file or the scenario is missing). */
@@ -37,25 +37,32 @@ export function ScenarioToggle({ compact = false }: { compact?: boolean }) {
   const { data, scenario, set } = useApp();
   const vp = useViewport();
   const short = compact || vp.w < 1600;
+  const lid = 'toggle-' + useId().replace(/[^a-zA-Z0-9]/g, '');
   const s = scenarioOf(data!.flows, scenario);
   // validation scenarios only: with no scenario-flows.json for this window, there is nothing to switch
   if (!data!.flows) return <div className="t-11 ink-3" data-testid="scenario-toggle-off">The mobility and capacity scenarios are not shown for this window.</div>;
   return (
-    <div className="flex flex-col items-center" style={{ gap: 4 }} data-testid="scenario-toggle">
-      <div className="flex items-center gap-2 flex-wrap justify-center">
-        <span className="t-12 fw-600 whitespace-nowrap" id="toggle-label">Which jobs can move?</span>
-        <div className="seg" role="group" aria-labelledby="toggle-label">
+    <div className={short ? 'flex items-center' : 'flex flex-col items-center'} style={{ gap: short ? 8 : 4 }} data-testid="scenario-toggle">
+      <div className="flex items-center gap-2 justify-center">
+        <span className="t-12 fw-600 whitespace-nowrap" id={lid}>Which jobs can move?</span>
+        <div className="seg" role="group" aria-labelledby={lid}>
           {SCENARIOS.map((x) => (
-            <button key={x.id} aria-pressed={scenario === x.id} disabled={!scenarioOf(data!.flows, x.id)} onClick={() => set({ scenario: x.id })} title={scenarioOf(data!.flows, x.id)?.note}>
+            <button key={x.id} aria-pressed={scenario === x.id} disabled={!scenarioOf(data!.flows, x.id)} onClick={() => set({ scenario: x.id })} title={`${x.label}: ${scenarioOf(data!.flows, x.id)?.note ?? ''}`}>
               {short ? x.short : x.label}
             </button>
           ))}
         </div>
       </div>
-      <div className="t-11 ink-2 text-center" aria-live="polite" data-testid="scenario-kind">
-        <span className="fw-600" style={{ color: C.ink }}>{s?.registered ? 'Registered result' : 'Scenario estimate (validation)'}</span>
-        {s && !s.registered ? <span title="A one-axis sensitivity, never pooled with the registered result"> · {s.note} <Ev e="assumed">setting</Ev></span> : <> · validation year <Ev e="simulated" /></>}
-      </div>
+      {short ? (
+        <div className="t-11 ink-2 whitespace-nowrap" aria-live="polite" data-testid="scenario-kind" title={s && !s.registered ? `${s.note}; a one-axis sensitivity, never pooled with the registered result` : undefined}>
+          <span className="fw-600" style={{ color: C.ink }}>{s?.registered ? 'Registered result' : 'Scenario estimate'}</span>
+        </div>
+      ) : (
+        <div className="t-11 ink-2 text-center" aria-live="polite" data-testid="scenario-kind">
+          <span className="fw-600" style={{ color: C.ink }}>{s?.registered ? 'Registered result' : 'Scenario estimate (validation)'}</span>
+          {s && !s.registered ? <span title="A one-axis sensitivity, never pooled with the registered result"> · {s.note} <Ev e="assumed">setting</Ev></span> : <> · validation year <Ev e="simulated" /></>}
+        </div>
+      )}
     </div>
   );
 }
@@ -77,12 +84,12 @@ export function budgetFacts(budget: Json | null, p: string) {
   const by = Object.fromEntries((b.buckets as Json[]).map((k) => [k.id, k]));
   const total = b.total_mwh.value as number;
   const big = by.stayed_booking?.larger_than_destination_mwh?.value ?? 0;
-  return { b, by, total, flex: b.flexible_mobile_share.value as number, must: b.must_stay_share.value as number, bigShare: total ? big / total : 0,
+  return { b, by, total, flex: b.flexible_mobile_share.value as number, fits: (b.fits_remote_share?.value ?? null) as number | null, must: b.must_stay_share.value as number, bigShare: total ? big / total : 0,
     slots: b.dest_slots.value as number, policy: budget.policies[p] ? p : budget.default_policy };
 }
 
-const pctSmall = (x: number | null | undefined) => (x == null ? '–' : x === 0 ? '0' : Math.abs(x) < 0.001 ? (x < 0 ? '≈ −0' : '<0.1') : pct(x, Math.abs(x) < 0.1 ? 1 : 0));
-const mwh = (v: number) => fmt(v, v > 0 && v < 10 ? 1 : 0);
+const pctSmall = (x: number | null | undefined) => (x == null ? '–' : x === 0 ? '0' : Math.abs(x) < 0.0005 ? '≈0' : pct(x, Math.abs(x) < 0.1 ? 1 : 0));
+const mwh = (v: number) => (v > 0 && v < 0.1 ? '<0.1' : fmt(v, v > 0 && v < 10 ? 1 : 0));
 
 /** One sentence: "{x}% of the energy sits in jobs that can move; {y}% must stay in Utah." */
 export function BudgetHeadline({ p }: { p: string }) {
@@ -91,7 +98,7 @@ export function BudgetHeadline({ p }: { p: string }) {
   if (!f) return null;
   return (
     <span data-testid="budget-headline">
-      {pct(f.flex, 0)}% of the energy sits in jobs that can move; {pct(f.must, 0)}% must stay in Utah.
+      {pct(f.flex, 0)}% of the energy sits in jobs flagged movable{f.fits != null ? ` (${pct(f.fits, 0)}% fit a remote site)` : ''}; {pct(f.must, 0)}% must stay in Utah.
     </span>
   );
 }
@@ -137,7 +144,7 @@ export function BudgetBar({ p, rows = true, testId = 'budget' }: { p: string; ro
           {ks.map((k) => (
             <span key={k.id} className="inline-flex items-center gap-1 whitespace-nowrap">
               <svg width="10" height="10"><rect x="0.5" y="0.5" width="9" height="9" rx="2" fill={BUCKET[k.id].hatch ? `url(#${hid})` : BUCKET[k.id].fill} stroke={BUCKET[k.id].hatch ? C.rush : 'none'} /></svg>
-              <span className="fw-500" style={{ color: C.ink }}>{BUCKET[k.id].name}</span> {k.status !== 'ok' ? 'not run' : `${pctSmall(k.share.value)}%`}
+              <span className="fw-500" style={{ color: C.ink }}>{BUCKET[k.id].name}</span> {k.status !== 'ok' ? 'not run' : `${pctSmall(k.share.value)}%`.replace('≈0%', '≈0%')}
             </span>
           ))}
         </div>
@@ -183,9 +190,15 @@ export function RemoteLine({ f, p, over = 'Over the year' }: { f: Json | null; p
   const rem = DESTS.map((d) => [d, f.remote_execution_mwh[d].value as number] as const).filter(([, v]) => v > 0);
   return (
     <span data-testid="remote-line">
-      {over}, {pname(p)} ran <b className="fw-600">{pct(f.remote_energy_share.value)}%</b> of the energy outside Utah
+      {over}, by execution energy, {pname(p)} ran <b className="fw-600">{pct(f.remote_execution_share.value)}%</b> outside Utah
       {rem.length ? <> ({rem.map(([d, v]) => `${REGION[d].name} ${fmt(v)} MWh`).join(', ')})</> : null}
-      ; it retimed {pct(f.retimed_home_execution_share.value)}% in Utah. The ledger's broader “moved”, which counts both, is {pct(f.moved_share_energy.value)}%. {fmt(f.late_jobs.value)} late jobs.
+      {' '}and retimed {pct(f.retimed_home_execution_share.value)}% (flexible jobs) in Utah; rigid jobs' queue slips add {pct(f.rigid_slip_execution_share.value)}%, for the ledger's “moved” {pct(f.moved_share_energy.value)}%. {fmt(f.late_jobs.value)} late jobs.
     </span>
   );
+}
+
+/** S only ranks sites, so with no remote room it keeps every booking (shown in the hero and story 4). */
+export function NoChangeNote({ f, p, testId = 'hero-nochange' }: { f: Json | null; p: string; testId?: string }) {
+  if (!f || f.remote_execution_share.value !== 0 || f.retimed_home_execution_share.value !== 0) return null;
+  return <div className="t-12 ink-2" style={{ marginTop: 4 }} data-testid={testId}>{pname(p)} only ranks sites, so with no remote room it keeps every booking; pick W or L under “Where the work went” to see waiting.</div>;
 }

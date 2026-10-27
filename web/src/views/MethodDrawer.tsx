@@ -70,7 +70,7 @@ export function MethodDrawer() {
                   ))}
                 </tbody>
               </table>
-              <div className="t-12 ink-3" style={{ marginTop: 4 }}>{pct(data!.workload.share_jobs_under_1_gpu_h.value, 0)}% of jobs use under 1 GPU-hour; the median job uses {fmt(data!.workload.median_gpu_h.value, 2)} GPU-hours. <Ev e="measured">sizes</Ev> <Ev e="simulated">energy and saving</Ev></div>
+              <div className="t-12 ink-3" style={{ marginTop: 4 }}>{pct(data!.workload.share_jobs_under_1_gpu_h.value, 0)}% of jobs use under 1 GPU-hour; the median job uses {fmt(data!.workload.median_gpu_h.value, 2)} GPU-hours. The saving column is in {pname(data!.workload.policy)}'s terms (workload-profile.json), not S's; the flexibility budget gives S's. <Ev e="measured">sizes</Ev> <Ev e="simulated">energy and saving</Ev></div>
             </Sec>
             <Sec title={copy.validationReadings ? 'Forecast choice barely matters here; placement dominates' : 'The pre-registered forecast test'}>
               <p className="t-13" style={{ margin: 0 }}>

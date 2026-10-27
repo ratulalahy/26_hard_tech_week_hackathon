@@ -10,8 +10,9 @@ budget. Both re-read already-computed ledgers; nothing here simulates.
 
 **Remote execution vs "moved"** (Astra F08). A job *ran remotely* when its executing site is
 not Utah (PACE). The ledger's `moved` is broader: the job did not run on its booking, which
-also counts a start-time change at home (retiming, earlier or later). Both are reported,
-under those names.
+also counts a start-time change at home. On the execution-energy basis, moved = remote +
+retimed (a *flexible* job started off its booking in Utah) + rigid slips (a non-flexible job
+whose home start moved off its booking as the queue shifted; not a router choice).
 
 Totals are `math.fsum` over job_uid-sorted rows (order-free). Outcomes are `simulated`;
 flexibility and mobility flags and scenario knobs are `assumed`. Validation only.
@@ -33,8 +34,9 @@ DESTS = tuple(sorted(s for s in SITES if s != HOME))
 POLICIES = ("S", "W", "L")
 HOUR_US = 3_600_000_000
 
-# Display order (a)-(e). Assignment precedence is different: capacity_blocked (F14.7, when
-# the run was diagnosed), then must_stay, then moved_remote, retimed_home, stayed_booking.
+# Display order (a)-(e). Assignment precedence (fix r1 I3): must_stay first (assumed flags, so it
+# is identical across policies), then capacity_blocked (F14.7 blocked, flexible and mobile, when the
+# run was diagnosed), moved_remote, retimed_home, stayed_booking.
 BUCKETS = ("moved_remote", "retimed_home", "stayed_booking", "must_stay", "capacity_blocked")
 BUCKET_TEXT = {
     "moved_remote": "ran at a remote site (remote execution)",
@@ -42,20 +44,25 @@ BUCKET_TEXT = {
                     "its booking",
     "stayed_booking": "flexible and mobile, but ran on its Utah booking (no better option "
                       "for the policy)",
-    "must_stay": "must stay: not flexible or not mobile (assumed flags), wherever it started",
-    "capacity_blocked": "capacity-blocked (F14.7): the policy would have chosen better "
-                        "without other jobs' pending bookings",
+    "must_stay": "must stay: not flexible or not mobile (assumed flags), wherever it started; "
+                 "identical across policies",
+    "capacity_blocked": "capacity-blocked (F14.7), flexible and mobile jobs only: the policy "
+                        "would have chosen better without other jobs' pending bookings",
 }
 DEFINITIONS = {
     "remote_execution": "the job executed at a site other than Utah (PACE); remote execution "
                         "energy is that job's execution energy at the destination",
     "moved": "ledger `moved`: the job did not run on its booking, so it includes remote "
-             "execution and retiming at home (a start-time change, earlier or later) (F08)",
+             "execution, retiming at home and rigid jobs' home queue slips (F08); "
+             "on the execution basis moved = remote + retimed + rigid slips",
     "remote_energy_share": "remote jobs' energy (execution plus transfer) / all energy "
                            "(execution plus transfer), copied from the scored run",
     "remote_execution_share": "remote execution kWh / all execution kWh, from the ledger",
-    "retimed_home_execution_share": "execution kWh of jobs that ran in Utah off their booking "
-                                    "start / all execution kWh, from the ledger",
+    "retimed_home_execution_share": "execution kWh of flexible jobs that ran in Utah off their "
+                                    "booking start / all execution kWh, from the ledger",
+    "rigid_slip_execution_share": "execution kWh of non-flexible jobs whose Utah start moved off "
+                                  "their booking (queue slips, not a router choice) / all "
+                                  "execution kWh",
     "week_arcs": "cohort jobs arriving in the replay week that executed at each destination: "
                  "count and declared GPU-hours (gpus x declared duration)",
     "saving_vs_U": "copied verbatim from metrics.json (registered) or extensions.json "
@@ -91,25 +98,33 @@ def week_arcs(led: pl.DataFrame, w0: datetime, w1: datetime) -> list[dict]:
     return out
 
 
-def execution_split(led: pl.DataFrame) -> dict:
-    """Execution kWh (facility) from the ledger: total, by site, remote, and retimed at home."""
-    f = led.select("job_uid", "site", "moved", _exec_kwh(led))
+def execution_split(led: pl.DataFrame, flags: pl.DataFrame) -> dict:
+    """Execution kWh (facility) from the ledger: total, by site, remote, retimed at home (flexible
+    jobs off their booking start in Utah) and rigid slips (non-flexible jobs off it). `flags`:
+    job_uid, flexible for every ledger job. remote + retimed + rigid slips = moved."""
+    f = led.select("job_uid", "site", "moved", _exec_kwh(led)).join(
+        flags.select("job_uid", "flexible"), on="job_uid", how="left")
+    if f["flexible"].null_count():
+        raise ValueError("flags must cover every ledger job")
     home = pl.col("site") == HOME
     remote = f.filter(~home)
-    ret = f.filter(home & pl.col("moved"))
+    ret = f.filter(home & pl.col("moved") & pl.col("flexible"))
+    slip = f.filter(home & pl.col("moved") & ~pl.col("flexible"))
+    moved = f.filter(pl.col("moved"))
     return {"total_kwh": _fsum(f, "exec_kwh"), "remote_kwh": _fsum(remote, "exec_kwh"),
-            "retimed_home_kwh": _fsum(ret, "exec_kwh"), "remote_jobs": remote.height,
-            "retimed_home_jobs": ret.height,
+            "retimed_home_kwh": _fsum(ret, "exec_kwh"), "rigid_slip_kwh": _fsum(slip, "exec_kwh"),
+            "moved_kwh": _fsum(moved, "exec_kwh"), "remote_jobs": remote.height,
+            "retimed_home_jobs": ret.height, "rigid_slip_jobs": slip.height,
             "by_site_kwh": {s: _fsum(f.filter(pl.col("site") == s), "exec_kwh") for s in SITES}}
 
 
 def policy_flow(pid: str, vs_u_b4: dict, led: pl.DataFrame, w0: datetime, w1: datetime, *,
-                remote_energy_share: dict, moved_share_energy: dict,
+                flags: pl.DataFrame, remote_energy_share: dict, moved_share_energy: dict,
                 by_site_kwh: dict[str, float], late_jobs: dict) -> dict:
     """One policy's flows. `vs_u_b4`, the shares and `late_jobs` are envelopes copied from the
     scored run; `by_site_kwh` is the scored run's execution kWh by site, which must agree with
     the ledger's own (a cross-check that the ledger is the scored one)."""
-    s = execution_split(led)
+    s = execution_split(led, flags)
     for site in SITES:
         a, b = s["by_site_kwh"][site], by_site_kwh.get(site, 0.0)
         if not math.isclose(a, b, rel_tol=1e-9, abs_tol=1e-6):
@@ -130,9 +145,13 @@ def policy_flow(pid: str, vs_u_b4: dict, led: pl.DataFrame, w0: datetime, w1: da
         "remote_energy_share": remote_energy_share,
         "moved_share_energy": moved_share_energy,
         "retimed_home_execution_share": share(s["retimed_home_kwh"], "retimed_home_share"),
+        "rigid_slip_execution_share": share(s["rigid_slip_kwh"], "rigid_slip_share"),
+        "moved_execution_share": share(s["moved_kwh"], "moved_exec_share"),
         "remote_jobs": env(s["remote_jobs"], "jobs", "simulated", f"{pid}:remote_jobs"),
         "retimed_home_jobs": env(s["retimed_home_jobs"], "jobs", "simulated",
                                  f"{pid}:retimed_home_jobs"),
+        "rigid_slip_jobs": env(s["rigid_slip_jobs"], "jobs", "simulated",
+                               f"{pid}:rigid_slip_jobs"),
         "late_jobs": late_jobs,
         "week_arcs": [{"from": HOME, "to": a["to"],
                        "jobs": env(a["jobs"], "jobs", "simulated", f"{pid}:arc:{a['to']}"),
@@ -188,8 +207,8 @@ def budget(acct_u: pl.DataFrame, acct_p: pl.DataFrame, flags: pl.DataFrame, *,
     must = ~(pl.col("flexible") & pl.col("mobile"))
     home = pl.col("site") == HOME
     f = f.with_columns(
-        pl.when(blocked).then(pl.lit("capacity_blocked"))
-        .when(must).then(pl.lit("must_stay"))
+        pl.when(must).then(pl.lit("must_stay"))
+        .when(blocked).then(pl.lit("capacity_blocked"))
         .when(~home).then(pl.lit("moved_remote"))
         .when(pl.col("moved")).then(pl.lit("retimed_home"))
         .otherwise(pl.lit("stayed_booking")).alias("bucket"))
@@ -199,6 +218,7 @@ def budget(acct_u: pl.DataFrame, acct_p: pl.DataFrame, flags: pl.DataFrame, *,
     for b in BUCKETS:
         r = f.filter(pl.col("bucket") == b)
         rec = {"id": b, "text": BUCKET_TEXT[b], "status": "ok", "reason": None,
+               "flags_evidence": "assumed",
                "mwh": _fsum(r, "kwh") / 1000, "n_jobs": r.height,
                "saving_kg": _fsum(r, "sav")}
         rec["share"] = rec["mwh"] * 1000 / total if total else None
@@ -216,9 +236,15 @@ def budget(acct_u: pl.DataFrame, acct_p: pl.DataFrame, flags: pl.DataFrame, *,
                        reason="the run was not diagnosed (no F14.7 blocked column)")
         out.append(rec)
     fm = f.filter(~must)
+    fits = fm.filter(pl.col("gpus") <= dest_slots)
+    bl = f.filter(pl.col("blocked")) if diagnosed else f.head(0)
     return {"total_mwh": total / 1000, "saving_kg": saving, "diagnosed": diagnosed,
             "dest_slots": dest_slots,
             "flexible_mobile_share": _fsum(fm, "kwh") / total if total else None,
+            "fits_remote_share": _fsum(fits, "kwh") / total if total else None,
+            "blocked_must_stay_mwh": (_fsum(bl.filter(must), "kwh") / 1000 if diagnosed
+                                      else None),
+            "blocked_must_stay_jobs": bl.filter(must).height if diagnosed else None,
             "must_stay_share": _fsum(f.filter(must), "kwh") / total if total else None,
             "blocked_total_mwh": (_fsum(f.filter(pl.col("blocked")), "kwh") / 1000
                                   if diagnosed else None),
@@ -242,7 +268,7 @@ def budget_artifact(by_policy: dict[str, dict], *, run_id: str, registered_run_i
         for r in b["buckets"]:
             q = f"{pid}:{r['id']}"
             rec = {"id": r["id"], "text": r["text"], "status": r["status"],
-                   "reason": r["reason"],
+                   "reason": r["reason"], "flags_evidence": r["flags_evidence"],
                    "mwh": _e(r["mwh"], "MWh", "simulated", f"{q}:mwh", r),
                    "share": _e(r["share"], "fraction", "simulated", f"{q}:share", r),
                    "n_jobs": _e(r["n_jobs"], "jobs", "simulated", f"{q}:n", r),
@@ -260,6 +286,18 @@ def budget_artifact(by_policy: dict[str, dict], *, run_id: str, registered_run_i
             "saving_kg": env(b["saving_kg"], "kg_CO2", "simulated", f"{pid}:saving"),
             "flexible_mobile_share": _e(b["flexible_mobile_share"], "fraction", "simulated",
                                         f"{pid}:flex_mobile_share"),
+            "fits_remote_share": _e(b["fits_remote_share"], "fraction", "simulated",
+                                    f"{pid}:fits_remote_share"),
+            "blocked_must_stay_mwh": (env(b["blocked_must_stay_mwh"], "MWh", "simulated",
+                                          f"{pid}:blocked_must_stay")
+                                      if b["diagnosed"] else
+                                      env(None, "MWh", "simulated", f"{pid}:blocked_must_stay",
+                                          "not_run", "the run was not diagnosed")),
+            "blocked_must_stay_jobs": (env(b["blocked_must_stay_jobs"], "jobs", "simulated",
+                                           f"{pid}:blocked_must_stay_n")
+                                       if b["diagnosed"] else
+                                       env(None, "jobs", "simulated", f"{pid}:blocked_must_stay_n",
+                                           "not_run", "the run was not diagnosed")),
             "must_stay_share": _e(b["must_stay_share"], "fraction", "simulated",
                                   f"{pid}:must_stay_share"),
             "blocked_total_mwh": (env(b["blocked_total_mwh"], "MWh", "simulated",
@@ -283,8 +321,12 @@ def budget_artifact(by_policy: dict[str, dict], *, run_id: str, registered_run_i
                        "split by what the policy did with each job; each bucket's share of "
                        "energy, job count, and share of the policy's CO2 saving vs U (U - "
                        "policy per job, execution plus transfer; signed). Assignment "
-                       "precedence: capacity_blocked, must_stay, moved_remote, retimed_home, "
-                       "stayed_booking. Flexibility and mobility flags are assumed (spec "
+                       "precedence: must_stay (identical across policies), capacity_blocked "
+                       "(blocked, flexible and mobile), moved_remote, retimed_home, "
+                       "stayed_booking; blocked jobs that must stay are in must_stay and "
+                       "counted in blocked_must_stay_mwh, so capacity_blocked + "
+                       "blocked_must_stay_mwh = blocked_total_mwh. fits_remote_share: flexible "
+                       "and mobile jobs no larger than a destination's slots. Flexibility and mobility flags are assumed (spec "
                        "rule); every outcome is simulated."),
         "bucket_order": list(BUCKETS),
         "policies": pols,

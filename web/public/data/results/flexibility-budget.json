@@ -6,7 +6,7 @@
  "registered_run_id": "20261027T160656Z",
  "default_policy": "S",
  "flags_evidence": "assumed",
- "definition": "the registered primary's cohort execution energy (MWh, math.fsum) split by what the policy did with each job; each bucket's share of energy, job count, and share of the policy's CO2 saving vs U (U - policy per job, execution plus transfer; signed). Assignment precedence: capacity_blocked, must_stay, moved_remote, retimed_home, stayed_booking. Flexibility and mobility flags are assumed (spec rule); every outcome is simulated.",
+ "definition": "the registered primary's cohort execution energy (MWh, math.fsum) split by what the policy did with each job; each bucket's share of energy, job count, and share of the policy's CO2 saving vs U (U - policy per job, execution plus transfer; signed). Assignment precedence: must_stay (identical across policies), capacity_blocked (blocked, flexible and mobile), moved_remote, retimed_home, stayed_booking; blocked jobs that must stay are in must_stay and counted in blocked_must_stay_mwh, so capacity_blocked + blocked_must_stay_mwh = blocked_total_mwh. fits_remote_share: flexible and mobile jobs no larger than a destination's slots. Flexibility and mobility flags are assumed (spec rule); every outcome is simulated.",
  "bucket_order": [
   "moved_remote",
   "retimed_home",
@@ -40,6 +40,30 @@
     "status": "ok",
     "reason": null
    },
+   "fits_remote_share": {
+    "value": 0.30930797176907654,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:S:fits_remote_share",
+    "status": "ok",
+    "reason": null
+   },
+   "blocked_must_stay_mwh": {
+    "value": 0.0271092,
+    "unit": "MWh",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:S:blocked_must_stay",
+    "status": "ok",
+    "reason": null
+   },
+   "blocked_must_stay_jobs": {
+    "value": 93,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:S:blocked_must_stay_n",
+    "status": "ok",
+    "reason": null
+   },
    "must_stay_share": {
     "value": 0.5387465016301108,
     "unit": "fraction",
@@ -70,6 +94,7 @@
      "text": "ran at a remote site (remote execution)",
      "status": "ok",
      "reason": null,
+     "flags_evidence": "assumed",
      "mwh": {
       "value": 2545.523241,
       "unit": "MWh",
@@ -116,6 +141,7 @@
      "text": "flexible job retimed at home: ran in Utah with its start changed from its booking",
      "status": "ok",
      "reason": null,
+     "flags_evidence": "assumed",
      "mwh": {
       "value": 0.36679680000000003,
       "unit": "MWh",
@@ -178,6 +204,7 @@
      "text": "flexible and mobile, but ran on its Utah booking (no better option for the policy)",
      "status": "ok",
      "reason": null,
+     "flags_evidence": "assumed",
      "mwh": {
       "value": 1251.9062047999998,
       "unit": "MWh",
@@ -237,11 +264,12 @@
     },
     {
      "id": "must_stay",
-     "text": "must stay: not flexible or not mobile (assumed flags), wherever it started",
+     "text": "must stay: not flexible or not mobile (assumed flags), wherever it started; identical across policies",
      "status": "ok",
      "reason": null,
+     "flags_evidence": "assumed",
      "mwh": {
-      "value": 4435.8187908,
+      "value": 4435.8459,
       "unit": "MWh",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:S:must_stay:mwh",
@@ -249,7 +277,7 @@
       "reason": null
      },
      "share": {
-      "value": 0.5387432091382183,
+      "value": 0.5387465016301108,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:S:must_stay:share",
@@ -257,7 +285,7 @@
       "reason": null
      },
      "n_jobs": {
-      "value": 533829,
+      "value": 533922,
       "unit": "jobs",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:S:must_stay:n",
@@ -265,7 +293,7 @@
       "reason": null
      },
      "saving_kg": {
-      "value": -16.429171098650592,
+      "value": -16.42704461924327,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:S:must_stay:saving",
@@ -273,7 +301,7 @@
       "reason": null
      },
      "saving_share": {
-      "value": -1.5554054032612688e-05,
+      "value": -1.5552040822365978e-05,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:S:must_stay:saving_share",
@@ -283,11 +311,12 @@
     },
     {
      "id": "capacity_blocked",
-     "text": "capacity-blocked (F14.7): the policy would have chosen better without other jobs' pending bookings",
+     "text": "capacity-blocked (F14.7), flexible and mobile jobs only: the policy would have chosen better without other jobs' pending bookings",
      "status": "ok",
      "reason": null,
+     "flags_evidence": "assumed",
      "mwh": {
-      "value": 0.0271092,
+      "value": 0.0,
       "unit": "MWh",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:S:capacity_blocked:mwh",
@@ -295,7 +324,7 @@
       "reason": null
      },
      "share": {
-      "value": 3.2924918924688074e-06,
+      "value": 0.0,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:S:capacity_blocked:share",
@@ -303,7 +332,7 @@
       "reason": null
      },
      "n_jobs": {
-      "value": 93,
+      "value": 0,
       "unit": "jobs",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:S:capacity_blocked:n",
@@ -311,7 +340,7 @@
       "reason": null
      },
      "saving_kg": {
-      "value": 0.0021264794073254777,
+      "value": 0.0,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:S:capacity_blocked:saving",
@@ -319,7 +348,7 @@
       "reason": null
      },
      "saving_share": {
-      "value": 2.0132102467114322e-09,
+      "value": 0.0,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:S:capacity_blocked:saving_share",
@@ -354,6 +383,30 @@
     "status": "ok",
     "reason": null
    },
+   "fits_remote_share": {
+    "value": 0.30930797176907654,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:W:fits_remote_share",
+    "status": "ok",
+    "reason": null
+   },
+   "blocked_must_stay_mwh": {
+    "value": 0.019272,
+    "unit": "MWh",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:W:blocked_must_stay",
+    "status": "ok",
+    "reason": null
+   },
+   "blocked_must_stay_jobs": {
+    "value": 3,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:W:blocked_must_stay_n",
+    "status": "ok",
+    "reason": null
+   },
    "must_stay_share": {
     "value": 0.5387465016301108,
     "unit": "fraction",
@@ -384,6 +437,7 @@
      "text": "ran at a remote site (remote execution)",
      "status": "ok",
      "reason": null,
+     "flags_evidence": "assumed",
      "mwh": {
       "value": 2541.0420633999997,
       "unit": "MWh",
@@ -430,6 +484,7 @@
      "text": "flexible job retimed at home: ran in Utah with its start changed from its booking",
      "status": "ok",
      "reason": null,
+     "flags_evidence": "assumed",
      "mwh": {
       "value": 130.7061888,
       "unit": "MWh",
@@ -492,6 +547,7 @@
      "text": "flexible and mobile, but ran on its Utah booking (no better option for the policy)",
      "status": "ok",
      "reason": null,
+     "flags_evidence": "assumed",
      "mwh": {
       "value": 401.4540016,
       "unit": "MWh",
@@ -551,11 +607,12 @@
     },
     {
      "id": "must_stay",
-     "text": "must stay: not flexible or not mobile (assumed flags), wherever it started",
+     "text": "must stay: not flexible or not mobile (assumed flags), wherever it started; identical across policies",
      "status": "ok",
      "reason": null,
+     "flags_evidence": "assumed",
      "mwh": {
-      "value": 4435.826628,
+      "value": 4435.8459,
       "unit": "MWh",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:W:must_stay:mwh",
@@ -563,7 +620,7 @@
       "reason": null
      },
      "share": {
-      "value": 0.5387441609891567,
+      "value": 0.5387465016301108,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:W:must_stay:share",
@@ -571,7 +628,7 @@
       "reason": null
      },
      "n_jobs": {
-      "value": 533919,
+      "value": 533922,
       "unit": "jobs",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:W:must_stay:n",
@@ -579,7 +636,7 @@
       "reason": null
      },
      "saving_kg": {
-      "value": 3.971569083186098,
+      "value": 3.973695562593759,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:W:must_stay:saving",
@@ -587,7 +644,7 @@
       "reason": null
      },
      "saving_share": {
-      "value": 3.777686650093107e-06,
+      "value": 3.779709319899866e-06,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:W:must_stay:saving_share",
@@ -597,11 +654,12 @@
     },
     {
      "id": "capacity_blocked",
-     "text": "capacity-blocked (F14.7): the policy would have chosen better without other jobs' pending bookings",
+     "text": "capacity-blocked (F14.7), flexible and mobile jobs only: the policy would have chosen better without other jobs' pending bookings",
      "status": "ok",
      "reason": null,
+     "flags_evidence": "assumed",
      "mwh": {
-      "value": 724.6132608,
+      "value": 724.5939888,
       "unit": "MWh",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:W:capacity_blocked:mwh",
@@ -609,7 +667,7 @@
       "reason": null
      },
      "share": {
-      "value": 0.08800640691571074,
+      "value": 0.08800406627475668,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:W:capacity_blocked:share",
@@ -617,7 +675,7 @@
       "reason": null
      },
      "n_jobs": {
-      "value": 214,
+      "value": 211,
       "unit": "jobs",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:W:capacity_blocked:n",
@@ -625,7 +683,7 @@
       "reason": null
      },
      "saving_kg": {
-      "value": 293.96018239547914,
+      "value": 293.95805591607143,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:W:capacity_blocked:saving",
@@ -633,7 +691,7 @@
       "reason": null
      },
      "saving_share": {
-      "value": 0.00027960975459187336,
+      "value": 0.00027960773192206654,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:W:capacity_blocked:saving_share",
@@ -668,6 +726,30 @@
     "status": "ok",
     "reason": null
    },
+   "fits_remote_share": {
+    "value": 0.30930797176907654,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:L:fits_remote_share",
+    "status": "ok",
+    "reason": null
+   },
+   "blocked_must_stay_mwh": {
+    "value": 0.019272,
+    "unit": "MWh",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:L:blocked_must_stay",
+    "status": "ok",
+    "reason": null
+   },
+   "blocked_must_stay_jobs": {
+    "value": 3,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:L:blocked_must_stay_n",
+    "status": "ok",
+    "reason": null
+   },
    "must_stay_share": {
     "value": 0.5387465016301108,
     "unit": "fraction",
@@ -698,6 +780,7 @@
      "text": "ran at a remote site (remote execution)",
      "status": "ok",
      "reason": null,
+     "flags_evidence": "assumed",
      "mwh": {
       "value": 2541.8673916000002,
       "unit": "MWh",
@@ -744,6 +827,7 @@
      "text": "flexible job retimed at home: ran in Utah with its start changed from its booking",
      "status": "ok",
      "reason": null,
+     "flags_evidence": "assumed",
      "mwh": {
       "value": 127.3361904,
       "unit": "MWh",
@@ -806,6 +890,7 @@
      "text": "flexible and mobile, but ran on its Utah booking (no better option for the policy)",
      "status": "ok",
      "reason": null,
+     "flags_evidence": "assumed",
      "mwh": {
       "value": 451.8161502,
       "unit": "MWh",
@@ -865,11 +950,12 @@
     },
     {
      "id": "must_stay",
-     "text": "must stay: not flexible or not mobile (assumed flags), wherever it started",
+     "text": "must stay: not flexible or not mobile (assumed flags), wherever it started; identical across policies",
      "status": "ok",
      "reason": null,
+     "flags_evidence": "assumed",
      "mwh": {
-      "value": 4435.826628,
+      "value": 4435.8459,
       "unit": "MWh",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:L:must_stay:mwh",
@@ -877,7 +963,7 @@
       "reason": null
      },
      "share": {
-      "value": 0.5387441609891567,
+      "value": 0.5387465016301108,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:L:must_stay:share",
@@ -885,7 +971,7 @@
       "reason": null
      },
      "n_jobs": {
-      "value": 533919,
+      "value": 533922,
       "unit": "jobs",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:L:must_stay:n",
@@ -893,7 +979,7 @@
       "reason": null
      },
      "saving_kg": {
-      "value": 3.9904833855519555,
+      "value": 3.9926098649596162,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:L:must_stay:saving",
@@ -901,7 +987,7 @@
       "reason": null
      },
      "saving_share": {
-      "value": 3.7962696856517923e-06,
+      "value": 3.798292670972742e-06,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:L:must_stay:saving_share",
@@ -911,11 +997,12 @@
     },
     {
      "id": "capacity_blocked",
-     "text": "capacity-blocked (F14.7): the policy would have chosen better without other jobs' pending bookings",
+     "text": "capacity-blocked (F14.7), flexible and mobile jobs only: the policy would have chosen better without other jobs' pending bookings",
      "status": "ok",
      "reason": null,
+     "flags_evidence": "assumed",
      "mwh": {
-      "value": 676.7957824,
+      "value": 676.7765104,
       "unit": "MWh",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:L:capacity_blocked:mwh",
@@ -923,7 +1010,7 @@
       "reason": null
      },
      "share": {
-      "value": 0.08219883384272067,
+      "value": 0.08219649320176661,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:L:capacity_blocked:share",
@@ -931,7 +1018,7 @@
       "reason": null
      },
      "n_jobs": {
-      "value": 197,
+      "value": 194,
       "unit": "jobs",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:L:capacity_blocked:n",
@@ -939,7 +1026,7 @@
       "reason": null
      },
      "saving_kg": {
-      "value": 397.5562720803934,
+      "value": 397.55414560098575,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:L:capacity_blocked:saving",
@@ -947,7 +1034,7 @@
       "reason": null
      },
      "saving_share": {
-      "value": 0.0003782075197966974,
+      "value": 0.0003782054968113765,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:budget:L:capacity_blocked:saving_share",
@@ -958,5 +1045,5 @@
    ]
   }
  },
- "ledger_run_dir": "runs/slice/20261027T173750Z"
+ "ledger_run_dir": "runs/slice/20261027T160656Z"
 }

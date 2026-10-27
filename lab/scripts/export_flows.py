@@ -60,7 +60,9 @@ def _check_ledger(led: pl.DataFrame, want: str, what: str) -> pl.DataFrame:
 
 def _registered(run: Path, ext: dict, man: dict) -> tuple[dict, dict]:
     cfg = _json(run / "config.json")
-    if cfg["window"] != "validation" or cfg["scenario"]["name"] != "primary":
+    # the registered run predates config["scenario"]; it is the primary when phase 0 and no scenario
+    if cfg["window"] != "validation" or cfg.get("scenario", {"name": "primary"})["name"] != "primary" \
+            or cfg["phase_days"] != 0:
         raise AssertionError(f"{run} is not a validation primary run")
     reg_hash = ext["repricing"]["canonical_hashes"]["ledger_canonical_sha256"]
     if run.name != man["run_id"]:
@@ -80,6 +82,16 @@ def _kwh(by_site: dict) -> dict[str, float]:
     return {s: e["value"] for s, e in by_site.items()}
 
 
+def _moved_closes(f: dict, what: str) -> dict:
+    """remote + retimed + rigid slips = the scored run's moved share (execution basis, I1)."""
+    parts = (f["remote_execution_share"]["value"] + f["retimed_home_execution_share"]["value"]
+             + f["rigid_slip_execution_share"]["value"])
+    for got in (f["moved_execution_share"]["value"], f["moved_share_energy"]["value"]):
+        if not math.isclose(parts, got, rel_tol=1e-9, abs_tol=1e-12):
+            raise AssertionError(f"{what}: remote + retimed + slips {parts} != moved {got}")
+    return f
+
+
 def build(run: Path, ext_root: Path) -> tuple[dict, dict]:
     m = _json(RESULTS_DIR / "metrics.json")
     ext = _json(RESULTS_DIR / "extensions.json")
@@ -90,6 +102,13 @@ def build(run: Path, ext_root: Path) -> tuple[dict, dict]:
     w1 = datetime.fromisoformat(jr["week"]["end"])
     rid = man["run_id"]
 
+    window = Window.named(cfg["window"])
+    A = datetime.fromisoformat(cfg["A"])
+    jobs = replay(window.init, window.F, phase_days=0)
+    cj = jobs.filter((pl.col("arrival_ts") >= window.eval_start) & (pl.col("arrival_ts") < A))
+    if ids_hash(cj["job_uid"].to_list()) != _json(run / "cohort.json")["cohort_ids_sha256"]:
+        raise AssertionError("rebuilt cohort differs from the registered cohort ids")
+    flex = cj.select("job_uid", "flexible")
     led = {p: _check_ledger(pl.read_parquet(run / f"ledger_{p}.parquet"), reg_hash[p],
                             f"{run.name}:{p}") for p in ("U", *POLICIES)}
     scen = []
@@ -98,11 +117,11 @@ def build(run: Path, ext_root: Path) -> tuple[dict, dict]:
         if name is None:
             for p in POLICIES:
                 pm = m["policies"][p]["metrics"]
-                pols[p] = policy_flow(f"{rid}:flows:{p}", _vs_u_metrics(m, p), led[p], w0, w1,
+                pols[p] = _moved_closes(policy_flow(f"{rid}:flows:{p}", _vs_u_metrics(m, p), led[p], w0, w1,
                                       remote_energy_share=pm["remote_energy_share"],
                                       moved_share_energy=pm["moved_share_energy"],
-                                      by_site_kwh=_kwh(pm["execution_kwh_by_site"]),
-                                      late_jobs=pm["late_jobs"])
+                                      by_site_kwh=_kwh(pm["execution_kwh_by_site"]), flags=flex,
+                                      late_jobs=pm["late_jobs"]), f"registered:{p}")
                 # the registered arcs must be job-replay.json's, number for number
                 want = {a["to"]: (a["jobs"]["value"], a["gpu_h"]["value"])
                         for a in jr["week"]["policies"][p]["arcs"]}
@@ -128,12 +147,12 @@ def build(run: Path, ext_root: Path) -> tuple[dict, dict]:
             lp = _check_ledger(pl.read_parquet(rd / f"ledger_{p}.parquet"), hashes[p],
                                f"{name}:{p}")
             bp = b["policies"][p]
-            pols[p] = policy_flow(f"{b['run_id']}:{name}:flows:{p}", bp["vs_U"]["4"], lp, w0, w1,
+            pols[p] = _moved_closes(policy_flow(f"{b['run_id']}:{name}:flows:{p}", bp["vs_U"]["4"], lp, w0, w1,
                                   remote_energy_share=bp["remote_energy_share"],
                                   moved_share_energy=bp["moved_share_energy"],
                                   by_site_kwh=_kwh(summ["policies"][p]["metrics"]
-                                                   ["execution_kwh_by_site"]),
-                                  late_jobs=bp["late_jobs"])
+                                                   ["execution_kwh_by_site"]), flags=flex,
+                                  late_jobs=bp["late_jobs"]), f"{name}:{p}")
         scen.append({"id": sid, "label": label, "registered": False,
                      "label_kind": "scenario estimate (validation)", "run_id": b["run_id"],
                      "ledger_run_dir": b["run_dir"], "note": b["scenario"]["note"],
@@ -141,12 +160,6 @@ def build(run: Path, ext_root: Path) -> tuple[dict, dict]:
     flows = flows_artifact(scenarios=scen, week=(w0, w1), registered_run_id=rid)
 
     # ---- flexibility budget (registered primary, S default, plus W)
-    window = Window.named(cfg["window"])
-    A = datetime.fromisoformat(cfg["A"])
-    jobs = replay(window.init, window.F, phase_days=0)
-    cj = jobs.filter((pl.col("arrival_ts") >= window.eval_start) & (pl.col("arrival_ts") < A))
-    if ids_hash(cj["job_uid"].to_list()) != _json(run / "cohort.json")["cohort_ids_sha256"]:
-        raise AssertionError("rebuilt cohort differs from the registered cohort ids")
     tf = drop_sealed(pl.read_parquet(run / "truth_fill.parquet"))  # F8: pre-seal truth only
     tt = TruthTable(tf, fill_mask(tf))
     jcols = cj.select("job_uid", "source_id", "arrival_ts", "gpus", "duration_s")
@@ -166,6 +179,11 @@ def build(run: Path, ext_root: Path) -> tuple[dict, dict]:
             raise AssertionError(f"{p}: budget saving {bud['saving_kg']} != metrics {want}")
         if not math.isclose(bud["total_mwh"] * 1000, pm["execution_kwh"]["value"], rel_tol=1e-9):
             raise AssertionError(f"{p}: budget energy differs from metrics execution_kwh")
+        cb = next(k for k in bud["buckets"] if k["id"] == "capacity_blocked")
+        if bud["diagnosed"] and not math.isclose(
+                (cb["mwh"] + bud["blocked_must_stay_mwh"]) * 1000, bud["blocked_total_mwh"] * 1000,
+                rel_tol=1e-9, abs_tol=1e-6):
+            raise AssertionError(f"{p}: capacity_blocked + blocked-but-must-stay != blocked")
         if bud["diagnosed"] and not math.isclose(bud["blocked_total_mwh"] * 1000,
                                                  pm["blocked_kwh"]["value"], rel_tol=1e-9,
                                                  abs_tol=1e-6):
@@ -187,6 +205,8 @@ def main(argv=None) -> int:
                     help="default: the runs/ext next to the run's runs/slice")
     a = ap.parse_args(argv)
     run = a.run_dir.resolve()
+    if a.ext_root is not None and not a.ext_root.is_dir():
+        raise SystemExit(f"--ext-root {a.ext_root} does not exist")  # fix r1 M14: never fall back
     ext_root = a.ext_root or run.parent.parent / "ext"
     if not ext_root.is_dir():
         ext_root = REPO_ROOT / "runs" / "ext"

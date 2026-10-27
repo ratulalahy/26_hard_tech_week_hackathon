@@ -33,7 +33,8 @@ def _case():
                ("c", "PACE", 0, 30.0, 15.0, False, False, 1024),
                ("d", "PACE", 0, 20.0, 10.0, False, False, 8),
                ("e", "PACE", 0, 10.0, 5.0, False, False, 8),
-               ("f", "PACE", 0, 5.0, 2.0, False, False, 8)])
+               ("f", "PACE", 0, 5.0, 2.0, False, False, 8),
+               ("g", "PACE", 0, 3.0, 1.0, False, False, 8)])
     # policy: a ran remote; b waited in Utah (later); c flexible but stayed on its booking
     # (too big for a destination); d is not flexible (and started early: still must-stay);
     # e was capacity-blocked (F14.7); f flexible but immobile.
@@ -42,9 +43,10 @@ def _case():
                ("c", "PACE", 0, 30.0, 15.0, False, False, 1024),
                ("d", "PACE", -1, 20.0, 11.0, True, False, 8),
                ("e", "PACE", 0, 10.0, 5.0, False, True, 8),
-               ("f", "PACE", 0, 5.0, 2.0, False, False, 8)])
+               ("f", "PACE", 0, 5.0, 2.0, False, False, 8),
+               ("g", "PACE", 0, 3.0, 1.0, False, True, 8)])  # rigid and blocked: must stay
     fl = _flags([("a", True, True), ("b", True, True), ("c", True, True), ("d", False, False),
-                 ("e", True, True), ("f", True, False)])
+                 ("e", True, True), ("f", True, False), ("g", False, False)])
     return u, p, fl
 
 
@@ -57,11 +59,12 @@ def test_budget_buckets_partition_energy_and_saving():
     assert by["moved_remote"]["mwh"] == pytest.approx(0.100)
     assert by["retimed_home"]["mwh"] == pytest.approx(0.040)
     assert by["stayed_booking"]["mwh"] == pytest.approx(0.030)
-    assert by["must_stay"]["mwh"] == pytest.approx(0.025)  # d (not flexible) + f (immobile)
+    # must stay comes first (I3): d (not flexible), f (immobile) and the blocked rigid g
+    assert by["must_stay"]["mwh"] == pytest.approx(0.028)
     assert by["capacity_blocked"]["mwh"] == pytest.approx(0.010)
     assert sum(x["mwh"] for x in k) == pytest.approx(b["total_mwh"])
     assert sum(x["share"] for x in k) == pytest.approx(1.0)
-    assert by["must_stay"]["n_jobs"] == 2 and by["moved_remote"]["n_jobs"] == 1
+    assert by["must_stay"]["n_jobs"] == 3 and by["moved_remote"]["n_jobs"] == 1
     # saving vs U = 40 + 2 + 0 - 1 + 0 + 0 = 41 kg; shares carry the sign
     assert b["saving_kg"] == pytest.approx(41.0)
     assert by["moved_remote"]["saving_share"] == pytest.approx(40 / 41)
@@ -70,7 +73,22 @@ def test_budget_buckets_partition_energy_and_saving():
     # retiming direction, and the jobs too large for any destination
     assert by["retimed_home"]["n_later"] == 1 and by["retimed_home"]["n_earlier"] == 0
     assert by["stayed_booking"]["larger_than_destination_mwh"] == pytest.approx(0.030)
-    assert b["blocked_total_mwh"] == pytest.approx(0.010)
+    # every F14.7-blocked kWh is accounted for: capacity_blocked + blocked-but-must-stay
+    assert b["blocked_total_mwh"] == pytest.approx(0.013)
+    assert b["blocked_must_stay_mwh"] == pytest.approx(0.003)
+    # M2: the movable energy that fits a remote site (gpus <= destination slots)
+    assert b["flexible_mobile_share"] == pytest.approx(0.180 / 0.208)
+    assert b["fits_remote_share"] == pytest.approx(0.150 / 0.208)
+    assert all(x["flags_evidence"] == "assumed" for x in k)  # M8
+
+
+def test_must_stay_is_identical_across_policies():
+    u, p, fl = _case()
+    a = flows.budget(u, p, fl, dest_slots=512)
+    b = flows.budget(u, u, fl, dest_slots=512)
+    ma = next(x for x in a["buckets"] if x["id"] == "must_stay")
+    mb = next(x for x in b["buckets"] if x["id"] == "must_stay")
+    assert ma["mwh"] == mb["mwh"] and ma["n_jobs"] == mb["n_jobs"]
 
 
 def test_budget_blocked_not_run_without_diagnosis():
@@ -82,6 +100,7 @@ def test_budget_blocked_not_run_without_diagnosis():
     assert by["capacity_blocked"]["mwh"] is None
     # e falls into the bucket its flags and placement give it (stayed on its booking)
     assert by["stayed_booking"]["mwh"] == pytest.approx(0.040)
+    assert by["must_stay"]["mwh"] == pytest.approx(0.028)
 
 
 def test_budget_rejects_mismatched_jobs():
@@ -112,16 +131,21 @@ def test_week_arcs_count_remote_arrivals_in_the_week():
     assert by["CISO"]["jobs"] == 0 and by["CISO"]["gpu_h"] == 0.0
 
 
-def test_execution_split_separates_remote_from_retimed():
+def test_execution_split_separates_remote_retimed_and_rigid_slips():
     led = _ledger([("a", "BPAT", 0, 1, 3, 10, 7200.0, True),
                    ("b", "PACE", 0, 2, 3, 10, 3600.0, True),
-                   ("c", "PACE", 0, 0, 1, 10, 3600.0, False)])
-    s = flows.execution_split(led)
+                   ("c", "PACE", 0, 0, 1, 10, 3600.0, False),
+                   ("r", "PACE", 0, 1, 2, 10, 3600.0, True)])  # a rigid job off its booking
+    fl = pl.DataFrame({"job_uid": ["a", "b", "c", "r"], "flexible": [True, True, True, False]})
+    s = flows.execution_split(led, fl)
     rate = 10 * flows.KW_PER_GPU * flows.PUE
     assert s["remote_kwh"] == pytest.approx(2 * rate)
-    assert s["retimed_home_kwh"] == pytest.approx(rate)
-    assert s["total_kwh"] == pytest.approx(4 * rate)
-    assert s["remote_jobs"] == 1 and s["retimed_home_jobs"] == 1
+    assert s["retimed_home_kwh"] == pytest.approx(rate)  # flexible jobs only (I2)
+    assert s["rigid_slip_kwh"] == pytest.approx(rate)
+    assert s["total_kwh"] == pytest.approx(5 * rate)
+    assert s["remote_jobs"] == 1 and s["retimed_home_jobs"] == 1 and s["rigid_slip_jobs"] == 1
+    # the three parts are the ledger's "moved" on the execution basis (I1)
+    assert s["remote_kwh"] + s["retimed_home_kwh"] + s["rigid_slip_kwh"] == pytest.approx(s["moved_kwh"])
     assert s["by_site_kwh"]["BPAT"] == pytest.approx(2 * rate)
 
 
@@ -136,6 +160,7 @@ def _vs_u(saving=0.2):
 def test_flows_artifact_is_enveloped_and_pre_seal():
     led = _ledger([("a", "BPAT", 0, 1, 3, 8, 7200.0, True)])
     pol = flows.policy_flow("r:S", _vs_u(), led, T0, T0 + 168 * H,
+                            flags=pl.DataFrame({"job_uid": ["a"], "flexible": [True]}),
                             remote_energy_share=_vs_u()["saving"],
                             moved_share_energy=_vs_u()["saving"],
                             by_site_kwh={"PACE": 0.0, "BPAT": 2 * 8 * 0.72, "CISO": 0.0, "NEVP": 0.0},
@@ -151,6 +176,9 @@ def test_flows_artifact_is_enveloped_and_pre_seal():
     assert s["saving_vs_U"]["saving"]["value"] == 0.2  # copied, not recomputed
     assert "remote" in art["definitions"]["remote_execution"]
     assert "retim" in art["definitions"]["moved"]
+    assert "flexible" in art["definitions"]["retimed_home_execution_share"]
+    assert s["remote_execution_share"]["value"] == pytest.approx(1.0)
+    assert s["rigid_slip_execution_share"]["value"] == 0.0
 
 
 def test_budget_artifact_is_enveloped():

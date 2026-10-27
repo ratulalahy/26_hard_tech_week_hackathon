@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { IntervalChart, Panel, PolicyTable, Strip, useWidth } from '../components/charts';
-import { BudgetBar, BudgetHeadline, RemoteLine, ScenarioToggle, budgetFacts, flowOf, kindOf, savingOf, scenarioOf } from '../components/flows';
+import { BudgetBar, BudgetHeadline, NoChangeNote, RemoteLine, ScenarioToggle, budgetFacts, flowOf, kindOf, savingOf, scenarioOf } from '../components/flows';
 import { Ev, EvCI, Icon } from '../components/ui';
 import { C, CI_MAX, CI_MID, ci2c } from '../lib/color';
 import { CORE, DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, contrast, dayCurve, headline, loadMonth, own, pname, pnote, waitPhrase, yearMean, type Dest } from '../lib/data';
@@ -19,7 +19,7 @@ export const dims = (vp: Viewport) => ({
 });
 export const controlPadding = (vp: Viewport) => {
   const d = dims(vp);
-  return { top: 72 + 88, bottom: 40 + d.tl + 24, left: 16 + d.left + 32, right: 16 + d.right + 16 + 56 };
+  return { top: 72 + (vp.w < 1600 ? 64 : 88), bottom: 40 + d.tl + 24, left: 16 + d.left + 32, right: 16 + d.right + 16 + 56 };
 };
 
 export function ControlRoom() {
@@ -65,10 +65,10 @@ function ResultDock({ compact }: { compact: boolean }) {
             <span className="t-13 ink-2">{hero.v < 0 ? 'more' : 'less'} attributed CO₂, {pname(arcPolicy)}</span>
           </div>
           <div className="t-12 ink-2" style={{ marginTop: 4 }}>
-            Its own 95% interval {pct(hero.lo)}–{pct(hero.hi)}%, vs U local (stay in Utah): same jobs, {DEADLINES_MET}.{sc && !sc.registered ? <> Registered: {pct(regP.v)}%.</> : null} <Ev e="simulated" />
+            Its own 95% interval {pct(hero.lo)}–{pct(hero.hi)}%, vs U local (stay in Utah): same jobs, {DEADLINES_MET}{strips ? '' : '; attributed CO₂, transfer included'}.{sc && !sc.registered ? <> Registered: {pct(regP.v)}%.</> : null} <Ev e="simulated" />
           </div>
-          {f && f.remote_energy_share.value === 0 && f.retimed_home_execution_share.value === 0 ? <div className="t-12 ink-2" style={{ marginTop: 4 }} data-testid="hero-nochange">{pname(arcPolicy)} only ranks sites, so with no remote room it keeps every booking; pick W or L under “Where the work went” to see waiting.</div> : null}
-          {!compact && <div className="t-11 ink-3" style={{ marginTop: 4 }}>
+          <NoChangeNote f={f} p={arcPolicy} />
+          {strips && <div className="t-11 ink-3" style={{ marginTop: 4 }}>
             Attributed operational CO₂ (EIA consumption basis, modeled){sc?.registered !== false ? `, including ${transferMWh(m, arcPolicy)} MWh of simulated transfer energy` : ', including transfer energy'}.
           </div>}
           <div className="t-12 ink-2" style={{ marginTop: 4 }} data-testid="hero-frame">{FRAME_LINE}</div>
@@ -85,7 +85,7 @@ function ResultDock({ compact }: { compact: boolean }) {
           <span className="fw-500 whitespace-nowrap" style={{ color: C.ink }}>Saving vs U, 95% interval</span>
           <span className="t-11 ink-3 whitespace-nowrap">{fmt(nWeeks.value as number)} weeks, registered <Ev e="simulated" /></span>
         </div>
-        <IntervalChart m={m} rows={['S', 'K', 'W', 'L', 'W_time', 'L_time']} stacked rowH={compact ? 24 : 26} />
+        <IntervalChart m={m} rows={strips || compact ? ['S', 'K', 'W', 'L', 'W_time', 'L_time'] : ['S', 'K', 'W', 'L']} stacked rowH={compact ? 24 : 26} />
       </div>
       <hr className="rule" />
       {compact ? null : (<>
@@ -112,7 +112,7 @@ function ResultDock({ compact }: { compact: boolean }) {
           );
           return (
             <li key={c}>
-              {isDest ? <button className="rowbtn" aria-pressed={dest === c} onClick={() => set({ dest: c as Dest })}>{inner}</button> : <div style={{ padding: 8 }}>{inner}</div>}
+              {isDest ? <button className="rowbtn" style={strips ? undefined : { padding: '4px 8px' }} aria-pressed={dest === c} onClick={() => set({ dest: c as Dest })}>{inner}</button> : <div style={{ padding: strips ? 8 : '4px 8px' }}>{inner}</div>}
             </li>
           );
         })}
@@ -136,6 +136,7 @@ function MapCaption({ left, bottom }: { left: number; bottom: number }) {
 }
 
 const weekSpan = (wk: { start: string; end: string }) => `${fmtDate(wk.start, { month: 'short', day: 'numeric' })}–${fmtDate(new Date(new Date(wk.end).getTime() - 1).toISOString(), { month: 'short', day: 'numeric', year: 'numeric' })}`;
+const SHORT_NAME: Record<string, string> = { S: 'S clean-region ranking', W: 'W weekly profile', L: 'L learned model' };
 /** Transfer energy of one registered policy, MWh (simulated). */
 function transferMWh(m: { policies: Record<string, { metrics: { transfer_kwh: { value: number } } }> }, p: string) {
   return fmt(Math.round(m.policies[p].metrics.transfer_kwh.value / 1000));
@@ -173,10 +174,12 @@ function RouterDock({ compact }: { compact: boolean }) {
   const slots = data!.manifest.assumptions;
   const destSlots = sc && !sc.registered ? asNum(sc.knobs?.dest_slots) : asNum(slots.destination_slots.BPAT);
   const bf = budgetFacts(data!.budget, arcPolicy);
+  const vpw = useViewport().w;
   return (
     <Panel over className="flex flex-col" style={{ height: '100%', padding: 0, overflow: 'hidden' }}>
       {bf ? <div style={{ padding: compact ? '12px 16px 8px' : 16, overflow: 'auto', minHeight: 0, flexShrink: 1 }}>
-        <h2 className="t-15" style={{ margin: 0 }}>Flexibility budget: what {pname(bf.policy)} did with the energy</h2>
+        <h2 className="t-15" style={{ margin: 0 }} data-testid="budget-title">Flexibility budget (registered run): {pname(bf.policy)}</h2>
+        {sc && !sc.registered ? <div className="t-12 fw-500" style={{ marginTop: 2, color: C.ink }} data-testid="budget-toggle-note">The toggle does not change this bar.</div> : null}
         <div className="t-13" style={{ marginTop: 4 }}><BudgetHeadline p={arcPolicy} /></div>
         {!compact && bf ? <div className="t-12 ink-2" style={{ marginTop: 2 }}>Registered cohort, {fmt(bf.total)} MWh of execution energy, sized by energy rather than job count.</div> : null}
         <div style={{ marginTop: 8 }}><BudgetBar p={arcPolicy} testId="budget-control" /></div>
@@ -192,7 +195,7 @@ function RouterDock({ compact }: { compact: boolean }) {
         <div className="flex items-center justify-between gap-2">
           <h2 className="t-15 whitespace-nowrap" style={{ margin: 0 }}>Where the work went</h2>
           <select className="sel" style={{ maxWidth: '55%', minWidth: 0 }} aria-label="Policy shown on the map" value={arcPolicy} onChange={(e) => set({ arcPolicy: e.target.value as 'S' | 'W' | 'L' })} title={pnote(m, arcPolicy)}>
-            {(['S', 'W', 'L'] as const).map((p) => <option key={p} value={p}>{pname(p)}</option>)}
+            {(['S', 'W', 'L'] as const).map((p) => <option key={p} value={p}>{vpw < 1600 ? SHORT_NAME[p] : pname(p)}</option>)}
           </select>
         </div>
         {!compact && <div className="t-12 ink-2" style={{ marginTop: 4 }}>

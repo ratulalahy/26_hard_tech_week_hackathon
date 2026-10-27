@@ -1,7 +1,7 @@
 // Offline acceptance (Task 8 Step 1): the built dist/, served on localhost, makes no request to any other
 // host, and every view renders a value that comes from results/metrics.json.
 import { expect, test, type Page } from '@playwright/test';
-import { bpatGpuH, budgetHeadline, consumptionSpan, fixtureManifest, lCommonSupport, sAbout, sMobility, sOwn, sOwnCI, sProduction, sTonnes, storageCombined, storageFlatT, storageHeadline, storageRushDays, storageRushN, testSOwn, testTimeOnlyRange, timeOnlyRange, uTonnes } from './expected';
+import { bpatGpuH, budgetHeadline, consumptionSpan, exact, fixtureManifest, placementRange, sMovedExec, sRemoteExec, testOwn, testPlacementRange, testWaitPhrase, lCommonSupport, sAbout, sMobility, sOwn, sOwnCI, sProduction, sTonnes, storageCombined, storageFlatT, storageHeadline, storageRushDays, storageRushN, testSOwn, testTimeOnlyRange, timeOnlyRange, uTonnes } from './expected';
 import { openTestYear, serveTestFixture } from './fixture-route';
 
 const LOCAL = new Set(['127.0.0.1', 'localhost', '[::1]']);
@@ -34,8 +34,9 @@ test('every view renders registered values with zero non-localhost requests', as
   await page.goto('./#control');
   const hero = page.getByTestId('hero-placement');
   // F06 and F10: the headline is S's own estimate and interval; no "30×", no span across policies
-  await expect(hero).toContainText(sOwn);
+  await expect(hero).toContainText(exact(sOwn));
   await expect(hero).toContainText(`Its own 95% interval ${sOwnCI}`);
+  if (placementRange.includes('–')) await expect(page.locator('main')).not.toContainText(placementRange); // I7: never the span
   await expect(page.getByTestId('hero-kind')).toContainText('registered result');
   await expect(page.getByTestId('hero-timing')).toContainText('under 1%');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(`In a simulated replay, moving Utah's AI jobs cut their attributed CO₂ by about ${sAbout}%; waiting in Utah cut under 1%.`);
@@ -43,6 +44,10 @@ test('every view renders registered values with zero non-localhost requests', as
   await expect(hero).toContainText('deadlines met by construction (baseline bookings)');
   await expect(page.getByTestId('hero-mobility')).toContainText(`${sOwn} → ${sMobility} if only jobs of 8 GPUs or fewer may move`);
   await expect(page.getByTestId('budget-headline').first()).toHaveText(budgetHeadline);
+  await expect(page.getByTestId('budget-title')).toHaveText('Flexibility budget (registered run): S static clean-region ranking');
+  // I1: the remote line is on the execution basis, and remote + retimed + slips = the ledger's moved
+  await expect(page.getByTestId('remote-line')).toContainText(`by execution energy, S static clean-region ranking ran ${sRemoteExec} outside Utah`);
+  await expect(page.getByTestId('remote-line')).toContainText(`for the ledger's “moved” ${sMovedExec}`);
   // T11: the window switch shows the validation year; the test year stays sealed (disabled) until results/test exists
   await expect(page.getByRole('radio', { name: 'Validation year' })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('radio', { name: 'Test year (sealed until the freeze)' })).toBeDisabled();
@@ -61,12 +66,14 @@ test('every view renders registered values with zero non-localhost requests', as
 
   await page.goto('./#ribbon');
   await expect(page.getByTestId('ribbon-timing')).toContainText(timeOnlyRange);
+  await expect(page.getByTestId('ribbon-own-W_time')).toContainText('W wait-only'); // M9: each policy's own estimate
   await expect(page.getByTestId('forecast-chart')).toBeVisible();
   await expect(page.getByText('retrospective ±week MAE; not a prediction interval').first()).toBeVisible();
 
   await page.goto('./#story');
-  await expect(page.getByTestId('story-result')).toContainText(sOwn);
+  await expect(page.getByTestId('story-result')).toContainText(exact(sOwn));
   await expect(page.getByTestId('story-result')).toContainText('no demonstrated aggregate benefit from dynamic search in this replay');
+  await expect(page.getByTestId('story-result')).not.toContainText('vs under 1%'); // M5: said once
   // T10b (F18, fix r1): story 5 (D-064 order) is the storage illustration, from results/storage.json
   await page.goto('./#story-5');
   await expect(page.getByTestId('storage-headline')).toContainText(storageHeadline);
@@ -127,18 +134,23 @@ test('the test-year state shows only test numbers and no validation wording (syn
   await expect(page.getByTestId('hero-placement')).toContainText(sOwn);
   await openTestYear(page);
   await expect(page.getByRole('radio', { name: 'Test year (sealed until Oct 27)' })).toHaveAttribute('aria-checked', 'true');
-  await expect(page.getByTestId('hero-placement')).toContainText(testSOwn); // F10: S's own estimate
-  await expect(page.getByTestId('hero-timing')).toContainText(testTimeOnlyRange);
+  await expect(page.getByTestId('hero-placement')).toContainText(exact(testSOwn)); // F10: S's own estimate
+  if (testPlacementRange.includes('–')) await expect(page.locator('main')).not.toContainText(testPlacementRange);
+  await expect(page.getByTestId('hero-timing')).toContainText(testWaitPhrase);
+  await expect(page.getByTestId('scenario-toggle-off')).toHaveText('The mobility and capacity scenarios are not shown for this window.');
   await expect(page.getByRole('heading', { level: 1 })).toContainText(`moving Utah's AI jobs cut their CO₂ by ${testSOwn}`);
   await expect(page.getByTestId('window-switch')).toHaveAccessibleDescription(/^Test year \(Nov 2025 – Oct 2026\) · opened once, after the freeze of Oct 27, 2026$/);
   await noValidation('control');
 
-  for (const [tab, id, want] of [['Decision cockpit', 'cockpit-registered', testSOwn], ['Day ribbon', 'ribbon-timing', testTimeOnlyRange], ['Story', 'story-result', testSOwn]] as const) {
+  for (const [tab, id, want] of [['Decision cockpit', 'cockpit-registered', testSOwn], ['Day ribbon', 'ribbon-own-W_time', testOwn('W_time')], ['Story', 'story-result', testSOwn]] as const) {
     await page.getByRole('navigation', { name: 'Views' }).getByRole('link', { name: tab }).click();
     await expect(page.getByTestId(id)).toContainText(want);
     await noValidation(tab);
   }
   await expect(page.getByTestId('story-result')).toContainText('Over the test year');
+  // M1: story 4 in the test window falls back to the policy's own test estimate, with window copy
+  await expect(page.getByTestId('story-lock-own')).toContainText(`Over the test year, S static clean-region ranking cut attributed CO₂ by ${testSOwn}`);
+  await expect(page.getByTestId('story-lock-own')).toContainText('not shown for this window');
 
   await page.getByRole('banner').getByRole('button', { name: 'Method & evidence' }).click();
   const drawer = page.getByRole('dialog');
@@ -186,6 +198,7 @@ test('the mobility/capacity toggle switches the hero, rows and arcs; registered 
   await expect(page.getByTestId('hero-placement')).toContainText(`Registered: ${sOwn}`);
   await expect(page.getByTestId('work-rows')).toContainText(bpatGpuH('mobility_le_8gpus'));
   await expect(page.locator('#map-main').getByText(`${bpatGpuH('mobility_le_8gpus')} GPU-h`)).toBeVisible();
+  await expect(page.getByTestId('budget-toggle-note')).toHaveText('The toggle does not change this bar.'); // I4
   await btn(2).click();
   await expect(page.getByTestId('hero-nochange')).toBeVisible();
   await btn(3).click();
@@ -198,10 +211,14 @@ test('the mobility/capacity toggle switches the hero, rows and arcs; registered 
   // story 4 reads the same toggle state
   await btn(1).click();
   await page.goto('./#story-4');
-  await expect(page.getByTestId('story-lock')).toContainText(`${sOwn} to ${sMobility}`);
+  await expect(page.getByTestId('story-lock')).toContainText(`falls from ${sOwn} to ${sMobility}`);
   await page.locator('[data-step="4"]').evaluate((el) => el.scrollIntoView({ block: 'center' }));
   await expect(page.getByTestId('budget-story')).toBeVisible();
   await expect(page.getByTestId('story-work-rows')).toContainText(bpatGpuH('mobility_le_8gpus'));
+  await expect(page.getByTestId('story-budget-toggle-note')).toBeVisible(); // I4
+  // I5: story 4 shows S's no-change note in the wait-only state
+  await page.getByTestId('scenario-toggle').getByRole('button').nth(2).click();
+  await expect(page.getByTestId('story-nochange')).toBeVisible();
 });
 
 test('reduced motion: the toggle swaps with no animation', async ({ page }) => {
