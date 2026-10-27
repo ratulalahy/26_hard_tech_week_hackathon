@@ -34,7 +34,7 @@ rs = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(rs)
 sys.exit(rs.run_test(repo_root=Path(sys.argv[2]), data_dir=Path(sys.argv[3]),
                      results_dir=Path(sys.argv[4]), out_dir=Path(sys.argv[5]),
-                     rerun_reason=sys.argv[6] or None))
+                     rerun_reason=sys.argv[6] or None, synthetic=True))
 """
 
 pytestmark = pytest.mark.skipif(not os.environ.get("GRIDPILOT_SEAL_E2E"),
@@ -92,19 +92,25 @@ def test_the_full_test_pipeline_on_synthetic_data(tmp_path):
     fz = seal.load_freeze(repo / seal.FREEZE_REL)
     assert cfg["s_ranking"] == fz.s_order
 
-    # The test truth went to its own path; the validation table was never written.
-    assert (data / "processed" / "carbon" / "carbon_hourly_test.parquet").exists()
+    # The test truth went into the run directory (I6), never the shared data dir; the
+    # validation table was never written; the run directory is read-only.
+    assert (run_dir / seal.CARBON_TEST_NAME).exists()
+    assert not (data / seal.LEGACY_CARBON_TEST_REL).exists()
     assert not (data / "processed" / "carbon" / "carbon_hourly.parquet").exists()
+    assert all(not os.access(f, os.W_OK) for f in run_dir.rglob("*") if f.is_file())
+    assert seal.verify_exports(results) == []  # M8
+    assert man["s_ranking"]["fit_at"] == "2025-10-29T00:00:00Z"
 
     # The read log: one invocation, logged reads of frozen or session-built files, one close.
     log = sealkit.read_log(results)
     ev = [x["event"] for x in log]
     assert ev[0] == "invocation" and ev[-1] == "close" and log[-1]["outcome"] == "ok"
     assert {"run_start", "export"} <= set(ev)
+    assert log[-1]["rc"] == 0 and log[-1]["exported"] is True  # M1
     reads = [x for x in log if x["event"] == "read"]
     assert len(reads) == log[-1]["n_reads"] > 10
     for x in reads:
-        assert Path(x["path"]).is_relative_to(data)
+        assert Path(x["path"]).is_relative_to(data) or Path(x["path"]).is_relative_to(runs)
         assert x["purpose"] and x["caller"] and x["sha256"] and x["time_range"][1] <= seal.iso(F)
         assert x["code_commit"] == man["git_sha"]
 

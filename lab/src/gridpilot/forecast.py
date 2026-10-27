@@ -61,7 +61,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 
 from gridpilot import seal
 from gridpilot.data.eia930 import add_demand_clean
-from gridpilot.data.eia_co2 import CARBON_PATH, CARBON_TEST_REL, CORE_BAS
+from gridpilot.data.eia_co2 import CARBON_PATH, CORE_BAS
 from gridpilot.paths import INTERIM_DIR, MANIFEST_DIR, REPO_ROOT
 from gridpilot.splits import TEST_START, VALIDATION_START, drop_sealed
 from gridpilot.window import Window, resolve
@@ -566,7 +566,7 @@ def _load_series_test(target: str, w: Window) -> pl.DataFrame:
     rng = (TEST_HISTORY_START, w.F)
     if target == "ci_consumed":
         frame = seal.sealed_read(
-            s.data_path(CARBON_TEST_REL), purpose=f"forecast series {target} (test fit, issues)",
+            s.carbon_test_path, purpose=f"forecast series {target} (test fit, issues)",
             columns=["ba", "ts_utc", "ci_consumed_g_kwh"], time_range=rng,
             where=pl.col("ba").is_in(list(CORE_BAS))).rename({"ci_consumed_g_kwh": "value"})
     else:

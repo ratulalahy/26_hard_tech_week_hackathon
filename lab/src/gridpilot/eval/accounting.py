@@ -141,7 +141,12 @@ class TruthTable:
             ci_col, tier = "ci_consumed_g_kwh", pl.lit(1)
         else:
             raise ValueError("truth needs ci_g_kwh (F14.6) or ci_consumed_g_kwh (Task 1)")
-        t = truth.filter(pl.col("ts_utc") < bound).select(
+        if truth.height and truth["ts_utc"].max() >= bound:
+            # I6: a frame past the read bound is refused, not silently trimmed
+            raise ValueError(f"truth holds rows at or after the read bound {bound.isoformat()} "
+                             f"(TEST_START outside test mode): sealed values are read only "
+                             f"inside the test-mode context (F8)")
+        t = truth.select(
             "ba", _us("ts_utc").alias("t"), pl.col(ci_col).cast(pl.Float64).alias("ci"),
             tier.alias("tier"),
         )

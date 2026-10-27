@@ -39,7 +39,7 @@ the freeze commit and the tree is clean, (b) config/freeze.json matches the anno
 completed run unless `--rerun-reason` is given; B7: manifests are read from git), then runs
 the primary scenario inside `gridpilot.seal.test_mode`: every grid read goes through
 `sealed_read` and is logged in results/test_reads.jsonl. The test truth is built into
-processed/carbon/carbon_hourly_test.parquet; forecasts are fitted at 2025-10-29 with the frozen
+carbon_hourly_test.parquet inside the test run directory; forecasts are fitted at 2025-10-29 with the frozen
 L configuration; S's ranking comes from the freeze record. Outputs: `runs/test/<UTC>/` and
 results/test/*.json (the same schema plus `window: "test"`, and the test grid and workload
 profiles).
@@ -68,7 +68,7 @@ from gridpilot import grid_profile as gpmod
 from gridpilot import seal
 from gridpilot import workload_profile as wpmod
 from gridpilot.cohort import SCENARIO_NOTES, SCENARIOS, ledger_hash, prefix_cohort
-from gridpilot.data.eia_co2 import CARBON_PATH, CARBON_TEST_REL, build_carbon
+from gridpilot.data.eia_co2 import CARBON_PATH, build_carbon
 from gridpilot.data.traces import TRACE_DIR
 from gridpilot.data.truth_fill import (
     BALANCE_PATH,
@@ -145,6 +145,7 @@ H1 = timedelta(hours=1)
 WINDOW_NAMES = ("validation", "fallback", "test")
 REFUSED_RC = 4  # `--window test` refused by the seal (the reason is on stderr)
 RANK_TRAIN = (datetime(2022, 1, 1, tzinfo=UTC), datetime(2024, 10, 29, tzinfo=UTC))
+RANK_FIT_AT = RANK_TRAIN[1]  # = forecast.VAL_FIT_AT: S's ranking is fixed at the fit time
 PHASE_DAYS = 0  # the registered primary phase (Scenario.primary().phase_days)
 POLICY_ORDER = PRIMARY_POLICIES
 EXT_NOT_DIAGNOSED_REASON = "extension runs do not run the F14.7 blocked diagnostic"
@@ -158,7 +159,8 @@ ACCEPTED_SNAPSHOT_IDS = {
     "8a1b36b24b91": "T11 refresh: openmeteo final; every other manifest byte-identical",
 }
 EIA_CI_PROVENANCE = "EIA's estimated consumption-basis hourly CO₂ intensity"
-S_RANK_PROVENANCE = f"means of {EIA_CI_PROVENANCE}, 2022-01-01 to 2024-10-29"
+S_RANK_PROVENANCE = (f"means of {EIA_CI_PROVENANCE}, 2022-01-01 to 2024-10-29, rows "
+                     f"published by fit_at (96 h envelope)")
 TIME_ONLY_SITES = Scenario.primary().time_only_sites()
 POLICY_NOTES = {
     "U": "earliest feasible execution at PACE (FIFO); local operational reference",
@@ -240,17 +242,23 @@ def _dt_us(t: datetime) -> int:
 # --------------------------------------------------------------------------- pipeline
 
 
+def s_rank_published(fit_at: datetime) -> pl.Expr:
+    """Astra F05: S's ranking at `fit_at` uses only rows published by then, under the same
+    assumed envelope as the forecasts (`forecast.as_of`): ts_utc + 1 h + 96 h <= fit_at."""
+    env_h = fcmod.ENVELOPE_H["ci_consumed"]
+    return pl.col("ts_utc") + pl.duration(hours=1 + env_h) <= fit_at
+
+
 def s_ranking(window: Window | None = None) -> tuple[list[str], dict[str, float]]:
     """S's ranking: mean consumed CI over the training rows, ascending (PACE included).
     A lazy scan with the seal and the training filter, so no other row is loaded. With the
     test window: read from the freeze record (T11 B2), never recomputed in the test run."""
     if window is not None and window.is_test:
         fz = seal.require_active("s_ranking(test)").freeze
-        means = fz.raw["s_ranking"].get("mean_consumed_ci_g_kwh") or {}
-        return fz.s_order, {b: float(v) for b, v in means.items()}
+        return fz.s_order, {b: fz.s_means[b] for b in fz.s_order}
     rows = (drop_sealed(pl.scan_parquet(CARBON_PATH))
             .filter((pl.col("ts_utc") >= RANK_TRAIN[0]) & (pl.col("ts_utc") < RANK_TRAIN[1])
-                    & pl.col("ba").is_in(list(SITES)))
+                    & s_rank_published(RANK_FIT_AT) & pl.col("ba").is_in(list(SITES)))
             .select("ba", "ts_utc", "ci_consumed_g_kwh").collect()
             .drop_nulls("ci_consumed_g_kwh").sort("ba", "ts_utc"))
     # Means as math.fsum / n, not a parallel group_by mean (T10 fix r1 M-4).
@@ -356,11 +364,14 @@ def run_pipeline(window: Window, scenario: Scenario, out_dir: Path | str | None 
     if window.is_test:
         ses.run_id = run_id
         seal.log_event("run_start", run_id=run_id, scenario=scenario.name)
-    root = Path(out_dir) if out_dir else default_root(scenario, window)
+    root = (Path(out_dir) if out_dir else ses.auth.runs_root if window.is_test
+            else default_root(scenario, window))
     root.mkdir(parents=True, exist_ok=True)
     tmp = root / f".tmp-{run_id}-{os.getpid()}"
     final = root / run_id
     tmp.mkdir()
+    if window.is_test:
+        ses.work_dir = tmp  # the test carbon table lives here, never in the shared data dir (I6)
     if window.is_test:
         # Check (a) verified HEAD and a clean tree at authorization; the read log has been
         # appended to since, so the live status is not the code's.
@@ -379,15 +390,25 @@ def run_pipeline(window: Window, scenario: Scenario, out_dir: Path | str | None 
         failed = root / f"failed-{run_id}"
         os.rename(tmp, failed)
         log.error("run failed; partial outputs in %s", failed)
+        if window.is_test:
+            ses.run_dirs.append(failed)
+            ses.work_dir = None
         raise
     print(f"run directory: {final}")
     exported = False
+    if window.is_test:
+        ses.run_dirs.append(final)
+        ses.work_dir = None
+        ses.rc = rc
     if rc == 0 and export:
         if window.is_test:
             dst = ses.auth.test_results_dir
+            archived = archive_test_results(dst)
             export_results(final / "results", dst, ARTIFACTS_TEST)
             seal.log_event("export", run_id=run_id, results=str(dst),
-                           artifacts=list(ARTIFACTS_TEST))
+                           artifacts=list(ARTIFACTS_TEST), archived=archived,
+                           artifacts_sha256={a: _sha256(dst / a) for a in ARTIFACTS_TEST})
+            ses.exported = True
         else:
             export_results(final / "results", RESULTS_DIR)
         exported = True
@@ -396,6 +417,24 @@ def run_pipeline(window: Window, scenario: Scenario, out_dir: Path | str | None 
 
 
 ARTIFACTS = ("manifest.json", "metrics.json", "forecast-replay.json", "job-replay.json")
+
+
+def archive_test_results(dst: Path) -> str | None:
+    """M9: before a rerun export, move the earlier test artifacts to
+    results/test/history/<their run_id>/; returns that path (None on a first export)."""
+    man = dst / "manifest.json"
+    if not man.exists():
+        return None
+    old = json.loads(man.read_text()).get("run_id") or "unknown"
+    hist = dst / seal.TEST_HISTORY_DIR / old
+    if hist.exists():
+        raise FileExistsError(f"{hist} already exists")
+    hist.mkdir(parents=True)
+    for p in sorted(dst.glob("*.json")):
+        shutil.copyfile(p, hist / p.name)
+    for p in sorted(dst.glob("*.json")):
+        p.unlink()
+    return str(hist)
 # The test run also writes its own grid and workload profiles; manifest.json goes last, as the
 # completion marker check (d) looks for.
 ARTIFACTS_TEST = ("metrics.json", "forecast-replay.json", "job-replay.json", "grid-profile.json",
@@ -510,7 +549,7 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
     file_sha["climatology.parquet"] = _sha256(fc_dir / "climatology.parquet")
     file_sha["balance.parquet"] = _sha256(BALANCE_PATH)
     if test:
-        file_sha[Path(CARBON_TEST_REL).name] = _sha256(carbon_test)
+        file_sha[carbon_test.name] = _sha256(carbon_test)
         for rel, h in ses.auth.input_sha256.items():
             file_sha[f"input:{rel}"] = h
     else:
@@ -642,10 +681,12 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
                                                                window=window)
                 art["workload-profile.json"] = workload_profile_for_test(ledgers, tt, run_id)
                 names += ["grid-profile.json", "workload-profile.json"]
+            texts = {}
             for name in names:
-                text = write_json_atomic(out / name, art[name], **wj)
-                hashes[name] = hashlib.sha256(text.encode()).hexdigest()
-            metrics_canonical = canonical_hash(art["metrics.json"])
+                texts[name] = write_json_atomic(out / name, art[name], **wj)
+                hashes[name] = hashlib.sha256(texts[name].encode()).hexdigest()
+            # M15: the canonical hash of the serialized artifact, as written
+            metrics_canonical = canonical_hash(json.loads(texts["metrics.json"]))
             man = art["manifest.json"]
             man["artifact_sha256"] = hashes
             man["reproducibility"]["metrics_canonical_sha256"] = metrics_canonical
@@ -660,7 +701,7 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
                                   repro=repro, tiers=tiers)
             text = write_json_atomic(tmp / "summary.json", summary)
             hashes["summary.json"] = hashlib.sha256(text.encode()).hexdigest()
-            summary_canonical = canonical_hash(summary)
+            summary_canonical = canonical_hash(json.loads(text))  # serialized (M15)
             info["summary_canonical_sha256"] = summary_canonical
     config = {
         "run_id": run_id, "window": window.name, "git_sha": sha, "git_clean": status == "",
@@ -672,6 +713,7 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
         "diagnosed_policies": list(DIAGNOSED_POLICIES) if primary else [],
         "s_ranking": ranking,
         "s_ranking_training_rows": [iso(RANK_TRAIN[0]), iso(RANK_TRAIN[1])],
+        "s_ranking_fit_at": iso(RANK_FIT_AT),
         "scenarios_for_A": list(SCENARIOS), "reproducibility": repro,
         "metrics_canonical_sha256": metrics_canonical, "artifact_sha256": hashes,
         "scenario": scenario.config(),
@@ -1223,7 +1265,11 @@ def build_artifacts(**k) -> dict:
                       "mean_consumed_ci": {b: env(v, "g/kWh", "modeled",
                                                   f"{run_id}:rank:{b}")
                                            for b, v in k["rank_means"].items()},
-                      "provenance": (f"frozen in config/freeze.json; {S_RANK_PROVENANCE}"
+                      "fit_at": iso(seal.TEST_FIT_AT if test else RANK_FIT_AT),
+                      "window": ([iso(t) for t in ses.freeze.s_window] if test
+                                 else [iso(RANK_TRAIN[0]), iso(RANK_TRAIN[1])]),
+                      "provenance": ("frozen in config/freeze.json; means over the window, "
+                                     "rows published by fit_at (96 h envelope)"
                                      if test else S_RANK_PROVENANCE),
                       "note": "unweighted hourly mean over training rows; never shown as an "
                               "attributed factor (F7)"},
@@ -1736,23 +1782,31 @@ def print_table(acct, timer, scenario: Scenario | None = None,
     print("timing (s): " + ", ".join(f"{k} {v:.1f}" for k, v in timer.t.items()))
 
 
-def run_test(*, rerun_reason: str | None = None, repo_root: Path | None = None,
-             data_dir: Path | None = None, results_dir: Path | None = None,
-             out_dir: Path | None = None, pipeline=None) -> int:
-    """The test-evaluation entry point: authorize (refusals (a)–(d), B7), then run the
-    primary scenario on `Window.test()` inside the logged test-mode context and export to
+def run_test(*, rerun_reason: str | None = None, remote_tag_override: str | None = None,
+             repo_root: Path | None = None, data_dir: Path | None = None,
+             results_dir: Path | None = None, out_dir: Path | None = None, pipeline=None,
+             synthetic: bool = False) -> int:
+    """The test-evaluation entry point: authorize (every refusal check), then run the primary
+    scenario on `Window.test()` inside the logged test-mode context and export to
     results/test/. Returns the exit code: REFUSED_RC with the reason on stderr when refused.
-    `pipeline(window)` replaces the run in unit tests (synthetic data only)."""
+
+    Real use takes no roots (I4). `repo_root`, `data_dir`, `results_dir`, `out_dir` and
+    `pipeline(window)` (a stand-in for the run) are for synthetic tests only and need
+    `synthetic=True`, which `seal.authorize` accepts only with a marked synthetic data dir."""
     try:
+        if not synthetic and (pipeline is not None or out_dir is not None):
+            raise seal.SealError("(I4) pipeline= and out_dir= are for synthetic tests only")
         auth = seal.authorize(repo_root=repo_root, data_dir=data_dir, results_dir=results_dir,
-                              rerun_reason=rerun_reason)
+                              rerun_reason=rerun_reason, remote_tag_override=remote_tag_override,
+                              synthetic=synthetic)
     except seal.SealError as e:
         print(f"run_slice --window test refused: {e}", file=sys.stderr)
         return REFUSED_RC
-    with seal.test_mode(auth):
+    with seal.test_mode(auth) as ses:
         window = Window.test()
         if pipeline is not None:
-            return int(pipeline(window))
+            ses.rc = int(pipeline(window))
+            return ses.rc
         res = run_pipeline(window, Scenario.primary(), out_dir, export=True)
     return res.rc
 
@@ -1766,6 +1820,9 @@ def main(argv=None) -> int:
                         "once, after the freeze (refuses otherwise)")
     p.add_argument("--rerun-reason", default=None,
                    help="--window test only: rerun over a completed test run; logged")
+    p.add_argument("--remote-tag-override", default=None,
+                   help="--window test only: why the config-freeze tag on origin cannot be "
+                        "checked (an unreachable remote); logged")
     p.add_argument("--scenario", choices=["primary", *EXTENSIONS], default="primary",
                    help="primary (registered) or a D-058 extension (gridpilot.scenario)")
     p.add_argument("--forecast-run", default=None,
@@ -1776,13 +1833,14 @@ def main(argv=None) -> int:
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
     if args.window == "test":
-        if args.scenario != "primary" or args.forecast_run or args.no_export:
-            p.error("--window test runs the primary scenario, builds its own forecasts and "
-                    "always exports to results/test/")
+        if args.scenario != "primary" or args.forecast_run or args.no_export or args.out:
+            p.error("--window test runs the primary scenario, builds its own forecasts, writes "
+                    "runs/test/ and always exports to results/test/ (no --scenario, "
+                    "--forecast-run, --no-export or --out)")
         return run_test(rerun_reason=args.rerun_reason,
-                        out_dir=Path(args.out) if args.out else None)
-    if args.rerun_reason is not None:
-        p.error("--rerun-reason applies to --window test only")
+                        remote_tag_override=args.remote_tag_override)
+    if args.rerun_reason is not None or args.remote_tag_override is not None:
+        p.error("--rerun-reason and --remote-tag-override apply to --window test only")
     scenario = Scenario.named(args.scenario)
     res = run_pipeline(Window.named(args.window), scenario, args.out,
                        export=scenario.is_primary and not args.no_export,

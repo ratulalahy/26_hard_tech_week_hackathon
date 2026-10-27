@@ -47,7 +47,9 @@ ENVELOPE_KEYS = ("value", "unit", "evidence", "provenance_id", "status", "reason
 WALLCLOCK_KEY = "wallclock_generated_at"
 # Wall-clock keys exempt from the seal check: the build time, and (test artifacts) the time
 # the configuration was frozen. Neither is data time.
-WALLCLOCK_KEYS = frozenset({WALLCLOCK_KEY, "wallclock_frozen_at"})
+WALLCLOCK_KEYS = frozenset({WALLCLOCK_KEY})
+# The freeze time is exempt only in test-window artifacts, which carry it (M16).
+WALLCLOCK_KEYS_TEST = WALLCLOCK_KEYS | {"wallclock_frozen_at"}
 # String fields that describe the seal itself; date substrings inside them are not data.
 SEAL_DESCRIPTION_KEYS = frozenset({"sealed_window", "evidence_scope"})
 
@@ -232,7 +234,7 @@ def sealed_timestamps(obj: Any, *, window: Window | None = None) -> list[str]:
     def walk(x, path, key=None):
         if isinstance(x, dict):
             for k, v in x.items():
-                if k in WALLCLOCK_KEYS:
+                if k in (WALLCLOCK_KEYS_TEST if w is not None and w.is_test else WALLCLOCK_KEYS):
                     continue
                 if isinstance(k, str) and _sealed_in(k, w):
                     bad.append(f"{path}.{k} (key)")

@@ -25,11 +25,13 @@ Seal (F8): `build_carbon` truncates at TEST_START before writing, so the stored
 parquet holds no sealed-window row. `load_carbon` also applies `drop_sealed`, as a second
 guard. Every function takes a `window` (`gridpilot.window.Window`, default validation).
 
-Test window (Stage 3 T11, B2): the test truth goes to a separate path,
-`processed/carbon/carbon_hourly_test.parquet`, holding [TEST_HISTORY_START, F_test). Only the
-test entry point builds it (`build_carbon(window=Window.test())`, inside the test-mode
-context), reading the workbooks through `gridpilot.seal.sealed_read`; `load_carbon` reads it
-back the same way. The validation parquet stays truncated at TEST_START.
+Test window (Stage 3 T11, B2, I6): the test truth goes to a separate file,
+`carbon_hourly_test.parquet` **inside the test run directory** (never the shared data dir),
+holding [TEST_HISTORY_START, F_test). Only the test entry point builds it
+(`build_carbon(window=Window.test())`, inside the test-mode context), reading the workbooks
+through `gridpilot.seal.sealed_read`; `load_carbon` reads it back the same way. The validation
+parquet stays truncated at TEST_START, and `load_carbon` refuses a file holding sealed rows
+outside test mode.
 
 `site_mask` is closed by default: any (ba, hour) with no carbon row is not ok.
 Lineage is written next to the parquet as `carbon_hourly.meta.json`.
@@ -38,6 +40,7 @@ Lineage is written next to the parquet as `carbon_hourly.meta.json`.
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
 from datetime import UTC, datetime, timedelta
@@ -61,9 +64,7 @@ GENERATED_COL = "CO2 Emissions Intensity for Generated Electricity"
 WORKBOOK_DIR = RAW_DIR / "eia930" / "ba_workbooks"
 CARBON_PATH = PROCESSED_DIR / "carbon" / "carbon_hourly.parquet"
 META_NAME = "carbon_hourly.meta.json"
-CARBON_TEST_REL = "processed/carbon/carbon_hourly_test.parquet"
-CARBON_TEST_PATH = PROCESSED_DIR / "carbon" / "carbon_hourly_test.parquet"  # test mode only
-TEST_META_NAME = "carbon_hourly_test.meta.json"
+TEST_META_NAME = "carbon_hourly_test.meta.json"  # next to the test table, in the run dir
 CORE_BAS = ("PACE", "CISO", "BPAT", "NEVP")
 
 COLUMNS = ["ba", "ts_utc", "ci_consumed_g_kwh", "ci_generated_g_kwh", "null_reason",
@@ -83,7 +84,7 @@ def _clean(raw: pl.Expr) -> tuple[pl.Expr, pl.Expr]:
     return value, reason
 
 
-def parse_ba_workbook(path: Path, ba: str) -> pl.DataFrame:
+def parse_ba_workbook(path: Path | io.BytesIO, ba: str) -> pl.DataFrame:
     """One BA's hourly intensities as a contiguous hourly grid (see module docstring)."""
     raw = pl.read_excel(
         path, sheet_name=SHEET, engine="calamine",
@@ -105,9 +106,9 @@ def parse_ba_workbook(path: Path, ba: str) -> pl.DataFrame:
     )
     if rows["ts_utc"].null_count():
         raise ValueError(f"{ba}: {rows['ts_utc'].null_count()} rows with a null or "
-                         f"unparseable '{TIME_COL}' in {path.name}")
+                         f"unparseable '{TIME_COL}' in {getattr(path, 'name', ba)}")
     if rows["ts_utc"].is_duplicated().any():
-        raise ValueError(f"{ba}: duplicate UTC hours in {path.name}")
+        raise ValueError(f"{ba}: duplicate UTC hours in {getattr(path, 'name', ba)}")
     grid = pl.select(pl.datetime_range(
         rows["ts_utc"].min(), rows["ts_utc"].max(), interval="1h", time_unit="us", time_zone="UTC",
     ).alias("ts_utc"))
@@ -163,7 +164,7 @@ def _build_carbon_test(window: Window, bas: tuple[str, ...]) -> Path:
     out = pl.concat(frames).sort("ba", "ts_utc")
     if out.height and out["ts_utc"].max() >= window.F:
         raise AssertionError("test carbon table reaches past F")
-    parquet = s.data_path(CARBON_TEST_REL)
+    parquet = s.carbon_test_path
     _write_atomic(out, parquet, parquet.with_name(TEST_META_NAME), {
         "evidence": "modeled", "window": "test",
         "source_workbooks_sha256": {f"{ba}.xlsx": _sha256(p) for ba, p in sources.items()},
@@ -224,9 +225,15 @@ def load_carbon(path: Path | None = None, *, window: Window | None = None,
     w = resolve(window, "load_carbon")
     if w.is_test:
         s = seal.require_active("load_carbon(test)")
-        return seal.sealed_read(path or s.data_path(CARBON_TEST_REL), purpose=purpose,
+        return seal.sealed_read(path or s.carbon_test_path, purpose=purpose,
                                 columns=COLUMNS, time_range=(seal.TEST_HISTORY_START, w.F))
-    return drop_sealed(pl.read_parquet(path or CARBON_PATH))
+    p = path or CARBON_PATH
+    # I6: outside test mode a file holding sealed rows is refused (a count, not a read).
+    n = pl.scan_parquet(p).filter(pl.col("ts_utc") >= TEST_START).select(pl.len()).collect()
+    if n.item():
+        raise ValueError(f"{p} holds {n.item()} row(s) at or after TEST_START: sealed values "
+                         f"are read only inside the test-mode context (F8)")
+    return drop_sealed(pl.read_parquet(p))
 
 
 def site_mask(

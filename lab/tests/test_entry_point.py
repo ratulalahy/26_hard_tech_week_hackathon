@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import tempfile
 from pathlib import Path
 
 import polars as pl
@@ -52,7 +53,9 @@ def test_cli_argument_rules(rs):
 def _stub(seen):
     """A tiny pipeline: build and read the synthetic test truth through the layers."""
     def run(window):
-        assert seal.active() is not None and window == Window.test() and window.is_test
+        s = seal.active()
+        assert s is not None and window == Window.test() and window.is_test
+        s.work_dir = Path(tempfile.mkdtemp(prefix="seal-stub-run-"))  # as run_pipeline does
         eia_co2.build_carbon(window=window)
         filled = truth_fill.fill_truth(window.init, window.F, ["PACE"], window=window)
         seen.append(filled.filter(pl.col("ts_utc") >= TEST_START).height)
@@ -63,7 +66,7 @@ def _stub(seen):
 def test_the_entry_point_opens_the_window_and_logs_every_read(rs, tmp_path):
     repo, data, results = sealkit.setup(tmp_path)
     seen = []
-    rc = rs.run_test(repo_root=repo, data_dir=data, results_dir=results, pipeline=_stub(seen))
+    rc = rs.run_test(synthetic=True, repo_root=repo, data_dir=data, results_dir=results, pipeline=_stub(seen))
     assert rc == 0 and seen and seen[0] > 0
     log = sealkit.read_log(results)
     events = [r["event"] for r in log]
@@ -91,7 +94,7 @@ REFUSALS = {
     "d_done": (lambda repo, data, res: ((res / "test").mkdir(parents=True),
                                         (res / "test" / "manifest.json").write_text("{}"),
                                         _commit(repo, "a completed run")),
-               r"\(d\).*completed test run"),
+               r"\(d\).*already opened"),
 }
 
 
@@ -102,7 +105,7 @@ def test_each_refusal_exits_non_zero_with_its_reason_and_reads_nothing(rs, tmp_p
     mutate, reason = REFUSALS[case]
     mutate(repo, data, results)
     seen = []
-    rc = rs.run_test(repo_root=repo, data_dir=data, results_dir=results, pipeline=_stub(seen))
+    rc = rs.run_test(synthetic=True, repo_root=repo, data_dir=data, results_dir=results, pipeline=_stub(seen))
     assert rc == rs.REFUSED_RC != 0
     err = capsys.readouterr().err
     assert "refused" in err
@@ -117,7 +120,7 @@ def test_each_refusal_exits_non_zero_with_its_reason_and_reads_nothing(rs, tmp_p
 def test_a_rerun_with_a_reason_is_allowed_and_logged(rs, tmp_path):
     repo, data, results = sealkit.setup(tmp_path)
     REFUSALS["d_done"][0](repo, data, results)
-    rc = rs.run_test(repo_root=repo, data_dir=data, results_dir=results,
+    rc = rs.run_test(synthetic=True, repo_root=repo, data_dir=data, results_dir=results,
                      rerun_reason="export bug fixed in abc123 (documented)", pipeline=_stub([]))
     assert rc == 0
     inv = sealkit.read_log(results)[0]
@@ -133,5 +136,5 @@ def test_a_failing_pipeline_is_logged_as_an_error(rs, tmp_path):
         raise RuntimeError("synthetic failure")
 
     with pytest.raises(RuntimeError):
-        rs.run_test(repo_root=repo, data_dir=data, results_dir=results, pipeline=boom)
+        rs.run_test(synthetic=True, repo_root=repo, data_dir=data, results_dir=results, pipeline=boom)
     assert sealkit.read_log(results)[-1]["outcome"].startswith("error: RuntimeError")

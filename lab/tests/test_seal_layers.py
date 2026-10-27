@@ -42,6 +42,8 @@ def opened(tmp_path, monkeypatch):
 
     monkeypatch.setattr(seal, "sealed_read", counting)
     with seal.test_mode(sealkit.authorize(repo, data)) as s:
+        s.work_dir = tmp_path / "run"  # run_pipeline sets this to the test run directory
+        s.work_dir.mkdir()
         yield s, data, results, calls
 
 
@@ -50,11 +52,12 @@ def _reads(results):
 
 
 def test_every_layer_reads_the_test_window_through_sealed_read(opened):
-    _s, data, results, calls = opened
+    s, data, results, calls = opened
     w = Window.test()
     # eia_co2: the test table goes to its own path, built through sealed_read
     p = eia_co2.build_carbon(window=w)
-    assert p == data / eia_co2.CARBON_TEST_REL
+    assert p == s.carbon_test_path and p.parent.name == "run"  # in the run dir (I6)
+    assert not (data / seal.LEGACY_CARBON_TEST_REL).exists()
     assert not (data / "processed" / "carbon" / "carbon_hourly.parquet").exists()
     c = eia_co2.load_carbon(window=w)
     assert c["ts_utc"].max() == F - H
@@ -76,7 +79,7 @@ def test_every_layer_reads_the_test_window_through_sealed_read(opened):
     assert [r["purpose"] for r in reads] == calls
     assert all(r["sha256"] and r["caller"] and r["time_range"][1] <= seal.iso(F) for r in reads)
     paths = {r["path"] for r in reads}
-    assert str(data / eia_co2.CARBON_TEST_REL) in paths
+    assert str(s.carbon_test_path) in paths
     assert str(data / seal.BALANCE_REL) in paths
 
 
@@ -101,6 +104,11 @@ def test_accounting_search_and_results_take_the_test_bound(opened):
     assert seal.active() is s
     art = {"window": "test", "covered": {"arrivals": [seal.iso(TEST_START), seal.iso(F)]}}
     assert validate_artifact(art, window=w) == []
+    # M16: the freeze time is exempt only in a test-window artifact
+    frozen = {"window": "test", "freeze": {"wallclock_frozen_at": "2026-10-27T12:00:00Z"}}
+    assert sealed_timestamps(frozen, window=w) == []
+    assert sealed_timestamps({"wallclock_frozen_at": "2026-10-27T12:00:00Z"}) == [
+        "$.wallclock_frozen_at"]
     late = {"window": "test", "t": seal.iso(F + H)}
     assert sealed_timestamps(late, window=w) == ["$.t"]
     assert any("declare window 'test'" in e for e in validate_artifact({"x": 1}, window=w))
@@ -118,7 +126,8 @@ def test_validation_defaults_never_return_a_sealed_row(tmp_path):
     assert carbon["ts_utc"].max() >= TEST_START  # the synthetic table does hold sealed rows
     p = tmp_path / "carbon.parquet"
     carbon.write_parquet(p)
-    assert eia_co2.load_carbon(p)["ts_utc"].max() < TEST_START
+    with pytest.raises(ValueError, match="test-mode context"):  # I6: refused, not trimmed
+        eia_co2.load_carbon(p)
     with pytest.raises(ValueError, match="TEST_START"):
         eia_co2.site_mask(carbon, TEST_START - H, F)
     fuel = pl.DataFrame({"ba": ["PACE"], "ts_utc": [TEST_START], "ci_g_kwh": [1.0]})
@@ -127,7 +136,9 @@ def test_validation_defaults_never_return_a_sealed_row(tmp_path):
     with pytest.raises(ValueError, match="sealed"):
         truth_fill.fill_truth(TEST_START - 24 * H, TEST_START, ["PACE"], carbon=carbon,
                               fuel_ci=fuel)
-    tt = TruthTable(carbon)
+    with pytest.raises(ValueError, match="test-mode context"):  # I6: refused, not trimmed
+        TruthTable(carbon)
+    tt = TruthTable(carbon.filter(pl.col("ts_utc") < TEST_START))
     assert tt.end_us == int(TEST_START.timestamp()) * 10**6
     t0 = int(TEST_START.timestamp()) * 10**6
     book = pl.DataFrame({"job_uid": ["a"], "site": ["PACE"], "start_us": [t0 - 3600 * 10**6],
@@ -149,7 +160,9 @@ def test_validation_defaults_never_return_a_sealed_row(tmp_path):
 
 def test_a_test_window_kept_after_the_context_refuses_every_layer(tmp_path):
     repo, data, results = sealkit.setup(tmp_path)
-    with seal.test_mode(sealkit.authorize(repo, data)):
+    with seal.test_mode(sealkit.authorize(repo, data)) as s:
+        s.work_dir = tmp_path / "run"
+        s.work_dir.mkdir()
         w = Window.test()
         eia_co2.build_carbon(window=w)
     n = len(_reads(results))

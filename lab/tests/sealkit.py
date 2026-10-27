@@ -84,6 +84,7 @@ def make_data_dir(root: Path, start: datetime = DATA_START, end: datetime = F_SY
     trace = data / seal.TRACE_REL
     trace.parent.mkdir(parents=True, exist_ok=True)
     trace.write_text("synthetic trace placeholder (not read by the seal tests)\n")
+    (data / seal.SYNTHETIC_MARKER).write_text("synthetic seal-test data (never real)\n")
     return data
 
 
@@ -95,12 +96,17 @@ def git(root: Path, *args: str) -> str:
     return r.stdout.strip()
 
 
-def _manifests(repo: Path) -> str:
-    """Two committed manifests and their snapshot; returns the snapshot id."""
+def _manifests(repo: Path, data_dir: Path, eia930_extra: list | None = None) -> str:
+    """Two committed manifests listing the synthetic raw inputs (as the real ones list theirs:
+    `file` under raw/eia930, `path` for the trace), and their snapshot; returns its id."""
     man = repo / "data" / "manifests"
     man.mkdir(parents=True, exist_ok=True)
-    (man / "eia930.json").write_text(json.dumps({"source": "synthetic", "files": []}) + "\n")
-    (man / "traces_acme.json").write_text(json.dumps({"source": "synthetic", "files": []}) + "\n")
+    wb = [{"file": f"ba_workbooks/{ba}.xlsx",
+           "sha256": seal.file_sha256(data_dir / seal.WORKBOOK_REL.format(ba=ba))}
+          for ba in seal.CORE_BAS] + list(eia930_extra or [])
+    tr = [{"path": seal.TRACE_REL, "sha256": seal.file_sha256(data_dir / seal.TRACE_REL)}]
+    (man / "eia930.json").write_text(json.dumps({"source": "synthetic", "files": wb}) + "\n")
+    (man / "traces_acme.json").write_text(json.dumps({"source": "synthetic", "files": tr}) + "\n")
     sources = {p.stem: {"manifest_sha256": hashlib.sha256(p.read_bytes()).hexdigest(), "files": 0,
                         "bytes": 0, "status": "frozen"}
                for p in sorted(man.glob("*.json")) if p.name != "snapshot.json"}
@@ -121,8 +127,17 @@ def freeze_record(*, commit: str, snapshot_id: str, data_dir: Path, F: datetime 
     return d
 
 
+VALIDATION_MANIFEST = {"run_id": "20261027T160656Z", "window": "validation"}
+VALIDATION_METRICS = {"window": "validation", "x": {"value": 0.1234567890123, "unit": "fraction",
+                                                    "evidence": "simulated",
+                                                    "provenance_id": "p", "status": "ok",
+                                                    "reason": None}}
+
+
 def make_repo(root: Path, data_dir: Path, *, F: datetime = F_SYN, tag: str = "annotated",
-              record_overrides: dict | None = None, tag_sha: str | None = None) -> Path:
+              record_overrides: dict | None = None, tag_sha: str | None = None,
+              extra_files: dict[str, str] | None = None,
+              eia930_extra: list | None = None) -> Path:
     """A git repo at `root/repo`: commit 1 (code + manifests) is the freeze commit; commit 2
     adds config/freeze.json; `config-freeze` tags commit 2 (annotated by default)."""
     repo = root / "repo"
@@ -130,13 +145,20 @@ def make_repo(root: Path, data_dir: Path, *, F: datetime = F_SYN, tag: str = "an
     git(repo, "init", "-q", "-b", "main")
     (repo / ".gitignore").write_text("runs/\n")
     (repo / "code.py").write_text("FROZEN = True\n")
-    sid = _manifests(repo)
+    sid = _manifests(repo, data_dir, eia930_extra)
+    for rel, text in (extra_files or {}).items():
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text(text)
+    (repo / "results").mkdir()
+    (repo / "results" / "manifest.json").write_text(json.dumps(VALIDATION_MANIFEST) + "\n")
+    (repo / "results" / "metrics.json").write_text(json.dumps(VALIDATION_METRICS) + "\n")
     (repo / "config").mkdir()
     shutil.copy(Path(__file__).parents[2] / seal.FREEZE_SCHEMA_REL, repo / seal.FREEZE_SCHEMA_REL)
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "-m", "code at the freeze")
     commit = git(repo, "rev-parse", "HEAD")
-    rec = freeze_record(commit=commit, snapshot_id=sid, data_dir=data_dir, F=F)
+    rec = freeze_record(commit=commit, snapshot_id=sid, data_dir=data_dir, F=F,
+                        validation_run=seal.validation_reference(repo))
     rec.update(record_overrides or {})
     p = repo / seal.FREEZE_REL
     p.write_text(json.dumps(rec, indent=2) + "\n")
@@ -158,8 +180,14 @@ def setup(tmp_path: Path, **kw) -> tuple[Path, Path, Path]:
 
 
 def authorize(repo: Path, data: Path, results: Path | None = None, **kw) -> seal.Authorization:
+    """A synthetic authorization (I4: synthetic=True, a marked data dir, a temp repo)."""
     return seal.authorize(repo_root=repo, data_dir=data, results_dir=results or repo / "results",
-                          **kw)
+                          synthetic=True, **kw)
+
+
+def commit_all(repo: Path, msg: str) -> None:
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", msg)
 
 
 def read_log(results: Path) -> list[dict]:
@@ -233,4 +261,5 @@ def make_full_data_dir(root: Path, F: datetime, trace_src: Path) -> Path:
     trace = data / seal.TRACE_REL
     trace.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(trace_src, trace)
+    (data / seal.SYNTHETIC_MARKER).write_text("synthetic seal-test data (never real)\n")
     return data

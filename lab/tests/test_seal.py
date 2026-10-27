@@ -179,7 +179,10 @@ def test_a_allows_committed_test_outputs_after_the_freeze(tmp_path):
     (results / "test_reads.jsonl").write_text("")
     sealkit.git(repo, "add", "-A")
     sealkit.git(repo, "commit", "-qm", "test outputs")
-    assert sealkit.authorize(repo, data).F == sealkit.F_SYN
+    # (a) accepts the added outputs; their history is a prior opening, so (d) needs a reason
+    with pytest.raises(seal.SealError, match=r"\(d\).*already opened.*git history"):
+        sealkit.authorize(repo, data)
+    assert sealkit.authorize(repo, data, rerun_reason="r").F == sealkit.F_SYN
 
 
 def test_b_refuses_a_missing_or_lightweight_tag(tmp_path):
@@ -223,8 +226,12 @@ def test_c_refuses_a_record_without_every_test_input(tmp_path):
     data = sealkit.make_data_dir(tmp_path)
     only = {seal.BALANCE_REL: seal.file_sha256(data / seal.BALANCE_REL)}
     repo = sealkit.make_repo(tmp_path, data, record_overrides={"input_sha256": only})
-    with pytest.raises(seal.SealError, match=r"\(c\).*no hash for the test inputs"):
+    # the committed manifests list the workbooks, so I5 refuses before (c) looks
+    with pytest.raises(seal.SealError, match=r"\((c|I5)\)"):
         sealkit.authorize(repo, data)
+    rec = seal.parse_freeze(seal.committed_bytes(repo, seal.FREEZE_REL), repo / seal.FREEZE_REL)
+    with pytest.raises(seal.SealError, match=r"\(c\).*no hash for the test inputs"):
+        seal._check_inputs(rec, data)
 
 
 def test_d_refuses_a_completed_run_unless_a_reason_is_given(tmp_path):
@@ -233,7 +240,7 @@ def test_d_refuses_a_completed_run_unless_a_reason_is_given(tmp_path):
     (results / "test" / "manifest.json").write_text("{}\n")
     sealkit.git(repo, "add", "-A")
     sealkit.git(repo, "commit", "-qm", "a completed test run")
-    with pytest.raises(seal.SealError, match=r"\(d\).*completed test run"):
+    with pytest.raises(seal.SealError, match=r"\(d\).*already opened.*manifest.json exists"):
         sealkit.authorize(repo, data)
     with pytest.raises(seal.SealError, match=r"\(d\).*must not be empty"):
         sealkit.authorize(repo, data, rerun_reason="   ")
@@ -313,13 +320,14 @@ def test_sealed_read_logs_before_returning_sealed_rows(tmp_path, monkeypatch):
     assert r["time_range"] == [seal.iso(t0), seal.iso(sealkit.F_SYN)]
     assert "test_seal:test_sealed_read_logs_before_returning_sealed_rows" in r["caller"]
     assert log[2]["outcome"] == "ok" and log[2]["n_reads"] == 1
-    assert len(synced) == 3  # one fsync per line
+    assert len(synced) == 3 + 1  # one fsync per line, and the directory when the log is new
 
 
 def test_the_read_log_is_append_only_across_sessions(tmp_path):
     repo, data, _results = sealkit.setup(tmp_path)
-    for _ in range(2):
-        with seal.test_mode(sealkit.authorize(repo, data, results=tmp_path / "res")):
+    for reason in (None, "second session: append-only check"):
+        with seal.test_mode(sealkit.authorize(repo, data, results=tmp_path / "res",
+                                              rerun_reason=reason)):
             seal.sealed_read(data / seal.BALANCE_REL, purpose="p", columns=["ts_utc"],
                              time_range=(TEST_START, sealkit.F_SYN))
     log = sealkit.read_log(tmp_path / "res")
@@ -372,9 +380,10 @@ def test_an_error_inside_the_context_is_logged_and_closes_it(tmp_path):
 def test_nested_test_mode_is_refused(tmp_path):
     repo, data, _results = sealkit.setup(tmp_path)
     auth = sealkit.authorize(repo, data)
-    with seal.test_mode(auth), pytest.raises(seal.SealError, match="already active"):  # noqa: SIM117
-        with seal.test_mode(auth):
-            pass
+    again = sealkit.authorize(repo, data)  # inside a session the tree is no longer clean
+    with (seal.test_mode(auth), pytest.raises(seal.SealError, match="already active"),
+          seal.test_mode(again)):
+        pass
 
 
 # --------------------------------------------------------------------------- B7 snapshot refresh

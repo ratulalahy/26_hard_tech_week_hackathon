@@ -293,14 +293,14 @@ def load_inputs(window: Window | None = None) -> tuple[pl.DataFrame, pl.DataFram
 
 def _load_inputs_test(s: datetime, e: datetime, cols: list[str]):
     from gridpilot import seal
-    from gridpilot.data.eia_co2 import CARBON_TEST_REL
-
     ses = seal.require_active("grid profile (test)")
-    carbon = seal.sealed_read(ses.data_path(CARBON_TEST_REL), purpose="grid profile (test)",
+    carbon = seal.sealed_read(ses.carbon_test_path, purpose="grid profile (test)",
                               columns=["ba", "ts_utc", "ci_consumed_g_kwh"], time_range=(s, e))
     balance = seal.sealed_read(
         ses.data_path(seal.BALANCE_REL), purpose="grid profile (test)", columns=cols,
         time_range=(s, e),
-        where=pl.col("ba").cast(pl.Utf8).is_in(("PACE",) + CONTEXT_BAS)
+        # M13 (lead ruling): the test profile reads the four core sites only; the map
+        # context BAs get no test-window means (context_year_mean_ci stays empty)
+        where=pl.col("ba").cast(pl.Utf8).is_in(CORE_BAS)
     ).with_columns(pl.col("ba").cast(pl.Utf8))
     return carbon, balance

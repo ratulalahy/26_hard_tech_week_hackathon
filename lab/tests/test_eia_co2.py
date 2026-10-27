@@ -93,7 +93,13 @@ def _stored(path: Path) -> Path:
 
 
 def test_load_carbon_is_sealed_synthetic(tmp_path):
-    df = load_carbon(_stored(tmp_path / "c.parquet"))
+    # T11 fix r1 I6: a file holding sealed rows is refused outside test mode, not trimmed
+    p = _stored(tmp_path / "c.parquet")
+    with pytest.raises(ValueError, match="test-mode context"):
+        load_carbon(p)
+    pre = pl.read_parquet(p).filter(pl.col("ts_utc") < TEST_START)
+    pre.write_parquet(tmp_path / "pre.parquet")
+    df = load_carbon(tmp_path / "pre.parquet")
     assert df.height == 2
     assert df["ts_utc"].max() < TEST_START
 

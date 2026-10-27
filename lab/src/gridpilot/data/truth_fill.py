@@ -36,7 +36,7 @@ import polars as pl
 from gridpilot import seal
 from gridpilot.carbon import fuel_mix_ci
 from gridpilot.data.eia930 import PARTITION_FUELS
-from gridpilot.data.eia_co2 import CARBON_PATH, CARBON_TEST_REL, CORE_BAS
+from gridpilot.data.eia_co2 import CARBON_PATH, CORE_BAS
 from gridpilot.paths import INTERIM_DIR
 from gridpilot.splits import drop_sealed
 from gridpilot.window import Window, resolve
@@ -128,7 +128,7 @@ def load_eia_carbon(start: datetime, end: datetime, bas: Sequence[str] = CORE_BA
     if w.is_test:
         s = seal.require_active("load_eia_carbon(test)")
         return seal.sealed_read(
-            s.data_path(CARBON_TEST_REL), purpose="F14.6 tiers 1-2 and 4: EIA carbon (test)",
+            s.carbon_test_path, purpose="F14.6 tiers 1-2 and 4: EIA carbon (test)",
             columns=cols, time_range=(start, end),
             where=pl.col("ba").is_in(list(bas))).sort("ba", "ts_utc")
     return (drop_sealed(pl.scan_parquet(CARBON_PATH))
