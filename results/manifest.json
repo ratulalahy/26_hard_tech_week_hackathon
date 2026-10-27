@@ -947,5 +947,11 @@
   "canonical_sha256": "52a55185f8ee48f3de92452aaed4bafa6bee477530fdfa8e6284b8436064cdca",
   "missing_runs": []
  },
- "common_support_rerun": "see extensions.json#common_support"
+ "common_support_rerun": "see extensions.json#common_support",
+ "storage": {
+  "artifact": "storage.json",
+  "kind": "illustrative",
+  "sha256": "6e8d5d7b18436b7e173df1438467440db6db3ad9dc35d5e34458cb013ddecd8c",
+  "canonical_sha256": "678aaca319961fbedf522f71f8b831a5a3c1c609b03a2cfe1a9caf4901599c6c"
+ }
 }

@@ -26,7 +26,7 @@ from gridpilot.results import (
 )
 
 ARTIFACTS = ("manifest.json", "metrics.json", "forecast-replay.json", "job-replay.json",
-             "grid-profile.json", "workload-profile.json", "extensions.json")
+             "grid-profile.json", "workload-profile.json", "extensions.json", "storage.json")
 
 
 # --------------------------------------------------------------------------- env()
@@ -222,6 +222,53 @@ def test_extensions_evidence_classes():
     assert man["extensions"]["missing_runs"] == ext["missing_runs"]
     assert man["extensions"]["canonical_sha256"] == canonical_hash(ext)
     assert man["common_support_rerun"] == "see extensions.json#common_support"
+
+
+def test_storage_evidence_classes():
+    """T10b (D-061; Astra F12–F15, F29): the storage illustration is labelled illustrative;
+    dispatch outcomes (energy, CO2, import, peak relief) are simulated, CI inputs modeled, eta,
+    P/E, sizes and the schedule hours assumed; the schedule comes from the training years;
+    strategy B is a hindsight heuristic, never a bound; the manifest points at it."""
+    _committed()
+    sto = json.loads((RESULTS_DIR / "storage.json").read_text())
+    assert sto["kind"] == "illustrative"
+    assert sto["note"] == ("not part of the registered experiment; validation-year profiles; "
+                           "storage not simulated in the scheduler")
+    assert "heuristic" in sto["strategy_labels"]["B"]
+    assert "bound" not in sto["strategy_labels"]["B"].replace("not an optimum or a bound", "")
+    a = sto["assumptions"]
+    for k in ("sizes_mwh", "p_over_e", "etas", "eta_default", "connection_mw"):
+        assert a[k]["evidence"] == "assumed", k
+    for k in ("charge_hours", "discharge_hours"):
+        assert sto["schedule"][k]["evidence"] == "assumed", k
+    assert sto["schedule"]["train_window"] == ["2022-01-01T00:00:00Z", "2024-10-29T00:00:00Z"]
+    assert sto["schedule"]["train_profile_g_kwh"]["evidence"] == "modeled"
+    assert sto["validation_profile_g_kwh"]["evidence"] == "modeled"
+    for name, c in sto["cases"].items():
+        for k in ("energy_mwh", "mean_load_mw", "load_hours", "base_co2_t"):
+            assert c[k]["evidence"] == "simulated", (name, k)
+        for s, by_eta in c["strategies"].items():
+            assert set(by_eta) == {"0.75", "0.85", "0.90"}
+            for eta, b in by_eta.items():
+                for k, e in b.items():
+                    assert e["evidence"] == "simulated", (name, s, eta, k)
+                    assert len(e["value"]) == len(a["sizes_mwh"]["value"])
+        for s, imp in c["import_at_headline"].items():
+            assert all(e["evidence"] == "simulated" for e in imp.values()), (name, s)
+    for p, sites in sto["peak_relief"]["policies"].items():
+        for site, by in sites.items():
+            assert all(e["evidence"] == "simulated" for e in by.values()), (p, site)
+    assert sto["peak_relief"]["run_id"] == sto["registered_run_id"]
+    assert sto["window"]["end"] <= "2025-11-01"
+    man = json.loads((RESULTS_DIR / "manifest.json").read_text())
+    assert sto["registered_run_id"] == man["run_id"]
+    assert man["storage"]["artifact"] == "storage.json"
+    assert man["storage"]["canonical_sha256"] == canonical_hash(sto)
+    # the storage window is the registered cohort window: no-storage CO2 is U's CO2
+    met = json.loads((RESULTS_DIR / "metrics.json").read_text())
+    u = met["policies"]["U"]["metrics"]["co2_kg"]["value"] / 1000
+    assert abs(sto["cases"]["U"]["base_co2_t"]["value"] - u) < 1e-6 * u
+    assert abs(sto["combined"]["U_co2_t"]["value"] - u) < 1e-6 * u
 
 
 def test_manifest_carries_claim_frame():

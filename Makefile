@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test notebooks profile slice need-run-dir ext-runs extensions web
+.PHONY: test notebooks profile slice need-run-dir ext-runs extensions storage web
 
 test:
 	cd lab && uv run pytest
@@ -49,6 +49,12 @@ extensions: need-run-dir
 	@test -n "$(REPRO_RUN)" || { echo "REPRO_RUN=<abs path of a primary run made by this code> is required"; exit 2; }
 	cd lab && uv run python scripts/export_extensions.py --registered-run $(RUN_DIR) \
 		--ext-root $(EXT_ROOT) --repro-run $(REPRO_RUN) $(if $(ALLOW_MISSING),--allow-missing,)
+
+# The storage illustration (Stage 3 T10b, D-061; validation only): results/storage.json and the
+# manifest's `storage` pointer. RUN_DIR (required): the registered run; EXT_ROOT (default: the
+# runs/ext next to it) holds the mobility <= 8 GPUs run that results/extensions.json names.
+storage: need-run-dir
+	cd lab && uv run python scripts/export_storage.py --registered-run $(RUN_DIR) --ext-root $(EXT_ROOT)
 
 # The dashboard's validation-year grid context (Task 8): results/grid-profile.json.
 # RUN_DIR: the registered slice run (default runs/slice/<results/manifest.json run_id>).
