@@ -20,6 +20,7 @@ from gridpilot.eval import (
     block_indices,
     bound_ok,
     common_support,
+    denver_weeks,
     h2_decision,
     influence,
     job_accounting,
@@ -30,7 +31,17 @@ from gridpilot.eval import (
     support_check,
     weekly,
 )
-from gridpilot.sim import LEDGER_COLUMNS, SITES, G, S, U, closed_intervals, simulate, u_bookings
+from gridpilot.sim import (
+    LEDGER_COLUMNS,
+    SITES,
+    G,
+    S,
+    U,
+    closed_intervals,
+    simulate,
+    u_bookings,
+    warm_up,
+)
 from gridpilot.splits import TEST_START
 
 T0 = datetime(2024, 11, 4, tzinfo=UTC)  # a Monday, inside validation
@@ -224,14 +235,86 @@ def test_missing_truth_touched_raises():
         score(led, jobs, truth_frame(t))
 
 
-def test_mask_closure_counts_as_missing():
-    led, jobs, truth = example()
-    mask = pl.DataFrame({"ba": ["CISO"], "ts_utc": [T0 + timedelta(hours=1)],
-                         "truth_ok": [False]},
+def one_hour_mask(ba: str, hour: int, ok: bool | None) -> pl.DataFrame:
+    return pl.DataFrame({"ba": [ba], "ts_utc": [T0 + timedelta(hours=hour)],
+                         "truth_ok": [ok]},
                         schema={"ba": pl.Utf8, "ts_utc": pl.Datetime("us", "UTC"),
                                 "truth_ok": pl.Boolean})
-    with pytest.raises(ValueError, match="missing truth"):
-        score(led, jobs, truth, mask=mask)
+
+
+def test_mask_closing_a_valued_hour_raises():
+    """The mask must come from the same (filled) truth (fix r1 #6)."""
+    led, jobs, truth = example()
+    with pytest.raises(ValueError, match="mask closes"):
+        score(led, jobs, truth, mask=one_hour_mask("CISO", 1, False))
+    with pytest.raises(ValueError, match="mask closes"):  # a null truth_ok means closed
+        TruthTable(truth, one_hour_mask("CISO", 1, None))
+
+
+def test_mask_from_the_same_truth_is_consistent():
+    led, jobs, _ = example()
+    t = dict(EX_TRUTH)
+    t["BPAT"] = [HIGH, None, HIGH, HIGH]  # nobody runs at BPAT
+    truth = truth_frame(t)
+    mask = site_mask(truth)
+    assert not mask.filter((pl.col("ba") == "BPAT") & ~pl.col("truth_ok")).is_empty()
+    assert score(led, jobs, truth, mask=mask)["co2_kg"] == pytest.approx(0.8904, abs=1e-12)
+
+
+def test_tier_must_be_1_to_4_where_valued():
+    for bad in (None, 0, 5):
+        t = ex_tiered().with_columns(
+            pl.when((pl.col("ba") == "PACE") & (pl.col("ts_utc") == T0)).then(pl.lit(bad))
+            .otherwise(pl.col("tier")).cast(pl.Int8).alias("tier"))
+        with pytest.raises(ValueError, match="tier"):
+            TruthTable(t)
+    # a null tier on a row with no value is fine (the hour is simply missing)
+    t = ex_tiered().with_columns(
+        pl.when((pl.col("ba") == "NEVP") & (pl.col("ts_utc") == T0)).then(None)
+        .otherwise(pl.col("ci_g_kwh")).alias("ci_g_kwh"),
+        pl.when((pl.col("ba") == "NEVP") & (pl.col("ts_utc") == T0)).then(None)
+        .otherwise(pl.col("tier")).cast(pl.Int8).alias("tier"))
+    TruthTable(t)
+
+
+def _hour_walk(ci: dict[int, float | None], s: int, e: int) -> tuple[float, bool]:
+    """Pure-Python reference: walk [s, e) hour by hour (µs ints, hour index -> value)."""
+    acc, miss, t = 0.0, False, s
+    while t < e:
+        h = t // HOUR_US
+        nxt = min(e, (h + 1) * HOUR_US)
+        v = ci.get(h)
+        if v is None:
+            miss = True
+        else:
+            acc += (nxt - t) / HOUR_US * v
+        t = nxt
+    return acc, miss
+
+
+def test_integral_matches_pure_python_hour_walk():
+    """Fix r1 #7: TruthTable.integral against an independent hour walk, µs-level times."""
+    rng = np.random.default_rng(2026)
+    hours = 72
+    vals = [None if rng.random() < 0.05 else float(rng.uniform(10, 900)) for _ in range(hours)]
+    tt = TruthTable(truth_frame({"PACE": vals}))
+    h0 = int(T0.timestamp()) * US // HOUR_US
+    ci = {h0 + i: v for i, v in enumerate(vals)}
+    t0 = h0 * HOUR_US
+    s = t0 + rng.integers(-HOUR_US, (hours - 1) * HOUR_US, size=400)
+    d = rng.integers(1, 30 * HOUR_US, size=400)
+    d[:20] = rng.integers(1, 1000, size=20)  # sub-millisecond jobs
+    s[20:40] = t0 + rng.integers(0, hours, size=20) * HOUR_US  # hour-aligned starts
+    e = s + d
+    val, miss = tt.integral("PACE", s, e)
+    n_checked = 0
+    for i in range(s.size):
+        ref, ref_miss = _hour_walk(ci, int(s[i]), int(e[i]))
+        assert bool(miss[i]) == ref_miss, i
+        if not ref_miss:
+            assert val[i] == pytest.approx(ref, rel=1e-12, abs=1e-9), i
+            n_checked += 1
+    assert n_checked > 100
 
 
 def test_truth_request_at_or_after_seal_raises():
@@ -364,15 +447,13 @@ def test_bound_respects_missing_arrival_hour_for_transfer():
     assert (r["site"], r["co2_kg"]) == ("PACE", pytest.approx(0.072, abs=1e-12))
 
 
-def test_bound_mask_closes_hours():
-    truth = truth_frame({"PACE": [100, 200, 300, 400], "CISO": [50, 60, 70, 80],
+def test_bound_with_mask_from_same_truth():
+    truth = truth_frame({"PACE": [100, 200, 300, 400], "CISO": [50, None, 70, 80],
                          "BPAT": [HIGH] * 4, "NEVP": [HIGH] * 4})
-    mask = pl.DataFrame({"ba": ["CISO"], "ts_utc": [T0 + timedelta(hours=1)],
-                         "truth_ok": [False]},
-                        schema={"ba": pl.Utf8, "ts_utc": pl.Datetime("us", "UTC"),
-                                "truth_ok": pl.Boolean})
-    r = relaxed_bound_jobs(bound_job(), truth, mask).to_dicts()[0]
+    r = relaxed_bound_jobs(bound_job(), truth, site_mask(truth)).to_dicts()[0]
     assert r["co2_kg"] == pytest.approx(0.0531, abs=1e-12)
+    with pytest.raises(ValueError, match="mask closes"):
+        relaxed_bound_jobs(bound_job(), truth, one_hour_mask("CISO", 0, False))
 
 
 def test_bound_immobile_and_gang_limits():
@@ -526,6 +607,40 @@ def test_weekly_denver_arrival_weeks_with_zero_weeks():
     assert w["co2_kg"].sum() == pytest.approx(score(led, jobs, truth)["co2_kg"])
 
 
+def test_weekly_spring_forward_week():
+    # DST starts Sun 2025-03-09 02:00 MST. Weeks: Mon 03-03 00:00 MST (07:00Z) and
+    # Mon 03-10 00:00 MDT (06:00Z), which is only 167 h later.
+    base = datetime(2025, 3, 1, tzinfo=UTC)
+    hours = 24 * 16
+    truth = flat_truth(hours, start=base, PACE=[100.0] * hours)
+
+    def at(ts):
+        return (ts - base).total_seconds() / 60
+
+    sun_late = datetime(2025, 3, 10, 5, 30, tzinfo=UTC)  # Sun 23:30 MDT
+    mon = datetime(2025, 3, 10, 6, 0, tzinfo=UTC)  # Mon 00:00 MDT
+    jrows = [{"job_uid": "s#c0", "at_min": at(sun_late), "dur_min": 60},
+             {"job_uid": "m#c0", "at_min": at(mon), "dur_min": 60, "gpus": 2}]
+    jobs = jobs_frame(jrows, base)
+    led = ledger_frame([{**r, "start_min": r["at_min"]} for r in jrows], base)
+    w = weekly(led, jobs, truth, window=(datetime(2025, 3, 5, tzinfo=UTC),
+                                         datetime(2025, 3, 12, tzinfo=UTC)))
+    wk = [d.astimezone(UTC) for d in w["week"].to_list()]
+    assert wk == [datetime(2025, 3, 3, 7, tzinfo=UTC), datetime(2025, 3, 10, 6, tzinfo=UTC)]
+    assert w["n_jobs"].to_list() == [1, 1]
+    assert w["co2_kg"].to_list() == pytest.approx([0.072, 0.144])
+
+
+def test_weekly_window_is_required_and_tz_aware():
+    led, jobs, truth = example()
+    with pytest.raises(TypeError):
+        weekly(led, jobs, truth)  # the window is a required keyword
+    with pytest.raises(ValueError, match="timezone-aware"):
+        weekly(led, jobs, truth, window=(datetime(2024, 11, 4), datetime(2024, 11, 11)))
+    with pytest.raises(ValueError, match="timezone-aware"):
+        denver_weeks(datetime(2024, 11, 4), T0 + timedelta(days=7))
+
+
 def test_weekly_rejects_arrivals_outside_window():
     led, jobs, truth = example()
     with pytest.raises(ValueError, match="outside"):
@@ -666,6 +781,48 @@ def test_h2_decision_directions():
     assert fav["method"] == BOOTSTRAP_LABEL
     empty = h2_decision(np.array([]), np.array([]))
     assert empty["direction"] == "inconclusive" and empty["decided"] is False
+    assert empty["reason"] == "degenerate"
+
+
+# W − L by week (24 weeks): a slow seasonal swing around a small positive mean. Short
+# blocks give an interval above zero; b = 8 keeps whole swings together and straddles 0.
+SPLIT_D = [1.1, 1.618, 2.1, 2.514, 2.832, 3.032, 3.1, 3.032, 2.832, 2.514, 2.1, 1.618, 1.1,
+           0.582, 0.1, -0.314, -0.632, -0.832, -0.9, -0.832, -0.632, -0.314, 0.1, 0.582]
+
+
+def test_h2_two_blocks_decide_third_does_not():
+    d = np.array(SPLIT_D)
+    r = h2_decision(100 + d, np.full(d.size, 100.0))
+    lo = {b: r["intervals"][b]["diff_kg_ci"][0] for b in (2, 4, 8)}
+    hi8 = r["intervals"][8]["diff_kg_ci"][1]
+    assert lo[2] > 0 and lo[4] > 0
+    assert lo[8] <= 0 < hi8
+    assert r["direction"] == "inconclusive" and r["decided"] is False
+    assert r["reason"] == "intervals do not all lie on one side of zero"
+
+
+def test_degenerate_when_n_le_block():
+    a, b = np.arange(1.0, 5.0), np.arange(1.0, 5.0) * 0.5
+    r = paired_block_bootstrap(a, b, block=4)
+    assert r["degenerate"] is True
+    # every replicate is a rotation of all n weeks: the interval collapses to the point
+    assert r["diff_kg_ci"] == pytest.approx((r["diff_kg"], r["diff_kg"]))
+    assert paired_block_bootstrap(np.ones(5), np.ones(5), block=4)["degenerate"] is False
+    # clearly favourable data, but n = 8 <= max(blocks): no decision
+    w = np.full(8, 100.0)
+    h = h2_decision(w, w - 10)
+    assert h["direction"] == "inconclusive" and h["reason"] == "degenerate"
+    assert h["decided"] is False
+    assert h2_decision(np.full(9, 100.0), np.full(9, 90.0))["direction"] == "favourable"
+
+
+def test_bootstrap_rejects_mixed_inputs():
+    led, jobs, truth = example()
+    w = weekly(led, jobs, truth, window=(T0, T0 + timedelta(days=7)))
+    with pytest.raises(TypeError, match="mixed"):
+        paired_block_bootstrap(w, np.ones(w.height))
+    with pytest.raises(TypeError, match="mixed"):
+        paired_block_bootstrap(np.ones(w.height), w)
 
 
 # --------------------------------------------------------------------------- influence
@@ -700,6 +857,15 @@ def test_influence_removes_every_instance_of_top_sources():
     assert k3["totals"]["U"] == pytest.approx(2 * 0.72 * 100 / 1000)  # only tie2 left
 
 
+def test_influence_requires_one_declared_attempt_per_source():
+    jrows = [{"job_uid": "a#c0", "dur_min": 60}, {"job_uid": "a#c1", "at_min": 120,
+                                                  "dur_min": 90}]
+    jobs = jobs_frame(jrows)
+    led = ledger_frame([{**r, "start_min": r.get("at_min", 0)} for r in jrows])
+    with pytest.raises(ValueError, match="different durations"):
+        influence({"U": led}, jobs, flat_truth(6), k_list=(1,))
+
+
 # --------------------------------------------------------------------------- support check
 
 
@@ -732,3 +898,49 @@ def test_support_check_accepts_ledgers_and_never_reads_past_seal():
     r = support_check(led, truth, TEST_START)
     assert r["ok"] is False
     assert sorted(r["failures"][0]["reasons"]) == ["ends_after_f", "missing_truth"]
+
+
+def test_support_check_end_equal_to_f_passes_and_f_must_be_aware():
+    truth = flat_truth(4)
+    t0 = int(T0.timestamp()) * US
+    b = pl.DataFrame({"job_uid": ["edge#c0"], "site": ["PACE"], "start_us": [t0 + HOUR_US],
+                      "end_us": [t0 + 3 * HOUR_US], "deadline_us": [t0 + 3 * HOUR_US]})
+    r = support_check(b, truth, T0 + timedelta(hours=3))
+    assert r["ok"] is True and r["n_after_f"] == 0
+    assert support_check(b, truth, T0 + timedelta(hours=3) - timedelta(microseconds=1))[
+        "n_after_f"] == 1
+    with pytest.raises(ValueError, match="timezone-aware"):
+        support_check(b, truth, datetime(2024, 11, 4, 3))
+
+
+# --------------------------------------------------------------------------- capacity
+
+
+def test_capacity_check_includes_warm_up():
+    # cohort: 2,000 GPUs at PACE for [0, 60) min; warm-up: 500 GPUs still running to 30 min
+    jobs = jobs_frame([{"job_uid": "big#c0", "dur_min": 60, "gpus": 2000}])
+    led = ledger_frame([{"job_uid": "big#c0", "start_min": 0, "dur_min": 60, "gpus": 2000}])
+    warm_led = ledger_frame([{"job_uid": "w#c0", "at_min": -60, "start_min": -30,
+                              "dur_min": 60, "gpus": 500}])
+    truth = flat_truth(2)
+    alone = score(led, jobs, truth)
+    assert alone["capacity_violations"] == 0 and alone["feasible"] is True
+    m = score(led, jobs, truth, warm=warm_led)
+    assert m["peak_gpus"]["PACE"] == 2500
+    assert m["capacity_violations"] == 1 and m["feasible"] is False
+    assert m["co2_kg"] == alone["co2_kg"]  # warm-up work and energy are not added
+    # ending exactly when the cohort job starts does not overlap (half-open)
+    touch = ledger_frame([{"job_uid": "w#c0", "at_min": -60, "start_min": -60,
+                           "dur_min": 60, "gpus": 500}])
+    assert score(led, jobs, truth, warm=touch)["capacity_violations"] == 0
+
+
+def test_capacity_check_accepts_warmup_state():
+    jobs, truth = random_instance(21, n_jobs=10, missing=False)
+    early = jobs.with_columns(pl.col("arrival_ts") - timedelta(hours=12),
+                              (pl.col("job_uid") + "w").alias("job_uid"))
+    warm = warm_up(early)
+    bookings = u_bookings(jobs, warm=warm)
+    led = simulate(jobs, G(), bookings=bookings, warm=warm)
+    m = score(led, jobs, truth, warm=warm)
+    assert m["capacity_violations"] == 0 and m["feasible"] is True

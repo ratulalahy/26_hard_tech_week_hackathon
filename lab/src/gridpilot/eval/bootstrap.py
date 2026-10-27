@@ -82,8 +82,12 @@ def paired_block_bootstrap(
 
     Returns the ratio-of-totals saving (a − b) / a and the paired absolute difference
     a − b in kg, each with a 95% percentile interval. A negative value means the
-    candidate emits more than the reference; signs are never altered.
+    candidate emits more than the reference; signs are never altered. Both inputs must
+    be frames or both arrays. `degenerate` is True when n ≤ block: every replicate is
+    then a rotation of all n weeks, so the interval collapses to the point estimate.
     """
+    if isinstance(a_weeks, pl.DataFrame) != isinstance(b_weeks, pl.DataFrame):
+        raise TypeError("pass both weekly series as frames or both as arrays, not mixed")
     a, wa = _values(a_weeks, value)
     b, wb = _values(b_weeks, value)
     if a.shape != b.shape:
@@ -100,6 +104,7 @@ def paired_block_bootstrap(
         "seed": seed,
         "quantiles": QUANTILES,
         "n_weeks": n,
+        "degenerate": n <= block,
         "value": value,
         "diff_definition": "reference − candidate (positive = candidate emits less)",
         "reference_total": float(a.sum()),
@@ -143,25 +148,30 @@ def h2_decision(
     block-resampling intervals at b = 2, 4 and 8. `direction` is "favourable" only if
     all three lower endpoints of W − L are > 0 (L emits less), "adverse" only if all
     three upper endpoints are < 0, else "inconclusive"; `decided` is direction !=
-    "inconclusive". The b = 4 interval is the primary statistic.
+    "inconclusive". The b = 4 interval is the primary statistic. With n ≤ max(blocks)
+    weeks (empty input included) the result is "inconclusive" with reason "degenerate":
+    at b ≥ n every replicate is a rotation of all n weeks and its interval collapses.
     """
     res = {int(b): paired_block_bootstrap(w_weeks, l_weeks, int(b), reps, seed, value=value)
            for b in blocks}
+    n = next(iter(res.values()))["n_weeks"] if res else 0
     cis = [r["diff_kg_ci"] for r in res.values()]
-    if any(c is None for c in cis):
-        direction = "inconclusive"
+    if n <= max(int(b) for b in blocks):
+        direction, reason = "inconclusive", "degenerate"
     elif all(c[0] > 0 for c in cis):
-        direction = "favourable"
+        direction, reason = "favourable", "all lower endpoints > 0"
     elif all(c[1] < 0 for c in cis):
-        direction = "adverse"
+        direction, reason = "adverse", "all upper endpoints < 0"
     else:
-        direction = "inconclusive"
+        direction, reason = "inconclusive", "intervals do not all lie on one side of zero"
     return {
         "method": BOOTSTRAP_LABEL,
         "statistic": "W − L kg CO₂ (positive = L emits less)",
         "blocks": [int(b) for b in blocks],
         "primary_block": PRIMARY_BLOCK,
+        "n_weeks": n,
         "intervals": res,
         "direction": direction,
+        "reason": reason,
         "decided": direction != "inconclusive",
     }

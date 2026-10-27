@@ -26,12 +26,12 @@ for an hour at or after TEST_START raises (seal, F8).
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import numpy as np
 import polars as pl
 
-from gridpilot.sim import HOME, SITES, TRANSFER_S
+from gridpilot.sim import HOME, SITES, TRANSFER_S, WarmupState
 from gridpilot.splits import TEST_START
 
 KW_PER_GPU = 0.60  # active power per allocated GPU slot (assumed, F7)
@@ -42,7 +42,21 @@ WEEK_TZ = "America/Denver"
 
 US = 1_000_000
 HOUR_US = 3600 * US
-TEST_START_US = int(TEST_START.timestamp()) * US
+EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
+
+
+def _aware(dt: datetime, what: str) -> datetime:
+    if not isinstance(dt, datetime) or dt.tzinfo is None or dt.utcoffset() is None:
+        raise ValueError(f"{what} must be a timezone-aware datetime, got {dt!r}")
+    return dt
+
+
+def _dt_us(dt: datetime, what: str) -> int:
+    """Exact µs since the Unix epoch for a tz-aware datetime."""
+    return (_aware(dt, what) - EPOCH) // timedelta(microseconds=1)
+
+
+TEST_START_US = _dt_us(TEST_START, "TEST_START")
 _RATE = KW_PER_GPU * PUE  # facility kW per GPU
 _CHUNK = 4_000_000  # bound candidates evaluated per numpy batch
 
@@ -82,6 +96,15 @@ class TruthTable:
     integrals. Build it once and pass it to every call to reuse it across policies.
 
     Arrays per site: `ci` (g/kWh, 0 where missing), `missing`, `filled` (tier ≥ 2).
+
+    `tier` must be an integer 1–4 wherever the value is finite (F14.6); a null or
+    out-of-range tier raises. Without a `tier` column every finite value is tier 1.
+
+    **Mask.** The mask must be built from the same (filled) truth, e.g.
+    `site_mask(filled_truth, ...)`, so it closes only hours that have no value. A mask
+    that closes an hour holding a finite value raises: it would silently make accounting
+    and the bound disagree with the engine's closure calendar. A null `truth_ok` means
+    closed.
     """
 
     def __init__(self, truth: pl.DataFrame, mask: pl.DataFrame | None = None):
@@ -96,6 +119,12 @@ class TruthTable:
             "ba", _us("ts_utc").alias("t"), pl.col(ci_col).cast(pl.Float64).alias("ci"),
             tier.alias("tier"),
         )
+        bad = t.filter(pl.col("ci").is_finite().fill_null(False)
+                       & (pl.col("tier").is_null() | ~pl.col("tier").is_between(1, 4)))
+        if bad.height:
+            raise ValueError(f"{bad.height} truth rows with a finite value have a null or "
+                             f"out-of-range tier (must be 1–4; F14.6), e.g. "
+                             f"{bad.head(3).to_dicts()}")
         if t.select((pl.col("t") % HOUR_US != 0).any()).item():
             raise ValueError("truth ts_utc must be UTC hour starts")
         if t.select(pl.struct("ba", "t").is_duplicated().any()).item():
@@ -110,7 +139,8 @@ class TruthTable:
         self._arrays: dict[str, tuple[np.ndarray, ...]] = {}
         closed: dict[str, np.ndarray] = {}
         if mask is not None:
-            m = mask.filter(~pl.col("truth_ok") & (pl.col("ts_utc") < TEST_START)).select(
+            m = mask.filter(~pl.col("truth_ok").fill_null(False)
+                            & (pl.col("ts_utc") < TEST_START)).select(
                 "ba", ((_us("ts_utc") - self.start_us) // HOUR_US).alias("h"))
             m = m.filter((pl.col("h") >= 0) & (pl.col("h") < n))
             for ba, g in m.group_by("ba"):
@@ -127,6 +157,12 @@ class TruthTable:
             miss[h[ok]] = False
             fill[h[ok]] = (g["tier"].to_numpy()[ok] >= 2).astype(float)
             if ba in closed:
+                clash = closed[ba][~miss[closed[ba]]]
+                if clash.size:
+                    ts = [self.start_us + int(x) * HOUR_US for x in clash[:3]]
+                    raise ValueError(
+                        f"mask closes {clash.size} {ba} hours that have a finite truth value "
+                        f"(e.g. µs {ts}); build the mask from the same filled truth")
                 miss[closed[ba]] = True
             ci[:n][miss] = 0.0
             fill[:n][miss] = 0.0
@@ -356,6 +392,18 @@ def job_accounting(
     })
 
 
+def _occupancy(warm: pl.DataFrame | WarmupState) -> pl.DataFrame:
+    """(site, start_us, end_us, gpus) from a warm-up ledger or a WarmupState."""
+    if isinstance(warm, WarmupState):
+        warm = warm.ledger
+    need = ["site", "start_ts", "end_ts", "gpus"]
+    missing = [c for c in need if c not in warm.columns]
+    if missing:
+        raise ValueError(f"warm-up ledger is missing columns {missing}")
+    return warm.select("site", _us("start_ts").alias("start_us"),
+                       _us("end_ts").alias("end_us"), pl.col("gpus").cast(pl.Int64))
+
+
 def _peak(starts: np.ndarray, ends: np.ndarray, gpus: np.ndarray) -> int:
     """Peak simultaneous GPUs over half-open intervals (ends release before starts)."""
     if starts.size == 0:
@@ -374,6 +422,7 @@ def score(
     mask: pl.DataFrame | None = None,
     sites: Mapping[str, int] = SITES,
     home: str = HOME,
+    warm: pl.DataFrame | WarmupState | None = None,
 ) -> dict:
     """Policy metrics over one ledger (spec §9; amendment 7; F14.6).
 
@@ -381,8 +430,11 @@ def score(
       exact equality in integer GPU-µs.
     - Lateness: `late_jobs`, `late_gpu_h` (declared GPU-hours of jobs ending after their
       deadline). Under F11 bookings both are 0 by construction.
-    - `feasible` = no late job, work conserved, and no site over its slots in this ledger
-      (`capacity_violations`; ledger-only, so warm-up occupancy is not included).
+    - `feasible` = no late job, work conserved, and `capacity_violations == 0`: the
+      number of sites whose peak simultaneous GPUs (`peak_gpus`) exceed their slots,
+      over the cohort ledger plus `warm` (the warm-up ledger or `WarmupState`) when
+      given. Without `warm` the check covers the cohort only. All other metrics are
+      cohort-only; warm-up work and energy are never added.
     - Wait = execution start − arrival (transfer time included for remote runs).
     - Energy: `execution_kwh`, `transfer_kwh` (with PUE), `transfer_it_kwh`, and
       `energy_kwh` = execution + transfer. `kwh_share_tier_ge2` is the share of charged
@@ -409,14 +461,19 @@ def score(
     else:
         p50 = p95 = wmax = wmean = None
 
+    occ = a.select("site", _us("start_ts").alias("start_us"), _us("end_ts").alias("end_us"),
+                   pl.col("gpus").cast(pl.Int64))
+    if warm is not None:
+        occ = pl.concat([occ, _occupancy(warm)])
+    unknown = set(occ["site"].unique().to_list()) - set(sites)
+    if unknown:
+        raise ValueError(f"ledger or warm-up uses sites {unknown} not in {list(sites)}")
     peaks = {}
     for st in sites:
-        d = a.filter(pl.col("site") == st)
-        peaks[st] = _peak(_us_np(d["start_ts"]), _us_np(d["end_ts"]),
+        d = occ.filter(pl.col("site") == st)
+        peaks[st] = _peak(d["start_us"].to_numpy().astype(np.int64),
+                          d["end_us"].to_numpy().astype(np.int64),
                           d["gpus"].to_numpy().astype(np.int64))
-    unknown = set(a["site"].unique().to_list()) - set(sites)
-    if unknown:
-        raise ValueError(f"ledger uses sites {unknown} not in {list(sites)}")
     violations = sum(peaks[st] > slots for st, slots in sites.items())
 
     def share(num, den):
@@ -676,9 +733,13 @@ def relaxed_bound(
 
 
 def denver_weeks(start: datetime, end: datetime) -> pl.Series:
-    """Every Monday-00:00 America/Denver week that intersects [start, end) (F13.4)."""
-    s = pl.Series([start, end - timedelta(microseconds=1)]).dt.cast_time_unit("us") \
-        .dt.convert_time_zone(WEEK_TZ).dt.truncate("1w")
+    """Every Monday-00:00 America/Denver week that intersects [start, end) (F13.4).
+    Both bounds must be timezone-aware."""
+    start, end = _aware(start, "start"), _aware(end, "end")
+    if not end > start:
+        raise ValueError(f"empty window [{start}, {end})")
+    s = pl.Series([start.astimezone(UTC), (end - timedelta(microseconds=1)).astimezone(UTC)]) \
+        .dt.cast_time_unit("us").dt.convert_time_zone(WEEK_TZ).dt.truncate("1w")
     return pl.datetime_range(s[0], s[1], "1w", time_unit="us", time_zone=WEEK_TZ,
                              eager=True).alias("week")
 
@@ -688,7 +749,7 @@ def weekly(
     jobs: pl.DataFrame,
     truth: pl.DataFrame | TruthTable,
     *,
-    window: tuple[datetime, datetime] | None = None,
+    window: tuple[datetime, datetime],
     mask: pl.DataFrame | None = None,
     home: str = HOME,
 ) -> pl.DataFrame:
@@ -696,17 +757,14 @@ def weekly(
 
     Each job's full totals land in the Monday-00:00 America/Denver week of its arrival,
     whatever weeks its execution spans. Rows are every week intersecting the arrival
-    interval `window` = [start, end) (default: first arrival to last arrival + 1 µs),
-    zero-job weeks included, partial edge weeks as they are. Columns: week
+    interval `window` = [eval_start, A) (required; tz-aware), zero-job weeks included,
+    partial edge weeks as they are. Arrivals outside the window raise. Columns: week
     (datetime[us, America/Denver]), co2_kg, energy_kwh, n_jobs, gpu_h, execution_kwh,
     transfer_kwh.
     """
-    a = job_accounting(ledger, jobs, truth, mask=mask, home=home)
-    if window is None:
-        if a.height == 0:
-            raise ValueError("weekly needs a window when there are no jobs")
-        window = (a["arrival_ts"].min(), a["arrival_ts"].max() + timedelta(microseconds=1))
     start, end = window
+    start, end = _aware(start, "window start"), _aware(end, "window end")
+    a = job_accounting(ledger, jobs, truth, mask=mask, home=home)
     if not end > start:
         raise ValueError(f"empty arrival window {window}")
     out = a.filter((pl.col("arrival_ts") < start) | (pl.col("arrival_ts") >= end))
@@ -758,6 +816,14 @@ def influence(
         raise ValueError(f"reference policy {reference!r} not in ledgers")
     src = _source_col(jobs)
     tt = _truth(truth, mask)
+    varied = (jobs.group_by(src)
+              .agg(pl.col("duration_s").n_unique().alias("nd"), pl.col("gpus").n_unique()
+                   .alias("ng"))
+              .filter((pl.col("nd") > 1) | (pl.col("ng") > 1)))
+    if varied.height:
+        raise ValueError(f"{varied.height} sources have instances with different durations "
+                         f"or gpus (one declared attempt each), e.g. "
+                         f"{varied[src][:5].to_list()}")
     rank = (
         jobs.group_by(src)
         .agg((pl.col("gpus") * pl.col("duration_s") / 3600).max().alias("declared_gpu_h"))
@@ -805,6 +871,7 @@ def support_check(
     through its actual completion. `ok` is False on any failure, which the driver must
     report as an accounting-support failure.
     """
+    f_us = _dt_us(F, "F")
     tt = _truth(truth, mask)
     if "start_us" in bookings.columns:
         s = bookings["start_us"].to_numpy().astype(np.int64)
@@ -813,7 +880,6 @@ def support_check(
         s, e = _us_np(bookings["start_ts"]), _us_np(bookings["end_ts"])
     uid = bookings["job_uid"].to_list()
     site = bookings["site"].to_numpy().astype(str)
-    f_us = round(F.timestamp() * US)
     after = e > f_us
     sealed = e > TEST_START_US
     e_read = np.minimum(e, TEST_START_US)
