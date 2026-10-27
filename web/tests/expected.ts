@@ -134,3 +134,20 @@ export const caseExpect = (caseDays.days as any[]).map((d) => ({
     return e(d) / Math.max(...others) < 0.6;
   })(),
 }));
+
+/** T17 (D-068): results/assumptions.json, checked against numbers computed here from metrics.json
+ * and extensions.json (not from the notebook's sentences). */
+export const assumptions = JSON.parse(readFileSync(join(results, 'assumptions.json'), 'utf8'));
+export const nRegister: number = assumptions.register.length;
+const ci = (cand: string, ref = 'U') => {
+  const c = metrics.contrasts.find((x: { candidate: string; reference: string }) => x.candidate === cand && x.reference === ref);
+  const [lo, hi] = c.blocks['4'].saving_ci95.value as number[];
+  return `${pct(saving(cand, ref))}% [${pct(lo)}, ${pct(hi)}]`;
+};
+/** "Perfect carbon foresight (H) saves 22.6% [18.4, 26.8]" and S's own saving, as the weather point prints them. */
+export const weatherH = `(H) saves ${ci('H')}`;
+export const weatherS = `ranking S saves ${ci('S')}`;
+/** Waiting in Utah, as the negative-results list prints it: "save 0.7% [0.5, 0.9] (W_time)". */
+export const waitW = `save ${ci('W_time')} (W_time)`;
+/** The mobility row: "W saves 3.9% [2.6, 5.4]". */
+export const mobilityW = `W saves ${cell(ext.sensitivities.mobility_le_8gpus.policies.W.vs_U['4'])}`;

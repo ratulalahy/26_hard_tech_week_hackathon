@@ -1,8 +1,9 @@
 import * as Dialog from '@radix-ui/react-dialog';
+import { AssumptionsSection } from '../components/assumptions';
 import { PolicyTable } from '../components/charts';
 import { CONSUMPTION_CHECKS, ExtensionsTable, PHRASE, extRows, listJoin, placementSpan } from '../components/extensions';
 import { ReliefTable, RushSensitivity, hourSpans, storageFacts } from '../components/storage';
-import { Ev, Icon } from '../components/ui';
+import { Ev, Icon, ScrollX } from '../components/ui';
 import { WaterPanel } from '../components/water';
 import { useCopy } from '../lib/useCopy';
 import { DEADLINE_RULE, asNum, headline, plainLimitations, pname, stripCodes, type Json } from '../lib/data';
@@ -60,7 +61,7 @@ export function MethodDrawer() {
                 Arrivals {iso(m.covered.arrivals[0])} to {iso(m.covered.arrivals[1])}; jobs then finish by {iso(m.covered.drain[1])}. U − policy is the U total minus the policy's, so positive means the policy emits less.
                 Intervals: 95%, resampling 4-week blocks of the {fmt(m.cohort.n_weeks.value)} weeks. Hover a name for its rule. <Ev e="simulated" />
               </div>
-              <div style={{ overflowX: 'auto' }}><PolicyTable m={m} testId="policy-table" /></div>
+              <ScrollX label="Every policy, table"><PolicyTable m={m} testId="policy-table" /></ScrollX>
             </Sec>
             <Sec title="A few large jobs carry the result">
               <table className="tbl" data-testid="method-workload">
@@ -111,6 +112,7 @@ export function MethodDrawer() {
                 <li>Colour midpoint: {fmt(asNum(g.reference?.us_avg_ci) ?? 0)} g/kWh, the 2024 US average (EIA). <Ev e="observed" /></li>
               </ul>
             </Sec>
+            {data!.assumptions ? <Sec title="Assumptions & what didn't work"><AssumptionsSection a={data!.assumptions} /></Sec> : null}
             <Sec title="Limitations">
               <ul className="t-13" style={{ margin: 0, paddingLeft: 16 }}>
                 {plainLimitations(man.limitations).map((l: string) => <li key={l} style={{ marginBottom: 4 }}>{l}</li>)}
@@ -146,9 +148,9 @@ export function MethodDrawer() {
               </ul>
               <h4 className="t-13 fw-600" style={{ margin: '12px 0 4px' }}>Router peak relief in Utah's rush hours</h4>
               <p className="t-12 ink-2" style={{ margin: '0 0 6px' }} data-testid="method-rush">Rush hours: validation hours with Utah net load at or above the 2022–24 top 1% ({fmt(sf.rushThr)} MW): {fmt(sf.rushN)} hours on {fmt(sf.rushDays)} days. Each site's cluster load in those hours and at the year's peak net-load hour, from the registered ledgers; MW = MWh per hour. One 2,288-GPU cluster against a Utah peak net load of about {fmt(Math.round(sf.peakNet / 100) * 100)} MW. <Ev e="observed">net load</Ev> <Ev e="simulated">cluster load</Ev></p>
-              <div style={{ overflowX: 'auto' }}><ReliefTable s={sto} /></div>
+              <ScrollX label="Router peak relief, table"><ReliefTable s={sto} /></ScrollX>
               <p className="t-12 ink-2" style={{ margin: '8px 0 6px' }}>The same relief at lower thresholds:</p>
-              <div style={{ overflowX: 'auto' }}><RushSensitivity s={sto} /></div>
+              <ScrollX label="Peak relief at lower thresholds, table"><RushSensitivity s={sto} /></ScrollX>
             </Sec></div> : null}
             {data!.water ? <div className="well" style={{ padding: 12 }}><Sec title="Water footprint illustration (not the registered result)">
               <WaterPanel w={data!.water} />

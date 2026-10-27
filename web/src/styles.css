@@ -144,6 +144,17 @@ table.tbl-stacked tr.name td { text-align: left; padding: 4px 0 0; border-top: 1
 table.tbl-stacked tr.vals td { border-top: 0; padding: 0 8px 4px; }
 table.tbl-stacked tr.vals td:first-child { text-align: left; padding-left: 0; color: var(--ink-2); }
 table.tbl-stacked tbody.em td { font-weight: 600; }
+/* a table of sentences (the assumptions register, T17): left-aligned, wrapping */
+table.tbl-text th, table.tbl-text td { text-align: left; white-space: normal; line-height: 1.35; }
+@media (max-width: 640px) {
+  /* stack each row: assumption, then reality, then result */
+  table.tbl-text thead { display: none; }
+  table.tbl-text, table.tbl-text tbody, table.tbl-text tr, table.tbl-text td { display: block; width: auto !important; }
+  table.tbl-text tr { border-top: 1px solid var(--hair-2); padding: 6px 0; }
+  table.tbl-text td { border-top: 0; padding: 2px 0; }
+  table.tbl-text td[data-label]::before { content: attr(data-label); display: block; font-size: 11px; font-weight: 500; color: var(--ink-3); margin-top: 2px; }
+  table.tbl-text td[data-label]:first-child::before { display: none; }
+}
 
 /* tooltip */
 .tip { position: fixed; z-index: 80; pointer-events: none; padding: 8px 12px; border-radius: var(--r-8); font-size: 12px; max-width: 280px; background: #fff; box-shadow: var(--e-2); line-height: 1.35; }
