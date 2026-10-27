@@ -1,5 +1,6 @@
 {
  "files": [
+  "case-days.json",
   "extensions.json",
   "forecast-replay.json",
   "grid-profile.json",

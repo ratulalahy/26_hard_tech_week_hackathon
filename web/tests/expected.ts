@@ -71,3 +71,16 @@ export const storageFlatT = (Math.round(flat / p10) * p10).toLocaleString('en-US
 /** The same ranges from the synthetic test fixture (its savings are halved, so they differ from validation). */
 export const testPlacementRange = range(['S', 'K', 'W', 'L'].map((p) => saving(p, 'U', fixtureMetrics)));
 export const testTimeOnlyRange = range(['W_time', 'L_time'].map((p) => saving(p, 'U', fixtureMetrics)));
+
+/** T16: results/case-days.json. Per day: the date button, the rank, the peak and the Utah-cluster numbers, as printed. */
+export const caseDays = JSON.parse(readFileSync(join(results, 'case-days.json'), 'utf8'));
+const hr = (h: number) => `${h % 12 === 0 ? 12 : h % 12} ${h < 12 ? 'AM' : 'PM'}`;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const caseExpect = (caseDays.days as any[]).map((d) => ({
+  button: new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' }).format(new Date(d.date + 'T12:00:00Z')),
+  rank: `Rank ${d.rank.value} of ${caseDays.days_considered.n.value} days`,
+  cluster: `${hr(d.peak.hour_index.value)} peak hour, ${d.policies.U.utah_cluster_at_peak_mw.value.toFixed(2)} → ${d.policies.S.utah_cluster_at_peak_mw.value.toFixed(2)} MW`,
+  peak: `net load peaked at ${Number(d.peak.net_load_mw.value).toLocaleString('en-US')} MW at ${hr(d.peak.hour_index.value)}`,
+  slc: `${Math.round(d.weather.PACE_SLC.tmax_f.value)} °F high`,
+  context: (d.context as { kind: string; sentence: string }[]).find((c) => c.kind === 'none')?.sentence ?? '',
+}));

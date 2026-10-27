@@ -1,7 +1,7 @@
 // Offline acceptance (Task 8 Step 1): the built dist/, served on localhost, makes no request to any other
 // host, and every view renders a value that comes from results/metrics.json.
 import { expect, test, type Page } from '@playwright/test';
-import { consumptionSpan, fixtureManifest, lCommonSupport, mobilityAbout, placementRange, sProduction, sTonnes, storageCombined, storageFlatT, storageHeadline, storageRushDays, storageRushN, testPlacementRange, testTimeOnlyRange, timeOnlyRange, uTonnes } from './expected';
+import { caseExpect, consumptionSpan, fixtureManifest, lCommonSupport, mobilityAbout, placementRange, sProduction, sTonnes, storageCombined, storageFlatT, storageHeadline, storageRushDays, storageRushN, testPlacementRange, testTimeOnlyRange, timeOnlyRange, uTonnes } from './expected';
 import { openTestYear, serveTestFixture } from './fixture-route';
 
 const LOCAL = new Set(['127.0.0.1', 'localhost', '[::1]']);
@@ -57,6 +57,21 @@ test('every view renders registered values with zero non-localhost requests', as
   await page.goto('./#ribbon');
   await expect(page.getByTestId('ribbon-timing')).toContainText(timeOnlyRange);
   await expect(page.getByTestId('forecast-chart')).toBeVisible();
+  // T16 (D-066): the toughest-days card, one pre-registered day at a time
+  const days = page.getByRole('radiogroup', { name: 'Toughest days' }).getByRole('radio');
+  await expect(days).toHaveCount(3);
+  for (const [i, e] of caseExpect.entries()) {
+    await expect(days.nth(i)).toHaveText(e.button);
+    await days.nth(i).click();
+    await expect(days.nth(i)).toHaveAttribute('aria-checked', 'true');
+    await expect(page.getByTestId('case-story')).toContainText(e.rank);
+    await expect(page.getByTestId('case-story')).toContainText(e.cluster);
+    await expect(page.getByTestId('case-temp')).toContainText(e.peak);
+    await expect(page.getByTestId('case-temp')).toContainText(e.slc);
+    await expect(page.getByTestId('case-context')).toContainText('Context, not evidence');
+    await expect(page.getByTestId('case-context')).toContainText(e.context);
+    await expect(page.getByTestId('case-chart')).toBeVisible();
+  }
 
   await page.goto('./#story');
   await expect(page.getByTestId('story-result')).toContainText(placementRange);
