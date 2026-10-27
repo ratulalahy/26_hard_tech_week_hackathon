@@ -129,13 +129,13 @@ function Lanes({ p }: { p: ReturnType<typeof makePlan> }) {
   ];
   const lx = 200, rx = 150, aw = Math.max(40, w - lx - rx), X = (v: number) => (Math.min(v, CI_MAX) / CI_MAX) * aw;
   return (
-    <div ref={ref} style={{ padding: '0 8px' }} role="list" aria-label="Options for this run">
+    <div ref={ref} style={{ padding: '0 8px' }} role="group" aria-label="Options for this run">
       <div className="flex t-11 ink-3" style={{ padding: '0 8px 4px', paddingLeft: lx + 8 }}>Average carbon intensity of the run, g CO₂/kWh</div>
       {lanes.map((L) => {
         const sel = L.m === mode && (L.m !== 'move' || L.d === dest);
         const cut = p.cut(L.v);
         return (
-          <button key={L.t} role="listitem" className="rowbtn grid items-center" aria-pressed={sel} style={{ gridTemplateColumns: `${lx - 8}px minmax(0,1fr) ${rx - 16}px`, gap: 8, padding: '6px 8px' }}
+          <button key={L.t} className="rowbtn grid items-center" aria-pressed={sel} style={{ gridTemplateColumns: `${lx - 8}px minmax(0,1fr) ${rx - 16}px`, gap: 8, padding: '6px 8px' }}
             onClick={() => set({ mode: L.m, ...(L.d ? { dest: L.d } : {}) })}>
             <span className="flex items-center gap-2 min-w-0">
               <span className="grid place-items-center flex-none" style={{ width: 24, height: 24, borderRadius: 8, background: sel ? C.route : '#fff', color: sel ? '#fff' : C.ink2, boxShadow: sel ? 'none' : 'inset 0 0 0 1px var(--hair)' }}>
@@ -185,6 +185,7 @@ function Patience({ p }: { p: ReturnType<typeof makePlan> }) {
         <div className="absolute t-13" style={{ left: 8, top: 24, width: 170 }}>
           <div className="fw-600">What patience buys</div>
           <div className="t-12 ink-3" style={{ marginTop: 2 }}>Best cut from waiting, by the longest wait allowed; moving needs no wait.</div>
+          <div style={{ marginTop: 4 }}><Ev e="modeled" /></div>
         </div>
       </div>
       <EChart option={option} className="flex-1" label="Best carbon cut from waiting in Utah by allowed wait, compared with moving" />

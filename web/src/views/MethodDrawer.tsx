@@ -5,7 +5,7 @@ import { asNum } from '../lib/data';
 import { fmt, fmtDate, pct, signed } from '../lib/format';
 import { useApp } from '../lib/store';
 
-const iso = (s: string) => fmtDate(s, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+const iso = (s: string) => fmtDate(s, { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }) + ' UTC';
 
 /** Method & evidence: reachable from every view. The claim frame is shown verbatim from manifest.json. */
 export function MethodDrawer() {
@@ -29,7 +29,7 @@ export function MethodDrawer() {
             </div>
             <Dialog.Close className="iconbtn" aria-label="Close method and evidence"><Icon name="close" /></Dialog.Close>
           </div>
-          <div className="flex flex-col gap-4" style={{ padding: 16, overflow: 'auto' }}>
+          <div className="flex flex-col gap-4" style={{ padding: 16, overflow: 'auto' }} tabIndex={0} role="region" aria-label="Method and evidence details">
             <Sec title="What this result is">
               <p className="t-13" style={{ margin: 0 }}><span className="ink-3">Claim frame, verbatim:</span> “{man.claim_frame}”.</p>
               <p className="t-13 ink-2" style={{ margin: '8px 0 0' }}>

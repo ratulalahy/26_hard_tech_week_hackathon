@@ -91,7 +91,7 @@ function Visual({ step, rush, clean, curve }: { step: number; rush: [number, num
   if (step === 4) return (
     <Panel className="h-full flex flex-col" style={{ gap: 16 }}>
       <span className="t-15">Saving in attributed CO₂ vs running local, with 95% intervals</span>
-      <IntervalChart m={m} rows={['G', 'S', 'K', 'W', 'L', 'H', 'W_time', 'L_time']} />
+      <IntervalChart m={m} rows={['G', 'S', 'K', 'W', 'L', 'H', 'W_time', 'L_time']} rowH={30} />
       <div className="t-12 ink-3">Filled dots: the four placement policies. Open dots: G (greedy), the hindsight diagnostic H and the two wait-only runs. <Ev e="simulated" /></div>
       <PolicyTable m={m} compact />
     </Panel>

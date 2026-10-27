@@ -64,7 +64,7 @@ function SharedMap() {
     });
   }, [data, arcPolicy, dest, on]);
   return (
-    <div className={`scene ${on ? '' : 'watermark'}`} aria-hidden={!on}>
+    <div className={`scene ${on ? '' : 'watermark'}`} aria-hidden={!on} inert={!on}>
       {data && (
         <WestMap id="map-main" variant="main" interactive={on} ci={ci} context={context} hourLabel={`${fmtHour(hour)}, ${monthLabel(month)}`} arcs={arcs}
           padding={controlPadding(vp)} onPick={(d) => set({ dest: d })} />
@@ -76,8 +76,8 @@ function SharedMap() {
 function TopBar() {
   const { view, set } = useApp();
   return (
-    <header className="panel over-map fixed z-30 flex items-center" style={{ top: 12, left: 16, right: 16, height: 48, padding: '0 8px 0 12px', borderRadius: 14 }}>
-      <a href="#control" className="flex items-center gap-2" style={{ color: 'inherit', textDecoration: 'none' }} aria-label="GridPilot home">
+    <header className="panel over-map fixed z-30 flex items-center" style={{ top: 12, left: 16, right: 16, height: 48, padding: '0 8px 0 12px', borderRadius: 16 }}>
+      <a href="#control" className="flex items-center gap-2" style={{ color: 'inherit', textDecoration: 'none' }}>
         <Mark />
         <span className="t-15" style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}>GridPilot</span>
         <span className="t-12 ink-3 whitespace-nowrap" style={{ marginLeft: 4 }}>Utah's grid, for AI jobs</span>

@@ -12,7 +12,7 @@ import { useViewport } from '../lib/useViewport';
 export const dims = (vp: Viewport) => ({
   left: vp.w >= 1600 ? 368 : 336,
   right: vp.w >= 1600 ? 376 : 344,
-  tl: vp.h >= 1000 ? 184 : 152,
+  tl: vp.h >= 1000 ? 184 : 164,
 });
 export const controlPadding = (vp: Viewport) => {
   const d = dims(vp);
@@ -27,6 +27,7 @@ export function ControlRoom() {
       <div className="pointer-events-auto absolute" style={{ top: 72, left: 16, width: d.left, bottom: 40 + d.tl + 16 }}><ResultDock compact={vp.h < 1000} /></div>
       <div className="pointer-events-auto absolute" style={{ top: 72, right: 16, width: d.right, bottom: 40 + d.tl + 16 }}><RouterDock /></div>
       <div className="pointer-events-auto absolute" style={{ left: 16, right: 16, bottom: 40, height: d.tl }}><Timeline /></div>
+      <MapCaption left={16 + d.left + 16} bottom={40 + d.tl + 16} />
     </section>
   );
 }
@@ -50,17 +51,22 @@ function ResultDock({ compact }: { compact: boolean }) {
           </div>
         </div>
         <div data-testid="hero-timing" className="t-13" style={{ marginTop: 8 }}>
-          Waiting for cleaner hours in Utah alone: <b className="fw-600">{pctRange(h.timing.lo, h.timing.hi)}%</b> <span className="t-12 ink-3">(95% {pct(h.timing.ciLo)}–{pct(h.timing.ciHi)}%)</span>
+          Waiting for cleaner hours in Utah alone: <b className="fw-600">{pctRange(h.timing.lo, h.timing.hi)}%</b> <span className="t-12 ink-3">(95% {pct(h.timing.ciLo)}–{pct(h.timing.ciHi)}%)</span> <Ev e="simulated" />
         </div>
       </div>
       <div style={{ padding: '0 16px 8px' }}>
         <div className="flex items-baseline justify-between t-12 ink-2" style={{ marginBottom: 4 }}>
-          <span className="fw-500" style={{ color: C.ink }}>Saving vs U, 95% interval</span>
-          <span className="t-11 ink-3">{fmt(h.nWeeks.value as number)} weeks · 4-week blocks</span>
+          <span className="fw-500 whitespace-nowrap" style={{ color: C.ink }}>Saving vs U, 95% interval</span>
+          <span className="t-11 ink-3 whitespace-nowrap">{fmt(h.nWeeks.value as number)} weeks <Ev e="simulated" /></span>
         </div>
         <IntervalChart m={m} rows={['S', 'K', 'W', 'L', 'W_time', 'L_time']} />
       </div>
       <hr className="rule" />
+      {compact ? (
+        <div className="t-12 ink-2" style={{ padding: '12px 16px', flex: 1 }}>
+          Each region's carbon at {fmtHour(hour)} is on the map; Utah's year mean is {fmt(pm)} g/kWh, the three destinations {CORE.slice(1).map((c) => `${REGION[c].name} ${fmt(asNum(yearMean(g, c))!)}`).join(', ')}. <Ev e="observed" />
+        </div>
+      ) : (<>
       <div className="flex items-baseline justify-between" style={{ padding: '12px 16px 4px' }}>
         <span className="t-15">The four sites, {fmtHour(hour)}</span>
         <span className="t-11 ink-3">typical {monthLabel(month, true)} day <Ev e="observed" /></span>
@@ -79,8 +85,8 @@ function ResultDock({ compact }: { compact: boolean }) {
               <span className="t-15 num">{curve[hour] == null ? '–' : Math.round(curve[hour]!)}<span className="unit">g/kWh</span></span>
               {!compact && <span />}
               {!compact && <div style={{ gridColumn: '2 / 4' }}><Strip curve={curve} hour={hour} h={10} label={`${REGION[c].name} typical day carbon`} /></div>}
-              <span />
-              <span className="t-11 ink-3" style={{ gridColumn: '2 / 4' }}>Year mean {fmt(ym)} g/kWh{c === 'PACE' ? ' · home site' : ` · ${pct(1 - ym / pm, 0)}% cleaner than Utah`}</span>
+              {!compact && <span />}
+              {!compact && <span className="t-11 ink-3" style={{ gridColumn: '2 / 4' }}>Year mean {fmt(ym)} g/kWh{c === 'PACE' ? ' · home site' : ` · ${pct(1 - ym / pm, 0)}% cleaner than Utah`}</span>}
             </div>
           );
           return (
@@ -90,8 +96,18 @@ function ResultDock({ compact }: { compact: boolean }) {
           );
         })}
       </ul>
+      </>)}
       <div style={{ padding: '8px 16px 12px', borderTop: '1px solid var(--hair-2)' }}><Legend /></div>
     </Panel>
+  );
+}
+
+function MapCaption({ left, bottom }: { left: number; bottom: number }) {
+  const { hour, month } = useApp();
+  return (
+    <div className="pointer-events-auto absolute panel over-map t-11 ink-2" style={{ left, bottom, padding: '8px 12px', borderRadius: 12, maxWidth: 420 }}>
+      Regions coloured by carbon at {fmtHour(hour)} on a typical {monthLabel(month, true)} day <Ev e="observed" />. Faded regions: year mean of generation fuel mix <Ev e="modeled" />. Scroll or pinch to zoom; drag to pan.
+    </div>
   );
 }
 
@@ -127,7 +143,7 @@ function RouterDock() {
     <Panel over className="flex flex-col" style={{ height: '100%', padding: 0, overflow: 'hidden' }}>
       <div style={{ padding: 16 }}>
         <h2 className="t-15" style={{ margin: 0 }}>Every policy did the same work, with no late jobs</h2>
-        <div className="t-12 ink-2" style={{ marginTop: 4 }}>Attributed CO₂ over the validation cohort ({fmt(m.cohort.n_jobs.value)} jobs, {fmt(m.cohort.declared_gpu_h.value / 1e6, 2)} M GPU-h). U − policy is positive when the policy emits less.</div>
+        <div className="t-12 ink-2" style={{ marginTop: 4 }}>Attributed CO₂, {fmt(m.cohort.n_jobs.value)} jobs, {fmt(m.cohort.declared_gpu_h.value / 1e6, 2)} M GPU-h. U − policy above zero: the policy emits less.</div>
         <div style={{ marginTop: 8 }}><PolicyTable m={m} compact testId="policy-table-compact" /></div>
         <div className="flex gap-3 flex-wrap" style={{ marginTop: 8 }}><Ev e="simulated">outcomes simulated</Ev><Ev e="measured">job sizes measured</Ev></div>
       </div>
@@ -140,15 +156,15 @@ function RouterDock() {
           </div>
         </div>
         <div className="t-12 ink-2" style={{ marginTop: 4 }}>
-          Replay week {fmtDate(wk.start, { month: 'short', day: 'numeric' })}–{fmtDate(new Date(new Date(wk.end).getTime() - 1).toISOString(), { month: 'short', day: 'numeric', year: 'numeric' })}: GPU-hours policy {arcPolicy} sent from Utah. Arc width is GPU-hours. <Ev e="simulated" />
+          Replay week {fmtDate(wk.start, { month: 'short', day: 'numeric' })}–{fmtDate(new Date(new Date(wk.end).getTime() - 1).toISOString(), { month: 'short', day: 'numeric', year: 'numeric' })}: GPU-hours policy {arcPolicy} sent from Utah ({fmt(asNum(slots.home_slots) ?? 0)} GPU slots) to sites of {fmt(asNum(slots.destination_slots.BPAT) ?? 0)} slots each <Ev e="assumed">slots assumed</Ev>. Arc width is GPU-hours. <Ev e="simulated" />
         </div>
         <div className="flex flex-col" style={{ marginTop: 8, gap: 2 }}>
           {DESTS.map((dd) => {
             const a = pol.arcs.find((x: { to: string }) => x.to === dd);
             return (
-              <button key={dd} className="rowbtn flex items-center justify-between" aria-pressed={dest === dd} onClick={() => set({ dest: dd })}>
-                <span className="t-13 fw-500">{REGION[dd].name} <span className="ink-3 fw-400 t-12">{dd} · {fmt(asNum(slots.destination_slots[dd]) ?? 0)} GPU slots <Ev e="assumed" /></span></span>
-                <span className="t-13 num fw-600">{a ? fmt(a.gpu_h.value) : '–'}<span className="unit">GPU-h</span> <span className="t-11 ink-3 fw-400">{a ? fmt(a.jobs.value) : 0} jobs</span></span>
+              <button key={dd} className="rowbtn flex items-baseline justify-between gap-2" style={{ padding: '6px 8px' }} aria-pressed={dest === dd} onClick={() => set({ dest: dd })}>
+                <span className="t-13 fw-500 whitespace-nowrap">{REGION[dd].name} <span className="ink-3 fw-400 t-12">{dd}</span></span>
+                <span className="t-13 num fw-600 whitespace-nowrap">{a ? fmt(a.gpu_h.value) : '–'}<span className="unit">GPU-h</span><span className="t-11 ink-3 fw-400"> · {a ? fmt(a.jobs.value) : 0} jobs</span></span>
               </button>
             );
           })}
@@ -204,7 +220,7 @@ function Timeline() {
             </defs>
             <rect x={X(rush[0])} y={yR} width={cw * (rush[1] - rush[0])} height={yC + hC - yR} rx={4} fill={C.rushFill} fillOpacity={0.3} />
             <rect x={X(rush[0]) + 1} y={yR} width={cw * (rush[1] - rush[0]) - 2} height={hR} rx={3} fill="url(#hatch)" />
-            <text x={X(rush[0]) + (cw * (rush[1] - rush[0])) / 2} y={yR - 5} textAnchor="middle" fontSize={11} fill={C.ink} fontWeight={600}>Rush {spanLabel(rush)}</text>
+            <text x={X(rush[0]) + (cw * (rush[1] - rush[0])) / 2} y={yR - 5} textAnchor="middle" fontSize={11} fill={C.ink} fontWeight={600}>Rush {spanLabel(rush)} · net-load peak {fmtHour(peak)}, {fmt(net[peak])} MW</text>
             <path d={`M${X(clean[0]) + 2},${yR + hR - 1} v-5 H${X(clean[1]) - 2} v5`} fill="none" stroke={C.ink3} strokeWidth={1} />
             <text x={X((clean[0] + clean[1]) / 2)} y={yR - 5} textAnchor="middle" fontSize={11} fill={C.ink} fontWeight={600}>Cleanest 8 hours {spanLabel(clean)}</text>
             {[0, mx / 2, mx].map((v) => <line key={v} x1={lx} x2={X(24)} y1={Y(v)} y2={Y(v)} stroke={C.hair2} />)}
@@ -212,10 +228,10 @@ function Timeline() {
             <path d={`M${pts(dem)}`} fill="none" stroke={C.ink3} strokeWidth={1.25} />
             <path d={`M${pts(net)}`} fill="none" stroke={C.ink} strokeWidth={2} strokeLinejoin="round" />
             <circle cx={X(peak) + cw / 2} cy={Y(net[peak])} r={3.5} fill={C.ink} stroke="#fff" strokeWidth={1.5} />
-            <text x={X(peak) + cw / 2 - 8} y={Y(net[peak]) - 6} textAnchor="end" fontSize={11} fill={C.ink} fontWeight={500} paintOrder="stroke" stroke="#fff" strokeWidth={3}>Net-load peak {fmtHour(peak)} · {fmt(net[peak])} MW</text>
+            
             <circle cx={X(dpeak) + cw / 2} cy={Y(dem[dpeak])} r={3} fill={C.ink3} stroke="#fff" strokeWidth={1.5} />
-            <text x={X(24) + 4} y={Y(dem[23]) + 4} fontSize={11} fill={C.ink2}>Demand</text>
-            <text x={X(24) + 4} y={Y(net[23]) + 4} fontSize={11} fill={C.ink} fontWeight={600}>Net load</text>
+            <text x={X(24) + 4} y={Math.min(Y(dem[23]) + 4, Y(net[23]) - 8)} fontSize={11} fill={C.ink2}>Demand</text>
+            <text x={X(24) + 4} y={Math.max(Y(net[23]) + 4, Y(dem[23]) + 16)} fontSize={11} fill={C.ink} fontWeight={600}>Net load</text>
             <text x={X(13)} y={Y(sol[13] * 0.45)} textAnchor="middle" fontSize={11} fill={C.solarInk} fontWeight={600}>Solar</text>
             <text x={lx - 12} y={yL + 10} textAnchor="end" fontSize={12} fill={C.ink} fontWeight={500}>Load</text>
             <text x={lx - 12} y={yL + 24} textAnchor="end" fontSize={11} fill={C.ink3}>MW · July weekday</text>

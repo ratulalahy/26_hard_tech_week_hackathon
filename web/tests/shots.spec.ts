@@ -26,7 +26,7 @@ for (const s of SIZES) {
     test(`${st.name} ${s.w}`, async ({ page }) => {
       await page.setViewportSize({ width: s.w, height: s.h });
       await page.goto('./' + st.hash);
-      await page.locator('.mk-region').first().waitFor({ timeout: 20_000 });
+      await page.locator('.mk-region').first().waitFor({ state: 'attached', timeout: 20_000 });
       await page.waitForTimeout(1200);
       if (st.prep) await st.prep(page);
       await page.waitForTimeout(500);

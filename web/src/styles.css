@@ -131,7 +131,7 @@ select.sel:hover { box-shadow: 0 0 0 1px var(--hair-3); }
 table.tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
 table.tbl th { text-align: right; font-weight: 500; color: var(--ink-3); font-size: 11px; padding: 0 8px 8px; vertical-align: bottom; white-space: nowrap; }
 table.tbl th:first-child, table.tbl td:first-child { text-align: left; padding-left: 0; }
-table.tbl td { text-align: right; padding: 6px 8px; border-top: 1px solid var(--hair-2); white-space: nowrap; }
+table.tbl td { text-align: right; vertical-align: top; padding: 6px 8px; border-top: 1px solid var(--hair-2); white-space: nowrap; }
 table.tbl tr.em td { font-weight: 600; }
 table.tbl tr.diag td { color: var(--ink-3); }
 
@@ -151,6 +151,7 @@ table.tbl tr.diag td { color: var(--ink-3); }
 
 /* the shared map: off the map view it recedes to a faint watermark (owner rule, tokens.md) */
 .scene { position: fixed; inset: 0; z-index: 0; transition: opacity 0.4s var(--ease), filter 0.4s var(--ease), transform 0.5s var(--ease); }
+.scene.watermark .maplibregl-marker { visibility: hidden; }
 .scene.watermark { opacity: 0.16; filter: saturate(0.3) blur(1.5px); pointer-events: none; transform: translate(22vw, 6vh) scale(1.15); }
 
 @media (prefers-reduced-motion: reduce) {

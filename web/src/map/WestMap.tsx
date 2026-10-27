@@ -13,10 +13,12 @@ import { loadGeo, type Geo } from './geo';
 
 maplibregl.setWorkerUrl(new URL(workerUrl, location.href).href);
 
+const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 export const WEST: LngLatBoundsLike = [[-124.8, 31.2], [-103.5, 49.2]];
 // Where each core region's label and arc end sit. PACE's label is anchored in Utah (its polygon's
 // pole of inaccessibility lies in Wyoming); arcs run between the BAs' main load centres.
-const LABEL_AT: Record<Core, [number, number]> = { PACE: [-111.1, 39.0], BPAT: [-120.6, 46.6], CISO: [-120.2, 36.9], NEVP: [-116.6, 39.6] };
+const LABEL_AT: Record<Core, [number, number]> = { PACE: [-110.0, 38.3], BPAT: [-120.6, 46.6], CISO: [-120.2, 36.9], NEVP: [-116.6, 39.6] };
 const HUB: Record<Core, [number, number]> = { PACE: [-111.93, 40.78], BPAT: [-122.64, 45.63], CISO: [-118.23, 34.05], NEVP: [-115.15, 36.17] };
 const LABEL_OFFSET: Record<Core, [number, number]> = { PACE: [0, 0], BPAT: [0, 0], CISO: [0, 0], NEVP: [0, 0] };
 const US_CITY = new Set(['Los Angeles', 'Denver', 'San Francisco', 'Phoenix', 'San Diego', 'Seattle', 'Salt Lake City', 'Las Vegas', 'Portland', 'Boise', 'Sacramento', 'Albuquerque', 'Reno', 'Spokane', 'Tucson', 'Fresno', 'Cheyenne', 'Provo', 'Ogden', 'Eugene', 'Bakersfield', 'El Paso', 'Santa Fe', 'Colorado Springs', 'Carson City', 'Salem', 'Olympia', 'Fort Collins', 'Tacoma', 'San Jose', 'Oakland']);
@@ -111,7 +113,7 @@ export function WestMap(p: MapProps) {
   const fit = (animate: boolean) => {
     const m = map.current; if (!m) return;
     const q = props.current;
-    m.fitBounds(q.bounds ?? WEST, { padding: q.padding ?? { top: 16, bottom: 16, left: 16, right: 16 }, duration: animate ? 400 : 0 });
+    m.fitBounds(q.bounds ?? WEST, { padding: q.padding ?? { top: 16, bottom: 16, left: 16, right: 16 }, duration: animate && !still() ? 400 : 0 });
   };
 
   useEffect(() => {
@@ -131,6 +133,7 @@ export function WestMap(p: MapProps) {
       maxZoom: 9,
       fadeDuration: 0,
     });
+    if (still()) m.scrollZoom.setWheelZoomRate(1 / 200);
     m.touchZoomRotate.disableRotation();
     m.keyboard.disableRotation();
     map.current = m;
@@ -262,8 +265,8 @@ export function WestMap(p: MapProps) {
       )}
       {p.variant === 'main' && p.interactive && (
         <div className="absolute flex flex-col gap-2" style={{ right: (p.padding?.right ?? 16) - 48, bottom: (p.padding?.bottom ?? 16) + 0 }}>
-          <button className="iconbtn" aria-label="Zoom in" onClick={() => map.current?.zoomIn({ duration: 200 })}><Icon name="plus" /></button>
-          <button className="iconbtn" aria-label="Zoom out" onClick={() => map.current?.zoomOut({ duration: 200 })}><Icon name="minus" /></button>
+          <button className="iconbtn" aria-label="Zoom in" onClick={() => map.current?.zoomIn({ duration: still() ? 0 : 200 })}><Icon name="plus" /></button>
+          <button className="iconbtn" aria-label="Zoom out" onClick={() => map.current?.zoomOut({ duration: still() ? 0 : 200 })}><Icon name="minus" /></button>
           <button className="iconbtn" aria-label="Reset to the West" title="Reset to the West" onClick={() => fit(true)}><Icon name="reset" /></button>
         </div>
       )}

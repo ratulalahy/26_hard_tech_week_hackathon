@@ -39,9 +39,9 @@ export function Strip({ curve, h = 14, hour, job, label, gap = 1.5 }: { curve: (
 
 const SHORT: Record<string, string> = { G: 'G greedy', S: 'S static', K: 'K persistence', W: 'W weekly', L: 'L learned', H: 'H hindsight', W_time: 'W wait only', L_time: 'L wait only' };
 /** The registered result on one axis: each policy's saving vs U with its 95% interval (b = 4). */
-export function IntervalChart({ m, rows, height }: { m: Json; rows: string[]; height?: number }) {
+export function IntervalChart({ m, rows, height, rowH = 18 }: { m: Json; rows: string[]; height?: number; rowH?: number }) {
   const [ref, w] = useWidth<HTMLDivElement>();
-  const lx = 120, rx = 48, rh = 18, top = 4;
+  const lx = 120, rx = 48, rh = rowH, top = 4;
   const H = height ?? top + rows.length * rh + 24;
   const max = 0.3;
   const X = (v: number) => lx + (Math.max(0, Math.min(max, v)) / max) * (w - lx - rx);
@@ -89,7 +89,7 @@ export function PolicyTable({ m, compact = false, testId }: { m: Json; compact?:
           <th>Feasible</th>
           {!compact && <th>Late jobs</th>}
           <th>CO₂ <span className="fw-400">t</span></th>
-          <th>U − policy <span className="fw-400">t, 95%</span></th>
+          <th>U − policy <span className="fw-400">t [95%]</span></th>
           {!compact && <th>Saving <span className="fw-400">95%</span></th>}
           {!compact && <th>Moved jobs</th>}
           {!compact && <th>Wait p95</th>}
@@ -110,7 +110,7 @@ export function PolicyTable({ m, compact = false, testId }: { m: Json; compact?:
               <td>{r.feasible ? 'yes' : 'no'}</td>
               {!compact && <td>{fmt(mt.late_jobs.value)}</td>}
               <td>{t1(mt.co2_kg.value)}</td>
-              <td>{c && c.diff_kg.value != null ? <>{signed(c.diff_kg.value / 1000, 1)} <span className="ink-3 fw-400">[{signed(ci![0] / 1000, 1)}, {signed(ci![1] / 1000, 1)}]</span></> : <span className="ink-3 fw-400">reference</span>}</td>
+              <td>{c && c.diff_kg.value != null ? <>{signed(c.diff_kg.value / 1000, 1)} <span className="ink-3 fw-400">[{signed(ci![0] / 1000, compact ? 0 : 1)}, {signed(ci![1] / 1000, compact ? 0 : 1)}]</span></> : <span className="ink-3 fw-400">reference</span>}</td>
               {!compact && <td>{c && c.saving.value != null ? <>{pct(c.saving.value, 2)}% <span className="ink-3 fw-400">[{pct(sv![0], 2)}, {pct(sv![1], 2)}]</span></> : '–'}</td>}
               {!compact && <td>{pct(mt.moved_share_jobs.value, 1)}%</td>}
               {!compact && <td>{fmt(mt.wait_p95_s.value / 60, 0)} min</td>}

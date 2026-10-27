@@ -61,7 +61,7 @@ export function LoadChart({ rush, clean, dem, net, sol }: { rush: [number, numbe
     return {
       grid: { left: LX, right: RX, top: 28, bottom: 8 },
       xAxis: { type: 'category', data: hours, boundaryGap: true, axisLabel: { show: false }, axisLine: { show: false } },
-      yAxis: { type: 'value', min: 0, splitNumber: 3, name: 'MW', nameLocation: 'end', nameGap: 8, axisLabel: { formatter: (v: number) => (v ? `${v / 1000}k` : '0') } },
+      yAxis: { type: 'value', min: 0, max: (e: { max: number }) => Math.ceil((e.max + 1500) / 3000) * 3000, interval: 3000, name: 'MW', nameLocation: 'end', nameGap: 8, axisLabel: { formatter: (v: number) => (v ? `${v / 1000}k` : '0') } },
       tooltip: { trigger: 'axis', valueFormatter: (v: number) => `${fmt(v)} MW` },
       series: [
         { name: 'Solar', type: 'line', data: sol.map((v) => Math.max(0, v)), areaStyle: { color: C.solar, opacity: 0.8 }, lineStyle: { width: 0 }, symbol: 'none', z: 1,
