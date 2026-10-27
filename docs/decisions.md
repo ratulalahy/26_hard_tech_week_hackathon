@@ -541,3 +541,11 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 - **Cut order if time is short:** water (T14) first, then this case study (T16). The toggle and flexibility budget (T15) stay.
 - **Not added:** weather-driven forecasts and temperature-dependent cooling (future work).
 - **Brief:** `docs/superpowers/plans/amendments/stage3-T16-worst-days.md`.
+
+## D-067 · 2026-10-27 15:03 MT · Storage headline: 4 MWh / 1 MW; the skeptic result shown prominently
+- **Decided by:** lead (Claude), on the T10b review.
+- **Context:** the reviewer reproduced every storage number independently (A 3.812% at 8 MWh; move-small-plus-store 7.575%).
+- **Decision (headline):** the illustrative headline is **4 MWh / 1 MW**, which gives 3.5% and 92% of the 8 MWh cut. The sentence states the binding limit: the site connection leaves only about 0.3–0.6 MW free to charge. The headline-size rule is labelled illustrative and was chosen after validation outcomes were seen.
+- **Decision (skeptic result):** on a flat marginal factor, storage adds CO₂ through its losses (about 120 t at 8 MWh, terminal energy included). This is shown as a bold line and as a chart series.
+- **Decision (beat 6):** about 90 words.
+- **Evidence:** the T10b review (the SDD ledger) and the reviewer's script `rev-t10b/indep.py`.
