@@ -8,7 +8,7 @@ Status: candidate for the fresh Astra soundness gate, then owner approval (G1). 
 
 ## 1. The entry and the claim
 
-Build one product: a day-ahead grid report connected to an AI batch-job scheduler. Start in PacifiCorp East (PACE), then visibly place eligible jobs in California (CISO), Bonneville (BPAT) or Nevada (NEVP) [R1], subject to finite compute capacity, deadlines, and transfer overhead. A national overview supplies context; these three regions receive the full experiment.
+Build one product: a day-ahead grid report connected to an AI batch-job scheduler. Start in PacifiCorp East (PACE), then visibly place eligible jobs in California (CISO), Bonneville (BPAT) or Nevada (NEVP) [R1], subject to finite compute capacity, deadlines, and transfer overhead. A national overview supplies context; these four core sites receive the full experiment.
 
 The question is: **How much does knowing tomorrow's grid help an operator who already knows which regions are usually cleaner?**
 
@@ -73,7 +73,7 @@ A forecast-improvement claim requires the paired uncertainty interval for the pr
 
 ## 4. Regions, data, and accounting boundary
 
-### Three routing regions and ten overview regions
+### Four core sites and ten overview regions
 
 Core placement set: **PACE, CISO, BPAT, NEVP** [R1]. This is a deliberately difficult test: the hero has substantial fossil generation, California has a changing daily mix, and the hydro destination provides a strong static alternative.
 
@@ -262,7 +262,7 @@ Run a PACE-only restriction of W and L (time-only), and a zero-discretionary-del
 
 The deployed product policy is chosen from U/G/S/K/W/L by validation: first require the hard feasibility conditions, then minimize aggregate attributed CO2; tie-break on lower mean wait, then simpler policy order U, G, S, K, W, L. Preserve L as a separate experimental candidate even if deployment selects S or W. Freeze that choice before unsealing.
 
-### Hindsight ceiling and certification
+### Relaxed hindsight bound and certification
 
 For every job, find its minimum realized CO2 over every continuous start time within its legal window and allowed sites, including transfer overhead, **while ignoring competition for slots**. This start set contains the operational policy's candidates. With piecewise-constant hourly intensity and transfer energy booked at arrival, the execution integral is piecewise linear in start time: evaluate both window endpoints, each hourly boundary, and each hourly boundary minus the job duration within the window. The minimum over this finite set is exact for the stated relaxation. Sum the independent minima to obtain C_relaxed, a lower bound on full-cohort CO2. Therefore C_U − C_relaxed is an **optimistic upper bound on possible reduction**, not an achievable schedule.
 
@@ -471,13 +471,13 @@ The data profiles and frozen manifests are the quantitative source of record. Ex
 
 ## 14. Reconciliation with Claude's proposal (amendments R1–R6)
 
-These amendments were added when the two independent proposals were reconciled. Every other section is Codex's text unchanged.
+These amendments were added when the two independent proposals were reconciled. Apart from the [R1] tags and the gate fixes in §15, the other sections keep Codex's text.
 
 - **[R1] NEVP is a third destination.**
-  - The owner asked for Utah plus 3–5 neighbours.
-  - Nevada is the realistic non-hydro neighbour, where moving and waiting are close calls: in the profile it is 42% below PACE on year-mean production intensity, while waiting up to 24 h in PACE cuts 33%. That makes it the most informative destination for H3/H4.
+  - The owner asked for Utah plus 3–5 neighbours (D-029).
+  - Nevada is the realistic non-hydro neighbour, where placement and waiting are expected to be close calls. That makes it the most informative destination for H3/H4.
   - NEVP uses the same rules as the other destinations.
-  - **Runtime fallback:** NEVP is the first destination dropped if the Tuesday 18:00 build is at risk. The drop is recorded, never silent.
+  - No runtime fallback drops it: cutting it would need the owner's approval (gate finding L6-2).
 - **[R2] Secondary insight: clean hours ≠ rush hours.** This is registered as secondary and descriptive, so it cannot become a selection target.
   - **Across the 10 overview BAs, on validation:** the hourly correlation between consumed intensity and the training-fitted net-load percentile, plus the share of each BA's above-threshold stress hours that fall in its top carbon quartile.
   - **In the replay:** the §4 stress outcomes of L and S versus U show whether emissions-first scheduling adds or removes energy in high-stress hours.
@@ -496,7 +496,129 @@ These amendments were added when the two independent proposals were reconciled. 
   - jobs are non-preemptive gang jobs (Claude had hourly-interruptible as primary);
   - the job log is replayed as a continuous 161-day cycle (Claude had a week-block bootstrap);
   - HistGradientBoosting replaces LightGBM, with no new dependency;
-  - the bound is a relaxed per-job lower bound, not a "certified optimum" (Claude's own wording was weaker);
+  - the bound is a relaxed per-job lower bound, not a "certified optimum" (Claude's draft had used the stronger "certified optimum" wording);
   - the stress threshold is a training-fitted 95th-percentile CDF (Claude had a trailing 365-day percentile).
 
   In each case Codex's version is stricter or more honest, so it was adopted.
+
+## 15. Gate fixes (binding; they override earlier sections where they differ)
+
+These come from the fresh-context soundness review of 2026-10-27, at about 02:45 MT (`docs/reviews/2026-10-27-spec-gate-r1-claude.md`, verdict `not_ready`). They were decided before any validation result was seen.
+
+### F1. Deadlines relative to run-now (fixes L3-1, critical; also L2-5, L8-1)
+- The submit-time replay of Seren overloads 2,288 slots: a peak of 3,082 GPUs and 31 episodes per cycle. It still overloads at 1.25×.
+- So each job's deadline is `max(arrival + duration + allowed delay, its finish time under U)`. That finish time is computed once, from U, and does not depend on any other policy.
+- This makes U feasible by construction. Flexibility means extra slack beyond what the cluster already gives the job.
+- The overload is reported as a workload fact: "on-arrival replay needs queueing; the recorded cluster absorbed it with queues".
+- **Deployed-policy fallback, if no policy meets the hard conditions:** the fewest deadline-miss GPU-hours, then the lowest CO₂.
+
+### F2. Validation window and drain (fixes L1-1, L3-4)
+- R_max = 336 h.
+- **Validation selection cohort:** F_val = 2025-10-24T00Z, so the arrivals scored are [2024-11-01, A_val = F_val − R_max − W_max).
+- **Warm-up:** at least 15 days, under U.
+- **Test:** F = the frozen cutoff (expected 2026-10-25), giving A ≈ 2026-10-10.
+- **Guard test:** the validation ledger never requests truth at or after TEST_START.
+
+### F3. Missing carbon truth (fixes L3-2)
+- Instead of failing the total or dropping jobs, use a site-availability mask that is the same for every policy.
+- A destination is closed to any start whose execution would touch a missing-truth hour there. The missing hours before the seal:
+  - CISO: 120 hours in the validation year, in three gaps;
+  - NEVP: 4 hours;
+  - BPAT: 93 hours in training;
+  - PACE: none.
+- The mask applies equally to H and to C_relaxed. The closed hours are disclosed.
+
+### F4. Forecast value in coverage (fixes L2-1, L2-2, L4-2, L4-3)
+- **H2's primary decision statistic:** the absolute paired difference in kg CO₂ (W − L) at phase 0, with a 4-week block percentile CI. A claim also needs the same sign at block lengths 2 and 8.
+- **Pre-registered H2 stratum:** jobs whose whole latest-start-plus-duration window is inside issued forecast coverage. Report the share of decision-relevant energy inside coverage.
+- H2 is named "system-level forecast value". Decision regret under a common reservation state is its forecast-skill companion.
+- Only H2's primary contrast carries a decision rule. Everything else is an estimate.
+
+### F5. Fair comparisons (fixes L2-3, L2-4, L1-4)
+- H3 compares dynamic placement-and-delay with static placement and no delay.
+- **S-wait** (S's ranking plus K's start choice) is a deferred extra comparator.
+- **Place-only set:** U, G, S, W and L, all with zero latency and the energy charge kept.
+- The relaxed bound relaxes only contention between jobs. The per-job limits on site size, mobility and delay still apply.
+
+### F6. Statistics and concentration (fixes L4-1, L4-4, L3-5, L3-7, L8-4)
+- Report:
+  - leave-top-k-jobs-out results for k = 1, 5 and 10;
+  - the number of distinct source weeks per block;
+  - the immovable mass ceiling: jobs over 512 GPUs carry 30.3% of GPU-hours;
+  - the cycle-seam censoring deficit;
+  - Chinese holidays inside the cycle.
+- Forecast errors use a 7-day block bootstrap.
+
+### F7. Wording and definitions (fixes L5-1 to L5-5, L6-3, L8-2, L8-3, L3-8, L1-3)
+- **Headline:** "attributed operational CO₂ (EIA consumption basis, modeled), including X MWh of modeled transfer energy".
+- **Skeptic view:**
+  - the marginal proxy is shown for PACE temporal shifts only;
+  - it is not identifiable for CISO, NEVP or BPAT.
+- **Destination ranking:** S ranks destinations by the unweighted hourly mean, which is never shown as an attributed factor.
+- **Emission factors:** the possible provisional vintage of EIA's 2025–26 factors is disclosed.
+- **R2:** "top carbon quartile" means a training-fitted quartile for each BA.
+- **The relaxed bound:** it is called a bound, never a ceiling. Its "possible reduction" appears only in the evidence drawer.
+- **Power and energy:**
+  - idle power is sensitivity-only;
+  - transfer energy is IT energy, with PUE applied at both ends.
+- **Prediction intervals** are labeled "transferred from the validation-fit model".
+
+### F8. Leakage guards (fixes L1-2, L1-5, L1-6)
+- **Grid loaders** default to `drop_sealed`. Only the evaluation entry point holds the unseal path, and it logs every read; a test checks this.
+- **Foundation models (R4a):** admitted only if the checkpoint's documented training cutoff is before 2025-11-01, or its corpus excludes EIA-930.
+- **Weather** is deferred now: its manifest is still growing, so it can't be gated by Tue 10:00.
+
+### F9. Minimal honest core by Tue 18:00 (fixes L7-1, critical; L6-6)
+**Core, validation only:**
+1. Consumed and produced carbon truth for PACE, CISO, BPAT and NEVP, with a unit test and the F3 mask.
+2. Forecasts:
+   - K, W and L for consumed intensity at the 4 BAs;
+   - PACE demand, wind and solar;
+   - an as-of guard with a sentinel test.
+3. The Seren 161-day cycle at phase 0, with the flexibility hash, the 6 h / 1 h delays and the F1 deadlines.
+4. The simulator:
+   - exact-interval gang capacity;
+   - the immutable ledger and the late queue;
+   - policies U, G, S, K, W, L and H;
+   - the primary scenario plus time-only;
+   - warm-up and drain per F2.
+5. Accounting:
+   - conservation checks;
+   - the feasibility table;
+   - the vectorized relaxed bound;
+   - the "feasible ≥ bound" check.
+6. The 4-week paired block bootstrap.
+7. `manifest.json`, `metrics.json`, and excerpts of `job-replay.json` and `forecast-replay.json`, with evidence envelopes on the exported fields.
+8. One offline page in the chosen direction:
+   - the PACE observed-vs-forecast chart;
+   - the map with arcs to the three destinations;
+   - the policy table with feasibility and signed CO₂;
+   - evidence labels.
+9. A Linux offline smoke check and a tagged commit.
+
+**After 18:00, before the configuration freeze** (hard stop for every extension: validation selection done by Tue 21:00):
+- the one-axis sensitivities (§7);
+- place-only;
+- phases 49 and 98, and block lengths 2 and 8;
+- the production-basis repricing (first in line);
+- the PACE marginal skeptic view;
+- the R2 cross-BA statistics;
+- forecasts for the other BAs (the overview shows observed data at 18:00);
+- stress precision/recall, empirical intervals, the DF comparison;
+- the break-even view;
+- S-wait.
+
+**Deferred past the freeze, or cut:**
+- MILP certification (tiny brute-force cases stay in the unit tests);
+- the overrun stress, redefined as excess misses vs U with mutable downstream reservations (L3-3);
+- weather, prices, the fuel-mix diagnostic;
+- R4 (a)–(c);
+- the complete-coverage cohort (superseded by F3);
+- the full field registry, the canonical-hash rebuild.
+
+The Mac offline rehearsal moves to Wed morning.
+
+### F10. Runtime (fixes L3-6)
+- Candidate starts are hourly boundaries plus the earliest feasible start at each site.
+- Capacity uses an interval or segment-tree structure.
+- Benchmark on a 2-week slice first.

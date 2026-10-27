@@ -319,3 +319,35 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 - **Decision:** experiments freeze Wed 13:00 MT; final numbers are locked in the dashboard and deck by 14:00; after the freeze only logged bug-fix re-runs are allowed. A checkable version (tag `checkpoint-tue`, real validation results in the chosen design) is due Tue 18:00, and the configs for the sealed evaluation freeze around Tue 23:00.
 - **Evidence:** [brief, deadline](brief.md#owner-decisions-2026-10-26); [plan v2, amendments](plan/2026-10-27-plan-v2.md#amendments).
 - **Rejected:** the Wed 11:00 freeze (D-015).
+
+## D-044 · 2026-10-27 02:50 MT · Spec reconciled: Codex base + amendments, gate fixes F1–F10
+- **Decided by:** Claude (reconciliation); fresh-context gate review.
+- **Decision:** `docs/superpowers/specs/2026-10-27-gridpilot-design.md` is the experiment spec.
+  - Base: Codex's proposal.
+  - Additions: R1–R6 from Claude's proposal, and gate fixes F1–F10.
+  - Notable choices:
+    - consumption-basis carbon;
+    - non-preemptive gang jobs;
+    - a continuous 161-day replay;
+    - policies U/G/S/K/W/L/H;
+    - deadlines relative to U.
+- **Evidence:** `docs/reviews/2026-10-27-spec-gate-r1-claude.md`.
+- **Supersedes:**
+  - D-034, pause/resume as the main lever: primary jobs are non-preemptive now.
+  - D-036, week-block bootstrap mapping: replaced by the continuous cycle replay.
+  - Plan v2's model and policy names (LightGBM; P0–P4): replaced by HistGradientBoosting and U/G/S/K/W/L/H.
+
+## D-045 · 2026-10-27 02:50 MT · Minimal honest core for Tue 18:00
+- **Decided by:** Claude, on the gate's recommendation.
+- **Decision:** spec §15 F9 defines what is built by 18:00, what comes after 18:00, and what is deferred or cut.
+- **Evidence:** gate finding L7-1.
+
+## D-046 · 2026-10-27 02:50 MT · Codex budget
+- **Decided by:** owner.
+- **Decision:** at most 3 pre-approved runs:
+  - Astra spec gate, at high;
+  - an optional Sol code review, at xhigh;
+  - the Astra results audit, at high.
+
+  Anything else needs the owner's yes.
+- **Evidence:** `.claude/skills/codex-gates/SKILL.md`.
