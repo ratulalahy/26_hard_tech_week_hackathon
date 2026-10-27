@@ -435,3 +435,12 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - H3 is not supported: no dynamic search beats S, and K emits 10.0 t more than S.
 - **Interpretation (carried into the narrative):** placement dominates timing, mostly through moving work to BPAT. The top 1% of jobs (9,180) carry 94% of the energy.
 - **Evidence:** `results/metrics.json` (`framing`, `policies`, `workload`); `results/manifest.json` (claim frame and limitations).
+
+## D-057 · 2026-10-27 07:50 MT · The registered validation run is preserved outside the agent worktree
+- **Decided by:** lead (Claude), from the Stage 2 final review (finding A1).
+- **Decision:** the run directory `runs/slice/20261027T122317Z/` (178 MB; ledgers, bookings, truth_fill, forecasts, cohort, config) is preserved in three ways:
+  - copied to the main checkout's `runs/slice/`, which is gitignored;
+  - archived at `~/workspace/personal/projects/htw-archive/runs/slice/`;
+  - its source worktree is locked.
+- **Code reference:** the code commit 9c05198 was squash-merged into main as 2e6b6fc, so 9c05198 is tagged `run-20261027T122317Z` and the tag is pushed.
+- **File hashes:** `docs/evidence/run-20261027T122317Z.sha256` (25 files).
