@@ -34,6 +34,9 @@ test('every view renders registered values with zero non-localhost requests', as
   const hero = page.getByTestId('hero-placement');
   await expect(hero).toContainText(placementRange);
   await expect(page.getByTestId('hero-timing')).toContainText(timeOnlyRange);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText("In a simulated replay, moving Utah's AI jobs cut their CO₂ by a fifth. Waiting barely helps.");
+  await expect(page.getByTestId('hero-frame')).toHaveText('Replay of a measured GPU-cluster trace mapped onto Utah · deadlines relative to the baseline, met by construction · exact declared runtimes; runtime uncertainty untested.');
+  await expect(hero).toContainText('deadlines met by construction (baseline bookings)');
   await expect(page.getByText('Validation year (Nov 2024 – Oct 2025) · test year sealed').first()).toBeVisible();
   // the map is drawn locally: a WebGL canvas and the four core regions labelled on it
   await expect(page.locator('#map-main canvas.maplibregl-canvas')).toBeVisible();
@@ -56,6 +59,9 @@ test('every view renders registered values with zero non-localhost requests', as
   await page.getByRole('banner').getByRole('button', { name: 'Method & evidence' }).click();
   const drawer = page.getByRole('dialog');
   await expect(drawer).toContainText('simulated advance-reservation scheduling scenario; baseline-relative deadlines');
+  await expect(drawer).toContainText("A job's deadline is the later of (a) its run-now finish plus its allowed delay and (b) its finish in the stay-in-Utah baseline (baseline-relative).");
+  await expect(drawer.getByTestId('validation-line')).toHaveText('These are validation-year results, which shaped the design; the sealed test year is the real test.');
+  await expect(drawer).toContainText("ignores competition between jobs for capacity (each job's own limits still apply)");
   await expect(drawer.getByTestId('policy-table')).toContainText(sTonnes);
   await expect(drawer.getByTestId('policy-table')).toContainText(uTonnes);
 

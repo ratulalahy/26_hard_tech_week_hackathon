@@ -1,14 +1,14 @@
 {
  "schema_version": "gridpilot.results.v1",
  "kind": "workload-profile",
- "run_id": "20261027T122317Z",
+ "run_id": "20261027T160656Z",
  "policy": "W",
  "definition": "jobs ranked by declared GPU-hours (ties by job_uid); shares of the cohort's declared GPU-hours, of U's energy, and of W's saving vs U",
  "n_jobs": {
   "value": 917909,
   "unit": "jobs",
   "evidence": "simulated",
-  "provenance_id": "20261027T122317Z:workload:n_jobs",
+  "provenance_id": "20261027T160656Z:workload:n_jobs",
   "status": "ok",
   "reason": null
  },
@@ -16,7 +16,7 @@
   "value": 0.057777777777777775,
   "unit": "GPU_h",
   "evidence": "measured",
-  "provenance_id": "20261027T122317Z:workload:median_gpu_h",
+  "provenance_id": "20261027T160656Z:workload:median_gpu_h",
   "status": "ok",
   "reason": null
  },
@@ -24,15 +24,15 @@
   "value": 0.8594043636133865,
   "unit": "fraction",
   "evidence": "measured",
-  "provenance_id": "20261027T122317Z:workload:under_1_gpu_h",
+  "provenance_id": "20261027T160656Z:workload:under_1_gpu_h",
   "status": "ok",
   "reason": null
  },
  "saving_kg": {
-  "value": 1051323.0585411873,
+  "value": 1051323.0585411876,
   "unit": "kg_CO2",
   "evidence": "simulated",
-  "provenance_id": "20261027T122317Z:workload:saving_kg",
+  "provenance_id": "20261027T160656Z:workload:saving_kg",
   "status": "ok",
   "reason": null
  },
@@ -42,7 +42,7 @@
     "value": 0.001,
     "unit": "fraction",
     "evidence": "assumed",
-    "provenance_id": "20261027T122317Z:workload:q0.001",
+    "provenance_id": "20261027T160656Z:workload:q0.001",
     "status": "ok",
     "reason": null
    },
@@ -50,7 +50,7 @@
     "value": 918,
     "unit": "jobs",
     "evidence": "simulated",
-    "provenance_id": "20261027T122317Z:workload:q0.001:n",
+    "provenance_id": "20261027T160656Z:workload:q0.001:n",
     "status": "ok",
     "reason": null
    },
@@ -58,23 +58,23 @@
     "value": 0.7338838568094364,
     "unit": "fraction",
     "evidence": "measured",
-    "provenance_id": "20261027T122317Z:workload:q0.001:gpu_h",
+    "provenance_id": "20261027T160656Z:workload:q0.001:gpu_h",
     "status": "ok",
     "reason": null
    },
    "energy_share": {
-    "value": 0.7338838568094362,
+    "value": 0.7338838568094364,
     "unit": "fraction",
     "evidence": "simulated",
-    "provenance_id": "20261027T122317Z:workload:q0.001:energy",
+    "provenance_id": "20261027T160656Z:workload:q0.001:energy",
     "status": "ok",
     "reason": null
    },
    "saving_share": {
-    "value": 0.6738995683696365,
+    "value": 0.6738995683696363,
     "unit": "fraction",
     "evidence": "simulated",
-    "provenance_id": "20261027T122317Z:workload:q0.001:saving",
+    "provenance_id": "20261027T160656Z:workload:q0.001:saving",
     "status": "ok",
     "reason": null
    }
@@ -84,39 +84,39 @@
     "value": 0.01,
     "unit": "fraction",
     "evidence": "assumed",
-    "provenance_id": "20261027T122317Z:workload:q0.01",
+    "provenance_id": "20261027T160656Z:workload:q0.01",
     "status": "ok",
     "reason": null
    },
    "n_jobs": {
-    "value": 9179,
+    "value": 9180,
     "unit": "jobs",
     "evidence": "simulated",
-    "provenance_id": "20261027T122317Z:workload:q0.01:n",
+    "provenance_id": "20261027T160656Z:workload:q0.01:n",
     "status": "ok",
     "reason": null
    },
    "gpu_h_share": {
-    "value": 0.9408591343944134,
+    "value": 0.9408633753365622,
     "unit": "fraction",
     "evidence": "measured",
-    "provenance_id": "20261027T122317Z:workload:q0.01:gpu_h",
+    "provenance_id": "20261027T160656Z:workload:q0.01:gpu_h",
     "status": "ok",
     "reason": null
    },
    "energy_share": {
-    "value": 0.9408591343944132,
+    "value": 0.9408633753365622,
     "unit": "fraction",
     "evidence": "simulated",
-    "provenance_id": "20261027T122317Z:workload:q0.01:energy",
+    "provenance_id": "20261027T160656Z:workload:q0.01:energy",
     "status": "ok",
     "reason": null
    },
    "saving_share": {
-    "value": 0.9239281422137626,
+    "value": 0.9239495315677752,
     "unit": "fraction",
     "evidence": "simulated",
-    "provenance_id": "20261027T122317Z:workload:q0.01:saving",
+    "provenance_id": "20261027T160656Z:workload:q0.01:saving",
     "status": "ok",
     "reason": null
    }
@@ -126,7 +126,7 @@
     "value": 0.1,
     "unit": "fraction",
     "evidence": "assumed",
-    "provenance_id": "20261027T122317Z:workload:q0.1",
+    "provenance_id": "20261027T160656Z:workload:q0.1",
     "status": "ok",
     "reason": null
    },
@@ -134,7 +134,7 @@
     "value": 91791,
     "unit": "jobs",
     "evidence": "simulated",
-    "provenance_id": "20261027T122317Z:workload:q0.1:n",
+    "provenance_id": "20261027T160656Z:workload:q0.1:n",
     "status": "ok",
     "reason": null
    },
@@ -142,23 +142,23 @@
     "value": 0.9862707902235469,
     "unit": "fraction",
     "evidence": "measured",
-    "provenance_id": "20261027T122317Z:workload:q0.1:gpu_h",
+    "provenance_id": "20261027T160656Z:workload:q0.1:gpu_h",
     "status": "ok",
     "reason": null
    },
    "energy_share": {
-    "value": 0.9862707902235468,
+    "value": 0.9862707902235469,
     "unit": "fraction",
     "evidence": "simulated",
-    "provenance_id": "20261027T122317Z:workload:q0.1:energy",
+    "provenance_id": "20261027T160656Z:workload:q0.1:energy",
     "status": "ok",
     "reason": null
    },
    "saving_share": {
-    "value": 0.9815174658774733,
+    "value": 0.9815174658774731,
     "unit": "fraction",
     "evidence": "simulated",
-    "provenance_id": "20261027T122317Z:workload:q0.1:saving",
+    "provenance_id": "20261027T160656Z:workload:q0.1:saving",
     "status": "ok",
     "reason": null
    }

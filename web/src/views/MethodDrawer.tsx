@@ -36,8 +36,9 @@ export function MethodDrawer() {
               <p className="t-13 ink-2" style={{ margin: '8px 0 0' }}>
                 Every job runs either at its Utah reservation, under {pname('U')}, or where a policy places it. Every policy completes the same declared work. {DEADLINE_RULE} The allowed delay is
                 up to {fmt((asNum(a.allowed_delay_s.SFT) ?? 0) / 3600)} h ({fmt((asNum(a.allowed_delay_s.Eval) ?? 0) / 3600)} h for eval jobs) <Ev e="assumed" />.
-                {VALIDATION_LINE} Emissions are EIA's consumption-basis carbon intensity times energy. Differences between policies are attributed emissions, not a measured change in what the grid emitted.
+                Emissions are EIA's consumption-basis carbon intensity times energy. Differences between policies are attributed emissions, not a measured change in what the grid emitted.
               </p>
+              <p className="t-13" style={{ margin: '8px 0 0' }} data-testid="validation-line"><b className="fw-600">{VALIDATION_LINE}</b></p>
             </Sec>
             <Sec title="Every policy, the validation cohort">
               <div className="t-12 ink-2" style={{ marginBottom: 8 }}>
