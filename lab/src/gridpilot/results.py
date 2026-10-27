@@ -12,13 +12,15 @@ their validators, the seal check on exported timestamps, and atomic JSON writes.
 
 Booleans, strings, IDs, dates and schema versions are metadata, not quantitative evidence.
 
-**Seal.** No exported timestamp may be at or after TEST_START. Keys starting with
-`wallclock_` hold the build's own wall-clock time (when the export was generated), not data
-time, and are exempt. Run IDs use the compact `YYYYMMDDTHHMMSSZ` form.
+**Seal.** No exported timestamp may be at or after TEST_START, as a value, a key, or a
+date substring inside a longer string. Exempt: the exact key `wallclock_generated_at` (the
+build's own wall-clock time, not data time) and the seal-description strings under
+`SEAL_DESCRIPTION_KEYS`. Run IDs use the compact `YYYYMMDDTHHMMSSZ` form.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -35,7 +37,10 @@ SCHEMA_VERSION = "gridpilot.results.v1"
 EVIDENCE_CLASSES = ("observed", "measured", "forecast", "modeled", "assumed", "simulated")
 STATUSES = ("ok", "not_run", "not_evaluated", "unavailable")
 ENVELOPE_KEYS = ("value", "unit", "evidence", "provenance_id", "status", "reason")
-WALLCLOCK_PREFIX = "wallclock_"
+# The only exempt key: the export's own build time (wall clock, not data time).
+WALLCLOCK_KEY = "wallclock_generated_at"
+# String fields that describe the seal itself; date substrings inside them are not data.
+SEAL_DESCRIPTION_KEYS = frozenset({"sealed_window", "evidence_scope"})
 
 CLAIM_FRAME = (
     "simulated advance-reservation scheduling scenario; baseline-relative deadlines; "
@@ -44,9 +49,19 @@ CLAIM_FRAME = (
 IMPORT_CONVENTION = (
     "EIA's consumption-basis intensity assigns imports from Canada and Mexico the average US "
     "emissions rate (EIA-930 convention).")
+# F12.5 / F12.7 limitations (fix round 1 #2); check_claim_frame requires the first two.
+LIMIT_ZERO_MISSES = ("Zero deadline misses hold by construction under baseline bookings; they "
+                     "are not evidence of production reliability.")
+LIMIT_BOOKINGS_UNSIGNED = "The bookings' effect on realized savings is not signed."
+LIMIT_SHADOW_U = ("The shadow-U sensitivity ('possible without advance reservations') is "
+                  "pending.")
+LIMIT_PHASES = "Only workload phase 0 is run; phases 49 and 98 are pending."
+REQUIRED_LIMITATIONS = (LIMIT_ZERO_MISSES, LIMIT_BOOKINGS_UNSIGNED)
 
 _ISO = re.compile(r"^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?)?"
                   r"(Z|[+-]\d{2}:?\d{2})?$")
+_ISO_SUB = re.compile(r"(?<!\d)\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?"
+                      r"(?:Z|[+-]\d{2}:?\d{2})?)?(?!\d)")
 
 
 # --------------------------------------------------------------------------- envelopes
@@ -164,26 +179,40 @@ def _parse(s: str) -> datetime | None:
     return t if t.tzinfo else t.replace(tzinfo=UTC)
 
 
+def _sealed_in(s: str) -> bool:
+    """True if `s` is, or contains, an ISO date/timestamp at or after TEST_START."""
+    t = _parse(s)
+    if t is not None:
+        return t >= TEST_START
+    for m in _ISO_SUB.finditer(s):
+        t = _parse(m.group(0))
+        if t is not None and t >= TEST_START:
+            return True
+    return False
+
+
 def sealed_timestamps(obj: Any) -> list[str]:
-    """JSON paths of ISO dates/timestamps (values or keys) at or after TEST_START.
-    Keys starting with `wallclock_` are exempt (build time, not data time)."""
+    """JSON paths of ISO dates/timestamps at or after TEST_START, in values or keys,
+    including date substrings inside longer strings. Exempt: the exact key
+    `wallclock_generated_at` (build time), and the seal-description strings under
+    SEAL_DESCRIPTION_KEYS."""
     bad: list[str] = []
 
-    def walk(x, path):
+    def walk(x, path, key=None):
         if isinstance(x, dict):
             for k, v in x.items():
-                if isinstance(k, str) and k.startswith(WALLCLOCK_PREFIX):
+                if k == WALLCLOCK_KEY:
                     continue
-                t = _parse(k) if isinstance(k, str) else None
-                if t is not None and t >= TEST_START:
+                if isinstance(k, str) and _sealed_in(k):
                     bad.append(f"{path}.{k} (key)")
-                walk(v, f"{path}.{k}")
+                walk(v, f"{path}.{k}", k)
         elif isinstance(x, list):
             for i, v in enumerate(x):
-                walk(v, f"{path}[{i}]")
+                walk(v, f"{path}[{i}]", key)
         elif isinstance(x, str):
-            t = _parse(x)
-            if t is not None and t >= TEST_START:
+            if key in SEAL_DESCRIPTION_KEYS:
+                return
+            if _sealed_in(x):
                 bad.append(path)
 
     walk(obj, "$")
@@ -203,9 +232,35 @@ def check_claim_frame(manifest: dict) -> None:
         raise ValueError("manifest claim_frame differs from the registered text (F12.5, D-050)")
     lim = manifest.get("limitations") or []
     for need, what in ((LIMITATION, "the Task 2 forecast limitation"),
-                       (IMPORT_CONVENTION, "the EIA import convention")):
+                       (IMPORT_CONVENTION, "the EIA import convention"),
+                       (LIMIT_ZERO_MISSES, "the zero-misses-by-construction limitation"),
+                       (LIMIT_BOOKINGS_UNSIGNED, "the unsigned-bookings-effect limitation")):
         if need not in lim:
             raise ValueError(f"manifest limitations must include {what}")
+
+
+# --------------------------------------------------------------------------- hashing
+
+CANONICAL_DROP_KEYS = frozenset({"provenance_id", "run_id"})
+
+
+def _canonical(x: Any) -> Any:
+    if isinstance(x, dict):
+        return {k: _canonical(v) for k, v in sorted(x.items()) if k not in CANONICAL_DROP_KEYS}
+    if isinstance(x, list):
+        return [_canonical(v) for v in x]
+    if isinstance(x, float):
+        r = round(x, 6)
+        return 0.0 if r == 0 else r  # -0.0 and 0.0 hash alike
+    return x
+
+
+def canonical_hash(obj: Any) -> str:
+    """sha256 of `obj` with floats rounded to 1e-6, provenance_id/run_id removed and keys
+    sorted (F12.6: reproduction by canonical values, not bytes)."""
+    text = json.dumps(_canonical(obj), sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False, allow_nan=False)
+    return hashlib.sha256(text.encode()).hexdigest()
 
 
 # --------------------------------------------------------------------------- writing

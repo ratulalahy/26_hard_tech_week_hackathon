@@ -70,9 +70,12 @@ def _all_candidates(jobs: pl.DataFrame) -> pl.DataFrame:
 
 
 def home_capacity_125(slots: int = SITES[HOME]) -> int:
-    """1.25× home capacity, rounded to the nearest 8-GPU node (2,288 → 2,860 → 2,864)."""
-    nodes = slots * HOME_CAPACITY_FACTOR / NODE_GPUS
-    return round(nodes) * NODE_GPUS
+    """1.25× home capacity, rounded half up to an 8-GPU node: 2,288 × 1.25 = 2,860 GPUs =
+    357.5 nodes → 358 nodes = 2,864 slots. Integer arithmetic, so no float tie-breaking:
+    nodes = floor(slots × 5/32 + 1/2) = (10·slots + 32) // 64."""
+    if HOME_CAPACITY_FACTOR != 1.25 or NODE_GPUS != 8:
+        raise AssertionError("the integer rounding below encodes 1.25x and 8-GPU nodes")
+    return (10 * slots + 32) // 64 * NODE_GPUS
 
 
 _JOB_TRANSFORMS: dict[str, Callable[[pl.DataFrame], pl.DataFrame]] = {
@@ -146,6 +149,15 @@ def booking_hash(bookings: pl.DataFrame) -> str:
         "job_uid", "site", "start_us", "end_us", "deadline_us").iter_rows())
 
 
+def ledger_hash(ledger: pl.DataFrame) -> str:
+    """Canonical policy-ledger hash (F12.6): rows sorted by job_uid, over site, start_us and
+    end_us (integer µs)."""
+    b = ledger.sort("job_uid").select(
+        "job_uid", "site", pl.col("start_ts").dt.epoch("us").alias("s"),
+        pl.col("end_ts").dt.epoch("us").alias("e"))
+    return _hash_lines(f"{u},{s},{a},{e}" for u, s, a, e in b.iter_rows())
+
+
 @dataclass(frozen=True)
 class Cohort:
     A: datetime
@@ -217,5 +229,5 @@ def prefix_cohort(
 
 
 __all__ = ["SCENARIOS", "SCENARIO_NOTES", "Cohort", "booking_hash", "first_failure",
-           "home_capacity_125", "ids_hash", "prefix_cohort", "scenario_jobs",
+           "home_capacity_125", "ids_hash", "ledger_hash", "prefix_cohort", "scenario_jobs",
            "scenario_sites"]

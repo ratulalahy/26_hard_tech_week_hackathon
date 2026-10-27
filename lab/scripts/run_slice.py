@@ -9,11 +9,16 @@ Pipeline (Task 7 amendment; spec §15 F11–F14):
 3. common A (F13.2, F14.1), the cohort record written before any grid value is read;
 4. the F14.6 scoring truth fill over [init, F), its mask and closure calendar;
 5. the support pre-check (hard gate);
-6. policies U, G, S, K, W, L, H and time-only W, L on the primary scenario;
+6. policies U, G, S, K, W, L, H and time-only W, L on the primary scenario; G, S, K, W, L
+   and H with the F14.7 diagnostic, and G once more without it (ledgers must be identical);
 7. accounting: score, relaxed bound and the bound check, weekly totals, the paired block
-   bootstrap vs U, S and W, H2, influence, common support;
-8. export: `runs/slice/<UTC>/` (atomic), then the artifacts are copied into `results/`.
-9. timing, and the policy table on stdout.
+   bootstrap vs U, S and W, H2, influence, common support, the F4 coverage stratum;
+8. export: `runs/slice/<UTC>/` (atomic) with config.json, canonical ledger/metrics hashes
+   and input hashes; then all four artifacts are staged and renamed into `results/`;
+9. timing.json (written last, export included), and the policy table on stdout.
+
+The fallback window labels every b = 8 interval low-n and makes no H2 decision statement
+(F14.4).
 
 All numbers are **validation** results. The sealed window is never read.
 """
@@ -22,7 +27,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import inspect
 import json
 import logging
 import math
@@ -38,9 +42,11 @@ import numpy as np
 import polars as pl
 
 from gridpilot import forecast as fcmod
-from gridpilot.cohort import SCENARIO_NOTES, SCENARIOS, prefix_cohort
-from gridpilot.data.eia_co2 import CARBON_PATH, load_carbon
+from gridpilot.cohort import SCENARIO_NOTES, SCENARIOS, ledger_hash, prefix_cohort
+from gridpilot.data.eia_co2 import CARBON_PATH
+from gridpilot.data.traces import TRACE_DIR
 from gridpilot.data.truth_fill import (
+    BALANCE_PATH,
     TIER_EVIDENCE,
     TIER_SOURCE,
     fill_mask,
@@ -69,29 +75,43 @@ from gridpilot.paths import MANIFEST_DIR, REPO_ROOT, RESULTS_DIR
 from gridpilot.results import (
     CLAIM_FRAME,
     IMPORT_CONVENTION,
+    LIMIT_BOOKINGS_UNSIGNED,
+    LIMIT_PHASES,
+    LIMIT_SHADOW_U,
+    LIMIT_ZERO_MISSES,
     SCHEMA_VERSION,
+    canonical_hash,
     check_claim_frame,
     env,
     iso,
     not_run,
     write_json_atomic,
 )
-from gridpilot.sim import HOME, SITES, TRANSFER_S, G, S, U, closed_intervals, simulate
-from gridpilot.splits import TEST_START
+from gridpilot.sim import (
+    HOME,
+    SITES,
+    TRANSFER_S,
+    CarbonSearch,
+    G,
+    S,
+    U,
+    closed_intervals,
+    load_forecasts,
+    simulate,
+    tail_climatology,
+)
+from gridpilot.splits import TEST_START, drop_sealed
 from gridpilot.workload import CYCLE_DAYS, cycle_stats, replay
-
-try:  # Task 5 (K/W/L/H)
-    from gridpilot.sim import CarbonSearch, load_forecasts, tail_climatology
-except ImportError:  # pragma: no cover - depends on the merge state
-    CarbonSearch = load_forecasts = tail_climatology = None
 
 log = logging.getLogger("run_slice")
 
-# F14.7 blocked diagnostic (Task 5 engine flag). `blocked` is read only from diagnosed runs.
-DIAGNOSE = "diagnose_blocked" in inspect.signature(simulate).parameters
+# F14.7 blocked diagnostic: kept in the run (fix round 1 #4). `blocked` is read only from
+# diagnosed runs.
 DIAGNOSED_POLICIES = ("G", "S", "K", "W", "L", "H")
-BLOCKED_REASON = ("F14.7 blocked diagnostic not run: needs the Task 5 engine flag "
-                  "(diagnose_blocked)")
+NOT_DIAGNOSED_REASON = "F14.7 is reported for G, S, K, W, L and H only"
+FALLBACK_H2_REASON = "F14.4: the fallback makes no H2 decision statement"
+TRACE_PATH = TRACE_DIR / "acme" / "trace_seren.csv"
+SNAPSHOT_PATH = MANIFEST_DIR / "snapshot.json"
 
 H1 = timedelta(hours=1)
 WINDOWS = {
@@ -103,12 +123,12 @@ WINDOWS = {
 RANK_TRAIN = (datetime(2022, 1, 1, tzinfo=UTC), datetime(2024, 10, 29, tzinfo=UTC))
 PHASE_DAYS = 0
 WARMUP_MIN = timedelta(days=15)
-CARBON_POLICIES = ("K", "W", "L", "H")
 POLICY_ORDER = ("U", "G", "S", "K", "W", "L", "H", "W_time", "L_time")
 REFERENCES = ("U", "S", "W")
 BLOCKS = (2, 4, 8)
-TASK5_REASON = "Task 5 pending merge"
 SNAPSHOT_ID = "05efabe781cc"
+S_RANK_PROVENANCE = ("means of EIA's published consumption-basis hourly CO₂ intensity, "
+                     "2022-01-01 to 2024-10-29")
 TIME_ONLY_SITES = {s: (n if s == HOME else 0) for s, n in SITES.items()}
 POLICY_NOTES = {
     "U": "earliest feasible execution at PACE (FIFO); local operational reference",
@@ -186,16 +206,21 @@ def _dt_us(t: datetime) -> int:
 
 
 def s_ranking() -> tuple[list[str], dict[str, float]]:
-    """S's ranking: mean consumed CI over the training rows, ascending (PACE included)."""
-    c = load_carbon().filter((pl.col("ts_utc") >= RANK_TRAIN[0]) & (pl.col("ts_utc") < RANK_TRAIN[1])
-                             & pl.col("ba").is_in(list(SITES)))
-    r = c.group_by("ba").agg(pl.col("ci_consumed_g_kwh").mean().alias("m"),
-                             pl.col("ci_consumed_g_kwh").count().alias("n")).sort("m", "ba")
+    """S's ranking: mean consumed CI over the training rows, ascending (PACE included).
+    A lazy scan with the seal and the training filter, so no other row is loaded."""
+    r = (drop_sealed(pl.scan_parquet(CARBON_PATH))
+         .filter((pl.col("ts_utc") >= RANK_TRAIN[0]) & (pl.col("ts_utc") < RANK_TRAIN[1])
+                 & pl.col("ba").is_in(list(SITES)))
+         .group_by("ba").agg(pl.col("ci_consumed_g_kwh").mean().alias("m"))
+         .collect().sort("m", "ba"))
     return r["ba"].to_list(), {b: float(m) for b, m in zip(r["ba"], r["m"], strict=True)}
 
 
 def bound_gap(acc: pl.DataFrame, per: pl.DataFrame) -> dict:
-    """Cohort gap as math.fsum of per-job (policy − bound) differences (T6 #12)."""
+    """Cohort gap as math.fsum of per-job (policy − bound) differences (T6 #12). The job
+    sets of the ledger and the bound must be identical."""
+    if set(acc["job_uid"].to_list()) != set(per["job_uid"].to_list()):
+        raise AssertionError("bound and ledger cover different job sets")
     j = acc.select("job_uid", "co2_kg").join(per.select("job_uid", pl.col("co2_kg").alias("b")),
                                              on="job_uid", how="inner")
     if j.height != acc.height:
@@ -216,8 +241,6 @@ def build_policies(ranking, fc_dir, filled, mask):
     """Each policy is built once per run. K/W/L read the pinned forecast run `fc_dir`;
     H reads the F14.6 filled truth; all get the mask the closure calendar came from."""
     pols = {"U": (U(), SITES), "G": (G(), SITES), "S": (S(ranking), SITES)}
-    if CarbonSearch is None:
-        return pols, None
     forecasts = load_forecasts(fc_dir)
     tail = _tail(fc_dir)
     out = dict(pols)
@@ -271,16 +294,60 @@ def run(args) -> int:
         raise
     print(f"run directory: {final}")
     if rc == 0 and not args.no_export:
-        RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-        for p in sorted((final / "results").glob("*.json")):
-            shutil.copyfile(p, RESULTS_DIR / f".{p.name}.tmp")
-            os.replace(RESULTS_DIR / f".{p.name}.tmp", RESULTS_DIR / p.name)
-        print(f"exported {len(list((final / 'results').glob('*.json')))} artifacts to {RESULTS_DIR}")
+        export_results(final / "results", RESULTS_DIR)
     return rc
 
 
+ARTIFACTS = ("manifest.json", "metrics.json", "forecast-replay.json", "job-replay.json")
+
+
+def export_results(src: Path, dst: Path) -> None:
+    """Stage all four artifacts next to `dst`, then rename them into place, so a failure
+    while copying never leaves a mix of old and new files."""
+    missing = [a for a in ARTIFACTS if not (src / a).exists()]
+    if missing:
+        raise FileNotFoundError(f"run results are missing {missing}")
+    dst.mkdir(parents=True, exist_ok=True)
+    staged = []
+    try:
+        for a in ARTIFACTS:
+            tmp = dst / f".{a}.{os.getpid()}.staged"
+            shutil.copyfile(src / a, tmp)
+            staged.append((tmp, dst / a))
+        for tmp, final in staged:
+            os.replace(tmp, final)
+    finally:
+        for tmp, _ in staged:
+            tmp.unlink(missing_ok=True)
+    print(f"exported {len(ARTIFACTS)} artifacts to {dst}")
+
+
+def _write_parquet_hashed(frame: pl.DataFrame, path: Path, hashes: dict) -> None:
+    frame.write_parquet(path)
+    hashes[path.name] = _sha256(path)
+
+
+def _candidates_frame(probe: RemoteProbe, cj: pl.DataFrame) -> pl.DataFrame:
+    """The §11 eligible set: flexible jobs with a feasible remote action in the U replay,
+    with declared GPU-h and the earliest feasible start (µs) at each site (null = none)."""
+    uids = sorted(probe.actions)
+    cols = {"job_uid": uids}
+    for site in SITES:
+        cols[f"earliest_start_us_{site}"] = [probe.actions[u].get(site) for u in uids]
+    frame = pl.DataFrame(cols, schema={"job_uid": pl.Utf8,
+                                       **{f"earliest_start_us_{s}": pl.Int64 for s in SITES}})
+    gh = cj.select("job_uid", (pl.col("gpus") * pl.col("duration_s") / 3600).alias("gpu_h"))
+    return frame.join(gh, on="job_uid", how="left").select(
+        "job_uid", "gpu_h", *[f"earliest_start_us_{s}" for s in SITES]).sort("job_uid")
+
+
 def _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F) -> int:
-    # 0. Forecasts (Task 2): constructed fresh unless a run is given.
+    file_sha: dict[str, str] = {}
+    snapshot_id = json.loads(SNAPSHOT_PATH.read_text())["snapshot_id"]
+    if snapshot_id != SNAPSHOT_ID:
+        raise AssertionError(f"data snapshot {snapshot_id} != registered {SNAPSHOT_ID}")
+
+    # 0. Forecasts (Task 2): constructed fresh unless a run is given; pinned either way.
     with timer("forecast_construction"):
         if args.forecast_run:
             fc_dir = Path(args.forecast_run)
@@ -291,6 +358,13 @@ def _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F) -> int
     for c in ("issue_ts", "target_ts"):
         if forecasts[c].max() >= TEST_START:
             raise AssertionError("forecasts reach the seal")
+    fc_path = (str(fc_dir) if args.forecast_run
+               else f"runs/slice/{run_id}/forecast/{fc_dir.name}")
+    file_sha["forecasts.parquet"] = _sha256(fc_dir / "forecasts.parquet")
+    file_sha["climatology.parquet"] = _sha256(fc_dir / "climatology.parquet")
+    file_sha["balance.parquet"] = _sha256(BALANCE_PATH)
+    file_sha["carbon_hourly.parquet"] = _sha256(CARBON_PATH)
+    file_sha[TRACE_PATH.name] = _sha256(TRACE_PATH)
 
     # 1. Jobs.
     with timer("replay"):
@@ -319,8 +393,11 @@ def _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F) -> int
                    "last_completion": iso(wl["end_ts"].max())},
         "recorded_before_grid_scoring": True,
     }
-    (tmp / "cohort.json").write_text(json.dumps(cohort_record, indent=1) + "\n")
-    bookings.write_parquet(tmp / "bookings.parquet")
+    cohort_text = json.dumps(
+        cohort_record | {"wallclock_written_at": datetime.now(UTC).isoformat()}, indent=1) + "\n"
+    (tmp / "cohort.json").write_text(cohort_text)
+    file_sha["cohort.json"] = hashlib.sha256(cohort_text.encode()).hexdigest()
+    _write_parquet_hashed(bookings, tmp / "bookings.parquet", file_sha)
     log.info("A = %s, cohort %d jobs, %d excluded", coh.A, cj.height, coh.n_excluded)
 
     # 4. Scoring truth fill (F14.6).
@@ -335,7 +412,7 @@ def _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F) -> int
         raise AssertionError(f"closure calendar not empty after tier 4: {missing_hours(filled)}")
     tiers = tier_counts(filled)
     still_missing = missing_hours(filled)
-    filled.write_parquet(tmp / "truth_fill.parquet")
+    _write_parquet_hashed(filled, tmp / "truth_fill.parquet", file_sha)
 
     # 5. Support pre-check (hard gate).
     sc_b = support_check(bookings, tt, F)
@@ -354,22 +431,32 @@ def _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F) -> int
     ledgers: dict[str, pl.DataFrame] = {}
     probe = None
     for name in POLICY_ORDER:
-        if name not in policies:
-            continue
         pol, sites = policies[name]
         if name == "U":
             pol = probe = RemoteProbe(pol)
-        kw = {"diagnose_blocked": True} if DIAGNOSE and name in DIAGNOSED_POLICIES else {}
+        kw = {"diagnose_blocked": True} if name in DIAGNOSED_POLICIES else {}
         with timer(f"policy_{name}"):
             led = simulate(cj, pol, sites, bookings=bookings, warm=warm, closed=closed, **kw)
         ledgers[name] = led
-        led.write_parquet(tmp / f"ledger_{name}.parquet")
+        _write_parquet_hashed(led, tmp / f"ledger_{name}.parquet", file_sha)
+    # F14.7 cost and invariance: G once more without the diagnostic; placements must match.
+    with timer("policy_G_undiagnosed"):
+        g_plain = simulate(cj, G(), SITES, bookings=bookings, warm=warm, closed=closed)
+    ledger_sha = {n: ledger_hash(led) for n, led in ledgers.items()}
+    if ledger_hash(g_plain) != ledger_sha["G"]:
+        raise AssertionError("G's ledger differs with and without diagnose_blocked (F14.7)")
+    cands = _candidates_frame(probe, cj)
+    _write_parquet_hashed(cands, tmp / "illustrative_candidates.parquet", file_sha)
 
     # 7. Accounting.
     with timer("accounting"):
         acct = accounting(ledgers, policies, cj, bookings, warm, tt, eval_start, coh.A)
-        acct["stratum"] = (stratum_estimates(ledgers, cj, bookings, cov, tt, eval_start, coh.A)
-                           if cov is not None else None)
+        acct["stratum"] = stratum_estimates(ledgers, cj, bookings, cov, tt, eval_start, coh.A)
+    repro = {"ledger_canonical_sha256": ledger_sha,
+             "ledger_hash_rule": "sha256 over job_uid-sorted lines 'job_uid,site,start_us,end_us'",
+             "g_ledger_equal_with_and_without_diagnose_blocked": True,
+             "file_sha256": file_sha, "snapshot_id": snapshot_id,
+             "forecast_run": {"path": fc_path, "forecasts_sha256": file_sha["forecasts.parquet"]}}
     # 8. Export.
     with timer("export"):
         art = build_artifacts(
@@ -378,19 +465,38 @@ def _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F) -> int
             still_missing=still_missing, support=support, ranking=ranking,
             rank_means=rank_means, ledgers=ledgers, acct=acct, cj=cj, bookings=bookings,
             tt=tt, filled=filled, forecasts=forecasts, fc_metrics=fc_metrics, fc_dir=fc_dir,
-            probe=probe, timer=timer)
+            fc_path=fc_path, probe=probe, cands=cands, warm=warm, timer=timer, repro=repro)
         out = tmp / "results"
         hashes = {}
         for name in ("metrics.json", "forecast-replay.json", "job-replay.json"):
             text = write_json_atomic(out / name, art[name])
             hashes[name] = hashlib.sha256(text.encode()).hexdigest()
+        metrics_canonical = canonical_hash(art["metrics.json"])
         man = art["manifest.json"]
         man["artifact_sha256"] = hashes
+        man["reproducibility"]["metrics_canonical_sha256"] = metrics_canonical
         man["timing_s"] = {k: env(v, "s", "measured", f"{run_id}:timing:{k}")
                            for k, v in timer.t.items()}
         check_claim_frame(man)
         write_json_atomic(out / "manifest.json", man)
+    config = {
+        "run_id": run_id, "window": args.window, "git_sha": sha, "git_clean": status == "",
+        "init": iso(init), "eval_start": iso(eval_start), "A": iso(coh.A), "F": iso(F),
+        "phase_days": PHASE_DAYS, "sites": SITES, "time_only_sites": TIME_ONLY_SITES,
+        "transfer_s": TRANSFER_S, "kw_per_gpu": KW_PER_GPU, "pue": PUE,
+        "transfer_fraction": TRANSFER_FRACTION, "bound_tol_kg": BOUND_TOL_KG,
+        "blocks": list(BLOCKS), "policies": list(POLICY_ORDER),
+        "diagnosed_policies": list(DIAGNOSED_POLICIES), "s_ranking": ranking,
+        "s_ranking_training_rows": [iso(RANK_TRAIN[0]), iso(RANK_TRAIN[1])],
+        "scenarios_for_A": list(SCENARIOS), "reproducibility": repro,
+        "metrics_canonical_sha256": metrics_canonical, "artifact_sha256": hashes,
+    }
+    (tmp / "config.json").write_text(json.dumps(config, indent=1) + "\n")
     print_table(acct, timer)
+    # Written last, after export, so it includes the export time (fix round 1 #12).
+    (tmp / "timing.json").write_text(json.dumps(
+        {"run_id": run_id, "unit": "s", "evidence": "measured", "timing_s": timer.t},
+        indent=1) + "\n")
     if not acct["bound_all_ok"]:
         log.error("feasible >= bound FAILED")
         return 3
@@ -416,6 +522,8 @@ def accounting(ledgers, policies, cj, bookings, warm, tt, eval_start, A) -> dict
             raise AssertionError(f"{name}: {m['fit_rejected_jobs']} fit-rejected jobs")
         m["mobile_remote_share"] = mobile_remote_share(led, cj)
         acc = job_accounting(led, cj, tt)
+        by_site = dict(acc.group_by("site").agg(pl.col("execution_kwh").sum()).iter_rows())
+        m["execution_kwh_by_site"] = {s: float(by_site.get(s, 0.0)) for s in SITES}
         gaps[name] = {"primary": bound_gap(acc, per)}
         if sites is TIME_ONLY_SITES:
             gaps[name]["time_only"] = bound_gap(acc, per_t)
@@ -485,9 +593,9 @@ METRIC_UNITS = {
 }
 
 
-def _policy_record(name, m, gaps, run_id, n_weeks) -> dict:
+def _policy_record(name, m, gaps, run_id) -> dict:
     pid = f"{run_id}:{name}"
-    diagnosed = DIAGNOSE and name in DIAGNOSED_POLICIES
+    diagnosed = name in DIAGNOSED_POLICIES
     rec = {"policy": name, "status": "ok", "reason": None, "note": POLICY_NOTES[name],
            "contender": name != "H", "feasible": bool(m["feasible"]),
            "conserved": bool(m["conserved"]),
@@ -496,8 +604,7 @@ def _policy_record(name, m, gaps, run_id, n_weeks) -> dict:
         v = m.get(k)
         if k in ("blocked_jobs", "blocked_kwh") and not diagnosed:
             rec["metrics"][k] = not_run(unit, EVIDENCE_POLICY, f"{pid}:{k}",
-                                        BLOCKED_REASON if name in DIAGNOSED_POLICIES
-                                        else "F14.7 is reported for G, S, K, W, L and H only")
+                                        NOT_DIAGNOSED_REASON)
         elif v is None:
             rec["metrics"][k] = env(None, unit, EVIDENCE_POLICY, f"{pid}:{k}",
                                     status="unavailable", reason="undefined (zero denominator)")
@@ -510,6 +617,9 @@ def _policy_record(name, m, gaps, run_id, n_weeks) -> dict:
             "no mobile jobs"))
     rec["metrics"]["peak_gpus"] = {s: env(v, "GPUs", EVIDENCE_POLICY, f"{pid}:peak_gpus:{s}")
                                    for s, v in m["peak_gpus"].items()}
+    rec["metrics"]["execution_kwh_by_site"] = {
+        s: env(v, "kWh", EVIDENCE_POLICY, f"{pid}:execution_kwh:{s}")
+        for s, v in m["execution_kwh_by_site"].items()}
     rec["bound_check"] = {
         basis: {"ok": g["ok"],
                 "gap_kg": env(g["gap_kg"], "kg_CO2", "modeled", f"{pid}:bound_gap:{basis}"),
@@ -522,23 +632,15 @@ def _policy_record(name, m, gaps, run_id, n_weeks) -> dict:
     return rec
 
 
-def _not_run_record(name, run_id) -> dict:
-    pid = f"{run_id}:{name}"
-    return {"policy": name, "status": "not_run", "reason": TASK5_REASON,
-            "note": POLICY_NOTES[name], "contender": name != "H", "feasible": None,
-            "conserved": None,
-            "metrics": {k: not_run(u, EVIDENCE_POLICY, f"{pid}:{k}", TASK5_REASON)
-                        for k, u in METRIC_UNITS.items()},
-            "bound_check": None}
-
-
 def _interval(ci, unit, evidence, pid, null_reason="undefined") -> dict:
     if ci is None:
         return env(None, unit, evidence, pid, status="unavailable", reason=null_reason)
     return env(list(ci), unit, evidence, pid)
 
 
-def _contrast_record(name, ref, by_b, run_id, n_weeks) -> dict:
+def _contrast_record(name, ref, by_b, run_id, n_weeks, window="validation") -> dict:
+    """One paired contrast at every block length. b = 8 is labelled low-n when n ≤ 8, and
+    always on the fallback window (F14.4)."""
     pid = f"{run_id}:{name}_vs_{ref}"
     out = {"candidate": name, "reference": ref, "method": BOOTSTRAP_LABEL,
            "definition": "reference − candidate (positive = candidate emits less); "
@@ -547,12 +649,12 @@ def _contrast_record(name, ref, by_b, run_id, n_weeks) -> dict:
         label = []
         if r["degenerate"]:
             label.append("degenerate (n_weeks <= block: interval collapses to the point)")
-        if b == 8 and n_weeks <= 8:
+        if b == 8 and (n_weeks <= 8 or window == "fallback"):
             label.append("low-n")
         out["blocks"][str(b)] = {
             "primary": b == 4,
             "labels": label,
-            "n_weeks": env(r["n_weeks"], "weeks", "simulated", f"{pid}:b{b}:n_weeks"),
+            "n_weeks": env(r["n_weeks"], "weeks", "measured", f"{pid}:b{b}:n_weeks"),
             "reps": env(r["reps"], "replicates", "assumed", "F12.4:reps"),
             "diff_kg": env(r["diff_kg"], "kg_CO2", "simulated", f"{pid}:b{b}:diff_kg",
                            *(("unavailable", "empty input") if r["diff_kg"] is None else ())),
@@ -568,43 +670,47 @@ def _contrast_record(name, ref, by_b, run_id, n_weeks) -> dict:
     return out
 
 
-def _h2_record(h2, run_id) -> dict:
-    if h2 is None:
-        return {"status": "not_run", "reason": TASK5_REASON, "population": "full phase-0 cohort",
-                "statistic": "W − L kg CO₂ (positive = L emits less)", "direction": None,
-                "decided": None,
-                "intervals": {str(b): not_run("kg_CO2", "simulated", f"{run_id}:h2:b{b}",
-                                              TASK5_REASON) for b in BLOCKS}}
-    return {"status": "ok", "reason": h2["reason"], "population": "full phase-0 cohort (F14.3)",
-            "statistic": h2["statistic"], "direction": h2["direction"], "decided": h2["decided"],
-            "n_weeks": env(h2["n_weeks"], "weeks", "simulated", f"{run_id}:h2:n_weeks"),
+def _h2_record(h2, run_id, window="validation") -> dict:
+    """H2 on the full phase-0 cohort (F14.3). The fallback window makes no H2 decision
+    statement (F14.4): status not_evaluated, direction and decided null; the intervals are
+    kept as estimates."""
+    fallback = window == "fallback"
+    return {"status": "not_evaluated" if fallback else "ok",
+            "reason": FALLBACK_H2_REASON if fallback else h2["reason"],
+            "population": "full phase-0 cohort (F14.3)",
+            "statistic": h2["statistic"],
+            "direction": None if fallback else h2["direction"],
+            "decided": None if fallback else h2["decided"],
+            "intervals_are": "estimates only" if fallback else "decision intervals (F13.4)",
+            "n_weeks": env(h2["n_weeks"], "weeks", "measured", f"{run_id}:h2:n_weeks"),
             "intervals": {str(b): {
+                "labels": ["low-n"] if int(b) == 8 and (fallback or h2["n_weeks"] <= 8)
+                else [],
                 "diff_kg": env(r["diff_kg"], "kg_CO2", "simulated", f"{run_id}:h2:b{b}:diff"),
                 "diff_kg_ci95": _interval(r["diff_kg_ci"], "kg_CO2", "simulated",
                                           f"{run_id}:h2:b{b}:ci")}
                 for b, r in h2["intervals"].items()}}
 
 
-def _stratum_record(st, run_id, n_weeks) -> dict:
+def _stratum_record(st, run_id, n_weeks, window="validation") -> dict:
     pid = f"{run_id}:stratum"
-    base = {"definition": "jobs whose deadline lies inside issued forecast coverage (as of "
-                          "arrival) at every legal site (F4); secondary estimate, no decision "
-                          "rule (F14.3)"}
-    if st is None:
-        return base | {"status": "not_run", "reason": TASK5_REASON}
-    out = base | {
+    out = {
+        "definition": "jobs whose deadline lies inside issued forecast coverage (as of "
+                      "arrival) at every legal site (F4); secondary estimate, no decision "
+                      "rule (F14.3)",
         "status": "ok",
         "n_jobs": env(st["n_jobs"], "jobs", "simulated", f"{pid}:n"),
         "n_flexible_cohort": env(st["n_flexible"], "jobs", "assumed", f"{pid}:n_flex"),
         "share_flexible_energy_in_coverage": env(
-            st["share_flexible_energy_in_coverage"], "fraction", "modeled", f"{pid}:share",
+            st["share_flexible_energy_in_coverage"], "fraction", "simulated", f"{pid}:share",
             *(("unavailable", "no flexible energy")
               if st["share_flexible_energy_in_coverage"] is None else ())),
     }
     if st["w_minus_l"] is None:
-        out["w_minus_l"] = {"status": "not_run", "reason": "W or L not run, or empty stratum"}
+        out["w_minus_l"] = {"status": "unavailable", "reason": "empty stratum"}
     else:
-        out["w_minus_l"] = _contrast_record("L", "W", st["w_minus_l"], f"{pid}", n_weeks)
+        out["w_minus_l"] = _contrast_record("L", "W", st["w_minus_l"], f"{pid}", n_weeks,
+                                            window)
     return out
 
 
@@ -634,33 +740,80 @@ def _flex_shares(cj, run_id) -> dict:
     return out
 
 
+GREEDY_NOTE = ("Per-job greedy search, including hindsight H, is not a cohort optimum; holding "
+               "scarce BPAT slots for cleaner hours pushes later jobs to dirtier sites.")
+
+
+def _t(kg: float) -> str:
+    t = kg / 1000
+    return f"{0.0 if abs(t) < 0.05 else t:,.1f} t"  # no "-0.0 t"
+
+
+def framing_text(acct) -> str:
+    """The validation reading of H3 and placement vs timing, every number from this run
+    (fix round 1 #5). Each clause is chosen by the intervals, so it stays true."""
+    c = acct["contrasts"]
+    s = acct["scores"]
+
+    def b4(cand, ref):
+        r = c[f"{cand}_vs_{ref}"][4]
+        return r["diff_kg"], r["diff_kg_ci"], r["saving"]
+
+    dynamic = ("K", "W", "L")
+    better, worse, same = [], [], []
+    for p in dynamic:
+        d, (lo, hi), _ = b4(p, "S")
+        (better if lo > 0 else worse if hi < 0 else same).append((p, d, lo, hi))
+    if better:
+        head = ("; ".join(f"{p} emits less than S by {_t(d)} (b = 4 95% interval "
+                          f"[{_t(lo)}, {_t(hi)}])" for p, d, lo, hi in better)
+                + " (H3 supported for " + ", ".join(p for p, *_ in better) + ")")
+    else:
+        head = ("no dynamic carbon search (K, W, L) improves on the static clean-region "
+                "ranking S (H3 not supported)")
+    parts = [head]
+    for p, d, lo, hi in worse:
+        parts.append(f"{p} emits more than S ({_t(-d)} more; S − {p} = {_t(d)}, b = 4 95% "
+                     f"interval [{_t(lo)}, {_t(hi)}]; the interval excludes zero)")
+    if same:
+        ps = [p for p, *_ in same]
+        names = ps[0] if len(ps) == 1 else ", ".join(ps[:-1]) + " and " + ps[-1]
+        detail = "; ".join(f"S − {p} = {_t(d)} [{_t(lo)}, {_t(hi)}]" for p, d, lo, hi in same)
+        parts.append(f"{names} {'is' if len(same) == 1 else 'are'} not distinguishable from S "
+                     f"({detail})")
+    t_save = [b4(p, "U")[2] for p in ("W_time", "L_time")]
+    by_site = s["L"]["execution_kwh_by_site"]
+    remote = {k: v for k, v in by_site.items() if k != HOME}
+    top = max(remote, key=remote.get)
+    share = remote[top] / sum(remote.values()) if sum(remote.values()) else 0.0
+    l_save = b4("L", "U")[2]
+    return (f"Validation: {'; '.join(parts)}. Waiting in Utah alone saves about "
+            f"{100 * sum(t_save) / 2:.1f}% (W_time {100 * t_save[0]:.2f}%, L_time "
+            f"{100 * t_save[1]:.2f}% vs U); the saving comes from moving work (L "
+            f"{100 * l_save:.2f}% vs U), mostly to {top} ({100 * share:.0f}% of L's remote "
+            f"execution energy).")
+
+
+def headline_wording(m) -> str:
+    """F7 headline with the F12.5 frame; transfer energy is simulated (fix round 1 #6a)."""
+    return ("attributed operational CO₂ (EIA consumption basis), including "
+            f"{m['transfer_kwh'] / 1000:,.1f} MWh of simulated transfer energy; "
+            "baseline-relative deadlines, exact declared runtimes; runtime uncertainty untested")
+
+
 def build_artifacts(**k) -> dict:
     run_id, coh, acct = k["run_id"], k["coh"], k["acct"]
     scores, gaps = acct["scores"], acct["gaps"]
     cj = k["cj"]
     n_weeks = acct["n_weeks"]
+    window = k["args"].window
 
     # metrics.json
-    policies = {}
-    for name in POLICY_ORDER:
-        if name in scores:
-            policies[name] = _policy_record(name, scores[name], gaps[name], run_id, n_weeks)
-        else:
-            policies[name] = _not_run_record(name, run_id)
-    contrasts = []
-    for ref in REFERENCES:
-        for name in POLICY_ORDER:
-            if name == ref:
-                continue
-            key = f"{name}_vs_{ref}"
-            if key in acct["contrasts"]:
-                contrasts.append(_contrast_record(name, ref, acct["contrasts"][key], run_id,
-                                                  n_weeks))
-            else:
-                contrasts.append({"candidate": name, "reference": ref, "status": "not_run",
-                                  "reason": TASK5_REASON,
-                                  "diff_kg": not_run("kg_CO2", "simulated",
-                                                     f"{run_id}:{key}", TASK5_REASON)})
+    policies = {name: _policy_record(name, scores[name], gaps[name], run_id)
+                for name in POLICY_ORDER}
+    contrasts = [_contrast_record(name, ref, acct["contrasts"][f"{name}_vs_{ref}"], run_id,
+                                  n_weeks, window)
+                 for ref in REFERENCES for name in POLICY_ORDER if name != ref]
     inf = acct["influence"]
     influence_rec = {
         "reference": inf["reference"], "rank_by": "declared GPU-hours per unique source attempt",
@@ -674,8 +827,9 @@ def build_artifacts(**k) -> dict:
                             for p, v in d["vs_reference"].items()}}
             for kk, d in inf["by_k"].items()}}
     metrics = {
-        "schema_version": SCHEMA_VERSION, "run_id": run_id, "window": k["args"].window,
-        "evidence_note": "validation results; policy outcomes simulated; bound modeled",
+        "schema_version": SCHEMA_VERSION, "run_id": run_id, "window": window,
+        "evidence_note": "validation results; policy outcomes (CO₂, execution and transfer "
+                         "energy) simulated; bound modeled",
         "covered": {"arrivals": [iso(k["eval_start"]), iso(coh.A)],
                     "drain": [iso(coh.A), iso(k["F"])]},
         "cohort": {
@@ -685,10 +839,11 @@ def build_artifacts(**k) -> dict:
             "n_excluded": env(coh.n_excluded, "jobs", "simulated", f"{run_id}:cohort:excluded"),
             "excluded_gpu_h": env(coh.excluded_gpu_h, "GPU_h", "measured",
                                   f"{run_id}:cohort:excluded_gpu_h"),
-            "n_weeks": env(n_weeks, "weeks", "simulated", f"{run_id}:n_weeks"),
+            "n_weeks": env(n_weeks, "weeks", "measured", f"{run_id}:n_weeks"),
             "flex_shares": _flex_shares(cj, run_id),
         },
         "policies": policies,
+        "headline_wording": {p: headline_wording(scores[p]) for p in POLICY_ORDER},
         "relaxed_bound": {
             "primary": env(acct["bounds"]["primary"], "kg_CO2", "modeled", f"{run_id}:bound"),
             "time_only": env(acct["bounds"]["time_only"], "kg_CO2", "modeled",
@@ -698,7 +853,7 @@ def build_artifacts(**k) -> dict:
             "all_feasible_policies_ok": acct["bound_all_ok"],
         },
         "contrasts": contrasts,
-        "h2": _h2_record(acct["h2"], run_id),
+        "h2": _h2_record(acct["h2"], run_id, window),
         "influence": influence_rec,
         "common_support": {
             "n_dropped_jobs": env(len(acct["common_support"]), "jobs", "simulated",
@@ -707,13 +862,10 @@ def build_artifacts(**k) -> dict:
             "reason": "the common-support sensitivity rerun is scheduled after 18:00 (Task 7 "
                       "amendment step 7)"},
         "weekly": _weekly_record(acct["weeks"], run_id),
-        "coverage_stratum": _stratum_record(acct.get("stratum"), run_id, n_weeks),
+        "coverage_stratum": _stratum_record(acct["stratum"], run_id, n_weeks, window),
         "framing": {
-            "placement_vs_timing": (
-                "Read mobile_remote_share with the time-only rows (W_time, L_time: destination "
-                "capacity 0). Where the carbon searches send nearly every mobile job remote, "
-                "placement dominates timing and the H2 (W vs L) and H3 contrasts are expected "
-                "to be small; that is the result, not a defect."),
+            "placement_vs_timing": framing_text(acct),
+            "greedy_search": GREEDY_NOTE,
             "h_is_diagnostic": "H uses realized (filled) truth; it is never a contender",
         },
     }
@@ -725,17 +877,20 @@ def build_artifacts(**k) -> dict:
     # manifest.json
     m_inputs = {p.name: _sha256(p) for p in sorted(MANIFEST_DIR.glob("*.json"))}
     tiers = k["tiers"]
+    repro = k["repro"]
+    t = k["timer"].t
     manifest = {
         "schema_version": SCHEMA_VERSION, "run_id": run_id, "git_sha": k["sha"],
-        "git_clean": k["status"] == "", "snapshot_id": SNAPSHOT_ID,
+        "git_clean": k["status"] == "", "snapshot_id": repro["snapshot_id"],
         "wallclock_generated_at": datetime.now(UTC).isoformat(),
         "reproduce": f"make slice  # cd lab && uv run python scripts/run_slice.py --window "
-                     f"{k['args'].window}",
+                     f"{window}",
         "evidence_scope": "validation (selection) results; the sealed test window "
                           "[2025-11-01, 2026-11-01) is never read",
         "claim_frame": CLAIM_FRAME,
         "limitations": [
-            fcmod.LIMITATION, IMPORT_CONVENTION,
+            fcmod.LIMITATION, IMPORT_CONVENTION, LIMIT_ZERO_MISSES, LIMIT_BOOKINGS_UNSIGNED,
+            LIMIT_SHADOW_U, LIMIT_PHASES,
             "EIA's 2025-26 emission factors may be a provisional vintage (F7).",
             ("Baseline bookings are an assumed advance-reservation calendar synthesized from "
              "the whole U replay (F11, F12.7); the result is not a historical online-router "
@@ -744,13 +899,14 @@ def build_artifacts(**k) -> dict:
              "calendar is an assumed advance-known calendar (F12.1)."),
         ],
         "inputs": {"data_manifests_sha256": m_inputs,
-                   "carbon_hourly_sha256": _sha256(CARBON_PATH),
-                   "forecast_run": (str(k["fc_dir"]) if k["args"].forecast_run else
-                                    f"runs/slice/{run_id}/forecast/{k['fc_dir'].name}"),
+                   "carbon_hourly_sha256": repro["file_sha256"]["carbon_hourly.parquet"],
+                   "forecast_run": k["fc_path"],
+                   "forecast_run_forecasts_sha256": repro["forecast_run"]["forecasts_sha256"],
                    "forecast_run_pinned": "K/W/L forecasts and the K tail climatology are "
                                           "read from this one run directory",
                    "forecast_metrics_run_id": k["fc_metrics"].get("run_id")},
-        "split": {"window": k["args"].window, "init": iso(k["init"]),
+        "reproducibility": dict(repro),
+        "split": {"window": window, "init": iso(k["init"]),
                   "eval_start": iso(k["eval_start"]), "A": iso(coh.A), "F": iso(k["F"]),
                   "sealed_window": "test window [TEST_START = 2025-11-01T00:00Z, "
                                    "2026-11-01T00:00Z): never read by this run",
@@ -763,11 +919,12 @@ def build_artifacts(**k) -> dict:
                                 "policies_run": n == "primary"} for n in SCENARIOS},
         "truth_fill": {
             "rule": "F14.6: first available of tiers 1-4; forecasts never used as fill",
-            "tiers": {str(t): {"source": TIER_SOURCE[t], "evidence": TIER_EVIDENCE[t]}
-                      for t in TIER_SOURCE},
-            "hours_by_ba": {ba: {t: env(n, "hours", TIER_EVIDENCE[int(t)] if t != "missing"
-                                        else "modeled", f"{run_id}:tier:{ba}:{t}")
-                                 for t, n in row.items()} for ba, row in tiers.items()},
+            "tiers": {str(tr): {"source": TIER_SOURCE[tr], "evidence": TIER_EVIDENCE[tr]}
+                      for tr in TIER_SOURCE},
+            "hours_by_ba_evidence_note": "hour counts are measured (counted from the frozen "
+                                         "snapshot); each tier's values carry its own label",
+            "hours_by_ba": {ba: {tr: env(n, "hours", "measured", f"{run_id}:tier:{ba}:{tr}")
+                                 for tr, n in row.items()} for ba, row in tiers.items()},
             "window": [iso(k["init"]), iso(k["F"])],
             "missing_after_tier4": k["still_missing"],
         },
@@ -776,6 +933,7 @@ def build_artifacts(**k) -> dict:
                       "mean_consumed_ci": {b: env(v, "g/kWh", "observed",
                                                   f"{run_id}:rank:{b}")
                                            for b, v in k["rank_means"].items()},
+                      "provenance": S_RANK_PROVENANCE,
                       "note": "unweighted hourly mean over training rows; never shown as an "
                               "attributed factor (F7)"},
         "assumptions": {
@@ -787,13 +945,15 @@ def build_artifacts(**k) -> dict:
             "transfer_energy_fraction": env(TRANSFER_FRACTION, "fraction", "assumed",
                                             "F7:transfer_fraction"),
             "transfer_time_s": env(TRANSFER_S, "s", "assumed", "spec§7:transfer_time"),
-            "allowed_delay_s": {t: env(v, "s", "assumed", f"spec§7:delay:{t}")
-                                for t, v in {"Pretrain": 21600, "SFT": 21600, "MLLM": 21600,
-                                             "Eval": 3600, "other": 0}.items()},
+            "allowed_delay_s": {tp: env(v, "s", "assumed", f"spec§7:delay:{tp}")
+                                for tp, v in {"Pretrain": 21600, "SFT": 21600, "MLLM": 21600,
+                                              "Eval": 3600, "other": 0}.items()},
             "flexibility_rule": "candidate type and int(sha256(f'{source_job_id}:42'), 16) % 2 "
                                 "== 0; mobile iff flexible (assumed)",
             "deadline_rule": "max(arrival + duration + allowed delay, finish under U) (F1)",
             "bookings": "every job holds its U booking as a fallback (F11; assumed)",
+            "home_capacity_1.25x_rounding": "round half up to an 8-GPU node: 2,288 x 1.25 = "
+                                            "2,860 GPUs = 357.5 nodes -> 358 nodes = 2,864 slots",
             "replay": f"Seren {CYCLE_DAYS}-day cycle at phase 0 (simulated arrivals; measured "
                       f"durations and GPU counts)",
             "bootstrap": {"method": BOOTSTRAP_LABEL,
@@ -803,13 +963,18 @@ def build_artifacts(**k) -> dict:
                           "seed": "20261027"},
         },
         "workload": _workload_env(run_id),
-        "not_before_18": ["F14.7 blocked diagnostic", "phases 49 and 98",
-                          "sensitivity-scenario policy runs", "production-basis repricing",
+        "f14_7_diagnostic": {
+            "status": "run", "policies": list(DIAGNOSED_POLICIES),
+            "g_ledger_identical_without_diagnostic": True,
+            "timing_s": {
+                "G_diagnosed": env(t["policy_G"], "s", "measured", f"{run_id}:timing:G_diag"),
+                "G_undiagnosed": env(t["policy_G_undiagnosed"], "s", "measured",
+                                     f"{run_id}:timing:G_plain")}},
+        "not_before_18": ["phases 49 and 98", "sensitivity-scenario policy runs",
+                          "production-basis repricing",
                           "shadow-U and missingness-blind sensitivities", "F12.6 rebuild"],
-        "task5_status": ("merged" if CarbonSearch is not None
-                         else f"K/W/L/H not run: {TASK5_REASON}"),
-        "artifacts": ["manifest.json", "metrics.json", "forecast-replay.json",
-                      "job-replay.json"],
+        "task5_status": "merged",
+        "artifacts": list(ARTIFACTS),
     }
     return {"manifest.json": manifest, "metrics.json": metrics,
             "forecast-replay.json": frep, "job-replay.json": jrep}
@@ -877,13 +1042,18 @@ def forecast_replay(k) -> dict:
                    on="target_ts", how="left")
     observed = [v if t == 1 else None for v, t in zip(obs["ci_g_kwh"], obs["tier"],
                                                       strict=True)]
-    series, issue_of = {}, None
+    series, issues_by_model = {}, {}
     for model in ("K", "W", "L"):
         f = hrs.join(fc.filter(pl.col("model") == model).select("target_ts", "issue_ts", "value"),
                      on="target_ts", how="left")
         series[model] = f["value"].to_list()
-        issue_of = f["issue_ts"]
-    issues = sorted({t for t in issue_of.to_list() if t is not None})
+        issues_by_model[model] = sorted({t for t in f["issue_ts"].to_list() if t is not None})
+    empty = [m for m, v in issues_by_model.items() if not v]
+    if empty:
+        raise ValueError(f"forecast replay week [{iso(w0)}, {iso(w1)}) has no issued "
+                         f"{HOME} ci_consumed forecast for model(s) {empty}; pick a week "
+                         f"inside the forecast run's issue range")
+    issues = sorted(set().union(*issues_by_model.values()))
     env_h = fcmod.ENVELOPE_H["ci_consumed"]
     issue_rows = [{"issue_ts": iso(i),
                    "target_day": [iso(fcmod.target_hours(i)[0]),
@@ -928,6 +1098,7 @@ def forecast_replay(k) -> dict:
         "issue_rule": "daily at 10:00 America/Denver for the next Utah civil day; a row is "
                       f"usable iff ts_utc + 1 h + {env_h} h <= issue (assumed envelope)",
         "issues": issue_rows,
+        "issues_by_model": {m: [iso(i) for i in v] for m, v in issues_by_model.items()},
         "hours": [iso(h) for h in hours.to_list()],
         "observed": env(observed, "g/kWh", "observed", f"{run_id}:fr:observed",
                         reason=nulls_reason(observed)),
@@ -965,25 +1136,41 @@ def _action_co2(tt, gpus, duration_s, site, start_us, arrival_us) -> tuple[float
     return float(ex), float(tr)
 
 
-def job_replay(k) -> dict:
+RULE_LITERAL = ("§11: among validation flexible jobs with a feasible remote action in the "
+                "primary (U, bookings-held) replay, the job nearest the median GPU-hours of "
+                "that set; ties by stable ID")
+RULE_V2 = ("illustration criterion v2 (D-054): over the same eligible set, sort by (declared "
+           "GPU-h, job_uid) and take the first job whose cumulative declared GPU-h reaches 50% "
+           "of the set's total (the GPU-hour-weighted median)")
+
+
+def pick_literal(cands: pl.DataFrame) -> tuple[str, float]:
+    """§11 literal rule: nearest the median GPU-h, ties by job_uid."""
+    med = float(cands["gpu_h"].median())
+    uid = cands.with_columns((pl.col("gpu_h") - med).abs().alias("dist")).sort(
+        "dist", "job_uid")["job_uid"][0]
+    return uid, med
+
+
+def pick_weighted_median(cands: pl.DataFrame) -> tuple[str, float]:
+    """D-054 criterion v2: the GPU-hour-weighted median job of the eligible set."""
+    c = cands.sort("gpu_h", "job_uid").with_columns(pl.col("gpu_h").cum_sum().alias("cum"))
+    total = float(c["gpu_h"].sum())
+    uid = c.filter(pl.col("cum") >= 0.5 * total)["job_uid"][0]
+    return uid, total
+
+
+def _illustrative_record(uid, rule, k, extra) -> dict:
     run_id, cj, tt, ledgers, probe = k["run_id"], k["cj"], k["tt"], k["ledgers"], k["probe"]
-    bookings = k["bookings"]
-    # §11 illustrative job: flexible jobs with a feasible remote action in the primary (U,
-    # bookings-held) replay; nearest the median GPU-hours; ties by stable ID.
-    cand = cj.filter(pl.col("job_uid").is_in(list(probe.actions))).with_columns(
-        (pl.col("gpus") * pl.col("duration_s") / 3600).alias("gpu_h"))
-    med = float(cand["gpu_h"].median())
-    pick = cand.with_columns((pl.col("gpu_h") - med).abs().alias("dist")).sort(
-        "dist", "job_uid").row(0, named=True)
-    uid = pick["job_uid"]
-    b = bookings.filter(pl.col("job_uid") == uid).row(0, named=True)
+    pick = cj.filter(pl.col("job_uid") == uid).with_columns(
+        (pl.col("gpus") * pl.col("duration_s") / 3600).alias("gpu_h")).row(0, named=True)
+    b = k["bookings"].filter(pl.col("job_uid") == uid).row(0, named=True)
     arr_us = _dt_us(pick["arrival_ts"])
     pid = f"{run_id}:job:{uid}"
+    d_us = round(pick["duration_s"] * 1e6)
     actions = []
-    acts = dict(probe.actions[uid])
-    for site, s in sorted(acts.items(), key=lambda kv: (kv[0] != HOME, kv[0])):
+    for site, s in sorted(probe.actions[uid].items(), key=lambda kv: (kv[0] != HOME, kv[0])):
         ex, tr = _action_co2(tt, pick["gpus"], pick["duration_s"], site, s, arr_us)
-        d_us = round(pick["duration_s"] * 1e6)
         actions.append({
             "site": site, "kind": "stay" if site == HOME else "travel",
             "start": iso(_us_dt(s)), "end": iso(_us_dt(s + d_us)),
@@ -995,34 +1182,28 @@ def job_replay(k) -> dict:
             "co2_kg": env(ex + tr, "kg_CO2", "modeled", f"{pid}:{site}:co2")})
     placements = {}
     for name, led in ledgers.items():
-        r = led.filter(pl.col("job_uid") == uid).row(0, named=True)
-        a = job_accounting(led.filter(pl.col("job_uid") == uid),
-                           cj.filter(pl.col("job_uid") == uid), tt).row(0, named=True)
+        one = led.filter(pl.col("job_uid") == uid)
+        r = one.row(0, named=True)
+        a = job_accounting(one, cj.filter(pl.col("job_uid") == uid), tt).row(0, named=True)
         placements[name] = {"site": r["site"], "start": iso(r["start_ts"]),
                             "end": iso(r["end_ts"]), "moved": r["moved"],
                             "co2_kg": env(a["co2_kg"], "kg_CO2", "simulated",
                                           f"{run_id}:{name}:job:{uid}:co2")}
-    for name in POLICY_ORDER:
-        placements.setdefault(name, {"status": "not_run", "reason": TASK5_REASON})
     best = min(actions, key=lambda a: a["co2_kg"]["value"])
     stay = next((a for a in actions if a["site"] == HOME), None)
     expl = (f"Staying at {HOME} from its earliest feasible start would emit "
             f"{stay['co2_kg']['value']:.3g} kg CO2 (modeled); the lowest-CO2 earliest action "
             f"is {best['site']} at {best['co2_kg']['value']:.3g} kg including transfer."
             if stay else f"The lowest-CO2 earliest action is {best['site']}.")
-    illustrative = {
-        "rule": "§11: among validation flexible jobs with a feasible remote action in the "
-                "primary (U, bookings-held) replay, the job nearest the median GPU-hours of "
-                "that set; ties by stable ID",
-        "set_size": env(cand.height, "jobs", "simulated", f"{run_id}:illustrative:set"),
-        "set_median_gpu_h": env(med, "GPU_h", "measured", f"{run_id}:illustrative:median"),
+    return {
+        "rule": rule, **extra,
         "job_uid": uid, "source_id": pick["source_id"], "job_type": pick["job_type"],
         "arrival": iso(pick["arrival_ts"]),
         "gpus": env(pick["gpus"], "GPUs", "measured", f"{pid}:gpus"),
         "declared_duration_s": env(pick["duration_s"], "s", "measured", f"{pid}:duration"),
-        "realized_duration_s": env(pick["duration_s"], "s", "assumed", f"{pid}:realized",
-                                   ) | {"reason": "exact declared runtimes: realized = "
-                                                  "declared (runtime uncertainty untested)"},
+        "realized_duration_s": env(pick["duration_s"], "s", "assumed", f"{pid}:realized")
+        | {"reason": "exact declared runtimes: realized = declared (runtime uncertainty "
+                     "untested)"},
         "declared_gpu_h": env(pick["gpu_h"], "GPU_h", "measured", f"{pid}:gpu_h"),
         "flexible": pick["flexible"], "mobile": pick["mobile"],
         "flags_evidence": "assumed",
@@ -1037,11 +1218,48 @@ def job_replay(k) -> dict:
         "placements": placements,
         "explanation": expl,
     }
+
+
+def _describe(cj, uid) -> str:
+    r = cj.filter(pl.col("job_uid") == uid).row(0, named=True)
+    gh = r["gpus"] * r["duration_s"] / 3600
+    dur = (f"{r['duration_s']:.0f} s" if r["duration_s"] < 3600
+           else f"{r['duration_s'] / 3600:.1f} h")
+    ghs = f"{gh:,.1f}" if gh >= 10 else f"{gh:.3g}"
+    return f"{uid} ({r['job_type']}, {r['gpus']} GPUs, {dur}, {ghs} GPU-h)"
+
+
+def job_replay(k) -> dict:
+    run_id, cj, ledgers = k["run_id"], k["cj"], k["ledgers"]
+    cands = k["cands"]
+    lit_uid, med = pick_literal(cands)
+    v2_uid, total = pick_weighted_median(cands)
+    n = cands.height
+    disclosure = (
+        f"Illustration criterion v2 (D-054). The §11 rule (the job nearest the median GPU-hours "
+        f"of the {n:,} eligible flexible jobs with a feasible remote action) selects "
+        f"{_describe(cj, lit_uid)}, because that set's median is only {med:.3g} GPU-h. The "
+        f"story uses the GPU-hour-weighted median instead: the eligible jobs sorted by "
+        f"(declared GPU-h, job_uid), and the first whose cumulative declared GPU-h reaches 50% "
+        f"of the set's {total:,.0f} GPU-h, which is {_describe(cj, v2_uid)}. The criterion was "
+        f"registered after the literal rule's choice was seen and before the test window "
+        f"opened; the literal-rule job is exported as illustrative_job_literal. Neither example "
+        f"replaces the cohort aggregate.")
+    common = {
+        "set_size": env(n, "jobs", "simulated", f"{run_id}:illustrative:set"),
+        "set_median_gpu_h": env(med, "GPU_h", "measured", f"{run_id}:illustrative:median"),
+        "set_total_gpu_h": env(total, "GPU_h", "measured", f"{run_id}:illustrative:total"),
+        "candidates_file": "illustrative_candidates.parquet (run directory)",
+    }
+    illustrative = _illustrative_record(
+        v2_uid, RULE_V2, k, {"criterion": "v2", "disclosure": disclosure, **common})
+    literal = _illustrative_record(lit_uid, RULE_LITERAL, k, {"criterion": "literal", **common})
     # One week of placements, with arcs (the forecast-replay week).
     w0, w1 = _replay_week(k["eval_start"])
     wk = {}
     hours = pl.datetime_range(w0, w1 - H1, "1h", time_unit="us", time_zone="UTC", eager=True)
     h_us = hours.dt.epoch("us").to_numpy()
+    wiv = k["warm"].intervals
     for name, led in ledgers.items():
         lw = led.filter((pl.col("arrival_ts") >= w0) & (pl.col("arrival_ts") < w1))
         arcs = []
@@ -1052,10 +1270,11 @@ def job_replay(k) -> dict:
                          "gpu_h": env(float((r["gpus"] * r["duration_s"]).sum() / 3600),
                                       "GPU_h", "simulated", f"{run_id}:{name}:arcgh:{site}")})
         busy = {}
-        s_us = led["start_ts"].dt.epoch("us").to_numpy()
-        e_us = led["end_ts"].dt.epoch("us").to_numpy()
-        g = led["gpus"].to_numpy()
-        sites_arr = led["site"].to_numpy()
+        s_us = np.concatenate([led["start_ts"].dt.epoch("us").to_numpy(),
+                               wiv["start_us"].to_numpy()])
+        e_us = np.concatenate([led["end_ts"].dt.epoch("us").to_numpy(), wiv["end_us"].to_numpy()])
+        g = np.concatenate([led["gpus"].to_numpy(), wiv["gpus"].to_numpy()])
+        sites_arr = np.concatenate([led["site"].to_numpy(), wiv["site"].to_numpy()])
         for site in SITES:
             m = sites_arr == site
             ss, ee, gg = s_us[m], e_us[m], g[m]
@@ -1069,10 +1288,12 @@ def job_replay(k) -> dict:
     return {
         "schema_version": SCHEMA_VERSION, "run_id": run_id,
         "illustrative_job": illustrative,
+        "illustrative_job_literal": literal,
         "week": {"start": iso(w0), "end": iso(w1), "hours": [iso(h) for h in hours.to_list()],
-                 "note": "cohort jobs only (warm-up occupancy excluded from the busy series)",
-                 "policies": wk,
-                 "not_run": {n: TASK5_REASON for n in POLICY_ORDER if n not in ledgers}},
+                 "note": "arcs count cohort jobs arriving in the week; mean_busy_gpus_by_hour "
+                         "includes warm-up occupancy (cohort plus warm-up)",
+                 "busy_includes_warmup": True,
+                 "policies": wk},
     }
 
 
@@ -1089,9 +1310,6 @@ def print_table(acct, timer) -> None:
     print(hdr)
     u = s["U"]["co2_kg"]
     for name in POLICY_ORDER:
-        if name not in s:
-            print(f"{name:8s} {'not_run':8s}  ({TASK5_REASON})")
-            continue
         m = s[name]
         c = acct["contrasts"].get(f"{name}_vs_U", {}).get(4)
         ci = f"[{c['diff_kg_ci'][0]:,.0f}, {c['diff_kg_ci'][1]:,.0f}]" if c else "-"
@@ -1116,13 +1334,14 @@ def print_table(acct, timer) -> None:
     for name, m in s.items():
         print(f"  {name:7s} mobile_remote_share {m.get('mobile_remote_share')}, "
               f"blocked {m['blocked_jobs']} jobs / {m['blocked_kwh']:.0f} kWh"
-              + ("" if DIAGNOSE and name in DIAGNOSED_POLICIES else " (not diagnosed)"))
+              + ("" if name in DIAGNOSED_POLICIES else " (not diagnosed)"))
     print(f"relaxed bound (modeled): primary {acct['bounds']['primary'] / 1000:.1f} t, "
           f"time-only {acct['bounds']['time_only'] / 1000:.1f} t")
     for name, g in acct["gaps"].items():
         for basis, x in g.items():
             print(f"  bound check {name:7s} {basis:9s} gap {x['gap_kg']:.6f} kg "
                   f"min job gap {x['min_job_gap_kg']:.3e} kg ok={x['ok']}")
+    print("framing: " + framing_text(acct))
     print("timing (s): " + ", ".join(f"{k} {v:.1f}" for k, v in timer.t.items()))
 
 

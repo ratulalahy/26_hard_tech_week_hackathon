@@ -8,11 +8,13 @@ import pytest
 from gridpilot.cohort import (
     SCENARIOS,
     first_failure,
+    home_capacity_125,
+    ledger_hash,
     prefix_cohort,
     scenario_jobs,
     scenario_sites,
 )
-from gridpilot.sim import SITES, u_bookings, warm_up
+from gridpilot.sim import SITES, U, simulate, u_bookings, warm_up
 
 H = timedelta(hours=1)
 T = datetime(2024, 11, 4, tzinfo=UTC)
@@ -162,3 +164,21 @@ def test_registered_scenarios():
     assert af["max_delay_s"].to_list() == [21600, 21600, 3600, 0, 21600]
     assert scenario_sites("home_capacity_1.25x") == {**SITES, "PACE": 2864}  # 2860 -> 8-GPU node
     assert scenario_sites("primary") == SITES
+
+
+def test_home_capacity_rounds_half_up_to_a_node():
+    assert home_capacity_125(2288) == 2864  # 357.5 nodes -> 358
+    assert home_capacity_125(8) == 8  # 1.25 nodes -> 1
+    assert home_capacity_125(12) == 16  # 1.875 nodes -> 2
+    assert home_capacity_125(16) == 24  # 2.5 nodes -> 3 (half up, not to even)
+
+
+def test_ledger_hash_is_order_free_and_sensitive_to_placement():
+    warm = warm_up(WARM, TOY_SITES)
+    jobs = STREAM.filter(pl.col("job_uid").is_in(["j1", "j2", "j3"]))
+    b = u_bookings(jobs, TOY_SITES, warm=warm)
+    led = simulate(jobs, U(), TOY_SITES, bookings=b, warm=warm)
+    assert ledger_hash(led) == ledger_hash(led.reverse())
+    moved = led.with_columns(pl.when(pl.col("job_uid") == "j1").then(pl.lit("CISO"))
+                             .otherwise(pl.col("site")).alias("site"))
+    assert ledger_hash(moved) != ledger_hash(led)
