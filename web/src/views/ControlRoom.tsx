@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { IntervalChart, Panel, PolicyTable, Strip, useWidth } from '../components/charts';
-import { extRows, roundedSpan } from '../components/extensions';
+import { BudgetBar, BudgetHeadline, RemoteLine, ScenarioToggle, budgetFacts, flowOf, kindOf, savingOf, scenarioOf } from '../components/flows';
 import { Ev, EvCI, Icon } from '../components/ui';
 import { C, CI_MAX, CI_MID, ci2c } from '../lib/color';
-import { CORE, DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, headline, loadMonth, pname, pnote, yearMean, type Dest } from '../lib/data';
-import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
-import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange } from '../lib/format';
+import { CORE, DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, contrast, dayCurve, headline, loadMonth, own, pname, pnote, waitPhrase, yearMean, type Dest } from '../lib/data';
 import { cap, heroHeadline } from '../lib/copy';
 import { useCopy } from '../lib/useCopy';
+import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
+import { fmt, fmtDate, fmtHour, monthLabel, pct } from '../lib/format';
 import { useApp } from '../lib/store';
 import type { Viewport } from '../lib/useViewport';
 import { useViewport } from '../lib/useViewport';
@@ -19,7 +19,7 @@ export const dims = (vp: Viewport) => ({
 });
 export const controlPadding = (vp: Viewport) => {
   const d = dims(vp);
-  return { top: 72 + 24, bottom: 40 + d.tl + 24, left: 16 + d.left + 32, right: 16 + d.right + 16 + 56 };
+  return { top: 72 + 88, bottom: 40 + d.tl + 24, left: 16 + d.left + 32, right: 16 + d.right + 16 + 56 };
 };
 
 export function ControlRoom() {
@@ -30,48 +30,60 @@ export function ControlRoom() {
       <div className="pointer-events-auto absolute" style={{ top: 72, left: 16, width: d.left, bottom: 40 + d.tl + 16 }}><ResultDock compact={vp.h < 1000} /></div>
       <div className="pointer-events-auto absolute" style={{ top: 72, right: 16, width: d.right, bottom: 40 + d.tl + 16 }}><RouterDock compact={vp.h < 1000} /></div>
       <div className="pointer-events-auto absolute" style={{ left: 16, right: 16, bottom: 40, height: d.tl }}><Timeline /></div>
+      <div className="pointer-events-none absolute flex justify-center" style={{ top: 72, left: 16 + d.left + 16, right: 16 + d.right + 16 }}>
+        <div data-map-avoid className="pointer-events-auto panel over-map" style={{ padding: '8px 12px', borderRadius: 14 }}><ScenarioToggle /></div>
+      </div>
       <MapCaption left={16 + d.left + 16} bottom={40 + d.tl + 16} />
     </section>
   );
 }
 
 function ResultDock({ compact }: { compact: boolean }) {
-  const { data, hour, month, dest, set } = useApp();
+  const { data, hour, month, dest, arcPolicy, scenario, set } = useApp();
   const m = data!.metrics, g = data!.grid;
-  const h = headline(m);
-  const mob = data!.ext ? roundedSpan(extRows(m, data!.ext), 'mobility_le_8gpus') : null;
+  const reg = own(m, 'S')!;
+  const sc = scenarioOf(data!.flows, scenario);
+  const f = flowOf(data!.flows, scenario, arcPolicy);
+  // the hero is the selected policy's own estimate in the toggled scenario (F10), registered S by default
+  const regP = own(m, arcPolicy) ?? reg;
+  const hero = savingOf(f) ?? regP;
+  const mob = savingOf(flowOf(data!.flows, 'mobility_le_8gpus', 'S'));
   const pm = asNum(yearMean(g, 'PACE'))!;
+  const wt = (['W_time', 'L_time'] as const).map((p) => [p, contrast(m, p)] as const);
+  const nWeeks = contrast(m, 'S')!.n_weeks;
   // the headline now carries the frame line, so below 1200 px the four sites drop their day strips (the timeline below still shows Utah's)
   const strips = useViewport().h >= 1200;
   const copy = useCopy();
   return (
     <Panel over className="flex flex-col" style={{ height: '100%', padding: 0, overflow: 'hidden' }}>
       <div style={{ padding: compact ? '12px 16px 10px' : 16 }}>
-        <h1 className="t-20" style={{ margin: 0 }}>{heroHeadline(copy, h)}</h1>
+        <h1 className="t-20" style={{ margin: 0 }} data-testid="hero-title">{heroHeadline(copy, headline(m), reg)}</h1>
         <div data-testid="hero-placement" style={{ marginTop: compact ? 8 : 12 }}>
-          <div className="flex items-baseline gap-2">
-            <span className="t-hero">{pctRange(h.placement.lo, h.placement.hi)}%</span>
-            <span className="t-13 ink-2">less attributed CO₂</span>
+          <div className="t-11 ink-2 fw-500" data-testid="hero-kind">{sc ? `${sc.label} · ${kindOf(sc)}` : 'registered result'}</div>
+          <div key={`${scenario}-${arcPolicy}`} className="flex items-baseline gap-2 swap">
+            <span className="t-hero">{pct(Math.abs(hero.v))}%</span>
+            <span className="t-13 ink-2">{hero.v < 0 ? 'more' : 'less'} attributed CO₂, {pname(arcPolicy)}</span>
           </div>
           <div className="t-12 ink-2" style={{ marginTop: 4 }}>
-            The four placement policies vs U local (stay in Utah): same jobs, {DEADLINES_MET}. 95% intervals {pct(h.placement.ciLo)}–{pct(h.placement.ciHi)}%. <Ev e="simulated" />
+            Its own 95% interval {pct(hero.lo)}–{pct(hero.hi)}%, vs U local (stay in Utah): same jobs, {DEADLINES_MET}.{sc && !sc.registered ? <> Registered: {pct(regP.v)}%.</> : null} <Ev e="simulated" />
           </div>
-          <div className="t-11 ink-3" style={{ marginTop: 4 }}>
-            Attributed operational CO₂ (EIA consumption basis, modeled), including {transferMWh(m)} MWh of simulated transfer energy.
-          </div>
+          {f && f.remote_energy_share.value === 0 && f.retimed_home_execution_share.value === 0 ? <div className="t-12 ink-2" style={{ marginTop: 4 }} data-testid="hero-nochange">{pname(arcPolicy)} only ranks sites, so with no remote room it keeps every booking; pick W or L under “Where the work went” to see waiting.</div> : null}
+          {!compact && <div className="t-11 ink-3" style={{ marginTop: 4 }}>
+            Attributed operational CO₂ (EIA consumption basis, modeled){sc?.registered !== false ? `, including ${transferMWh(m, arcPolicy)} MWh of simulated transfer energy` : ', including transfer energy'}.
+          </div>}
           <div className="t-12 ink-2" style={{ marginTop: 4 }} data-testid="hero-frame">{FRAME_LINE}</div>
         </div>
         <div data-testid="hero-timing" className="t-13" style={{ marginTop: compact ? 6 : 8 }}>
-          Waiting for cleaner hours in Utah alone: <b className="fw-600">{pctRange(h.timing.lo, h.timing.hi)}%</b> <span className="t-12 ink-3">(95% {pct(h.timing.ciLo)}–{pct(h.timing.ciHi)}%)</span>{compact && mob ? null : <> <Ev e="simulated" /></>}
+          Waiting for cleaner hours in Utah alone: <b className="fw-600">{waitPhrase(m)}</b>{compact ? null : <span className="t-12 ink-3"> ({wt.map(([p, c]) => c ? `${pname(p)} ${pct(c.saving.value as number)}%` : null).filter(Boolean).join(', ')})</span>}
         </div>
         {mob ? <div data-testid="hero-mobility" className="t-12 ink-2" style={{ marginTop: 4 }}>
-          The cut depends on moving large multi-node jobs: if only jobs of 8 GPUs or fewer could move, it would be about {mob}%. <Ev e="simulated">{compact ? 'both simulated' : 'simulated'}</Ev>
+          The cut depends on moving large multi-node jobs: {pname('S')} <b className="fw-600">{pct(reg.v)}% → {pct(mob.v)}%</b> if only jobs of 8 GPUs or fewer may move (scenario estimate). <Ev e="simulated" />
         </div> : null}
       </div>
       <div style={{ padding: '0 16px 8px' }}>
         <div className="flex items-baseline justify-between t-12 ink-2" style={{ marginBottom: 4 }}>
           <span className="fw-500 whitespace-nowrap" style={{ color: C.ink }}>Saving vs U, 95% interval</span>
-          <span className="t-11 ink-3 whitespace-nowrap">{fmt(h.nWeeks.value as number)} weeks <Ev e="simulated" /></span>
+          <span className="t-11 ink-3 whitespace-nowrap">{fmt(nWeeks.value as number)} weeks, registered <Ev e="simulated" /></span>
         </div>
         <IntervalChart m={m} rows={['S', 'K', 'W', 'L', 'W_time', 'L_time']} stacked rowH={compact ? 24 : 26} />
       </div>
@@ -112,21 +124,21 @@ function ResultDock({ compact }: { compact: boolean }) {
 }
 
 function MapCaption({ left, bottom }: { left: number; bottom: number }) {
-  const { data, hour, month, arcPolicy } = useApp();
+  const { data, hour, month, arcPolicy, scenario } = useApp();
   const wk = data!.jobs.week;
+  const sc = scenarioOf(data!.flows, scenario);
   return (
     <div data-map-avoid className="pointer-events-auto absolute panel over-map t-11 ink-2" style={{ left, bottom, padding: '8px 12px', borderRadius: 12, maxWidth: 440 }}>
       The four sites are coloured by carbon at {fmtHour(hour)} on a typical {monthLabel(month, true)} day <EvCI />; other regions are context only.
-      Arcs: GPU-hours {pname(arcPolicy)} moved out of Utah in the replay week {weekSpan(wk)}, wider for more <Ev e="simulated" />. Scroll or pinch to zoom; drag to pan.
+      Arcs are a static weekly flow, not tied to that hour: GPU-hours {pname(arcPolicy)} ran outside Utah in the replay week {weekSpan(wk)}{sc && !sc.registered ? ` (${sc.label}: ${kindOf(sc)})` : ''}, wider for more <Ev e="simulated" />. Scroll or pinch to zoom; drag to pan.
     </div>
   );
 }
 
 const weekSpan = (wk: { start: string; end: string }) => `${fmtDate(wk.start, { month: 'short', day: 'numeric' })}–${fmtDate(new Date(new Date(wk.end).getTime() - 1).toISOString(), { month: 'short', day: 'numeric', year: 'numeric' })}`;
-/** Transfer energy of the placement policies, MWh (simulated), as one figure or a range. */
-function transferMWh(m: { policies: Record<string, { metrics: { transfer_kwh: { value: number } } }> }) {
-  const v = ['S', 'K', 'W', 'L'].map((p) => Math.round(m.policies[p].metrics.transfer_kwh.value / 1000));
-  return Math.min(...v) === Math.max(...v) ? fmt(v[0]) : `${fmt(Math.min(...v))}–${fmt(Math.max(...v))}`;
+/** Transfer energy of one registered policy, MWh (simulated). */
+function transferMWh(m: { policies: Record<string, { metrics: { transfer_kwh: { value: number } } }> }, p: string) {
+  return fmt(Math.round(m.policies[p].metrics.transfer_kwh.value / 1000));
 }
 
 export function Legend({ width, short = false }: { width?: number; short?: boolean }) {
@@ -152,21 +164,29 @@ export function Legend({ width, short = false }: { width?: number; short?: boole
 
 function RouterDock({ compact }: { compact: boolean }) {
   const copy = useCopy();
-  const { data, arcPolicy, dest, set } = useApp();
-  const m = data!.metrics, j = data!.jobs;
-  const wk = j.week;
-  const pol = wk.policies[arcPolicy];
-  const year = m.policies[arcPolicy].metrics;
+  const { data, arcPolicy, dest, scenario, set } = useApp();
+  const m = data!.metrics;
+  const wk = data!.jobs.week;
+  const sc = scenarioOf(data!.flows, scenario);
+  const f = flowOf(data!.flows, scenario, arcPolicy);
+  const arcs = f?.week_arcs ?? wk.policies[arcPolicy].arcs;
   const slots = data!.manifest.assumptions;
+  const destSlots = sc && !sc.registered ? asNum(sc.knobs?.dest_slots) : asNum(slots.destination_slots.BPAT);
+  const bf = budgetFacts(data!.budget, arcPolicy);
   return (
     <Panel over className="flex flex-col" style={{ height: '100%', padding: 0, overflow: 'hidden' }}>
-      <div style={{ padding: compact ? '12px 16px 8px' : 16, overflow: 'auto', minHeight: 0, flexShrink: 1 }}>
+      {bf ? <div style={{ padding: compact ? '12px 16px 8px' : 16, overflow: 'auto', minHeight: 0, flexShrink: 1 }}>
+        <h2 className="t-15" style={{ margin: 0 }}>Flexibility budget: what {pname(bf.policy)} did with the energy</h2>
+        <div className="t-13" style={{ marginTop: 4 }}><BudgetHeadline p={arcPolicy} /></div>
+        {!compact && bf ? <div className="t-12 ink-2" style={{ marginTop: 2 }}>Registered cohort, {fmt(bf.total)} MWh of execution energy, sized by energy rather than job count.</div> : null}
+        <div style={{ marginTop: 8 }}><BudgetBar p={arcPolicy} testId="budget-control" /></div>
+        <div className="flex gap-3 flex-wrap" style={{ marginTop: 6 }}><Ev e="simulated">outcomes, registered run</Ev><Ev e="assumed">flexible and mobile flags</Ev></div>
+      </div> : <div style={{ padding: compact ? '12px 16px 8px' : 16, overflow: 'auto', minHeight: 0, flexShrink: 1 }}>
+        {/* a window with no flexibility budget (the test year) keeps the policy table */}
         <h2 className="t-15" style={{ margin: 0 }}>Every policy did the same work; deadlines met by construction</h2>
-        {!compact && <div className="t-12 ink-2" style={{ marginTop: 4 }}>Attributed CO₂, {fmt(m.cohort.n_jobs.value)} jobs, {fmt(m.cohort.declared_gpu_h.value / 1e6, 2)} M GPU-h. U − policy above zero: the policy emits less.</div>}
-        {!compact && <div className="t-11 ink-3" style={{ marginTop: 4 }}>Key: S, K, W, L and H may move or delay work; G is carbon-blind; wait-only may not move. Hover a name for its rule.</div>}
         <div style={{ marginTop: 8 }}><PolicyTable m={m} compact testId="policy-table-compact" /></div>
         <div className="flex gap-3 flex-wrap" style={{ marginTop: 8 }}><Ev e="simulated">outcomes simulated</Ev><Ev e="measured">job sizes measured</Ev></div>
-      </div>
+      </div>}
       <hr className="rule" />
       <div style={{ padding: compact ? '12px 16px' : 16, flex: compact ? 'none' : 1, minHeight: compact ? 156 : 140, overflow: 'auto' }}>
         <div className="flex items-center justify-between gap-2">
@@ -176,11 +196,11 @@ function RouterDock({ compact }: { compact: boolean }) {
           </select>
         </div>
         {!compact && <div className="t-12 ink-2" style={{ marginTop: 4 }}>
-          Replay week {weekSpan(wk)}: GPU-hours sent from Utah ({fmt(asNum(slots.home_slots) ?? 0)} GPU slots) to sites of {fmt(asNum(slots.destination_slots.BPAT) ?? 0)} slots each <Ev e="assumed">slots assumed</Ev> <Ev e="simulated" />
+          Replay week {weekSpan(wk)}{sc && !sc.registered ? `, ${kindOf(sc)}` : ''}: GPU-hours run outside Utah ({fmt(asNum(slots.home_slots) ?? 0)} GPU slots) at sites of {fmt(destSlots ?? 0)} slots each <Ev e="assumed">slots assumed</Ev> <Ev e="simulated" />
         </div>}
-        <div className="flex flex-col" style={{ marginTop: 8, gap: 2 }}>
+        <div className="flex flex-col swap" key={`${scenario}-${arcPolicy}`} style={{ marginTop: 8, gap: 2 }} data-testid="work-rows">
           {DESTS.map((dd) => {
-            const a = pol.arcs.find((x: { to: string }) => x.to === dd);
+            const a = arcs.find((x: { to: string }) => x.to === dd);
             return (
               <button key={dd} className="rowbtn flex items-baseline justify-between gap-2" style={{ padding: '6px 8px' }} aria-pressed={dest === dd} onClick={() => set({ dest: dd })}>
                 <span className="t-13 fw-500 whitespace-nowrap">{REGION[dd].name} <span className="ink-3 fw-400 t-12">{dd}</span></span>
@@ -189,9 +209,10 @@ function RouterDock({ compact }: { compact: boolean }) {
             );
           })}
         </div>
-        {!compact && <div className="t-12 ink-2" style={{ marginTop: 8 }}>
-          {cap(copy.overYear)}, {pname(arcPolicy)} moved {pct(year.moved_share_jobs.value)}% of jobs and ran {pct(year.remote_energy_share.value)}% of energy remotely; {fmt(year.late_jobs.value)} late jobs, {fmt(year.capacity_violations.value)} capacity violations. <Ev e="simulated" />
-        </div>}
+        {!compact && f ? <div className="t-12 ink-2" style={{ marginTop: 8 }}><RemoteLine f={f} p={arcPolicy} over={cap(copy.overYear)} /> <Ev e="simulated" /></div> : null}
+        {!compact && !f ? <div className="t-12 ink-2" style={{ marginTop: 8 }}>
+          {cap(copy.overYear)}, {pname(arcPolicy)} ran {pct(m.policies[arcPolicy].metrics.remote_energy_share.value)}% of the energy outside Utah; the ledger's broader “moved”, which also counts retiming in Utah, is {pct(m.policies[arcPolicy].metrics.moved_share_energy.value)}%. {fmt(m.policies[arcPolicy].metrics.late_jobs.value)} late jobs, {fmt(m.policies[arcPolicy].metrics.capacity_violations.value)} capacity violations. <Ev e="simulated" />
+        </div> : null}
       </div>
     </Panel>
   );

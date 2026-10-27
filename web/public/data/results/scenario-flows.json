@@ -1,0 +1,2620 @@
+{
+ "schema_version": "gridpilot.results.v1",
+ "kind": "scenario-flows",
+ "evidence_scope": "validation (selection) results; the sealed test window [2025-11-01, 2026-11-01) is never read",
+ "note": "Re-read from already-computed validation runs; no new simulation. The registered scenario is the registered result; the others are scenario estimates (one-axis sensitivities, D-058), never pooled with it.",
+ "registered_run_id": "20261027T160656Z",
+ "default_scenario": "registered",
+ "default_policy": "S",
+ "definitions": {
+  "remote_execution": "the job executed at a site other than Utah (PACE); remote execution energy is that job's execution energy at the destination",
+  "moved": "ledger `moved`: the job did not run on its booking, so it includes remote execution and retiming at home (a start-time change, earlier or later) (F08)",
+  "remote_energy_share": "remote jobs' energy (execution plus transfer) / all energy (execution plus transfer), copied from the scored run",
+  "remote_execution_share": "remote execution kWh / all execution kWh, from the ledger",
+  "retimed_home_execution_share": "execution kWh of jobs that ran in Utah off their booking start / all execution kWh, from the ledger",
+  "week_arcs": "cohort jobs arriving in the replay week that executed at each destination: count and declared GPU-hours (gpus x declared duration)",
+  "saving_vs_U": "copied verbatim from metrics.json (registered) or extensions.json (scenarios): (U - policy) / U, ratio of totals, 4-week blocks, 95% interval; not recomputed"
+ },
+ "week": {
+  "start": "2024-11-04T07:00:00Z",
+  "end": "2024-11-11T07:00:00Z",
+  "tz_display": "America/Denver"
+ },
+ "scenarios": [
+  {
+   "id": "registered",
+   "label": "All flexible jobs (registered)",
+   "registered": true,
+   "label_kind": "registered result",
+   "run_id": "20261027T160656Z",
+   "ledger_run_dir": "runs/slice/20261027T173750Z",
+   "note": "registered primary scenario",
+   "knobs": {},
+   "policies": {
+    "S": {
+     "saving_vs_U": {
+      "saving": {
+       "value": 0.22619570751542967,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:S_vs_U:b4:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "saving_ci95": {
+       "value": [
+        0.1836214692017572,
+        0.2682126090185966
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:S_vs_U:b4:saving_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg": {
+       "value": 1056262.956538727,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:S_vs_U:b4:diff_kg",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg_ci95": {
+       "value": [
+        910438.3027177769,
+        1195249.603215583
+       ],
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:S_vs_U:b4:diff_kg_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "n_weeks": {
+       "value": 51,
+       "unit": "weeks",
+       "evidence": "measured",
+       "provenance_id": "20261027T160656Z:S_vs_U:b4:n_weeks",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh": {
+      "BPAT": {
+       "value": 1757.152668799999,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:flows:S:remote_mwh:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 679.7754538,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:flows:S:remote_mwh:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 108.5951184,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:flows:S:remote_mwh:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh_total": {
+      "value": 2545.523240999999,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:flows:S:remote_mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_execution_share": {
+      "value": 0.3091612675063603,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:flows:S:remote_exec_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_energy_share": {
+      "value": 0.31967773223707957,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:S:remote_energy_share",
+      "status": "ok",
+      "reason": null
+     },
+     "moved_share_energy": {
+      "value": 0.3103161829903356,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:S:moved_share_energy",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_execution_share": {
+      "value": 0.0011549154839752631,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:flows:S:retimed_home_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_jobs": {
+      "value": 383499,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:flows:S:remote_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_jobs": {
+      "value": 3291,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:flows:S:retimed_home_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "late_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:S:late_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "week_arcs": [
+      {
+       "from": "PACE",
+       "to": "BPAT",
+       "jobs": {
+        "value": 7876,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:S:arc:BPAT",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 42317.84444444445,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:S:arcgh:BPAT",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "CISO",
+       "jobs": {
+        "value": 5,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:S:arc:CISO",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 48930.779444444444,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:S:arcgh:CISO",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "NEVP",
+       "jobs": {
+        "value": 5,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:S:arc:NEVP",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 8.391111111111112,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:S:arcgh:NEVP",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     ]
+    },
+    "W": {
+     "saving_vs_U": {
+      "saving": {
+       "value": 0.225137842411205,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:W_vs_U:b4:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "saving_ci95": {
+       "value": [
+        0.18362251961715767,
+        0.26670166379456123
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:W_vs_U:b4:saving_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg": {
+       "value": 1051323.0585411876,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:W_vs_U:b4:diff_kg",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg_ci95": {
+       "value": [
+        908080.0433666729,
+        1187002.2808083168
+       ],
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:W_vs_U:b4:diff_kg_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "n_weeks": {
+       "value": 51,
+       "unit": "weeks",
+       "evidence": "measured",
+       "provenance_id": "20261027T160656Z:W_vs_U:b4:n_weeks",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh": {
+      "BPAT": {
+       "value": 1674.5896356000005,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:flows:W:remote_mwh:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 702.7232872000003,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:flows:W:remote_mwh:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 163.72914060000005,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:flows:W:remote_mwh:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh_total": {
+      "value": 2541.0420634000006,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:flows:W:remote_mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_execution_share": {
+      "value": 0.30861701533673846,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:flows:W:remote_exec_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_energy_share": {
+      "value": 0.3191235187101708,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:W:remote_energy_share",
+      "status": "ok",
+      "reason": null
+     },
+     "moved_share_energy": {
+      "value": 0.35562195362493415,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:W:moved_share_energy",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_execution_share": {
+      "value": 0.04700493828819565,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:flows:W:retimed_home_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_jobs": {
+      "value": 383493,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:flows:W:remote_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_jobs": {
+      "value": 3500,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:flows:W:retimed_home_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "late_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:W:late_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "week_arcs": [
+      {
+       "from": "PACE",
+       "to": "BPAT",
+       "jobs": {
+        "value": 7738,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:W:arc:BPAT",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 41574.34305555555,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:W:arcgh:BPAT",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "CISO",
+       "jobs": {
+        "value": 143,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:W:arc:CISO",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 49674.28083333333,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:W:arcgh:CISO",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "NEVP",
+       "jobs": {
+        "value": 5,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:W:arc:NEVP",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 8.391111111111112,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:W:arcgh:NEVP",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     ]
+    },
+    "L": {
+     "saving_vs_U": {
+      "saving": {
+       "value": 0.22510272886716834,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:L_vs_U:b4:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "saving_ci95": {
+       "value": [
+        0.18316984436427652,
+        0.26626769380714277
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:L_vs_U:b4:saving_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg": {
+       "value": 1051159.089311859,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:L_vs_U:b4:diff_kg",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg_ci95": {
+       "value": [
+        908120.1343859029,
+        1187518.4699711646
+       ],
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:L_vs_U:b4:diff_kg_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "n_weeks": {
+       "value": 51,
+       "unit": "weeks",
+       "evidence": "measured",
+       "provenance_id": "20261027T160656Z:L_vs_U:b4:n_weeks",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh": {
+      "BPAT": {
+       "value": 1665.5234255999999,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:flows:L:remote_mwh:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 716.1713420000001,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:flows:L:remote_mwh:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 160.17262399999996,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T160656Z:flows:L:remote_mwh:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh_total": {
+      "value": 2541.8673916,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:flows:L:remote_mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_execution_share": {
+      "value": 0.3087172538685699,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:flows:L:remote_exec_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_energy_share": {
+      "value": 0.31922559412288937,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:L:remote_energy_share",
+      "status": "ok",
+      "reason": null
+     },
+     "moved_share_energy": {
+      "value": 0.34985148707111363,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:L:moved_share_energy",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_execution_share": {
+      "value": 0.0411342332025437,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:flows:L:retimed_home_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_jobs": {
+      "value": 383482,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:flows:L:remote_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_jobs": {
+      "value": 3504,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:flows:L:retimed_home_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "late_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:L:late_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "week_arcs": [
+      {
+       "from": "PACE",
+       "to": "BPAT",
+       "jobs": {
+        "value": 7819,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:L:arc:BPAT",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 40158.651666666665,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:L:arcgh:BPAT",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "CISO",
+       "jobs": {
+        "value": 62,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:L:arc:CISO",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 51089.97222222222,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:L:arcgh:CISO",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "NEVP",
+       "jobs": {
+        "value": 5,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:L:arc:NEVP",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 8.391111111111112,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T160656Z:flows:L:arcgh:NEVP",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "mobility_le_8gpus",
+   "label": "Only jobs of 8 GPUs or fewer",
+   "registered": false,
+   "label_kind": "scenario estimate (validation)",
+   "run_id": "20261027T173750Z",
+   "ledger_run_dir": "runs/ext/mobility_le_8gpus/20261027T173750Z",
+   "note": "only jobs requesting at most 8 GPUs may move (data gravity)",
+   "knobs": {
+    "dest_slots": {
+     "value": 512,
+     "unit": "GPU_slots",
+     "evidence": "assumed",
+     "provenance_id": "20261027T173750Z:scenario:dest_slots",
+     "status": "ok",
+     "reason": null
+    },
+    "transfer_s": {
+     "value": 1800.0,
+     "unit": "s",
+     "evidence": "assumed",
+     "provenance_id": "20261027T173750Z:scenario:transfer_s",
+     "status": "ok",
+     "reason": null
+    },
+    "batch_delay_s": {
+     "value": 21600,
+     "unit": "s",
+     "evidence": "assumed",
+     "provenance_id": "20261027T173750Z:scenario:batch_delay_s",
+     "status": "ok",
+     "reason": null
+    },
+    "mobility_max_gpus": {
+     "value": 8,
+     "unit": "GPUs",
+     "evidence": "assumed",
+     "provenance_id": "20261027T173750Z:scenario:mobility_max_gpus",
+     "status": "ok",
+     "reason": null
+    },
+    "phase_days": {
+     "value": 0,
+     "unit": "days",
+     "evidence": "assumed",
+     "provenance_id": "20261027T173750Z:scenario:phase_days",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "policies": {
+    "S": {
+     "saving_vs_U": {
+      "saving": {
+       "value": 0.03242143671801732,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:S_vs_U:b4:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "saving_ci95": {
+       "value": [
+        0.020678146984758405,
+        0.045336594411208915
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:S_vs_U:b4:saving_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg": {
+       "value": 151397.9331401335,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:S_vs_U:b4:diff_kg",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg_ci95": {
+       "value": [
+        101823.70637345617,
+        202107.43560824695
+       ],
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:S_vs_U:b4:diff_kg_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "n_weeks": {
+       "value": 51,
+       "unit": "weeks",
+       "evidence": "measured",
+       "provenance_id": "20261027T173750Z:S_vs_U:b4:n_weeks",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh": {
+      "BPAT": {
+       "value": 341.26745539999996,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:S:remote_mwh:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 0.0,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:S:remote_mwh:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 0.0,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:S:remote_mwh:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh_total": {
+      "value": 341.26745539999996,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:S:remote_mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_execution_share": {
+      "value": 0.041447933914241675,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:S:remote_exec_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_energy_share": {
+      "value": 0.04343032574638325,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:S:remote_energy_share",
+      "status": "ok",
+      "reason": null
+     },
+     "moved_share_energy": {
+      "value": 0.04319421442424932,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:S:moved_share_energy",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_execution_share": {
+      "value": 0.0017462805100076492,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:S:retimed_home_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_jobs": {
+      "value": 376775,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:S:remote_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_jobs": {
+      "value": 3294,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:S:retimed_home_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "late_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:S:late_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "week_arcs": [
+      {
+       "from": "PACE",
+       "to": "BPAT",
+       "jobs": {
+        "value": 7770,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:S:arc:BPAT",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 17168.17722222222,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:S:arcgh:BPAT",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "CISO",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:S:arc:CISO",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:S:arcgh:CISO",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "NEVP",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:S:arc:NEVP",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:S:arcgh:NEVP",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     ]
+    },
+    "W": {
+     "saving_vs_U": {
+      "saving": {
+       "value": 0.03903996472267946,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:W_vs_U:b4:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "saving_ci95": {
+       "value": [
+        0.026029124592568034,
+        0.05353811687842312
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:W_vs_U:b4:saving_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg": {
+       "value": 182304.38152029086,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:W_vs_U:b4:diff_kg",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg_ci95": {
+       "value": [
+        128049.81129519068,
+        236187.64082788958
+       ],
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:W_vs_U:b4:diff_kg_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "n_weeks": {
+       "value": 51,
+       "unit": "weeks",
+       "evidence": "measured",
+       "provenance_id": "20261027T173750Z:W_vs_U:b4:n_weeks",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh": {
+      "BPAT": {
+       "value": 329.26494,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:W:remote_mwh:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 10.342897800000001,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:W:remote_mwh:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 1.6596176,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:W:remote_mwh:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh_total": {
+      "value": 341.26745539999996,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:W:remote_mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_execution_share": {
+      "value": 0.041447933914241675,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:W:remote_exec_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_energy_share": {
+      "value": 0.04343032574638325,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:W:remote_energy_share",
+      "status": "ok",
+      "reason": null
+     },
+     "moved_share_energy": {
+      "value": 0.24140815937530397,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:W:moved_share_energy",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_execution_share": {
+      "value": 0.19996022546106232,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:W:retimed_home_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_jobs": {
+      "value": 376775,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:W:remote_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_jobs": {
+      "value": 7190,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:W:retimed_home_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "late_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:W:late_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "week_arcs": [
+      {
+       "from": "PACE",
+       "to": "BPAT",
+       "jobs": {
+        "value": 7741,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:W:arc:BPAT",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 17135.651944444446,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:W:arcgh:BPAT",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "CISO",
+       "jobs": {
+        "value": 29,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:W:arc:CISO",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 32.52527777777778,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:W:arcgh:CISO",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "NEVP",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:W:arc:NEVP",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:W:arcgh:NEVP",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     ]
+    },
+    "L": {
+     "saving_vs_U": {
+      "saving": {
+       "value": 0.03938876483116835,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:L_vs_U:b4:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "saving_ci95": {
+       "value": [
+        0.02646438480892911,
+        0.05388084201225357
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:L_vs_U:b4:saving_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg": {
+       "value": 183933.16854671296,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:L_vs_U:b4:diff_kg",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg_ci95": {
+       "value": [
+        130454.98743114209,
+        237409.32074327784
+       ],
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:L_vs_U:b4:diff_kg_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "n_weeks": {
+       "value": 51,
+       "unit": "weeks",
+       "evidence": "measured",
+       "provenance_id": "20261027T173750Z:L_vs_U:b4:n_weeks",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh": {
+      "BPAT": {
+       "value": 331.7931432,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:L:remote_mwh:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 9.4743122,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:L:remote_mwh:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 0.0,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:L:remote_mwh:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh_total": {
+      "value": 341.26745539999996,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:L:remote_mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_execution_share": {
+      "value": 0.041447933914241675,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:L:remote_exec_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_energy_share": {
+      "value": 0.04343032574638325,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:L:remote_energy_share",
+      "status": "ok",
+      "reason": null
+     },
+     "moved_share_energy": {
+      "value": 0.2129366916165687,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:L:moved_share_energy",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_execution_share": {
+      "value": 0.17148875770232702,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:L:retimed_home_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_jobs": {
+      "value": 376775,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:L:remote_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_jobs": {
+      "value": 7035,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:L:retimed_home_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "late_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173750Z:L:late_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "week_arcs": [
+      {
+       "from": "PACE",
+       "to": "BPAT",
+       "jobs": {
+        "value": 7770,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:L:arc:BPAT",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 17168.17722222222,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:L:arcgh:BPAT",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "CISO",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:L:arc:CISO",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:L:arcgh:CISO",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "NEVP",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:L:arc:NEVP",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173750Z:mobility_le_8gpus:flows:L:arcgh:NEVP",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "dest_slots_0",
+   "label": "No remote capacity (wait only)",
+   "registered": false,
+   "label_kind": "scenario estimate (validation)",
+   "run_id": "20261027T173749Z",
+   "ledger_run_dir": "runs/ext/dest_slots_0/20261027T173749Z",
+   "note": "destination capacity 0 at CISO, BPAT and NEVP: time-only",
+   "knobs": {
+    "dest_slots": {
+     "value": 0,
+     "unit": "GPU_slots",
+     "evidence": "assumed",
+     "provenance_id": "20261027T173749Z:scenario:dest_slots",
+     "status": "ok",
+     "reason": null
+    },
+    "transfer_s": {
+     "value": 1800.0,
+     "unit": "s",
+     "evidence": "assumed",
+     "provenance_id": "20261027T173749Z:scenario:transfer_s",
+     "status": "ok",
+     "reason": null
+    },
+    "batch_delay_s": {
+     "value": 21600,
+     "unit": "s",
+     "evidence": "assumed",
+     "provenance_id": "20261027T173749Z:scenario:batch_delay_s",
+     "status": "ok",
+     "reason": null
+    },
+    "mobility_max_gpus": {
+     "value": null,
+     "unit": "GPUs",
+     "evidence": "assumed",
+     "provenance_id": "20261027T173749Z:scenario:mobility_max_gpus",
+     "status": "ok",
+     "reason": "null = no mobility limit"
+    },
+    "phase_days": {
+     "value": 0,
+     "unit": "days",
+     "evidence": "assumed",
+     "provenance_id": "20261027T173749Z:scenario:phase_days",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "policies": {
+    "S": {
+     "saving_vs_U": {
+      "saving": {
+       "value": 0.0,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:S_vs_U:b4:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "saving_ci95": {
+       "value": [
+        0.0,
+        0.0
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:S_vs_U:b4:saving_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg": {
+       "value": 0.0,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:S_vs_U:b4:diff_kg",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg_ci95": {
+       "value": [
+        0.0,
+        0.0
+       ],
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:S_vs_U:b4:diff_kg_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "n_weeks": {
+       "value": 51,
+       "unit": "weeks",
+       "evidence": "measured",
+       "provenance_id": "20261027T173749Z:S_vs_U:b4:n_weeks",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh": {
+      "BPAT": {
+       "value": 0.0,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_0:flows:S:remote_mwh:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 0.0,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_0:flows:S:remote_mwh:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 0.0,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_0:flows:S:remote_mwh:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh_total": {
+      "value": 0.0,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_0:flows:S:remote_mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_execution_share": {
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_0:flows:S:remote_exec_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_energy_share": {
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:S:remote_energy_share",
+      "status": "ok",
+      "reason": null
+     },
+     "moved_share_energy": {
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:S:moved_share_energy",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_execution_share": {
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_0:flows:S:retimed_home_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_0:flows:S:remote_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_0:flows:S:retimed_home_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "late_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:S:late_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "week_arcs": [
+      {
+       "from": "PACE",
+       "to": "BPAT",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:S:arc:BPAT",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:S:arcgh:BPAT",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "CISO",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:S:arc:CISO",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:S:arcgh:CISO",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "NEVP",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:S:arc:NEVP",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:S:arcgh:NEVP",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     ]
+    },
+    "W": {
+     "saving_vs_U": {
+      "saving": {
+       "value": 0.007217618950137973,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:W_vs_U:b4:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "saving_ci95": {
+       "value": [
+        0.005153193082846444,
+        0.009456153043836736
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:W_vs_U:b4:saving_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg": {
+       "value": 33704.01505485084,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:W_vs_U:b4:diff_kg",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg_ci95": {
+       "value": [
+        25953.038487138692,
+        40726.11595469979
+       ],
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:W_vs_U:b4:diff_kg_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "n_weeks": {
+       "value": 51,
+       "unit": "weeks",
+       "evidence": "measured",
+       "provenance_id": "20261027T173749Z:W_vs_U:b4:n_weeks",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh": {
+      "BPAT": {
+       "value": 0.0,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_0:flows:W:remote_mwh:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 0.0,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_0:flows:W:remote_mwh:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 0.0,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_0:flows:W:remote_mwh:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh_total": {
+      "value": 0.0,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_0:flows:W:remote_mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_execution_share": {
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_0:flows:W:remote_exec_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_energy_share": {
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:W:remote_energy_share",
+      "status": "ok",
+      "reason": null
+     },
+     "moved_share_energy": {
+      "value": 0.21812573557306356,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:W:moved_share_energy",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_execution_share": {
+      "value": 0.21812573557306356,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_0:flows:W:retimed_home_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_0:flows:W:remote_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_jobs": {
+      "value": 127969,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_0:flows:W:retimed_home_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "late_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:W:late_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "week_arcs": [
+      {
+       "from": "PACE",
+       "to": "BPAT",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:W:arc:BPAT",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:W:arcgh:BPAT",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "CISO",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:W:arc:CISO",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:W:arcgh:CISO",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "NEVP",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:W:arc:NEVP",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:W:arcgh:NEVP",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     ]
+    },
+    "L": {
+     "saving_vs_U": {
+      "saving": {
+       "value": 0.0074548224586865885,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:L_vs_U:b4:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "saving_ci95": {
+       "value": [
+        0.005538327801153361,
+        0.009594824061182177
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:L_vs_U:b4:saving_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg": {
+       "value": 34811.68098712247,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:L_vs_U:b4:diff_kg",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg_ci95": {
+       "value": [
+        27909.87523493562,
+        41369.68095468571
+       ],
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:L_vs_U:b4:diff_kg_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "n_weeks": {
+       "value": 51,
+       "unit": "weeks",
+       "evidence": "measured",
+       "provenance_id": "20261027T173749Z:L_vs_U:b4:n_weeks",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh": {
+      "BPAT": {
+       "value": 0.0,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_0:flows:L:remote_mwh:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 0.0,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_0:flows:L:remote_mwh:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 0.0,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_0:flows:L:remote_mwh:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh_total": {
+      "value": 0.0,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_0:flows:L:remote_mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_execution_share": {
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_0:flows:L:remote_exec_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_energy_share": {
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:L:remote_energy_share",
+      "status": "ok",
+      "reason": null
+     },
+     "moved_share_energy": {
+      "value": 0.18745293289035542,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:L:moved_share_energy",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_execution_share": {
+      "value": 0.18745293289035542,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_0:flows:L:retimed_home_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_0:flows:L:remote_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_jobs": {
+      "value": 118992,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_0:flows:L:retimed_home_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "late_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:L:late_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "week_arcs": [
+      {
+       "from": "PACE",
+       "to": "BPAT",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:L:arc:BPAT",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:L:arcgh:BPAT",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "CISO",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:L:arc:CISO",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:L:arcgh:CISO",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "NEVP",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:L:arc:NEVP",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_0:flows:L:arcgh:NEVP",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "dest_slots_1024",
+   "label": "Double remote capacity",
+   "registered": false,
+   "label_kind": "scenario estimate (validation)",
+   "run_id": "20261027T173749Z",
+   "ledger_run_dir": "runs/ext/dest_slots_1024/20261027T173749Z",
+   "note": "destination capacity 1,024 slots at CISO, BPAT and NEVP",
+   "knobs": {
+    "dest_slots": {
+     "value": 1024,
+     "unit": "GPU_slots",
+     "evidence": "assumed",
+     "provenance_id": "20261027T173749Z:scenario:dest_slots",
+     "status": "ok",
+     "reason": null
+    },
+    "transfer_s": {
+     "value": 1800.0,
+     "unit": "s",
+     "evidence": "assumed",
+     "provenance_id": "20261027T173749Z:scenario:transfer_s",
+     "status": "ok",
+     "reason": null
+    },
+    "batch_delay_s": {
+     "value": 21600,
+     "unit": "s",
+     "evidence": "assumed",
+     "provenance_id": "20261027T173749Z:scenario:batch_delay_s",
+     "status": "ok",
+     "reason": null
+    },
+    "mobility_max_gpus": {
+     "value": null,
+     "unit": "GPUs",
+     "evidence": "assumed",
+     "provenance_id": "20261027T173749Z:scenario:mobility_max_gpus",
+     "status": "ok",
+     "reason": "null = no mobility limit"
+    },
+    "phase_days": {
+     "value": 0,
+     "unit": "days",
+     "evidence": "assumed",
+     "provenance_id": "20261027T173749Z:scenario:phase_days",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "policies": {
+    "S": {
+     "saving_vs_U": {
+      "saving": {
+       "value": 0.35024833954557627,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:S_vs_U:b4:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "saving_ci95": {
+       "value": [
+        0.32720914434402626,
+        0.37578580381479365
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:S_vs_U:b4:saving_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg": {
+       "value": 1635549.8108908823,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:S_vs_U:b4:diff_kg",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg_ci95": {
+       "value": [
+        1405403.6845531664,
+        1869638.3032939401
+       ],
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:S_vs_U:b4:diff_kg_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "n_weeks": {
+       "value": 51,
+       "unit": "weeks",
+       "evidence": "measured",
+       "provenance_id": "20261027T173749Z:S_vs_U:b4:n_weeks",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh": {
+      "BPAT": {
+       "value": 2885.095175,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_1024:flows:S:remote_mwh:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 912.7010676,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_1024:flows:S:remote_mwh:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 0.0,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_1024:flows:S:remote_mwh:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh_total": {
+      "value": 3797.7962425999995,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_1024:flows:S:remote_mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_execution_share": {
+      "value": 0.46125349836988916,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_1024:flows:S:remote_exec_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_energy_share": {
+      "value": 0.4733983412374694,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:S:remote_energy_share",
+      "status": "ok",
+      "reason": null
+     },
+     "moved_share_energy": {
+      "value": 0.4623660293059383,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:S:moved_share_energy",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_execution_share": {
+      "value": 0.0011125309360490885,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_1024:flows:S:retimed_home_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_jobs": {
+      "value": 383987,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_1024:flows:S:remote_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_jobs": {
+      "value": 3288,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_1024:flows:S:retimed_home_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "late_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:S:late_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "week_arcs": [
+      {
+       "from": "PACE",
+       "to": "BPAT",
+       "jobs": {
+        "value": 7886,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:S:arc:BPAT",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 91257.015,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:S:arcgh:BPAT",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "CISO",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:S:arc:CISO",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:S:arcgh:CISO",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "NEVP",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:S:arc:NEVP",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:S:arcgh:NEVP",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     ]
+    },
+    "W": {
+     "saving_vs_U": {
+      "saving": {
+       "value": 0.3489364847178544,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:W_vs_U:b4:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "saving_ci95": {
+       "value": [
+        0.32700269551721783,
+        0.3736166580180191
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:W_vs_U:b4:saving_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg": {
+       "value": 1629423.8606060627,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:W_vs_U:b4:diff_kg",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg_ci95": {
+       "value": [
+        1403656.9779430272,
+        1859651.5113518836
+       ],
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:W_vs_U:b4:diff_kg_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "n_weeks": {
+       "value": 51,
+       "unit": "weeks",
+       "evidence": "measured",
+       "provenance_id": "20261027T173749Z:W_vs_U:b4:n_weeks",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh": {
+      "BPAT": {
+       "value": 2820.2914338,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_1024:flows:W:remote_mwh:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 921.6080655999999,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_1024:flows:W:remote_mwh:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 55.896743199999996,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_1024:flows:W:remote_mwh:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh_total": {
+      "value": 3797.7962426,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_1024:flows:W:remote_mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_execution_share": {
+      "value": 0.46125349836988916,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_1024:flows:W:remote_exec_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_energy_share": {
+      "value": 0.4733983412374694,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:W:remote_energy_share",
+      "status": "ok",
+      "reason": null
+     },
+     "moved_share_energy": {
+      "value": 0.461872781927723,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:W:moved_share_energy",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_execution_share": {
+      "value": 0.0006192835578338437,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_1024:flows:W:retimed_home_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_jobs": {
+      "value": 383987,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_1024:flows:W:remote_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_jobs": {
+      "value": 3282,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_1024:flows:W:retimed_home_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "late_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:W:late_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "week_arcs": [
+      {
+       "from": "PACE",
+       "to": "BPAT",
+       "jobs": {
+        "value": 7847,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:W:arc:BPAT",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 91138.54527777778,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:W:arcgh:BPAT",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "CISO",
+       "jobs": {
+        "value": 39,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:W:arc:CISO",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 118.46972222222222,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:W:arcgh:CISO",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "NEVP",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:W:arc:NEVP",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:W:arcgh:NEVP",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     ]
+    },
+    "L": {
+     "saving_vs_U": {
+      "saving": {
+       "value": 0.3490654790502688,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:L_vs_U:b4:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "saving_ci95": {
+       "value": [
+        0.32711976980356255,
+        0.3738278516370885
+       ],
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:L_vs_U:b4:saving_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg": {
+       "value": 1630026.2236501249,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:L_vs_U:b4:diff_kg",
+       "status": "ok",
+       "reason": null
+      },
+      "diff_kg_ci95": {
+       "value": [
+        1404006.839076018,
+        1860140.8480753272
+       ],
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:L_vs_U:b4:diff_kg_ci",
+       "status": "ok",
+       "reason": null
+      },
+      "n_weeks": {
+       "value": 51,
+       "unit": "weeks",
+       "evidence": "measured",
+       "provenance_id": "20261027T173749Z:L_vs_U:b4:n_weeks",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh": {
+      "BPAT": {
+       "value": 2836.9717652,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_1024:flows:L:remote_mwh:BPAT",
+       "status": "ok",
+       "reason": null
+      },
+      "CISO": {
+       "value": 908.6155650000001,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_1024:flows:L:remote_mwh:CISO",
+       "status": "ok",
+       "reason": null
+      },
+      "NEVP": {
+       "value": 52.2089124,
+       "unit": "MWh",
+       "evidence": "simulated",
+       "provenance_id": "20261027T173749Z:dest_slots_1024:flows:L:remote_mwh:NEVP",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "remote_execution_mwh_total": {
+      "value": 3797.7962426,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_1024:flows:L:remote_mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_execution_share": {
+      "value": 0.46125349836988916,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_1024:flows:L:remote_exec_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_energy_share": {
+      "value": 0.4733983412374694,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:L:remote_energy_share",
+      "status": "ok",
+      "reason": null
+     },
+     "moved_share_energy": {
+      "value": 0.4622775260667424,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:L:moved_share_energy",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_execution_share": {
+      "value": 0.001024027696853185,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_1024:flows:L:retimed_home_share",
+      "status": "ok",
+      "reason": null
+     },
+     "remote_jobs": {
+      "value": 383987,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_1024:flows:L:remote_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "retimed_home_jobs": {
+      "value": 3284,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:dest_slots_1024:flows:L:retimed_home_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "late_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T173749Z:L:late_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "week_arcs": [
+      {
+       "from": "PACE",
+       "to": "BPAT",
+       "jobs": {
+        "value": 7878,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:L:arc:BPAT",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 89205.94388888888,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:L:arcgh:BPAT",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "CISO",
+       "jobs": {
+        "value": 8,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:L:arc:CISO",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 2051.071111111111,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:L:arcgh:CISO",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      {
+       "from": "PACE",
+       "to": "NEVP",
+       "jobs": {
+        "value": 0,
+        "unit": "jobs",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:L:arc:NEVP",
+        "status": "ok",
+        "reason": null
+       },
+       "gpu_h": {
+        "value": 0.0,
+        "unit": "GPU_h",
+        "evidence": "simulated",
+        "provenance_id": "20261027T173749Z:dest_slots_1024:flows:L:arcgh:NEVP",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     ]
+    }
+   }
+  }
+ ]
+}

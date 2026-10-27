@@ -4,7 +4,7 @@ import { CONSUMPTION_CHECKS, ExtensionsTable, PHRASE, extRows, listJoin, placeme
 import { ReliefTable, RushSensitivity, hourSpans, storageFacts } from '../components/storage';
 import { Ev, Icon } from '../components/ui';
 import { useCopy } from '../lib/useCopy';
-import { DEADLINE_RULE, asNum, headline, plainLimitations, pname, stripCodes } from '../lib/data';
+import { DEADLINE_RULE, asNum, headline, plainLimitations, pname, stripCodes, type Json } from '../lib/data';
 import { fmt, fmtDate, pct, pctRange, sig2, signed } from '../lib/format';
 import { useApp } from '../lib/store';
 
@@ -61,18 +61,30 @@ export function MethodDrawer() {
               </div>
               <div style={{ overflowX: 'auto' }}><PolicyTable m={m} testId="policy-table" /></div>
             </Sec>
+            <Sec title="A few large jobs carry the result">
+              <table className="tbl" data-testid="method-workload">
+                <thead><tr><th>Largest jobs</th><th>Share of GPU-hours</th><th>Share of energy</th><th>Share of {pname(data!.workload.policy)}'s saving</th></tr></thead>
+                <tbody>
+                  {data!.workload.top.map((t: Json) => (
+                    <tr key={t.fraction.value}><td>top {pct(t.fraction.value, t.fraction.value < 0.01 ? 1 : 0)}% ({fmt(t.n_jobs.value)} jobs)</td><td>{pct(t.gpu_h_share.value, 0)}%</td><td>{pct(t.energy_share.value, 0)}%</td><td>{t.saving_share.value == null ? '–' : `${pct(t.saving_share.value, 0)}%`}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="t-12 ink-3" style={{ marginTop: 4 }}>{pct(data!.workload.share_jobs_under_1_gpu_h.value, 0)}% of jobs use under 1 GPU-hour; the median job uses {fmt(data!.workload.median_gpu_h.value, 2)} GPU-hours. <Ev e="measured">sizes</Ev> <Ev e="simulated">energy and saving</Ev></div>
+            </Sec>
             <Sec title={copy.validationReadings ? 'Forecast choice barely matters here; placement dominates' : 'The pre-registered forecast test'}>
               <p className="t-13" style={{ margin: 0 }}>
                 The pre-registered forecast test, whether {pname('L')} beats {pname('W')}, is <b className="fw-600">{h2.direction === 'inconclusive' || h2.decided === false || h2.direction == null ? 'inconclusive' : h2.direction}</b>:
                 W − L = {signed(h2b4.diff_kg.value / 1000, 1)} t CO₂, 95% interval [{signed(h2b4.diff_kg_ci95.value[0] / 1000, 1)}, {signed(h2b4.diff_kg_ci95.value[1] / 1000, 1)}] t; {stripCodes(h2.reason ?? '')}. <Ev e="simulated" />
               </p>
+              {copy.validationReadings ? <p className="t-13" style={{ margin: '8px 0 0' }} data-testid="method-dynamic">We found no demonstrated aggregate benefit from dynamic search in this replay: the forecast-driven policies are not distinguishable from {pname('S')} in aggregate, and only part of the flexible energy has its whole decision window inside forecast coverage.</p> : null}
               <p className="t-13 ink-2" style={{ margin: '8px 0 0' }}>
                 Waiting in Utah alone saves {pctRange(hd.timing.lo, hd.timing.hi)}%{copy.validationReadings ? '; nearly all of the saving comes from moving work, mostly to the Northwest' : ''}. A per-job search, even with hindsight, is not a best plan for {copy.wholeYear}: holding scarce Northwest slots for cleaner hours can push later jobs to dirtier sites.
               </p>
             </Sec>
             {data!.ext ? <Sec title="Robustness and sensitivity checks">
               <p className="t-12 ink-2" style={{ margin: '0 0 8px' }}>
-                Each row changes one choice and re-scores or re-runs the validation year; none replaces the registered result, and the two workload shifts are never pooled with it.
+                Each row changes one choice and re-scores or re-runs the validation year; none replaces the registered result, and the two workload shifts are alignment checks on the same trace, never pooled with it. Their savings are scenario estimates, and a span across rows or policies is not a confidence interval.
                 Production basis prices the same schedules on where electricity is generated rather than where it is used, which flatters hydro-heavy Northwest destinations; an hour with no production value takes, in order, the consumption value for the same hour, our fuel-mix estimate, then the mean of the same hour over the previous 7 days.
                 The published-values row drops, from every policy, the {fmt(data!.ext.common_support.cohort.n_dropped.value)} jobs that touch a filled hour under any policy.
                 {mob ? <> Letting only jobs of 8 GPUs or fewer move leaves {pctRange(mob[0], mob[1])}%: most of the energy, and most of the saving, sits in large multi-node jobs, so the result depends on those jobs' data being ready at the destination.</> : null}

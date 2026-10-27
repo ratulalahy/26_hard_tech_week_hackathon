@@ -97,8 +97,12 @@ export function windowCopy(window: EvalWindow, man: Json, metrics?: Json): Windo
 
 /** The control room's headline. Validation keeps its registered wording; the test year's is built from
  * its own numbers, so a reading made on the validation year is never put on test numbers. */
-export function heroHeadline(c: WindowCopy, h: { placement: { lo: number; hi: number }; timing: { lo: number; hi: number } }): string {
+export function heroHeadline(c: WindowCopy, h: { placement: { lo: number; hi: number }; timing: { lo: number; hi: number } }, s?: { v: number }): string {
+  // F06/F10 (T15): lead with S's own estimate, "about 22.5%" against "under 1%"; never a span across policies
+  const tUnder = h.timing.lo >= 0 && h.timing.hi < 0.01;
+  if (c.validationReadings && s) return `In a simulated replay, moving Utah's AI jobs cut their attributed CO₂ by about ${Math.round(s.v * 200) / 2}%; waiting in Utah cut ${tUnder ? 'under 1%' : `${pctRange(h.timing.lo, h.timing.hi)}%`}.`;
   if (c.validationReadings) return "In a simulated replay, moving Utah's AI jobs cut their CO₂ by a fifth. Waiting barely helps.";
+  if (s) h = { ...h, placement: { lo: s.v, hi: s.v } };
   const verb = (lo: number, hi: number, it: string) =>
     lo > 0 ? `cut ${it} by ${pctRange(lo, hi)}%`
       : hi < 0 ? `raised ${it} by ${pctRange(-hi, -lo)}%`
