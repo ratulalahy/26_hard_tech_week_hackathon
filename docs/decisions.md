@@ -379,3 +379,10 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - Causal sensitivities (shadow-U, carbon-blind scheduling on common support) are deferred until after 18:00.
 - **Evidence:** `docs/reviews/2026-10-27-spec-astra-r1-astra.md`.
 - **Alternatives rejected:** adopting shadow U as the primary design. If no job moves away from PACE, it makes time-only savings exactly zero by construction, so it would answer a different question.
+
+## D-050 · 2026-10-27 02:55 MT · Owner accepts the advance-reservation claim frame; Sol re-checks the gate
+- **Decided by:** owner.
+- **Decision:**
+  - The headline is framed as a simulated advance-reservation scheduling scenario, with baseline-relative deadlines and exact declared runtimes (F12.5, F12.7). The shadow-U causal version is a sensitivity.
+  - The spec re-check uses the optional Sol slot (budget run 2 of 3) at xhigh, instead of a second Astra run.
+- **Evidence:** the owner's answers in session; `docs/reviews/2026-10-27-spec-astra-r1-astra.md`.
