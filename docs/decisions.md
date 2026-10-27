@@ -444,3 +444,16 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - its source worktree is locked.
 - **Code reference:** the code commit 9c05198 was squash-merged into main as 2e6b6fc, so 9c05198 is tagged `run-20261027T122317Z` and the tag is pushed.
 - **File hashes:** `docs/evidence/run-20261027T122317Z.sha256` (25 files).
+
+## D-058 · 2026-10-27 ~07:55 MT · Extensions before the 21:00 cutoff: the robustness pack and key sensitivities
+- **Decided by:** owner.
+- **Run, on validation only:**
+  - production-basis repricing;
+  - common support on filled hours;
+  - workload phases 49 and 98;
+  - sensitivities: destination capacity 0 and 1,024; transfer time 120 min; batch delay 24 h; mobility limited to jobs of 8 GPUs or fewer.
+- **Cut, reported as `not_run` with a reason:**
+  - the shadow-U (no advance booking) sensitivity;
+  - the remaining §7 sensitivities (PUE, power, transfer energy, idle power, flexibility shares, 1.25× home capacity runs);
+  - the missingness-blind scheduling sensitivity.
+- **Evidence:** the owner's answer in session; Stage 3 plan `docs/superpowers/plans/2026-10-27-stage3-freeze-test.md`.
