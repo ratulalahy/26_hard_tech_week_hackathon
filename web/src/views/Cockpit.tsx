@@ -1,13 +1,14 @@
 import { useMemo, useRef } from 'react';
 import { EChart } from '../components/EChart';
 import { Panel, Strip, useWidth } from '../components/charts';
-import { Ev, Icon } from '../components/ui';
+import { Ev, EvCI, Icon } from '../components/ui';
 import { C, CI_MAX, ci2c } from '../lib/color';
 import { DESTS, REGION, asNum, dayCurve, headline, type Core, type Dest } from '../lib/data';
 import { fmt, fmtHour, fmtSpan, monthLabel, pct, pctRange, sig2 } from '../lib/format';
 import { makePlan } from '../lib/plan';
 import { useApp, type Mode } from '../lib/store';
 import { WestMap, type ArcSpec } from '../map/WestMap';
+import { useViewport } from '../lib/useViewport';
 
 const SCRUB = {
   gpus: { min: 8, max: 512, step: 8, fmt: (v: number) => fmt(v), label: 'GPUs' },
@@ -46,6 +47,7 @@ export function ModeSeg() {
 
 export function Cockpit() {
   const s = useApp();
+  const short = useViewport().h < 1000;
   const { data, mode, dest, month } = s;
   const p = useMemo(() => makePlan(data!, { month, hour: s.hour, hours: s.hours, gpus: s.gpus, maxWait: s.maxWait }), [data, month, s.hour, s.hours, s.gpus, s.maxWait]);
   const h = headline(data!.metrics);
@@ -69,7 +71,7 @@ export function Cockpit() {
           </div>
           <div className="flex flex-wrap items-center gap-4 t-12 ink-3" style={{ marginTop: 8 }}>
             <span>Drag a number sideways, or focus it and use the arrow keys.</span>
-            <Ev e="observed">carbon: typical {monthLabel(month, true)} day, America/Denver hours</Ev>
+            <EvCI extra={`typical ${monthLabel(month, true)} day, Denver time`} />
             <Ev e="assumed">{fmt(kw ?? 0, 1)} kW per GPU × PUE {fmt(pue ?? 0, 1)}</Ev>
           </div>
         </Panel>
@@ -79,41 +81,44 @@ export function Cockpit() {
             <div>
               <h2 className="t-15" style={{ margin: 0 }}>{verdict}{best === mode ? ': the cleanest of the three' : ''}</h2>
               <div className="flex items-baseline gap-2" style={{ marginTop: 4 }}>
-                <span className="t-hero">{mode === 'now' ? fmt(V) : `${pct(Math.max(0, p.cut(V)), 0)}%`}<span className="unit">{mode === 'now' ? 'g/kWh average' : 'less CO₂ than running now'}</span></span>
+                <span className="t-hero">{mode === 'now' ? fmt(V) : `${pct(Math.max(0, p.cut(V)), 0)}%`}<span className="unit">{mode === 'now' ? 'g/kWh average, illustrative' : 'less CO₂ than running now, illustrative'}</span></span>
               </div>
               <div className="t-12 ink-2" style={{ marginTop: 4 }}>
-                {fmt(p.kwh)} kWh for the run, about {sig2(p.kg(V))} kg CO₂ at {fmt(V)} g/kWh{best !== mode ? `. The cleanest option here is to ${best === 'move' ? 'move' : best === 'wait' ? 'wait' : 'run now'}.` : '.'} <Ev e="modeled" />
+                {fmt(p.kwh)} kWh for the run, about {sig2(p.kg(V))} kg CO₂ at {fmt(V)} g/kWh{mode === 'move' ? `, including a ${fmt(p.transferH * 60)}-minute transfer that draws ${pct(p.transferFrac, 0)}% extra energy in Utah` : ''}{best !== mode ? `. The cleanest option here is to ${best === 'move' ? 'move' : best === 'wait' ? 'wait' : 'run now'}.` : '.'} <Ev e="modeled" />
               </div>
             </div>
             <ModeSeg />
           </div>
           <Lanes p={p} />
-          <div style={{ padding: '0 16px 8px', flex: 1, minHeight: 140 }}><Patience p={p} /></div>
+          <div style={{ padding: '0 16px 8px', height: 180, flex: 'none' }}><Patience p={p} /></div>
+          {!short && <><hr className="rule" />
+          <div style={{ padding: 16 }}>
+            <div className="flex items-baseline justify-between"><span className="t-15">Where the job's hours land</span><EvCI /></div>
+            <HoursLand p={p} />
+          </div></>}
         </Panel>
 
         <Panel style={{ padding: '12px 16px' }}>
-          <div data-testid="cockpit-registered" className="flex flex-wrap items-baseline gap-x-4 gap-y-1 t-13">
-            <span className="t-15">The registered result is the whole year, not this one job</span>
-            <span>Moving: <b className="fw-600">{pctRange(h.placement.lo, h.placement.hi)}%</b> less CO₂ <span className="t-12 ink-3">(95% {pct(h.placement.ciLo)}–{pct(h.placement.ciHi)}%)</span></span>
-            <span>Waiting only: <b className="fw-600">{pctRange(h.timing.lo, h.timing.hi)}%</b> <span className="t-12 ink-3">(95% {pct(h.timing.ciLo)}–{pct(h.timing.ciHi)}%)</span></span>
-            <span className="t-12 ink-3">{fmt(data!.metrics.cohort.n_jobs.value)} jobs, same work, deadlines met. <Ev e="simulated" /></span>
+          <div data-testid="cockpit-registered" className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+            <span className="t-15">Registered result, the whole validation year: moving cuts {pctRange(h.placement.lo, h.placement.hi)}%, waiting only {pctRange(h.timing.lo, h.timing.hi)}%</span>
+            <span className="t-12 ink-3">95% intervals {pct(h.placement.ciLo)}–{pct(h.placement.ciHi)}% and {pct(h.timing.ciLo)}–{pct(h.timing.ciHi)}%; {fmt(data!.metrics.cohort.n_jobs.value)} jobs, same work, deadlines met. <Ev e="simulated" /></span>
           </div>
         </Panel>
       </div>
 
-      <div className="grid min-h-0" style={{ gridTemplateRows: 'minmax(0,1fr) auto', gap: 16 }}>
+      <div className="grid min-h-0" style={{ gridTemplateRows: short ? 'minmax(0,1fr) auto' : 'minmax(0,1fr)', gap: 16 }}>
         <Panel className="relative overflow-hidden" style={{ padding: 0 }}>
           <WestMap id="map-inset" variant="inset" interactive={false} ci={ci} context={context} hourLabel={fmtHour(s.hour)} arcs={arcs} ring={mode === 'wait'}
-            bounds={[[-124.6, 32.2], [-105.5, 48.6]]} padding={{ top: 64, bottom: 16, left: 16, right: 16 }} />
+            bounds={[[-127.8, 31.4], [-101.2, 49.0]]} padding={{ top: 52, bottom: 12, left: 12, right: 12 }} />
           <div className="absolute flex items-baseline justify-between gap-2" style={{ left: 16, right: 16, top: 16 }}>
             <span className="t-15">{mode === 'move' ? `Utah to ${REGION[dest].name}` : mode === 'wait' ? `Held in Utah until ${fmtHour(p.wait.s)}` : 'Runs in Utah now'}</span>
-            <Ev e="observed">carbon at {fmtHour(s.hour)}</Ev>
+            <EvCI extra={fmtHour(s.hour)} />
           </div>
         </Panel>
-        <Panel>
-          <div className="flex items-baseline justify-between"><span className="t-15">Where the job's hours land</span><Ev e="observed">typical day</Ev></div>
+        {short && <Panel>
+          <div className="flex items-baseline justify-between"><span className="t-15">Where the job's hours land</span><EvCI /></div>
           <HoursLand p={p} />
-        </Panel>
+        </Panel>}
       </div>
     </section>
   );
@@ -125,12 +130,12 @@ function Lanes({ p }: { p: ReturnType<typeof makePlan> }) {
   const lanes: { m: Mode; d?: Dest; t: string; s: string; v: number }[] = [
     { m: 'now', t: 'Run now in Utah', s: fmtSpan(p.a, p.H), v: p.now },
     { m: 'wait', t: 'Wait in Utah', s: p.wait.d ? `${fmtSpan(p.wait.s, p.H)}, starts ${p.wait.d} h later` : `no cleaner start within ${maxWait} h`, v: p.wait.v },
-    ...DESTS.map((d) => ({ m: 'move' as Mode, d, t: `Move to ${REGION[d].name}`, s: `${fmtSpan(p.a, p.H)} · ${d}`, v: p.moves[d] })),
+    ...DESTS.map((d) => ({ m: 'move' as Mode, d, t: `Move to ${REGION[d].name}`, s: `starts ${fmt(p.transferH * 60)} min later (transfer)`, v: p.moves[d] })),
   ];
   const lx = 200, rx = 150, aw = Math.max(40, w - lx - rx), X = (v: number) => (Math.min(v, CI_MAX) / CI_MAX) * aw;
   return (
     <div ref={ref} style={{ padding: '0 8px' }} role="group" aria-label="Options for this run">
-      <div className="flex t-11 ink-3" style={{ padding: '0 8px 4px', paddingLeft: lx + 8 }}>Average carbon intensity of the run, g CO₂/kWh</div>
+      <div className="flex t-11 ink-3" style={{ padding: '0 8px 4px', paddingLeft: lx + 8 }}>Average carbon intensity of the run, g CO₂/kWh; a move includes its transfer</div>
       {lanes.map((L) => {
         const sel = L.m === mode && (L.m !== 'move' || L.d === dest);
         const cut = p.cut(L.v);
@@ -144,7 +149,7 @@ function Lanes({ p }: { p: ReturnType<typeof makePlan> }) {
               <span className="min-w-0"><span className="t-13 fw-600 block truncate">{L.t}</span><span className="t-11 ink-3 block truncate">{L.s}</span></span>
             </span>
             <span className="flex items-center gap-2" style={{ height: 20 }}>
-              <span style={{ width: Math.max(4, X(L.v)), height: 14, borderRadius: '0 4px 4px 0', background: ci2c(L.v), boxShadow: 'inset 0 0 0 1px rgba(110,62,30,.10)' }} />
+              <span style={{ width: Math.max(4, X(L.v)), height: 14, borderRadius: '0 4px 4px 0', background: ci2c(L.v), boxShadow: 'inset 0 0 0 1px rgba(45,29,20,.28)' }} />
               <span className="t-13 fw-500 num">{fmt(L.v)}</span>
             </span>
             <span className="text-right"><span className="t-13 fw-600 num block">{L.m === 'now' ? 'baseline' : Math.round(cut * 100) === 0 ? 'no gain' : `${cut >= 0 ? '−' : '+'}${pct(Math.abs(cut), 0)}%`}</span><span className="t-11 ink-3 num block">≈ {sig2(p.kg(L.v))} kg CO₂</span></span>
@@ -161,7 +166,7 @@ function Patience({ p }: { p: ReturnType<typeof makePlan> }) {
     const items = [{ k: 'wait', v: p.patience[24] * 100 }, ...DESTS.map((d) => ({ k: d as string, v: Math.max(0, p.cut(p.moves[d])) * 100 }))].sort((a, b) => b.v - a.v);
     const off: Record<string, number> = {};
     let last = Infinity, shift = 0;
-    for (const it of items) { shift = last - it.v < 7 ? shift + 12 : 0; off[it.k] = shift; last = it.v; }
+    for (const it of items) { shift = last - it.v < 12 ? shift + 12 : 0; off[it.k] = shift; last = it.v; }
     return off;
   }, [p]);
   const option = useMemo(() => ({
@@ -172,7 +177,7 @@ function Patience({ p }: { p: ReturnType<typeof makePlan> }) {
     graphic: [],
     series: [
       { name: 'Wait in Utah', type: 'line', step: 'end', data: p.patience.map((v, d) => [d, v * 100]), lineStyle: { color: C.ink, width: 2 }, symbol: 'none',
-        markLine: { silent: true, symbol: 'none', label: { show: true, position: 'insideEndTop', color: C.ink, fontSize: 11, formatter: 'your limit' }, lineStyle: { color: C.route, width: 1.5, type: 'solid' }, data: [{ xAxis: maxWait }] },
+        markLine: { silent: true, symbol: 'none', label: { show: true, position: 'insideEndTop', color: C.ink, fontSize: 11, formatter: 'your limit' }, lineStyle: { color: C.ink, width: 1.25, type: [4, 3] }, data: [{ xAxis: maxWait }] },
         endLabel: { show: true, formatter: () => `Wait in Utah · up to ${Math.round(p.patience[24] * 100)}%`, color: C.ink, fontSize: 11, fontWeight: 500, offset: [8, ends.wait] } },
       ...DESTS.map((d) => ({ name: `Move to ${REGION[d].name}`, type: 'line', data: [[0, Math.max(0, p.cut(p.moves[d])) * 100], [24, Math.max(0, p.cut(p.moves[d])) * 100]], symbol: 'none',
         lineStyle: { color: d === dest ? C.route : C.ink3, width: d === dest ? 2 : 1, type: d === dest ? 'solid' : [4, 4] },

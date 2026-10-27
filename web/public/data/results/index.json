@@ -4,6 +4,7 @@
   "grid-profile.json",
   "job-replay.json",
   "manifest.json",
-  "metrics.json"
+  "metrics.json",
+  "workload-profile.json"
  ]
 }

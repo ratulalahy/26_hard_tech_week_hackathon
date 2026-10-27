@@ -59,3 +59,8 @@ export function Skel({ w = '100%', h = 12, r = 8, className }: { w?: number | st
 }
 
 export const SEALED = 'Validation year (Nov 2024 – Oct 2025) · test year sealed';
+
+/** EIA's consumption-basis carbon intensity is an EIA estimate: modeled (lead ruling R3). */
+export function EvCI({ extra }: { extra?: string }) {
+  return <Ev e="modeled" title="EIA's published consumption-basis CO₂ intensity, an EIA estimate">{`modeled · EIA estimate${extra ? ` · ${extra}` : ''}`}</Ev>;
+}

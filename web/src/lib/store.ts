@@ -49,4 +49,7 @@ export const useApp = create<State>((set) => ({
   set: (p) => set(p),
 }));
 
-window.addEventListener('hashchange', () => useApp.getState().set({ view: parseView() }));
+const parseStep = (): number | null => { const m = /^#story-(\d)$/.exec(location.hash); return m ? Math.min(6, Math.max(1, Number(m[1]))) : null; };
+export const initialStep = parseStep();
+if (initialStep) useApp.setState({ step: initialStep });
+window.addEventListener('hashchange', () => { const st = parseStep(); useApp.getState().set({ view: parseView(), ...(st ? { step: st } : {}) }); });

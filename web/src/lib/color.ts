@@ -1,6 +1,8 @@
 // Colour roles from docs/design/tokens.md (the source of truth). One meaning per colour.
 export const CARBON = ['#298954', '#59aa6d', '#8fc990', '#c3e2bc', '#f7efe0', '#f5c79f', '#ed8b51', '#c6481c', '#7c1213'];
-export const CI_MID = 380; // assumed US-average reference, g/kWh (diverging midpoint; tokens.md)
+// Diverging midpoint: the US average CO2 intensity, 2024 (EIA), read from grid-profile.json at load (tokens.md).
+export let CI_MID = 356;
+export function setMid(v: number | null | undefined) { if (v != null && Number.isFinite(v)) CI_MID = v; }
 export const CI_MAX = 750;
 
 export const C = {

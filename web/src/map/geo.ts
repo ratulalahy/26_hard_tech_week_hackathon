@@ -12,7 +12,7 @@ const base = import.meta.env.BASE_URL;
 const j = (f: string) => fetch(`${base}data/geo/${f}`).then((r) => { if (!r.ok) throw new Error(`geo/${f}: HTTP ${r.status}`); return r.json(); });
 
 // Crop of the Natural Earth hillshade that the West needs, duotoned to the sandstone ramp (#8c6a4f → #fdf9f4).
-export const VIEW_BOX = { w: -128, e: -97, s: 27, n: 52.5 };
+export const VIEW_BOX = { w: -134, e: -92, s: 24, n: 55 };
 const merc = (lat: number) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
 
 async function relief(): Promise<Geo['relief']> {

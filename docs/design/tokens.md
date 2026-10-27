@@ -8,10 +8,10 @@ The owner's G2 feedback on round 3: "only more meaningful color would be helpful
 
 ## Carbon intensity: a diverging scale, g CO₂/kWh
 
-- **Midpoint** `CI_MID = 380`: the assumed US-average reference. **Source it from EIA before judging.**
-- **Scale:** 0 → 380 → 750, nine OKLCH steps, interpolated in OKLab.
+- **Midpoint** `CI_MID = 356` g/kWh: the 2024 US average CO₂ intensity of generation, from EIA, *United States Electricity Profile 2024*: 785 lb CO₂/MWh × 0.453592 = 356 g/kWh (https://www.eia.gov/electricity/state/unitedstates/). It is a national generation-basis annual average, used as a reference midpoint. The dashboard reads it from `results/grid-profile.json` (`reference.us_avg_ci`, observed); the legend reads "356 · US avg 2024 (EIA)".
+- **Scale:** 0 → 356 → 750, nine OKLCH steps, interpolated in OKLab. Only the four core regions wear it on the map; other regions are a flat neutral sand.
 
-| Step | 0 | 1 | 2 | 3 | 4 (mid) | 5 | 6 | 7 | 8 |
+| Step | 0 | 1 | 2 | 3 | 4 (mid, 356) | 5 | 6 | 7 | 8 |
 |---|---|---|---|---|---|---|---|---|---|
 | hex | `#298954` | `#59aa6d` | `#8fc990` | `#c3e2bc` | `#f7efe0` | `#f5c79f` | `#ed8b51` | `#c6481c` | `#7c1213` |
 
@@ -69,4 +69,4 @@ Funnel Sans carries the interface; Funnel Display carries the view title and the
 - **Grid:** 8 px. Panel padding 12–16 px; gutters 16 px.
 - **Radii:** 8 px for controls and chips, 12 px for inner blocks and rows, 16 px for panels.
 - **Elevation:** a 1 px hairline (`rgba(110,62,30,.14)`) plus soft, layered, warm shadows. Never one heavy grey drop.
-- **Motion:** 120–200 ms on hover, focus and pressed states; camera moves at most 400 ms. All of it is off under `prefers-reduced-motion`.
+- **Motion:** 120–200 ms on hover, focus and pressed states; camera moves and view changes at most 300 ms. All of it is off under `prefers-reduced-motion`.

@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { setMid } from './lib/color';
 import { Ev, Icon, SEALED } from './components/ui';
 import { DESTS, asNum, dayCurve, type Core } from './lib/data';
 import { loadResults } from './lib/data';
@@ -16,7 +17,10 @@ export function App() {
   const { data, error, view, set } = useApp();
   useEffect(() => {
     // the allowed wait starts at the registered flexible-job delay (manifest, assumed)
-    loadResults().then((d) => set({ data: d, maxWait: Math.round((asNum(d.manifest.assumptions.allowed_delay_s.SFT) ?? 21600) / 3600) })).catch((e) => set({ error: String(e) }));
+    loadResults().then((d) => {
+      setMid(asNum(d.grid.reference?.us_avg_ci)); // the diverging midpoint: EIA's 2024 US average
+      set({ data: d, maxWait: Math.round((asNum(d.manifest.assumptions.allowed_delay_s.SFT) ?? 21600) / 3600) });
+    }).catch((e) => set({ error: String(e) }));
   }, [set]);
 
   return (
@@ -56,18 +60,20 @@ function SharedMap() {
     if (!data) return [];
     const pol = data.jobs.week.policies[arcPolicy];
     if (!pol) return [];
+    if (!on) return []; // no arcs in the watermark
     const gh = (a: { gpu_h: { value: number } }) => a.gpu_h.value ?? 0;
-    const max = Math.max(...pol.arcs.map(gh), 1);
-    return DESTS.map((d) => {
+    const max = Math.max(...pol.arcs.map(gh), 1), tot = pol.arcs.map(gh).reduce((x: number, y: number) => x + y, 0) || 1;
+    return DESTS.flatMap((d) => {
       const a = pol.arcs.find((x: { to: string }) => x.to === d);
       const g = a ? gh(a) : 0;
-      return { to: d, weight: Math.sqrt(g / max), label: on ? `${Math.round(g).toLocaleString('en-US')} GPU-h` : '', selected: d === dest };
+      if (g / tot < 0.01) return []; // arcs under 1% of the week's moved GPU-hours are not drawn
+      return [{ to: d, weight: Math.sqrt(g / max), label: `${Math.round(g).toLocaleString('en-US')} GPU-h`, selected: d === dest }];
     });
   }, [data, arcPolicy, dest, on]);
   return (
     <div className={`scene ${on ? '' : 'watermark'}`} aria-hidden={!on} inert={!on}>
       {data && (
-        <WestMap id="map-main" variant="main" interactive={on} ci={ci} context={context} hourLabel={`${fmtHour(hour)}, ${monthLabel(month)}`} arcs={arcs}
+        <WestMap id="map-main" variant="main" interactive={on} frozen={!on} ci={ci} context={context} hourLabel={`${fmtHour(hour)}, ${monthLabel(month)}`} arcs={arcs}
           padding={controlPadding(vp)} onPick={(d) => set({ dest: d })} />
       )}
     </div>
@@ -114,6 +120,7 @@ function Mark() {
 function Footer() {
   return (
     <footer className="fixed z-20 flex gap-4 t-11 ink-3 whitespace-nowrap overflow-hidden" style={{ left: 24, right: 24, bottom: 4, height: 16 }}>
+      <span className="min-[1600px]:hidden">Hours in America/Denver time. Validation year data.</span>
       <span className="hidden min-[1600px]:inline"><b className="fw-500 ink-2">Data:</b> EIA-930 hourly balance and EIA consumption-basis CO₂, validation year (Nov 2024 – Oct 2025). Jobs: simulated replay of a measured trace. Hours are America/Denver.</span>
       <span className="ml-auto">BA boundaries © Electricity Maps contributors (AGPL-3.0). BA codes: U.S. EIA Form EIA-930. Basemap: Natural Earth.</span>
     </footer>
