@@ -38,6 +38,8 @@ export function ScenarioToggle({ compact = false }: { compact?: boolean }) {
   const vp = useViewport();
   const short = compact || vp.w < 1600;
   const s = scenarioOf(data!.flows, scenario);
+  // validation scenarios only: with no scenario-flows.json for this window, there is nothing to switch
+  if (!data!.flows) return <div className="t-11 ink-3" data-testid="scenario-toggle-off">The mobility and capacity scenarios are validation-year runs; they are not shown for this window.</div>;
   return (
     <div className="flex flex-col items-center" style={{ gap: 4 }} data-testid="scenario-toggle">
       <div className="flex items-center gap-2 flex-wrap justify-center">
