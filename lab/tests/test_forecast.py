@@ -109,19 +109,26 @@ def test_weekly_median():
     assert first == pytest.approx(predict_climatology(clim_none, [t0])[0])
 
 
-def test_weekly_median_respects_the_envelope():
-    # ci_consumed (96 h) for a target 168 h ahead of a just-published hour: still available,
-    # but a lag that is not yet published must not be used.
+def test_weekly_lags_respect_the_envelope():
+    # With the real envelopes every weekly lag is published by the issue; a 200 h envelope
+    # makes the 168 h lag of the early target hours unpublished, and it must then be missing.
+    env = 200
     start = datetime(2024, 1, 1, tzinfo=UTC)
     s = _series(start, 24 * 60, fn=lambda i, t: float(i))
     issue = issue_times(start + timedelta(days=40), start + timedelta(days=41))[0]
-    feats = l_features(as_of(s, issue, 96), issue, 96, "America/Denver")
-    cutoff = issue - H - 96 * H
+    feats = l_features(as_of(s, issue, env), issue, env, "America/Denver")
+    cutoff = issue - H - env * H
+    seen = {"missing": 0, "present": 0}
     for row in feats.iter_rows(named=True):
         for k in WEEKLY_LAGS_H:
             lag_ts = row["target_ts"] - k * H
             if lag_ts > cutoff:
-                assert row[f"lag_{k}"] is None or np.isnan(row[f"lag_{k}"])
+                assert np.isnan(row[f"lag_{k}"]) and row[f"miss_lag_{k}"] == 1.0
+                seen["missing"] += 1
+            else:
+                assert row[f"lag_{k}"] == float((lag_ts - start) // H)
+                seen["present"] += 1
+    assert seen["missing"] > 0 and seen["present"] > 0
 
 
 def test_climatology_backoff():
@@ -196,6 +203,16 @@ def test_forecast_schema_and_clipping():
     assert out.height == sum(len(target_hours(i)) for i in issues)
     assert out["target"].unique().to_list() == ["solar"]
     assert out["model"].unique().to_list() == ["L"]
+
+
+@pytest.mark.parametrize("model", ["K", "W"])
+def test_issue_before_fit_raises(model):
+    start = datetime(2024, 1, 1, tzinfo=UTC)
+    s = _series(start, 24 * 60)
+    fit_at = start + timedelta(days=50)
+    early = issue_times(fit_at - timedelta(days=2), fit_at - timedelta(days=1))
+    with pytest.raises(LeakageError):
+        forecast(s, "PACE", "demand", model, early, fit_at=fit_at, history_start=start)
 
 
 def test_L_requires_a_config():
