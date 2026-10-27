@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test notebooks profile slice need-run-dir ext-runs extensions storage web
+.PHONY: test notebooks profile slice need-run-dir ext-runs extensions storage flows web
 
 test:
 	cd lab && uv run pytest
@@ -57,6 +57,14 @@ extensions: need-run-dir
 # runs/ext next to it) holds the mobility <= 8 GPUs run that results/extensions.json names.
 storage: need-run-dir
 	cd lab && uv run python scripts/export_storage.py --registered-run $(RUN_DIR) --ext-root $(EXT_ROOT)
+
+# Stage 3 T15 (D-064): results/scenario-flows.json (per scenario and policy S/W/L: the saving
+# copied from metrics/extensions.json, remote execution by site, retiming, replay-week arcs) and
+# results/flexibility-budget.json (the registered primary's energy by what S, W and L did with it).
+# RUN_DIR (required): the registered run or its equal-ledger reproduction; the scenario runs are the
+# ones extensions.json names under EXT_ROOT. Re-reads ledgers only; validation only. About 15 s.
+flows: need-run-dir
+	cd lab && uv run python scripts/export_flows.py --run-dir $(RUN_DIR) --ext-root $(EXT_ROOT)
 
 # The dashboard's validation-year grid context (Task 8): results/grid-profile.json.
 # RUN_DIR: the registered slice run (default runs/slice/<results/manifest.json run_id>).
