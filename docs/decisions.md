@@ -549,3 +549,12 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 - **Decision (skeptic result):** on a flat marginal factor, storage adds CO₂ through its losses (about 120 t at 8 MWh, terminal energy included). This is shown as a bold line and as a chart series.
 - **Decision (beat 6):** about 90 words.
 - **Evidence:** the T10b review (the SDD ledger) and the reviewer's script `rev-t10b/indep.py`.
+
+## D-068 · 2026-10-27 15:23 MT · Document the assumptions and the negative results in a notebook
+- **Decided by:** owner ("even some assumptions fail … worth to put those in notebook").
+- **Decision:** add `notebooks/40_assumptions_and_reality.ipynb`, built only from committed results. It holds:
+  - an assumptions register (our value, how reality differs, tested or not, the result);
+  - the negative and null results stated plainly;
+  - a quantified weather point: hindsight router H, with perfect carbon foresight, ties the fixed ranking S, so weather-aware forecasts are unlikely to change the routing result;
+  - the things not done, with their reasons.
+- **Timing:** before the freeze if ready by about 20:30, otherwise after the test run. Queued as T17.
