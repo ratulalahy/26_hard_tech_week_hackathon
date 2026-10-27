@@ -22,10 +22,15 @@ for an hour at or after TEST_START raises (seal, F8).
 
 **Evidence.** Energy is `modeled`; CO₂ outputs and schedule quantities are `simulated` (the
 policy outcomes of a simulated run; T9 C5).
+
+**Determinism (Stage 3 T10).** Every float total that feeds an export is `math.fsum` over
+the values sorted by job_uid (`fsum_by`), never a parallel `group_by(...).sum()`, so a total
+does not depend on row order or thread scheduling.
 """
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime, timedelta
 
@@ -43,6 +48,14 @@ WEEK_TZ = "America/Denver"
 US = 1_000_000
 HOUR_US = 3600 * US
 EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
+
+
+def fsum_by(frame: pl.DataFrame, col: str, key: str = "job_uid") -> float:
+    """Exactly rounded total of `frame[col]` (math.fsum over values sorted by `key`): the
+    same float for any row order (Stage 3 T10 determinism). 0.0 for an empty frame."""
+    if frame.height == 0:
+        return 0.0
+    return math.fsum(frame.sort(key)[col].to_list())
 
 
 def _aware(dt: datetime, what: str) -> datetime:
@@ -449,11 +462,11 @@ def score(
       `fit_rejected` (the engine's F12.7 bug signal: a returned action that did not
       fit) counts and energy, which should be 0 for every registered policy.
     """
-    a = job_accounting(ledger, jobs, truth, mask=mask, home=home)
+    a = job_accounting(ledger, jobs, truth, mask=mask, home=home).sort("job_uid")
     n = a.height
 
     def tot(c):
-        return float(a[c].sum()) if n else 0.0
+        return math.fsum(a[c].to_list()) if n else 0.0
 
     req_us = int(a["requested_gpu_us"].sum()) if n else 0
     done_us = int(a["completed_gpu_us"].sum()) if n else 0
@@ -498,7 +511,7 @@ def score(
         "completed_gpu_s": done_us / US,
         "conserved": conserved,
         "late_jobs": late_jobs,
-        "late_gpu_h": float(late["requested_gpu_s"].sum()) / 3600 if late_jobs else 0.0,
+        "late_gpu_h": fsum_by(late, "requested_gpu_s") / 3600 if late_jobs else 0.0,
         "capacity_violations": int(violations),
         "peak_gpus": peaks,
         "feasible": bool(late_jobs == 0 and conserved and violations == 0),
@@ -517,13 +530,13 @@ def score(
         "co2_kg_per_1000_gpu_h": None if gpu_h == 0 else co2 / (gpu_h / 1000),
         "moved_jobs": moved.height,
         "moved_share_jobs": share(moved.height, n),
-        "moved_share_energy": share(float(moved["execution_kwh"].sum()), exec_kwh),
+        "moved_share_energy": share(fsum_by(moved, "execution_kwh"), exec_kwh),
         "remote_jobs": remote.height,
-        "remote_energy_share": share(float(remote["energy_kwh"].sum()), energy),
+        "remote_energy_share": share(fsum_by(remote, "energy_kwh"), energy),
         "blocked_jobs": blocked.height,
-        "blocked_kwh": float(blocked["execution_kwh"].sum()),
+        "blocked_kwh": fsum_by(blocked, "execution_kwh"),
         "fit_rejected_jobs": rejected.height,
-        "fit_rejected_kwh": float(rejected["execution_kwh"].sum()),
+        "fit_rejected_kwh": fsum_by(rejected, "execution_kwh"),
         "evidence": dict(EVIDENCE),
     }
 
@@ -736,7 +749,7 @@ def relaxed_bound(
     if lost.height:
         raise ValueError(f"{lost.height} jobs have no legal action in the relaxed envelope "
                          f"(unsupported truth?), e.g. {lost['job_uid'][:5].to_list()}")
-    return float(per["co2_kg"].sum())
+    return fsum_by(per, "co2_kg")
 
 
 # --------------------------------------------------------------------------- weekly
@@ -781,14 +794,17 @@ def weekly(
     if out.height:
         raise ValueError(f"{out.height} arrivals fall outside the window {window}, e.g. "
                          f"{out['job_uid'][:5].to_list()}")
-    agg = (
-        a.with_columns(pl.col("arrival_ts").dt.convert_time_zone(WEEK_TZ).dt.truncate("1w")
-                       .alias("week"))
-        .group_by("week")
-        .agg(pl.col("co2_kg").sum(), pl.col("energy_kwh").sum(), pl.len().alias("n_jobs"),
-             (pl.col("completed_gpu_s").sum() / 3600).alias("gpu_h"),
-             pl.col("execution_kwh").sum(), pl.col("transfer_kwh").sum())
-    )
+    a = a.with_columns(pl.col("arrival_ts").dt.convert_time_zone(WEEK_TZ).dt.truncate("1w")
+                       .alias("week")).sort("job_uid")
+    cols = ("co2_kg", "energy_kwh", "execution_kwh", "transfer_kwh")
+    rows = []
+    for (wk,), g in a.partition_by("week", as_dict=True, maintain_order=True).items():
+        r = {"week": wk, "n_jobs": g.height,
+             "gpu_h": math.fsum(g["completed_gpu_s"].to_list()) / 3600}
+        r.update({c: math.fsum(g[c].to_list()) for c in cols})
+        rows.append(r)
+    agg = pl.DataFrame(rows, schema={"week": a.schema["week"], "n_jobs": pl.Int64,
+                                     "gpu_h": pl.Float64, **{c: pl.Float64 for c in cols}})
     weeks = denver_weeks(start, end).to_frame()
     return (
         weeks.join(agg, on="week", how="left")
@@ -846,7 +862,7 @@ def influence(
     by_k = {}
     for k in ks:
         top = rank[src][:k].to_list()
-        totals = {p: float(a.filter(~pl.col("source_id").is_in(top))["co2_kg"].sum())
+        totals = {p: fsum_by(a.filter(~pl.col("source_id").is_in(top)), "co2_kg")
                   for p, a in acc.items()}
         ref = totals[reference]
         removed = jobs.filter(pl.col(src).is_in(top)).height

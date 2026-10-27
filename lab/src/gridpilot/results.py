@@ -248,6 +248,7 @@ def check_claim_frame(manifest: dict) -> None:
 # --------------------------------------------------------------------------- hashing
 
 CANONICAL_DROP_KEYS = frozenset({"provenance_id", "run_id"})
+CANONICAL_SIG_DIGITS = 10
 
 
 def _canonical(x: Any) -> Any:
@@ -256,14 +257,15 @@ def _canonical(x: Any) -> Any:
     if isinstance(x, list):
         return [_canonical(v) for v in x]
     if isinstance(x, float):
-        r = round(x, 6)
+        r = float(f"{x:.{CANONICAL_SIG_DIGITS}g}")
         return 0.0 if r == 0 else r  # -0.0 and 0.0 hash alike
     return x
 
 
 def canonical_hash(obj: Any) -> str:
-    """sha256 of `obj` with floats rounded to 1e-6, provenance_id/run_id removed and keys
-    sorted (F12.6: reproduction by canonical values, not bytes)."""
+    """sha256 of `obj` with floats rounded to 10 significant digits (Stage 3 T10; it was an
+    absolute 1e-6 before), provenance_id/run_id removed and keys sorted (F12.6:
+    reproduction by canonical values, not bytes)."""
     text = json.dumps(_canonical(obj), sort_keys=True, separators=(",", ":"),
                       ensure_ascii=False, allow_nan=False)
     return hashlib.sha256(text.encode()).hexdigest()

@@ -1,7 +1,15 @@
-"""Task 7: the registered validation run (phase 0) and the results export.
+"""Task 7: the registered validation run (phase 0) and the results export; Stage 3 T10:
+the same pipeline for the D-058 extension scenarios.
 
     cd lab && uv run python scripts/run_slice.py [--window validation|fallback]
+                                                 [--scenario primary|<extension>]
                                                  [--forecast-run runs/forecast/<id>]
+
+`run_pipeline(window, scenario, out_dir, export=...)` is the pure entry point (T10 Part A);
+the CLI only builds its arguments. The primary scenario reproduces the registered run.
+An extension scenario (`gridpilot.scenario.EXTENSIONS`) runs U, S, K, W, L (plus time-only
+W and L where it has destinations) into `runs/ext/<name>/<UTC>/` and writes `summary.json`
+there; it never exports into `results/`.
 
 Pipeline (Task 7 amendment; spec §15 F11–F14):
 1. jobs: `replay(init, F)` at phase 0;
@@ -59,6 +67,7 @@ from gridpilot.eval import (
     BOUND_TOL_KG,
     TruthTable,
     common_support,
+    fsum_by,
     h2_decision,
     influence,
     job_accounting,
@@ -85,6 +94,7 @@ from gridpilot.results import (
     not_run,
     write_json_atomic,
 )
+from gridpilot.scenario import EXTENSIONS, PRIMARY_POLICIES, RunResult, Scenario, Window
 from gridpilot.sim import (
     HOME,
     SITES,
@@ -114,22 +124,17 @@ TRACE_PATH = TRACE_DIR / "acme" / "trace_seren.csv"
 SNAPSHOT_PATH = MANIFEST_DIR / "snapshot.json"
 
 H1 = timedelta(hours=1)
-WINDOWS = {
-    "validation": (datetime(2024, 10, 17, tzinfo=UTC), datetime(2024, 11, 1, tzinfo=UTC),
-                   datetime(2025, 10, 24, tzinfo=UTC)),
-    "fallback": (datetime(2025, 7, 10, tzinfo=UTC), datetime(2025, 7, 25, tzinfo=UTC),
-                 datetime(2025, 10, 24, tzinfo=UTC)),
-}
+WINDOW_NAMES = ("validation", "fallback")
 RANK_TRAIN = (datetime(2022, 1, 1, tzinfo=UTC), datetime(2024, 10, 29, tzinfo=UTC))
-PHASE_DAYS = 0
-WARMUP_MIN = timedelta(days=15)
-POLICY_ORDER = ("U", "G", "S", "K", "W", "L", "H", "W_time", "L_time")
+PHASE_DAYS = 0  # the registered primary phase (Scenario.primary().phase_days)
+POLICY_ORDER = PRIMARY_POLICIES
+EXT_NOT_DIAGNOSED_REASON = "extension runs do not run the F14.7 blocked diagnostic"
 REFERENCES = ("U", "S", "W")
 BLOCKS = (2, 4, 8)
 SNAPSHOT_ID = "05efabe781cc"
 EIA_CI_PROVENANCE = "EIA's estimated consumption-basis hourly CO₂ intensity"
 S_RANK_PROVENANCE = f"means of {EIA_CI_PROVENANCE}, 2022-01-01 to 2024-10-29"
-TIME_ONLY_SITES = {s: (n if s == HOME else 0) for s, n in SITES.items()}
+TIME_ONLY_SITES = Scenario.primary().time_only_sites()
 POLICY_NOTES = {
     "U": "earliest feasible execution at PACE (FIFO); local operational reference",
     "G": "earliest finish across core sites; no carbon input",
@@ -194,6 +199,11 @@ class RemoteProbe:
         return self.inner.choose(job, now, capacities, ctx)
 
 
+def _gpu_h(frame: pl.DataFrame) -> float:
+    """Declared GPU-hours: math.fsum of gpus × duration_s (order-free; T10), / 3600."""
+    return math.fsum((frame["gpus"] * frame["duration_s"]).to_list()) / 3600
+
+
 def _us_dt(us: int) -> datetime:
     return datetime(1970, 1, 1, tzinfo=UTC) + timedelta(microseconds=int(us))
 
@@ -237,20 +247,28 @@ def _tail(fc_dir):
     return tail_climatology(fc_dir, list(SITES))
 
 
-def build_policies(ranking, fc_dir, filled, mask):
-    """Each policy is built once per run. K/W/L read the pinned forecast run `fc_dir`;
+def build_policies(ranking, fc_dir, filled, mask, scenario: Scenario | None = None):
+    """Each policy in `scenario.policies()` is built once per run, with the scenario's
+    sites (time-only variants: PACE only). K/W/L read the pinned forecast run `fc_dir`;
     H reads the F14.6 filled truth; all get the mask the closure calendar came from."""
-    pols = {"U": (U(), SITES), "G": (G(), SITES), "S": (S(ranking), SITES)}
+    scenario = scenario or Scenario.primary()
+    sites, t_sites = scenario.sites(), scenario.time_only_sites()
     forecasts = load_forecasts(fc_dir)
     tail = _tail(fc_dir)
-    out = dict(pols)
-    for sig in ("K", "W", "L"):
-        out[sig] = (CarbonSearch(sig, forecasts, None, mask, tail=tail), SITES)
-    out["H"] = (CarbonSearch("H", None, filled, mask, truth_col="ci_g_kwh"), SITES)
-    for sig in ("W", "L"):
+
+    def search(sig, time_only=False):
         p = CarbonSearch(sig, forecasts, None, mask, tail=tail)
-        p.name = f"{sig}_time"
-        out[f"{sig}_time"] = (p, TIME_ONLY_SITES)
+        if time_only:
+            p.name = f"{sig}_time"
+        return p, (t_sites if time_only else sites)
+
+    make = {
+        "U": lambda: (U(), sites), "G": lambda: (G(), sites), "S": lambda: (S(ranking), sites),
+        "K": lambda: search("K"), "W": lambda: search("W"), "L": lambda: search("L"),
+        "H": lambda: (CarbonSearch("H", None, filled, mask, truth_col="ci_g_kwh"), sites),
+        "W_time": lambda: search("W", True), "L_time": lambda: search("L", True),
+    }
+    out = {n: make[n]() for n in scenario.policies()}
     coverage = CarbonSearch("L", forecasts, None, mask, tail=tail)  # coverage only (F4)
     return out, coverage
 
@@ -268,15 +286,26 @@ def in_coverage(cj, bookings, cov, sites=SITES) -> set[str]:
     return out
 
 
-def run(args) -> int:
+def default_root(scenario: Scenario) -> Path:
+    if scenario.is_primary:
+        return REPO_ROOT / "runs" / "slice"
+    return REPO_ROOT / "runs" / "ext" / scenario.name
+
+
+def run_pipeline(window: Window, scenario: Scenario, out_dir: Path | str | None = None, *,
+                 export: bool, forecast_run: Path | str | None = None) -> RunResult:
+    """One run of `scenario` on `window` into its own run directory `<out_dir>/<UTC>/`
+    (default `default_root(scenario)`), written atomically. `export` copies the primary
+    run's four artifacts into `results/`; an extension never exports there.
+    `forecast_run` pins a Task 2 forecast run instead of building forecasts."""
+    if not isinstance(window, Window) or not isinstance(scenario, Scenario):
+        raise TypeError("run_pipeline needs a Window and a Scenario")
+    if export and not scenario.is_primary:
+        raise ValueError(f"scenario {scenario.name!r} is a sensitivity: it never exports "
+                         f"into results/ (only the registered primary does)")
     timer = Timer()
-    init, eval_start, F = WINDOWS[args.window]
-    if eval_start - init < WARMUP_MIN:
-        raise AssertionError("warm-up shorter than 15 days (F2)")
-    if F > TEST_START:
-        raise AssertionError("F reaches the seal")
     run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    root = Path(args.out) if args.out else REPO_ROOT / "runs" / "slice"
+    root = Path(out_dir) if out_dir else default_root(scenario)
     root.mkdir(parents=True, exist_ok=True)
     tmp = root / f".tmp-{run_id}-{os.getpid()}"
     final = root / run_id
@@ -284,8 +313,9 @@ def run(args) -> int:
     sha = _git("rev-parse", "HEAD")
     status = _git("status", "--porcelain")
     (tmp / "git.txt").write_text(f"sha {sha}\nstatus:\n{status}\n")
+    fc = Path(forecast_run) if forecast_run else None
     try:
-        rc = _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F)
+        rc, info = _pipeline(window, scenario, fc, timer, tmp, run_id, sha, status)
         os.rename(tmp, final)
     except BaseException:
         failed = root / f"failed-{run_id}"
@@ -293,9 +323,12 @@ def run(args) -> int:
         log.error("run failed; partial outputs in %s", failed)
         raise
     print(f"run directory: {final}")
-    if rc == 0 and not args.no_export:
+    exported = False
+    if rc == 0 and export:
         export_results(final / "results", RESULTS_DIR)
-    return rc
+        exported = True
+    return RunResult(run_id=run_id, run_dir=final, rc=rc, window=window, scenario=scenario,
+                     exported=exported, **info)
 
 
 ARTIFACTS = ("manifest.json", "metrics.json", "forecast-replay.json", "job-replay.json")
@@ -341,7 +374,36 @@ def _candidates_frame(probe: RemoteProbe, cj: pl.DataFrame) -> pl.DataFrame:
         "job_uid", "gpu_h", *[f"earliest_start_us_{s}" for s in SITES]).sort("job_uid")
 
 
-def _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F) -> int:
+def _cohort(warm_jobs, stream, F, scenario: Scenario):
+    """F13.2 + F14.1. A is the minimum first failure over the registered F14.1 scenarios at
+    this window and phase; the scored cohort and its bookings follow `scenario`. An
+    extension whose knobs change the jobs is added as one more scenario for its own
+    bookings, and must not move A (it only uses that common A)."""
+    if _jobs_unchanged(scenario):  # U and its bookings do not see capacity or transfer
+        return prefix_cohort(warm_jobs, stream, F, scenarios=SCENARIOS, sites=SITES)
+    key = f"scored:{scenario.name}"
+    coh = prefix_cohort(warm_jobs, stream, F, scenarios={**SCENARIOS, key: scenario.cohort_fn()},
+                        sites=SITES, primary=key)
+    hits = [t for n, t in coh.first_failure.items() if n != key and t is not None]
+    a_common = min(hits) if hits else F
+    if coh.A != a_common:
+        raise AssertionError(f"{scenario.name}: A {coh.A} differs from the common F14.1 A "
+                             f"{a_common}")
+    return coh
+
+
+def _jobs_unchanged(scenario: Scenario) -> bool:
+    """True if the scenario leaves the job frame as the primary's (only phase, capacity or
+    transfer differ), so the registered F14.1 set gives its cohort directly."""
+    return (scenario.batch_delay_s == Scenario.primary().batch_delay_s
+            and scenario.mobility_max_gpus is None)
+
+
+def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, timer, tmp, run_id,
+              sha, status) -> tuple[int, dict]:
+    init, eval_start, F = window.init, window.eval_start, window.F
+    primary = scenario.is_primary
+    sites, t_sites = scenario.sites(), scenario.time_only_sites()
     file_sha: dict[str, str] = {}
     snapshot_id = json.loads(SNAPSHOT_PATH.read_text())["snapshot_id"]
     if snapshot_id != SNAPSHOT_ID:
@@ -349,8 +411,8 @@ def _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F) -> int
 
     # 0. Forecasts (Task 2): constructed fresh unless a run is given; pinned either way.
     with timer("forecast_construction"):
-        if args.forecast_run:
-            fc_dir = Path(args.forecast_run)
+        if forecast_run:
+            fc_dir = Path(forecast_run)
         else:
             fc_dir = fcmod.run_validation(out_root=tmp / "forecast")
         forecasts = pl.read_parquet(fc_dir / "forecasts.parquet")
@@ -358,8 +420,9 @@ def _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F) -> int
     for c in ("issue_ts", "target_ts"):
         if forecasts[c].max() >= TEST_START:
             raise AssertionError("forecasts reach the seal")
-    fc_path = (str(fc_dir) if args.forecast_run
-               else f"runs/slice/{run_id}/forecast/{fc_dir.name}")
+    run_root = "runs/slice" if primary else f"runs/ext/{scenario.name}"
+    fc_path = (str(fc_dir) if forecast_run
+               else f"{run_root}/{run_id}/forecast/{fc_dir.name}")
     file_sha["forecasts.parquet"] = _sha256(fc_dir / "forecasts.parquet")
     file_sha["climatology.parquet"] = _sha256(fc_dir / "climatology.parquet")
     file_sha["balance.parquet"] = _sha256(BALANCE_PATH)
@@ -368,17 +431,17 @@ def _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F) -> int
 
     # 1. Jobs.
     with timer("replay"):
-        jobs = replay(init, F, phase_days=PHASE_DAYS)
+        jobs = replay(init, F, phase_days=scenario.phase_days)
         warm_jobs = jobs.filter(pl.col("arrival_ts") < eval_start)
         stream = jobs.filter(pl.col("arrival_ts") >= eval_start)
 
     # 2–3. Bookings and the common A.
     with timer("bookings"):
-        coh = prefix_cohort(warm_jobs, stream, F, scenarios=SCENARIOS, sites=SITES)
+        coh = _cohort(warm_jobs, stream, F, scenario)
     cj, bookings, warm = coh.jobs, coh.bookings, coh.warm
     wl = warm.ledger
     cohort_record = {
-        "window": args.window, "phase_days": PHASE_DAYS,
+        "window": window.name, "phase_days": scenario.phase_days,
         "init": iso(init), "eval_start": iso(eval_start), "F": iso(F), "A": iso(coh.A),
         "first_failure": {k: iso(v) for k, v in coh.first_failure.items()},
         "n_stream": coh.n_stream, "n_cohort": cj.height, "n_excluded": coh.n_excluded,
@@ -388,11 +451,13 @@ def _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F) -> int
         "drain": {"max_booking_end": iso(coh.max_booking_end),
                   "max_deadline": iso(coh.max_deadline), "drain_window": [iso(coh.A), iso(F)]},
         "warmup": {"n_jobs": wl.height,
-                   "gpu_h": float((wl["gpus"] * wl["duration_s"]).sum() / 3600),
+                   "gpu_h": _gpu_h(wl),
                    "last_arrival": iso(_us_dt(warm.last_arrival_us)),
                    "last_completion": iso(wl["end_ts"].max())},
         "recorded_before_grid_scoring": True,
     }
+    if not primary:
+        cohort_record["scenario"] = scenario.name
     cohort_text = json.dumps(
         cohort_record | {"wallclock_written_at": datetime.now(UTC).isoformat()}, indent=1) + "\n"
     (tmp / "cohort.json").write_text(cohort_text)
@@ -423,109 +488,144 @@ def _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F) -> int
         (tmp / "support_failure.json").write_text(json.dumps(
             {"bookings": sc_b, "warmup_ledger": sc_w}, indent=1, default=str))
         log.error("accounting-support failure: %s", support)
-        return 2
+        return 2, {}
 
     # 6. Policies.
     ranking, rank_means = s_ranking()
-    policies, cov = build_policies(ranking, fc_dir, filled, mask)
+    policies, cov = build_policies(ranking, fc_dir, filled, mask, scenario)
     ledgers: dict[str, pl.DataFrame] = {}
     probe = None
-    for name in POLICY_ORDER:
-        pol, sites = policies[name]
-        if name == "U":
+    for name in scenario.policies():
+        pol, p_sites = policies[name]
+        if name == "U" and primary:
             pol = probe = RemoteProbe(pol)
-        kw = {"diagnose_blocked": True} if name in DIAGNOSED_POLICIES else {}
+        kw = {"diagnose_blocked": True} if primary and name in DIAGNOSED_POLICIES else {}
         with timer(f"policy_{name}"):
-            led = simulate(cj, pol, sites, bookings=bookings, warm=warm, closed=closed, **kw)
+            led = simulate(cj, pol, p_sites, bookings=bookings, warm=warm, closed=closed,
+                           transfer_s=scenario.transfer_s, **kw)
         ledgers[name] = led
         _write_parquet_hashed(led, tmp / f"ledger_{name}.parquet", file_sha)
-    # F14.7 cost and invariance: G once more without the diagnostic; placements must match.
-    with timer("policy_G_undiagnosed"):
-        g_plain = simulate(cj, G(), SITES, bookings=bookings, warm=warm, closed=closed)
     ledger_sha = {n: ledger_hash(led) for n, led in ledgers.items()}
-    if ledger_hash(g_plain) != ledger_sha["G"]:
-        raise AssertionError("G's ledger differs with and without diagnose_blocked (F14.7)")
-    cands = _candidates_frame(probe, cj)
-    _write_parquet_hashed(cands, tmp / "illustrative_candidates.parquet", file_sha)
+    if primary:
+        # F14.7 cost and invariance: G once more without the diagnostic; placements match.
+        with timer("policy_G_undiagnosed"):
+            g_plain = simulate(cj, G(), sites, bookings=bookings, warm=warm, closed=closed,
+                               transfer_s=scenario.transfer_s)
+        if ledger_hash(g_plain) != ledger_sha["G"]:
+            raise AssertionError("G's ledger differs with and without diagnose_blocked (F14.7)")
+        cands = _candidates_frame(probe, cj)
+        _write_parquet_hashed(cands, tmp / "illustrative_candidates.parquet", file_sha)
 
     # 7. Accounting.
     with timer("accounting"):
-        acct = accounting(ledgers, policies, cj, bookings, warm, tt, eval_start, coh.A)
-        acct["stratum"] = stratum_estimates(ledgers, cj, bookings, cov, tt, eval_start, coh.A)
+        acct = accounting(ledgers, policies, cj, bookings, warm, tt, eval_start, coh.A,
+                          scenario=scenario)
+        if primary:
+            acct["stratum"] = stratum_estimates(ledgers, cj, bookings, cov, tt, eval_start,
+                                                coh.A, sites=sites)
     repro = {"ledger_canonical_sha256": ledger_sha,
              "ledger_hash_rule": "sha256 over job_uid-sorted lines 'job_uid,site,start_us,end_us'",
-             "g_ledger_equal_with_and_without_diagnose_blocked": True,
              "file_sha256": file_sha, "snapshot_id": snapshot_id,
              "forecast_run": {"path": fc_path, "forecasts_sha256": file_sha["forecasts.parquet"]}}
+    if primary:
+        repro = {**repro, "g_ledger_equal_with_and_without_diagnose_blocked": True}
+        repro = {k: repro[k] for k in ("ledger_canonical_sha256", "ledger_hash_rule",
+                                       "g_ledger_equal_with_and_without_diagnose_blocked",
+                                       "file_sha256", "snapshot_id", "forecast_run")}
     # 8. Export.
+    info: dict = {"ledger_sha256": ledger_sha}
+    metrics_canonical = summary_canonical = None
+    hashes: dict[str, str] = {}
     with timer("export"):
-        art = build_artifacts(
-            args=args, run_id=run_id, sha=sha, status=status, init=init,
-            eval_start=eval_start, F=F, coh=coh, cohort_record=cohort_record, tiers=tiers,
-            still_missing=still_missing, support=support, ranking=ranking,
-            rank_means=rank_means, ledgers=ledgers, acct=acct, cj=cj, bookings=bookings,
-            tt=tt, filled=filled, forecasts=forecasts, fc_metrics=fc_metrics, fc_dir=fc_dir,
-            fc_path=fc_path, probe=probe, cands=cands, warm=warm, timer=timer, repro=repro)
-        out = tmp / "results"
-        hashes = {}
-        for name in ("metrics.json", "forecast-replay.json", "job-replay.json"):
-            text = write_json_atomic(out / name, art[name])
-            hashes[name] = hashlib.sha256(text.encode()).hexdigest()
-        metrics_canonical = canonical_hash(art["metrics.json"])
-        man = art["manifest.json"]
-        man["artifact_sha256"] = hashes
-        man["reproducibility"]["metrics_canonical_sha256"] = metrics_canonical
-        man["timing_s"] = {k: env(v, "s", "measured", f"{run_id}:timing:{k}")
-                           for k, v in timer.t.items()}
-        check_claim_frame(man)
-        write_json_atomic(out / "manifest.json", man)
+        if primary:
+            art = build_artifacts(
+                window=window.name, run_id=run_id, sha=sha, status=status, init=init,
+                eval_start=eval_start, F=F, coh=coh, cohort_record=cohort_record, tiers=tiers,
+                still_missing=still_missing, support=support, ranking=ranking,
+                rank_means=rank_means, ledgers=ledgers, acct=acct, cj=cj, bookings=bookings,
+                tt=tt, filled=filled, forecasts=forecasts, fc_metrics=fc_metrics,
+                fc_dir=fc_dir, fc_path=fc_path, probe=probe, cands=cands, warm=warm,
+                timer=timer, repro=repro)
+            out = tmp / "results"
+            for name in ("metrics.json", "forecast-replay.json", "job-replay.json"):
+                text = write_json_atomic(out / name, art[name])
+                hashes[name] = hashlib.sha256(text.encode()).hexdigest()
+            metrics_canonical = canonical_hash(art["metrics.json"])
+            man = art["manifest.json"]
+            man["artifact_sha256"] = hashes
+            man["reproducibility"]["metrics_canonical_sha256"] = metrics_canonical
+            man["timing_s"] = {k: env(v, "s", "measured", f"{run_id}:timing:{k}")
+                               for k, v in timer.t.items()}
+            check_claim_frame(man)
+            write_json_atomic(out / "manifest.json", man)
+            info["metrics_canonical_sha256"] = metrics_canonical
+        else:
+            summary = ext_summary(run_id=run_id, sha=sha, status=status, window=window,
+                                  scenario=scenario, coh=coh, cj=cj, acct=acct,
+                                  repro=repro, tiers=tiers)
+            text = write_json_atomic(tmp / "summary.json", summary)
+            hashes["summary.json"] = hashlib.sha256(text.encode()).hexdigest()
+            summary_canonical = canonical_hash(summary)
+            info["summary_canonical_sha256"] = summary_canonical
     config = {
-        "run_id": run_id, "window": args.window, "git_sha": sha, "git_clean": status == "",
+        "run_id": run_id, "window": window.name, "git_sha": sha, "git_clean": status == "",
         "init": iso(init), "eval_start": iso(eval_start), "A": iso(coh.A), "F": iso(F),
-        "phase_days": PHASE_DAYS, "sites": SITES, "time_only_sites": TIME_ONLY_SITES,
-        "transfer_s": TRANSFER_S, "kw_per_gpu": GPU_KW, "pue": PUE,
+        "phase_days": scenario.phase_days, "sites": sites, "time_only_sites": t_sites,
+        "transfer_s": scenario.transfer_s, "kw_per_gpu": GPU_KW, "pue": PUE,
         "transfer_fraction": TRANSFER_FRACTION, "bound_tol_kg": BOUND_TOL_KG,
-        "blocks": list(BLOCKS), "policies": list(POLICY_ORDER),
-        "diagnosed_policies": list(DIAGNOSED_POLICIES), "s_ranking": ranking,
+        "blocks": list(BLOCKS), "policies": list(scenario.policies()),
+        "diagnosed_policies": list(DIAGNOSED_POLICIES) if primary else [],
+        "s_ranking": ranking,
         "s_ranking_training_rows": [iso(RANK_TRAIN[0]), iso(RANK_TRAIN[1])],
         "scenarios_for_A": list(SCENARIOS), "reproducibility": repro,
         "metrics_canonical_sha256": metrics_canonical, "artifact_sha256": hashes,
+        "scenario": scenario.config(),
     }
+    if not primary:
+        config["summary_canonical_sha256"] = summary_canonical
     (tmp / "config.json").write_text(json.dumps(config, indent=1) + "\n")
-    print_table(acct, timer)
+    print_table(acct, timer, scenario)
     # Written last, after export, so it includes the export time (fix round 1 #12).
     (tmp / "timing.json").write_text(json.dumps(
         {"run_id": run_id, "unit": "s", "evidence": "measured", "timing_s": timer.t},
         indent=1) + "\n")
     if not acct["bound_all_ok"]:
         log.error("feasible >= bound FAILED")
-        return 3
-    return 0
+        return 3, info
+    return 0, info
 
 
 # --------------------------------------------------------------------------- accounting
 
 
-def accounting(ledgers, policies, cj, bookings, warm, tt, eval_start, A) -> dict:
-    per = relaxed_bound_jobs(cj, tt, bookings=bookings, sites=SITES, transfer_s=TRANSFER_S)
+def site_energy(acc: pl.DataFrame, sites) -> dict[str, float]:
+    """Execution kWh by site: math.fsum over job_uid-sorted rows (T10 determinism; it was a
+    parallel group_by sum)."""
+    return {s: fsum_by(acc.filter(pl.col("site") == s), "execution_kwh") for s in sites}
+
+
+def accounting(ledgers, policies, cj, bookings, warm, tt, eval_start, A, *,
+               scenario: Scenario | None = None) -> dict:
+    scenario = scenario or Scenario.primary()
+    sites, t_sites = scenario.sites(), scenario.time_only_sites()
+    per = relaxed_bound_jobs(cj, tt, bookings=bookings, sites=sites,
+                             transfer_s=scenario.transfer_s)
     if per["co2_kg"].null_count():
         raise AssertionError("a cohort job has no legal action in the relaxed envelope")
-    per_t = relaxed_bound_jobs(cj, tt, bookings=bookings, sites=TIME_ONLY_SITES,
-                               transfer_s=TRANSFER_S)
-    bounds = {"primary": math.fsum(per["co2_kg"].to_list()),
-              "time_only": math.fsum(per_t["co2_kg"].to_list())}
+    per_t = relaxed_bound_jobs(cj, tt, bookings=bookings, sites=t_sites,
+                               transfer_s=scenario.transfer_s)
+    bounds = {"primary": fsum_by(per, "co2_kg"), "time_only": fsum_by(per_t, "co2_kg")}
     scores, gaps, weeks = {}, {}, {}
     for name, led in ledgers.items():
-        sites = policies[name][1]
-        m = score(led, cj, tt, sites=sites, warm=warm)
+        p_sites = policies[name][1]
+        m = score(led, cj, tt, sites=p_sites, warm=warm)
         if m["fit_rejected_jobs"] != 0:  # the engine's F12.7 signal: nonzero is a bug
             raise AssertionError(f"{name}: {m['fit_rejected_jobs']} fit-rejected jobs")
         m["mobile_remote_share"] = mobile_remote_share(led, cj)
         acc = job_accounting(led, cj, tt)
-        by_site = dict(acc.group_by("site").agg(pl.col("execution_kwh").sum()).iter_rows())
-        m["execution_kwh_by_site"] = {s: float(by_site.get(s, 0.0)) for s in SITES}
+        m["execution_kwh_by_site"] = site_energy(acc, sites)
         gaps[name] = {"primary": bound_gap(acc, per)}
-        if sites is TIME_ONLY_SITES:
+        if name.endswith("_time"):
             gaps[name]["time_only"] = bound_gap(acc, per_t)
         if m["feasible"] and not all(g["ok"] for g in gaps[name].values()):
             log.error("%s: feasible but below the bound: %s", name, gaps[name])
@@ -550,15 +650,15 @@ def accounting(ledgers, policies, cj, bookings, warm, tt, eval_start, A) -> dict
             "common_support": cs, "n_weeks": n_weeks, "bound_per_job": per}
 
 
-def stratum_estimates(ledgers, cj, bookings, cov, tt, eval_start, A) -> dict:
+def stratum_estimates(ledgers, cj, bookings, cov, tt, eval_start, A, *, sites=SITES) -> dict:
     """F4/F14.3: the coverage stratum is a pre-registered secondary estimate (no decision
     rule): its share of decision-relevant energy and the W − L intervals on it."""
-    ids = in_coverage(cj, bookings, cov)
+    ids = in_coverage(cj, bookings, cov, sites)
     acc = job_accounting(ledgers["U"], cj, tt).join(cj.select("job_uid", "flexible"),
                                                      on="job_uid")
     flex = acc.filter(pl.col("flexible"))
-    e_flex = float(flex["execution_kwh"].sum())
-    e_in = float(flex.filter(pl.col("job_uid").is_in(list(ids)))["execution_kwh"].sum())
+    e_flex = fsum_by(flex, "execution_kwh")
+    e_in = fsum_by(flex.filter(pl.col("job_uid").is_in(list(ids))), "execution_kwh")
     out = {"n_jobs": len(ids), "n_flexible": flex.height,
            "share_flexible_energy_in_coverage": e_in / e_flex if e_flex else None,
            "w_minus_l": None}
@@ -593,9 +693,10 @@ METRIC_UNITS = {
 }
 
 
-def _policy_record(name, m, gaps, run_id) -> dict:
+def _policy_record(name, m, gaps, run_id, *, diagnosed: bool | None = None,
+                   not_diagnosed_reason: str = NOT_DIAGNOSED_REASON) -> dict:
     pid = f"{run_id}:{name}"
-    diagnosed = name in DIAGNOSED_POLICIES
+    diagnosed = name in DIAGNOSED_POLICIES if diagnosed is None else diagnosed
     rec = {"policy": name, "status": "ok", "reason": None, "note": POLICY_NOTES[name],
            "contender": name != "H", "feasible": bool(m["feasible"]),
            "conserved": bool(m["conserved"]),
@@ -604,7 +705,7 @@ def _policy_record(name, m, gaps, run_id) -> dict:
         v = m.get(k)
         if k in ("blocked_jobs", "blocked_kwh") and not diagnosed:
             rec["metrics"][k] = not_run(unit, EVIDENCE_POLICY, f"{pid}:{k}",
-                                        NOT_DIAGNOSED_REASON)
+                                        not_diagnosed_reason)
         elif v is None:
             rec["metrics"][k] = env(None, unit, EVIDENCE_POLICY, f"{pid}:{k}",
                                     status="unavailable", reason="undefined (zero denominator)")
@@ -725,14 +826,15 @@ def _weekly_record(weeks, run_id) -> dict:
 
 
 def _flex_shares(cj, run_id) -> dict:
-    gh = cj["gpus"] * cj["duration_s"] / 3600
-    tot = float(gh.sum())
+    gh = (cj["gpus"] * cj["duration_s"] / 3600).to_list()
+    tot = math.fsum(gh)
     out = {}
     for flag in ("flexible", "mobile"):
         m = cj[flag]
         out[flag] = {"by_jobs": env(float(m.mean()), "fraction", "assumed",
                                     f"{run_id}:share_{flag}_jobs"),
-                     "by_gpu_h": env(float(gh.filter(m).sum()) / tot, "fraction", "assumed",
+                     "by_gpu_h": env(math.fsum(g for g, f in zip(gh, m, strict=True) if f)
+                                     / tot, "fraction", "assumed",
                                      f"{run_id}:share_{flag}_gpu_h")}
     out["max_delay_s"] = {str(int(k)): env(int(v), "jobs", "assumed", f"{run_id}:delay_{k}")
                           for k, v in cj.group_by("max_delay_s").len().sort("max_delay_s")
@@ -846,7 +948,7 @@ def build_artifacts(**k) -> dict:
     scores, gaps = acct["scores"], acct["gaps"]
     cj = k["cj"]
     n_weeks = acct["n_weeks"]
-    window = k["args"].window
+    window = k["window"]
 
     # metrics.json
     policies = {name: _policy_record(name, scores[name], gaps[name], run_id)
@@ -874,7 +976,7 @@ def build_artifacts(**k) -> dict:
                     "drain": [iso(coh.A), iso(k["F"])]},
         "cohort": {
             "n_jobs": env(cj.height, "jobs", "simulated", f"{run_id}:cohort:n"),
-            "declared_gpu_h": env(float((cj["gpus"] * cj["duration_s"]).sum() / 3600), "GPU_h",
+            "declared_gpu_h": env(_gpu_h(cj), "GPU_h",
                                   "measured", f"{run_id}:cohort:gpu_h"),
             "n_excluded": env(coh.n_excluded, "jobs", "simulated", f"{run_id}:cohort:excluded"),
             "excluded_gpu_h": env(coh.excluded_gpu_h, "GPU_h", "measured",
@@ -1016,6 +1118,77 @@ def build_artifacts(**k) -> dict:
     }
     return {"manifest.json": manifest, "metrics.json": metrics,
             "forecast-replay.json": frep, "job-replay.json": jrep}
+
+
+# --------------------------------------------------------------------------- extensions
+
+SCENARIO_KNOB_UNITS = {"dest_slots": "GPU_slots", "transfer_s": "s", "batch_delay_s": "s",
+                       "mobility_max_gpus": "GPUs", "phase_days": "days"}
+EXT_EVIDENCE_NOTE = ("validation results of a sensitivity scenario (D-058); policy outcomes "
+                     "simulated, bound modeled, scenario knobs assumed; never pooled with the "
+                     "registered primary result")
+
+
+def scenario_record(scenario: Scenario, pid: str) -> dict:
+    """The scenario definition: every knob is an `assumed` envelope (spec §7)."""
+    knobs = {}
+    for k, unit in SCENARIO_KNOB_UNITS.items():
+        v = getattr(scenario, k)
+        knobs[k] = env(v, unit, "assumed", f"{pid}:{k}",
+                       reason=None if v is not None else "null = no mobility limit")
+    return {"name": scenario.name, "note": scenario.note, "knobs": knobs,
+            "changes_deadlines": scenario.changes_deadlines,
+            "own_cohort": scenario.own_cohort, "policies": list(scenario.policies())}
+
+
+def ext_summary(*, run_id, sha, status, window: Window, scenario: Scenario, coh, cj, acct,
+                repro, tiers) -> dict:
+    """summary.json of an extension run: the same enveloped policy records and contrasts as
+    metrics.json, for this scenario's policies (no F14.7 diagnostic, no H2 decision: H2's
+    rule applies to the primary phase-0 cohort only, F14.3)."""
+    n_weeks = acct["n_weeks"]
+    names = scenario.policies()
+    policies = {n: _policy_record(n, acct["scores"][n], acct["gaps"][n], run_id, diagnosed=False,
+                                  not_diagnosed_reason=EXT_NOT_DIAGNOSED_REASON) for n in names}
+    contrasts = [_contrast_record(n, ref, acct["contrasts"][f"{n}_vs_{ref}"], run_id, n_weeks,
+                                  window.name)
+                 for ref in REFERENCES if ref in names for n in names if n != ref]
+    pid = f"{run_id}:cohort"
+    return {
+        "schema_version": SCHEMA_VERSION, "run_id": run_id, "git_sha": sha,
+        "git_clean": status == "", "window": window.name,
+        "kind": "extension: one-axis sensitivity scenario (validation only; D-058)",
+        "evidence_note": EXT_EVIDENCE_NOTE,
+        "scenario": scenario_record(scenario, f"{run_id}:scenario"),
+        "covered": {"arrivals": [iso(window.eval_start), iso(coh.A)],
+                    "drain": [iso(coh.A), iso(window.F)]},
+        "cohort": {
+            "A": iso(coh.A),
+            "A_rule": ("common F14.1 A of this phase (minimum first failure over the "
+                       "registered F14.1 scenarios)"),
+            "first_failure": {k: iso(v) for k, v in coh.first_failure.items()},
+            "n_jobs": env(cj.height, "jobs", "simulated", f"{pid}:n"),
+            "declared_gpu_h": env(_gpu_h(cj), "GPU_h", "measured", f"{pid}:gpu_h"),
+            "n_excluded": env(coh.n_excluded, "jobs", "simulated", f"{pid}:excluded"),
+            "excluded_gpu_h": env(coh.excluded_gpu_h, "GPU_h", "measured",
+                                  f"{pid}:excluded_gpu_h"),
+            "n_weeks": env(n_weeks, "weeks", "measured", f"{pid}:n_weeks"),
+            "cohort_ids_sha256": coh.ids_hash, "booking_sha256": coh.booking_hash,
+        },
+        "policies": policies,
+        "contrasts": contrasts,
+        "relaxed_bound": {
+            "primary": env(acct["bounds"]["primary"], "kg_CO2", "modeled", f"{run_id}:bound"),
+            "time_only": env(acct["bounds"]["time_only"], "kg_CO2", "modeled",
+                             f"{run_id}:bound_time_only"),
+            "all_feasible_policies_ok": acct["bound_all_ok"]},
+        "common_support": {"n_dropped_jobs": env(len(acct["common_support"]), "jobs",
+                                                 "simulated", f"{run_id}:common_support")},
+        "truth_fill_hours_by_ba": {ba: {tr: env(n, "hours", "measured",
+                                                f"{run_id}:tier:{ba}:{tr}")
+                                        for tr, n in row.items()} for ba, row in tiers.items()},
+        "reproducibility": repro,
+    }
 
 
 def _cohort_record_env(r, run_id) -> dict:
@@ -1323,7 +1496,7 @@ def job_replay(k) -> dict:
             r = lw.filter(pl.col("site") == site)
             arcs.append({"from": HOME, "to": site,
                          "jobs": env(r.height, "jobs", "simulated", f"{run_id}:{name}:arc:{site}"),
-                         "gpu_h": env(float((r["gpus"] * r["duration_s"]).sum() / 3600),
+                         "gpu_h": env(_gpu_h(r),
                                       "GPU_h", "simulated", f"{run_id}:{name}:arcgh:{site}")})
         busy = {}
         s_us = np.concatenate([led["start_ts"].dt.epoch("us").to_numpy(),
@@ -1356,16 +1529,17 @@ def job_replay(k) -> dict:
 # --------------------------------------------------------------------------- table
 
 
-def print_table(acct, timer) -> None:
+def print_table(acct, timer, scenario: Scenario | None = None) -> None:
+    scenario = scenario or Scenario.primary()
     s = acct["scores"]
-    print("\nValidation results (phase 0; simulated outcomes; bound modeled). "
-          "Not test results.")
+    print(f"\nValidation results (scenario {scenario.name}, phase {scenario.phase_days}; "
+          f"simulated outcomes; bound modeled). Not test results.")
     hdr = (f"{'policy':8s} {'status':8s} {'feas':5s} {'late':>4s} {'tCO2':>10s} {'vs U %':>7s} "
            f"{'U-P b4 CI kg':>24s} {'moved%':>7s} {'remote%E':>8s} {'tier>=2%':>8s} "
            f"{'bound':>5s} {'sim s':>7s}")
     print(hdr)
     u = s["U"]["co2_kg"]
-    for name in POLICY_ORDER:
+    for name in scenario.policies():
         m = s[name]
         c = acct["contrasts"].get(f"{name}_vs_U", {}).get(4)
         ci = f"[{c['diff_kg_ci'][0]:,.0f}, {c['diff_kg_ci'][1]:,.0f}]" if c else "-"
@@ -1397,20 +1571,28 @@ def print_table(acct, timer) -> None:
         for basis, x in g.items():
             print(f"  bound check {name:7s} {basis:9s} gap {x['gap_kg']:.6f} kg "
                   f"min job gap {x['min_job_gap_kg']:.3e} kg ok={x['ok']}")
-    print("framing: " + framing_text(acct))
+    if scenario.is_primary:
+        print("framing: " + framing_text(acct))
     print("timing (s): " + ", ".join(f"{k} {v:.1f}" for k, v in timer.t.items()))
 
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("--window", choices=sorted(WINDOWS), default="validation")
+    p.add_argument("--window", choices=WINDOW_NAMES, default="validation")
+    p.add_argument("--scenario", choices=["primary", *EXTENSIONS], default="primary",
+                   help="primary (registered) or a D-058 extension (gridpilot.scenario)")
     p.add_argument("--forecast-run", default=None,
                    help="reuse a Task 2 run directory instead of building forecasts")
     p.add_argument("--out", default=None, help="run root (default: runs/slice)")
-    p.add_argument("--no-export", action="store_true", help="do not copy into results/")
+    p.add_argument("--no-export", action="store_true",
+                   help="do not copy into results/ (extensions never export)")
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
-    return run(args)
+    scenario = Scenario.named(args.scenario)
+    res = run_pipeline(Window.named(args.window), scenario, args.out,
+                       export=scenario.is_primary and not args.no_export,
+                       forecast_run=args.forecast_run)
+    return res.rc
 
 
 if __name__ == "__main__":

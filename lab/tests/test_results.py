@@ -138,10 +138,10 @@ def test_claim_frame_text_is_verbatim():
 
 
 def test_canonical_hash_ignores_provenance_and_tiny_float_noise():
-    a = {"run_id": "r1", "x": env(1.0000001, "kg", "simulated", "r1:x"), "y": [0.0, -0.0]}
-    b = {"run_id": "r2", "x": env(1.0000004, "kg", "simulated", "r2:x"), "y": [-0.0, 0.0]}
-    assert canonical_hash(a) == canonical_hash(b)
-    c = {"run_id": "r1", "x": env(1.00001, "kg", "simulated", "r1:x"), "y": [0.0, 0.0]}
+    a = {"run_id": "r1", "x": env(1.00000000001, "kg", "simulated", "r1:x"), "y": [0.0, -0.0]}
+    b = {"run_id": "r2", "x": env(1.00000000004, "kg", "simulated", "r2:x"), "y": [-0.0, 0.0]}
+    assert canonical_hash(a) == canonical_hash(b)  # 10 significant digits (T10)
+    c = {"run_id": "r1", "x": env(1.000001, "kg", "simulated", "r1:x"), "y": [0.0, 0.0]}
     assert canonical_hash(a) != canonical_hash(c)
 
 
