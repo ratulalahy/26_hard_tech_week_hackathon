@@ -32,3 +32,9 @@ Branch `s3/t16` from main. **Do not merge before the test run.** The seal holds:
 
 ## Report
 Write `/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/s3-t16-report.md`.
+
+## Addendum (owner, after reading about weather as the main peak driver): temperature context
+- For each of the 3 pre-registered days, add **descriptive** weather context: the daily max and min temperature, and the cooling or heating degree-days (base 65 °F), for Salt Lake City and the PACE load-weighted proxy points.
+- Source: the archived Open-Meteo data already downloaded (`data/raw/openmeteo/`, manifest `data/manifests/openmeteo.json`). Use the historical **observed or analysis** values if they are in the download. If only forecast products are present, use the issue closest before the day and label it `forecast`.
+- **Descriptive only:** it explains the day and never feeds any model or decision. Label it observed (or forecast), never causal ("hot day" plus "peak", not "the heat caused X MW").
+- Add one sentence per day to the card, e.g. "102 °F in Salt Lake City; evening net load peaked at … MW".
