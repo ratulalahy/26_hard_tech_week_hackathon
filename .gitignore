@@ -27,3 +27,4 @@ runs/
 
 # Subagent-driven development scratch (ledgers, briefs, reports)
 .superpowers/
+.claude/worktrees/
