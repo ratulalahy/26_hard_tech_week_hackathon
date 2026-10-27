@@ -24,6 +24,17 @@ Each entry is dated in Mountain Time (MDT, UTC−6) and cites its evidence: a co
 
 ## Entries
 
+### 2026-10-27 14:59 MT: Codex — one premium UI concept for owner comparison
+
+- Branch: codex/ui-flexibility. Standalone source: docs/design/prototypes/flexibility-cockpit/index.html; source data, local fonts, licenses, screenshots and README alongside it. The production web/ app and experiment configuration are untouched.
+- Direction: warm ivory, forest ink, restrained glass surfaces, green-to-clay carbon meaning, blue routing actions, a single prominent result and a visible scenario challenge.
+- Functional comparisons use existing validation policy-S metrics: registered fleet, mobility limited to jobs of at most 8 GPUs, and doubled destination capacity. Regional intensity comes from exported validation profiles. No new data downloads, experiment reruns or sealed values.
+- Storage is a qualitative concept only, explicitly without an estimated benefit. The evidence dialog discloses advance reservations, declared runtimes, conditional intervals and absence of demonstrated ML improvement.
+- Verification: node --check passed; Playwright interactions matched the source-rounded 22.6%, 3.2% and 35.0%; no page errors, no attempted external requests; axe main-state WCAG A/AA scan: 0 violations. Desktop 1728×1117 and 1440×900 screenshots and a 390×844 mobile screenshot included; no horizontal mobile overflow.
+- Visual self-pass fixed mobile glass-layer rendering, competing map text, small labels and responsive chart sizing. Actual MacBook rehearsal and independent image critique are not claimed.
+- Budget: one locally authored concept. Superdesign CLI preflight required authentication; no remote design generation, public upload or paid critic was used.
+- Owner can review the concept independently and choose whether to port its palette/hierarchy/scenario interaction into the working dashboard. Lead owns any production integration.
+
 ### 2026-10-27 01:17 MT: Codex — independent experiment design complete
 
 - Ran the owner's requested sync: git pull --rebase origin main; fast-forwarded codex/planning to main at 8e0ce4c before writing.

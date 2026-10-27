@@ -1,0 +1,9 @@
+Map layers bundled with the GridPilot dashboard (offline; clipped and rounded by web/scripts/copy-data.mjs).
+
+Balancing-authority boundaries (ba.geojson, ba_points.geojson):
+  BA boundaries: Electricity Maps contributors, electricitymaps-contrib zone geometries (commit 501e61d), AGPL-3.0, simplified. BA codes and names: U.S. Energy Information Administration, Form EIA-930. Made with Natural Earth. Free vector and raster map data @ naturalearthdata.com.
+  License: AGPL-3.0 (GNU Affero General Public License v3.0; electricitymaps-contrib repository license since v1.5.0, contributions before commit cb9664f were MIT). Copyleft: redistribution and derived geometry must stay under AGPL-3.0 with attribution.
+
+Basemap (states, state lines, countries, lakes, cities, roads, relief):
+  Made with Natural Earth. Free vector and raster map data @ naturalearthdata.com.
+  License: Public domain. Natural Earth terms of use: 'All versions of Natural Earth raster + vector map data found on this website are in the public domain. You may use the maps in any manner ... No permission is needed to use Natural Earth. Crediting the authors is unnecessary.' https://www.naturalearthdata.com/about/terms-of-use/
