@@ -1,9 +1,18 @@
-"""Gang-job scheduler simulator: exact-interval capacity, F11 bookings, policies U/G/S."""
+"""Gang-job scheduler simulator: exact-interval capacity, F11 bookings, policies U/G/S and
+the emissions-first carbon search K/W/L/H."""
 
 from gridpilot.sim.capacity import Capacity, CapacityView
+from gridpilot.sim.carbon_search import (
+    CarbonSearch,
+    job_energy_kwh,
+    load_forecasts,
+    tail_climatology,
+    transfer_kwh,
+)
 from gridpilot.sim.engine import (
     BOOKING_COLUMNS,
     HOME,
+    HOUR_US,
     LEDGER_COLUMNS,
     SITES,
     TRANSFER_S,
@@ -26,6 +35,7 @@ from gridpilot.sim.engine import (
 __all__ = [
     "BOOKING_COLUMNS",
     "HOME",
+    "HOUR_US",
     "LEDGER_COLUMNS",
     "SITES",
     "TRANSFER_S",
@@ -33,6 +43,7 @@ __all__ = [
     "Action",
     "Capacity",
     "CapacityView",
+    "CarbonSearch",
     "G",
     "Job",
     "Ledger",
@@ -42,7 +53,11 @@ __all__ = [
     "U",
     "WarmupState",
     "closed_intervals",
+    "job_energy_kwh",
+    "load_forecasts",
     "simulate",
+    "tail_climatology",
+    "transfer_kwh",
     "u_bookings",
     "warm_up",
 ]

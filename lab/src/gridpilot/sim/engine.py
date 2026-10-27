@@ -17,10 +17,11 @@ every job is on time by construction; a late job raises, because it would be a b
 (arrival + duration + max_delay), then `job_uid`. The declared deadline, not the F1 one,
 keeps the order the same for every policy and for the U run that defines the bookings.
 
-**Mask (F3, F12.1).** `closed` gives per-site closed intervals (an assumed, advance-known
-closure calendar). No policy action may execute over a closed interval, and a remote
-move also needs its arrival instant open at home and at the destination, where its
-transfer energy is charged. The engine rejects an action that breaks either rule.
+**Mask (F3, F12.1, F14.5).** `closed` gives per-site closed, hour-aligned intervals (an
+assumed, advance-known closure calendar). No policy action may execute over a closed
+interval (positive overlap of half-open intervals), and a remote move also needs the UTC
+hour containing its arrival open at home and at the destination, where its transfer
+energy is charged. The engine rejects an action that breaks either rule.
 Bookings are exempt: they sit at PACE, which has no missing truth in validation; the
 driver checks every booking against PACE support before any comparison (F12.3).
 
@@ -47,6 +48,7 @@ SITES: dict[str, int] = {"PACE": 2288, "CISO": 512, "BPAT": 512, "NEVP": 512}
 HOME = "PACE"
 TRANSFER_S = 1800.0  # remote staging before execution (assumed, §7)
 US = 1_000_000
+HOUR_US = 3600 * US
 
 JOB_COLUMNS = ["job_uid", "arrival_ts", "duration_s", "gpus", "job_type", "flexible",
                "max_delay_s", "mobile"]
@@ -64,7 +66,9 @@ is the duration rounded to the µs, and duration_s is the exact input value. `tr
 is True when the job ran away from home; `moved` when it did not run on its booking;
 `blocked` (F12.7) when the policy returned a legal, on-time action that did not fit
 (another booking or an earlier move held its capacity), so the job fell back to its
-booking; `late` is always False under bookings (kept for the accounting contract).
+booking — or, under `simulate(..., diagnose_blocked=True)`, the F14.7 diagnostic (the
+policy would have chosen better without other jobs' pending bookings); `late` is always
+False under bookings (kept for the accounting contract).
 """
 
 
@@ -101,12 +105,21 @@ class Job:
         return self.deadline_us - self.duration_us
 
 
+def floor_hour(t_us: int) -> int:
+    """Start of the UTC hour containing instant `t_us`."""
+    return t_us - t_us % HOUR_US
+
+
 def _merge(intervals: Sequence[tuple[int, int]]) -> tuple[np.ndarray, np.ndarray]:
+    """Sort and merge closed intervals. Each must be whole UTC hours (F3, F14.5), so the
+    F12.1 transfer check on the arrival hour is exact."""
     iv = sorted((int(a), int(b)) for a, b in intervals)
     out: list[list[int]] = []
     for a, b in iv:
         if b <= a:
             raise ValueError(f"empty closed interval [{a}, {b})")
+        if a % HOUR_US or b % HOUR_US:
+            raise ValueError(f"closed interval [{a}, {b}) is not hour-aligned")
         if out and a <= out[-1][1]:
             out[-1][1] = max(out[-1][1], b)
         else:
@@ -154,13 +167,13 @@ class SimContext:
         return self.closure(site, start, duration) is None
 
     def transfer_supported(self, job: Job, site: str) -> bool:
-        """F12.1: a remote move charges transfer energy at arrival at both ends, so the
-        arrival instant must be open at home and at `site`. Always True at home."""
+        """F12.1/F14.5: a remote move charges transfer energy in the UTC hour containing
+        the arrival, at both ends, so [floor_hour(arrival), +1 h) must be open at home and
+        at `site`. Always True at home."""
         if site == self.home:
             return True
-        return self.is_open(self.home, job.arrival_us, 1) and self.is_open(
-            site, job.arrival_us, 1
-        )
+        h = floor_hour(job.arrival_us)
+        return self.is_open(self.home, h, HOUR_US) and self.is_open(site, h, HOUR_US)
 
     def earliest_start(
         self,
@@ -218,6 +231,13 @@ class Policy(Protocol):
     Return an `Action`, or None to run on the booking. An action that is late or does
     not fit also runs on the booking. An illegal action (site not legal for the job,
     start before arrival or before the transfer, or touching a closed interval) raises.
+
+    Optional, for `simulate(..., diagnose_blocked=True)` (F14.7):
+    `blocked(job, now, actual, real, cf, ctx) -> bool`. `actual` is the action the
+    engine committed; `real` the views the policy chose from; `cf` the counterfactual
+    views (warm-up plus every committed placement, without pending bookings). Return
+    True if the policy's choice over both views' candidates, filtered against `cf`,
+    differs from `actual` and improves the policy's own score.
     """
 
     name: str
@@ -234,6 +254,20 @@ class Policy(Protocol):
 # --------------------------------------------------------------------------- policies
 
 
+def _cf_start(job: Job, site: str, real: Mapping[str, CapacityView],
+              cf: Mapping[str, CapacityView], ctx: SimContext,
+              latest: int | None = None) -> int | None:
+    """F14.7 for earliest-start policies: the earliest of both views' earliest starts at
+    `site` that is on time and fits the counterfactual ledger, or None."""
+    best = None
+    for views in (real, cf):
+        s = ctx.earliest_start(job, site, views, latest=latest)
+        if (s is not None and ctx.on_time(job, s)
+                and cf[site].fits(s, s + job.duration_us, job.gpus)):
+            best = s if best is None else min(best, s)
+    return best
+
+
 class U:
     """Earliest feasible execution at home (PACE), in FIFO order; no carbon input."""
 
@@ -245,6 +279,14 @@ class U:
         s = ctx.earliest_start(job, ctx.home, capacities)
         return None if s is None else Action(ctx.home, s)
 
+    def blocked(self, job, now, actual, real, cf, ctx):
+        """F14.7: an earlier on-time home start without pending bookings."""
+        if ctx.home not in ctx.legal_sites(job):
+            return False
+        s = _cf_start(job, ctx.home, real, cf, ctx)
+        return s is not None and (ctx.home, s) != (actual.site, actual.start_us) \
+            and s < actual.start_us
+
 
 class G:
     """Earliest finish across the legal core sites, then home, then BA code; no carbon."""
@@ -253,6 +295,19 @@ class G:
 
     def choose(self, job, now, capacities, ctx):
         return ctx.earliest_action(job, capacities)
+
+    def blocked(self, job, now, actual, real, cf, ctx):
+        """F14.7: an earlier finish without pending bookings."""
+        best = None
+        for site in ctx.legal_sites(job):
+            s = _cf_start(job, site, real, cf, ctx)
+            if s is not None:
+                key = (s + job.duration_us, site != ctx.home, site)
+                best = key if best is None or key < best else best
+        if best is None:
+            return False
+        want = Action(best[2], best[0] - job.duration_us)
+        return want != actual and best[0] < actual.start_us + job.duration_us
 
 
 class S:
@@ -269,16 +324,33 @@ class S:
     def __init__(self, ranking: Sequence[str]):
         self.ranking = tuple(ranking)
 
-    def choose(self, job, now, capacities, ctx):
+    def _order(self, job, ctx) -> list[str]:
         legal = ctx.legal_sites(job)
         order = [s for s in self.ranking if s in legal]
         if ctx.home in legal and ctx.home not in order:
             order.append(ctx.home)
-        for site in order:
+        return order
+
+    def choose(self, job, now, capacities, ctx):
+        for site in self._order(job, ctx):
             s = ctx.earliest_start(job, site, capacities, latest=job.latest_start_us)
             if s is not None:
                 return Action(site, s)
         return None
+
+    def blocked(self, job, now, actual, real, cf, ctx):
+        """F14.7: a higher-ranked site (or the same site, earlier) without pending
+        bookings."""
+        order = self._order(job, ctx)
+        for site in order:
+            s = _cf_start(job, site, real, cf, ctx, latest=job.latest_start_us)
+            if s is not None:
+                break
+        else:
+            return False
+        rank = {x: i for i, x in enumerate(order)}
+        mine = (rank.get(actual.site, len(order)), actual.start_us)
+        return Action(site, s) != actual and (rank[site], s) < mine
 
 
 # --------------------------------------------------------------------------- inputs
@@ -339,7 +411,7 @@ def _prepare(jobs: pl.DataFrame) -> pl.DataFrame:
 
 
 def _attach_bookings(frame: pl.DataFrame, bookings: pl.DataFrame,
-                     sites: Mapping[str, int]) -> pl.DataFrame:
+                     sites: Mapping[str, int], home: str) -> pl.DataFrame:
     missing = [c for c in BOOKING_COLUMNS if c not in bookings.columns]
     if missing:
         raise ValueError(f"bookings is missing columns {missing}")
@@ -370,6 +442,17 @@ def _attach_bookings(frame: pl.DataFrame, bookings: pl.DataFrame,
     if bad.height:
         raise ValueError(f"bookings inconsistent with jobs (site, start, duration or "
                          f"deadline): {bad['job_uid'][:5].to_list()}")
+    # F1: the deadline is exactly max(arrival + duration + delay, booking end).
+    bad = out.filter(pl.col("_dl") != pl.max_horizontal("_base", "_be"))
+    if bad.height:
+        raise ValueError(f"booking deadline_us != max(arrival + duration + delay, end_us): "
+                         f"{bad['job_uid'][:5].to_list()}")
+    # The booking site must be legal for the job (mobility and gang size).
+    slots = pl.col("_bsite").replace_strict(dict(sites), return_dtype=pl.Int64)
+    bad = out.filter(((pl.col("_bsite") != home) & ~pl.col("mobile")) | (slots < pl.col("gpus")))
+    if bad.height:
+        raise ValueError(f"booking site is not legal for the job (mobility or size): "
+                         f"{bad['job_uid'][:5].to_list()}")
     return out
 
 
@@ -447,6 +530,7 @@ def _run(
     closed: Mapping[str, Sequence[tuple[int, int]]] | None,
     home: str,
     on_commit: Callable[[Job, Action], None] | None = None,
+    diagnose_blocked: bool = False,
 ) -> _Run:
     if home not in sites:
         raise ValueError(f"home site {home} is not in sites")
@@ -466,8 +550,11 @@ def _run(
     t0 = int(frame["_arr"][0]) if n else None
 
     booked = bookings is not None
+    if diagnose_blocked and not (booked and callable(getattr(policy, "blocked", None))):
+        raise TypeError(f"diagnose_blocked needs bookings and a policy with blocked(); "
+                        f"{policy.name} has none")
     if booked:
-        frame = _attach_bookings(frame, bookings, sites)
+        frame = _attach_bookings(frame, bookings, sites, home)
         extra = frame.select(pl.col("_bsite").alias("site"), pl.col("_bs").alias("start_us"),
                              pl.col("_be").alias("end_us"), "gpus")
         dl = frame["_dl"].to_numpy()
@@ -478,6 +565,11 @@ def _run(
         dl = frame["_base"].to_numpy()
     caps = _capacities(sites, warm, extra, t0)
     views = {s: c.view() for s, c in caps.items()}
+    # F14.7 counterfactual ledger: warm-up plus every committed placement, no pending
+    # bookings. Diagnostic only: the run's state evolves under the real view.
+    cf_caps = _capacities(sites, warm, None, t0) if diagnose_blocked else {}
+    cf_views = {s: c.view() for s, c in cf_caps.items()}
+    cf_list = list(cf_caps.values())
 
     uid = frame["job_uid"].to_list()
     arr = frame["_arr"].to_numpy()
@@ -505,6 +597,8 @@ def _run(
         now = job.arrival_us
         for c in cap_list:
             c.advance(now)
+        for c in cf_list:
+            c.advance(now)
         if booked:  # the policy sees capacity without j's own booking
             caps[booking.site].release(booking.start_us, booking.start_us + d, g)
         action = policy.choose(job, now, views, ctx)
@@ -521,6 +615,9 @@ def _run(
                 raise ValueError(f"job {job.job_uid} ({g} GPUs) fits no legal site "
                                  f"in {dict(sites)}")
             action = booking
+        if diagnose_blocked:  # before committing: both views as the policy saw them
+            blocked_out[k] = bool(policy.blocked(job, now, action, views, cf_views, ctx))
+            cf_caps[action.site].reserve(action.start_us, action.start_us + d, g)
         caps[action.site].reserve(action.start_us, action.start_us + d, g)
         if on_commit is not None:
             on_commit(job, action)
@@ -597,17 +694,23 @@ def simulate(
     closed: Mapping[str, Sequence[tuple[int, int]]] | None = None,
     home: str = HOME,
     on_commit: Callable[[Job, Action], None] | None = None,
+    diagnose_blocked: bool = False,
 ) -> Ledger:
     """Replay `jobs` (the replay() frame) under `policy` with F11 bookings.
 
-    `bookings` comes from `u_bookings` for the same jobs, sites and warm-up; it is
-    required and must cover exactly the jobs. `warm` seeds capacity with the warm-up's
-    still-running reservations. `closed` maps a site to closed µs intervals (F3; build it
-    with `closed_intervals(site_mask(...))`). `on_commit(job, action)` is an optional
-    diagnostic hook called after each placement.
+    `bookings` comes from `u_bookings` for the same jobs, sites, warm-up and `closed`;
+    it is required and must cover exactly the jobs. `warm` seeds capacity with the
+    warm-up's still-running reservations. `closed` maps a site to closed, hour-aligned
+    µs intervals (F3; build it with `closed_intervals(site_mask(...))`).
+    `on_commit(job, action)` is an optional diagnostic hook called after each placement.
+
+    `diagnose_blocked` (F14.7, off by default; it roughly doubles the policy's cost):
+    the ledger's `blocked` column becomes "the policy's choice without other jobs'
+    pending bookings differs and scores better" (`policy.blocked`), instead of the
+    default "the returned on-time action did not fit". Placements are identical.
     """
     r = _run(jobs, policy, sites=sites, bookings=bookings, warm=warm, transfer_s=transfer_s,
-             closed=closed, home=home, on_commit=on_commit)
+             closed=closed, home=home, on_commit=on_commit, diagnose_blocked=diagnose_blocked)
     return _ledger(r, home)
 
 
@@ -617,16 +720,18 @@ def u_bookings(
     *,
     warm: WarmupState | None = None,
     transfer_s: float = TRANSFER_S,
+    closed: Mapping[str, Sequence[tuple[int, int]]] | None = None,
     home: str = HOME,
 ) -> pl.DataFrame:
     """F1 + F11: one U run gives each job its booking and deadline.
 
     Columns job_uid, site, start_us, end_us, deadline_us (Int64 µs), where
-    deadline_us = max(arrival + duration + max_delay, U end). Pass the same `sites` and
-    `warm` as the policy runs. U uses no transfer; `transfer_s` is accepted for symmetry.
+    deadline_us = max(arrival + duration + max_delay, U end). Pass the same `sites`,
+    `warm` and `closed` as the policy runs, so U reproduces its bookings under a mask.
+    U uses no transfer; `transfer_s` is accepted for symmetry.
     """
     r = _run(jobs, U(), sites=sites, bookings=None, warm=warm, transfer_s=transfer_s,
-             closed=None, home=home)
+             closed=closed, home=home)
     end = r.start + r.order["_dur"].to_numpy()
     return pl.DataFrame({
         "job_uid": r.order["job_uid"],

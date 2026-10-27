@@ -284,28 +284,39 @@ class Capacity:
 
 
 class CapacityView:
-    """Read-only access to a site's capacity, the only form policies receive."""
+    """Read-only access to a site's capacity, the only form policies receive.
 
-    __slots__ = ("_c",)
+    The view holds closures over the Capacity, never the Capacity itself or its bound
+    methods, so `reserve`/`release` are not reachable by attribute access, and the
+    view's own attributes cannot be reassigned.
+    """
+
+    __slots__ = ("_horizon", "earliest_start", "fits", "max_in", "slots")
 
     def __init__(self, cap: Capacity):
-        self._c = cap
+        def max_in(start: int, end: int) -> int:
+            return cap.max_in(start, end)
 
-    @property
-    def slots(self) -> int:
-        return self._c.slots
+        def fits(start: int, end: int, gpus: int) -> bool:
+            return cap.fits(start, end, gpus)
+
+        def earliest_start(
+            earliest: int, duration: int, gpus: int, latest: int | None = None
+        ) -> int | None:
+            return cap.earliest_start(earliest, duration, gpus, latest)
+
+        def horizon() -> int:
+            return cap.horizon
+
+        for name, value in (("max_in", max_in), ("fits", fits),
+                            ("earliest_start", earliest_start), ("_horizon", horizon),
+                            ("slots", int(cap.slots))):
+            object.__setattr__(self, name, value)
+
+    def __setattr__(self, name, value):
+        raise AttributeError("CapacityView is read-only")
 
     @property
     def horizon(self) -> int:
-        return self._c.horizon
-
-    def max_in(self, start: int, end: int) -> int:
-        return self._c.max_in(start, end)
-
-    def fits(self, start: int, end: int, gpus: int) -> bool:
-        return self._c.fits(start, end, gpus)
-
-    def earliest_start(
-        self, earliest: int, duration: int, gpus: int, latest: int | None = None
-    ) -> int | None:
-        return self._c.earliest_start(earliest, duration, gpus, latest)
+        """The earliest instant a query may start at (the site's last `advance`)."""
+        return self._horizon()

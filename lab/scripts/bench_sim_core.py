@@ -7,9 +7,9 @@ Sources:
   (GPU count, duration, job type) drawn jointly from the Seren attempts.
 
 Each run: one `u_bookings` (the F1/F11 U run), then U, G and S with bookings.
-`--diagnose` adds a counterfactual per policy: the action it would pick if future
-bookings were not held (only earlier placements), counted as "blocked" when it differs
-from what it got. That pass roughly doubles the cost.
+`--diagnose` adds the F14.7 blocked diagnostic per policy (`simulate(...,
+diagnose_blocked=True)`): the choice without pending bookings, counted when it differs
+and improves the policy's own score. That pass roughly doubles the cost.
 
     cd lab && GRIDPILOT_DATA_DIR=... uv run python scripts/bench_sim_core.py \\
         [--source replay|synthetic] [--weeks N] [--rate-scale 1.0] [--diagnose]
@@ -26,7 +26,7 @@ import numpy as np
 import polars as pl
 
 from gridpilot.data.traces import load_acme
-from gridpilot.sim import SITES, Capacity, G, S, U, simulate, u_bookings
+from gridpilot.sim import SITES, G, S, U, simulate, u_bookings
 
 DELAY_H = {"Pretrain": 6.0, "SFT": 6.0, "MLLM": 6.0, "Eval": 1.0}
 VAL_START = datetime(2024, 11, 1, tzinfo=UTC)
@@ -59,34 +59,6 @@ def synthetic_slice(days: float, rate_scale: float = 1.0, seed: int = 20261027) 
                         for t, f in zip(jt, flex, strict=True)],
         "mobile": flex,
     })
-
-
-class _Counterfactual:
-    """Wraps a policy; also asks it what it would do without future bookings."""
-
-    def __init__(self, inner, sites):
-        self.inner = inner
-        self.name = inner.name
-        self.free = {s: Capacity(n) for s, n in sites.items()}  # earlier placements only
-        self.views = {s: c.view() for s, c in self.free.items()}
-        self.blocked = 0
-        self.blocked_gpu_h = 0.0
-        self.decisions = 0
-
-    def choose(self, job, now, capacities, ctx):
-        for c in self.free.values():
-            c.advance(now)
-        got = self.inner.choose(job, now, capacities, ctx)
-        want = self.inner.choose(job, now, self.views, ctx)
-        self.decisions += 1
-        if want is not None and want != got and ctx.on_time(job, want.start_us):
-            self.blocked += 1
-            self.blocked_gpu_h += job.gpus * job.duration_s / 3600
-        return got
-
-    def on_commit(self, job, action):
-        self.free[action.site].reserve(action.start_us, action.start_us + job.duration_us,
-                                       job.gpus)
 
 
 def main() -> None:
@@ -134,13 +106,13 @@ def main() -> None:
               f"remote={ledger['transfer'].sum():,}  blocked={ledger['blocked'].sum():,} "
               f"({ledger.filter('blocked').select(pl.col('gpus') * pl.col('duration_s'))
                  .sum().item() / 3600:,.0f} GPU-h)")
-        if args.diagnose:
-            cf = _Counterfactual(policy, SITES)
+        if args.diagnose:  # F14.7, in the engine
             t = time.perf_counter()
-            simulate(jobs, cf, bookings=bookings, on_commit=cf.on_commit)
-            print(f"   counterfactual: preferred action blocked by bookings in "
-                  f"{cf.blocked:,} of {cf.decisions:,} decisions "
-                  f"({cf.blocked / cf.decisions:.2%}, {cf.blocked_gpu_h:,.0f} GPU-h); "
+            d = simulate(jobs, policy, bookings=bookings, diagnose_blocked=True)
+            b = d.filter("blocked")
+            gpu_h = b.select(pl.col("gpus") * pl.col("duration_s")).sum().item() / 3600
+            print(f"   F14.7 blocked by pending bookings: {b.height:,} of {d.height:,} jobs "
+                  f"({b.height / d.height:.2%}, {gpu_h:,.0f} GPU-h); "
                   f"{time.perf_counter() - t:.1f} s")
 
 
