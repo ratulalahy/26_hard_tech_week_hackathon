@@ -52,14 +52,12 @@ from gridpilot.sim.engine import (
     closed_intervals,
     floor_hour,
 )
+from gridpilot.sim.power import GPU_KW, PUE, TRANSFER_FRACTION
 from gridpilot.splits import TEST_START
 
 if TYPE_CHECKING:
     from gridpilot.forecast import Climatology
 
-GPU_KW = 0.60  # active power per allocated GPU slot (assumed, F7)
-PUE = 1.20  # at each site (assumed, F7)
-TRANSFER_SHARE = 0.05  # transfer energy as a share of the job's IT energy (assumed, F7)
 TIE_KG = 1e-9  # absolute part of the tie / improvement tolerance
 TIE_REL = 1e-12  # relative part: tolerance = 1e-9 + 1e-12·|kg|
 SIGNALS = ("K", "W", "L", "H")
@@ -79,7 +77,7 @@ def job_energy_kwh(gpus: float, duration_s: float) -> float:
 def transfer_kwh(gpus: float, duration_s: float) -> float:
     """Transfer IT energy, 5% of the job's IT energy (F7). It is charged half at home and
     half at the destination, each half times PUE, in the arrival hour."""
-    return TRANSFER_SHARE * gpus * GPU_KW * duration_s / 3600
+    return TRANSFER_FRACTION * gpus * GPU_KW * duration_s / 3600
 
 
 def kg_tol(kg: float) -> float:

@@ -3,8 +3,9 @@
 Source: the per-BA workbooks in data/raw/eia930/ba_workbooks/{BA}.xlsx, sheet
 "Published Hourly Data". Intensities there are lb CO2 per kWh; we store g/kWh
 (x 453.592). The primary signal is the consumption-based intensity; the
-production-based intensity is stored alongside. Both are `observed` EIA estimates
-(EIA's own flow model, not a measured response to our load).
+production-based intensity is stored alongside. Both are EIA's estimated consumption- and
+production-basis hourly CO₂ intensity: modeled (D-055; EIA's own flow model, not a measured
+response to our load).
 
 Time: the workbook's "UTC time" is hour-ending. `ts_utc` here is the hour start
 (workbook time minus one hour). A row with a null or unparseable time raises.
@@ -138,7 +139,7 @@ def build_carbon(bas: tuple[str, ...] = CORE_BAS) -> Path:
     try:
         out.write_parquet(tmp_parquet)
         lineage = {
-            "evidence": "observed",
+            "evidence": "modeled",  # D-055: EIA's estimate, not an observation
             "source_workbooks_sha256": {f"{ba}.xlsx": _sha256(p) for ba, p in sources.items()},
             "sheet": SHEET,
             "unit": "lb/kWh",

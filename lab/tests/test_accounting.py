@@ -203,7 +203,7 @@ def test_score_hand_values():
     assert m["fit_rejected_jobs"] == 1
     assert m["fit_rejected_kwh"] == pytest.approx(2.16)
     assert m["evidence"]["fit_rejected_jobs"] == "simulated"
-    assert m["evidence"]["co2_kg"] == "modeled"
+    assert m["evidence"]["co2_kg"] == "simulated"
 
 
 def test_job_accounting_rows():

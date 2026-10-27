@@ -9,6 +9,7 @@ the registered validation slice.
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 import polars as pl
@@ -16,6 +17,21 @@ import polars as pl
 from gridpilot.results import SCHEMA_VERSION, env
 
 QS = (0.001, 0.01, 0.1)
+
+
+def top_share(jobs: pl.DataFrame, frac: float = 0.01) -> dict:
+    """The largest `ceil(frac x n)` jobs by declared GPU-hours (`gpu_h`; ties to `job_uid`).
+
+    The one definition of "top x% of jobs", shared by `run_slice` and this module (T9 A9).
+    `jobs` needs `job_uid` and `gpu_h`; any other column rides along in `top`, the ranked head.
+    """
+    ranked = jobs.sort(["gpu_h", "job_uid"], descending=[True, False])
+    n = math.ceil(frac * ranked.height)
+    total = float(ranked["gpu_h"].sum())
+    head = ranked.head(n)
+    gpu_h = float(head["gpu_h"].sum())
+    return {"n_jobs": n, "n_cohort": ranked.height, "gpu_h": gpu_h,
+            "share": gpu_h / total if total else None, "top": head}
 
 
 def concentration(acct_u: pl.DataFrame, acct_p: pl.DataFrame, qs=QS) -> dict:
@@ -26,13 +42,12 @@ def concentration(acct_u: pl.DataFrame, acct_p: pl.DataFrame, qs=QS) -> dict:
     f = acct_u.select("job_uid", (pl.col("requested_gpu_s") / 3600).alias("gpu_h"),
                       pl.col("energy_kwh").alias("kwh"), pl.col("co2_kg").alias("co2_u")).join(
         acct_p.select("job_uid", pl.col("co2_kg").alias("co2_p")), on="job_uid")
-    f = f.with_columns((pl.col("co2_u") - pl.col("co2_p")).alias("sav")).sort(
-        ["gpu_h", "job_uid"], descending=[True, False])
+    f = f.with_columns((pl.col("co2_u") - pl.col("co2_p")).alias("sav"))
     tot = {k: f[k].sum() for k in ("gpu_h", "kwh", "sav")}
     top = []
     for q in qs:
-        k = max(1, round(f.height * q))
-        t = f.head(k)
+        ts = top_share(f, q)
+        k, t = ts["n_jobs"], ts["top"]
         top.append({"fraction": q, "n_jobs": k, "gpu_h_share": t["gpu_h"].sum() / tot["gpu_h"],
                     "energy_share": t["kwh"].sum() / tot["kwh"],
                     "saving_share": t["sav"].sum() / tot["sav"] if tot["sav"] else None})

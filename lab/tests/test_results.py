@@ -14,6 +14,7 @@ from gridpilot.results import (
     EVIDENCE_CLASSES,
     IMPORT_CONVENTION,
     LIMIT_BOOKINGS_UNSIGNED,
+    LIMIT_VALIDATION_DEV,
     LIMIT_ZERO_MISSES,
     canonical_hash,
     check_claim_frame,
@@ -99,7 +100,8 @@ def test_sealed_timestamps_found_and_wallclock_exempt():
 
 
 def test_validate_artifact_and_claim_frame():
-    req = [FORECAST_LIMITATION, IMPORT_CONVENTION, LIMIT_ZERO_MISSES, LIMIT_BOOKINGS_UNSIGNED]
+    req = [FORECAST_LIMITATION, IMPORT_CONVENTION, LIMIT_ZERO_MISSES, LIMIT_BOOKINGS_UNSIGNED,
+           LIMIT_VALIDATION_DEV]
     m = {"claim_frame": CLAIM_FRAME, "limitations": req}
     assert validate_artifact(m) == []
     check_claim_frame(m)
@@ -107,7 +109,7 @@ def test_validate_artifact_and_claim_frame():
         check_claim_frame({"claim_frame": "something else", "limitations": req})
     with pytest.raises(ValueError):
         check_claim_frame({"claim_frame": CLAIM_FRAME, "limitations": [IMPORT_CONVENTION]})
-    for drop in (LIMIT_ZERO_MISSES, LIMIT_BOOKINGS_UNSIGNED):
+    for drop in (LIMIT_ZERO_MISSES, LIMIT_BOOKINGS_UNSIGNED, LIMIT_VALIDATION_DEV):
         with pytest.raises(ValueError):
             check_claim_frame({"claim_frame": CLAIM_FRAME,
                                "limitations": [x for x in req if x != drop]})
