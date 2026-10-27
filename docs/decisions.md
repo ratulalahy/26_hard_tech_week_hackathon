@@ -405,3 +405,9 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - BPAT 51; NEVP 51.
   - Last hour present: 2026-10-27T05Z.
 - **Evidence:** `docs/reviews/2026-10-27-spec-claude-r3.md`.
+
+## D-053 · 2026-10-27 ~04:30 MT · G2 visual direction: round-3 layouts with the Utah palette
+- **Decided by:** owner; the palette construction is the lead's.
+- **Decision:** the round-3 dashboard concepts are kept ("dashboard looks good"). The colour changes to meaningful, Utah-warm colour: a diverging carbon scale (green cleaner, sand at the assumed US-average 380 g/kWh, Utah orange to canyon red dirtier), a deep-blue router action, a neutral caution hatch for rush hour, and a warm salt-flat ground.
+- **Evidence:** the owner's G2 message; validator results in `docs/design/tokens.md`; screenshots in `docs/design/concepts/shots/round4/`.
+- **Open:** source the US-average midpoint from EIA. Which layouts Task 8 builds first is to be confirmed by the owner.
