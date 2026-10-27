@@ -4,7 +4,7 @@ import { Panel, Strip, useWidth } from '../components/charts';
 import { Ev, EvCI } from '../components/ui';
 import { Legend } from './ControlRoom';
 import { C, ci2c } from '../lib/color';
-import { CORE, REGION, asNum, dayCurve, headline, pname, yearMean, type Json } from '../lib/data';
+import { CORE, REGION, asNum, dayCurve, headline, loadMonth, pname, yearMean, type Json } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
 import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange } from '../lib/format';
 import { useApp } from '../lib/store';
@@ -16,7 +16,7 @@ export function Ribbon() {
   const g = data!.grid;
   const curve = dayCurve(g, 'PACE', month);
   const rush = rushHours(g), clean = cleanest(curve);
-  const jul = g.pace_july_weekday;
+  const jul = g.pace_july_weekday, lm = loadMonth(g);
   const net: number[] = jul.net_load_mw.value, dem: number[] = jul.demand_mw.value;
   const h = headline(data!.metrics);
   const delayH = (asNum(data!.manifest.assumptions.allowed_delay_s.SFT) ?? 0) / 3600;
@@ -28,7 +28,7 @@ export function Ribbon() {
         <div>
           <h1 className="t-20" style={{ margin: 0 }}>In Utah, the clean hours aren't the rush hours</h1>
           <p className="t-13 ink-2" style={{ margin: '4px 0 0', maxWidth: '84ch' }}>
-            On a July weekday, carbon is lowest {spanLabel(clean)} while the sun is up. The grid's rush comes after sunset: net load peaks at {fmtHour(argmax(net))} at {fmt(net[argmax(net)])} MW, and {fmtHour(rush[0])}–{fmtHour(rush[1])} holds most of the year's {fmt(k)} highest net-load hours.
+            On a {lm.short} weekday, carbon is lowest {spanLabel(clean)} while the sun is up. The grid's rush comes after sunset: net load peaks at {fmtHour(argmax(net))} at {fmt(net[argmax(net)])} MW, and {fmtHour(rush[0])}–{fmtHour(rush[1])} holds most of the year's {fmt(k)} highest net-load hours.
             Night hours, midnight to 7 AM, run {fmt(Math.min(...night))}–{fmt(Math.max(...night))} g/kWh.
           </p>
         </div>
@@ -40,10 +40,10 @@ export function Ribbon() {
 
       <Panel className="flex flex-col min-h-0" style={{ padding: '12px 0 8px' }}>
         <div className="flex items-baseline justify-between" style={{ padding: '0 16px' }}>
-          <span className="t-15">Utah · PacifiCorp East, a {monthLabel(month, true).split(' ')[0]} weekday</span>
+          <span className="t-15">Utah · PacifiCorp East, a {lm.short} weekday</span>
           <span className="flex gap-4"><Ev e="observed">load in MW: EIA-930, {fmt(jul.n_days.value)} weekdays</Ev><EvCI extra="carbon, typical day" /></span>
         </div>
-        <div className="flex-1 min-h-0"><LoadChart rush={rush} clean={clean} dem={dem} net={net} sol={jul.solar_mw.value} /></div>
+        <div className="flex-1 min-h-0"><LoadChart rush={rush} clean={clean} dem={dem} net={net} sol={jul.solar_mw.value} month={lm.short} /></div>
         <CarbonRibbon curve={curve} />
       </Panel>
 
@@ -56,7 +56,7 @@ export function Ribbon() {
   );
 }
 
-export function LoadChart({ rush, clean, dem, net, sol }: { rush: [number, number]; clean: [number, number]; dem: number[]; net: number[]; sol: number[] }) {
+export function LoadChart({ rush, clean, dem, net, sol, month }: { rush: [number, number]; clean: [number, number]; dem: number[]; net: number[]; sol: number[]; month: string }) {
   const option = useMemo(() => {
     const at = (a: number[]) => a.map((v, i) => [i + 0.5, v]);
     const pk = argmax(net), dk = argmax(dem);
@@ -86,7 +86,7 @@ export function LoadChart({ rush, clean, dem, net, sol }: { rush: [number, numbe
       ],
     };
   }, [rush, clean, dem, net, sol]);
-  return <EChart option={option} className="h-full w-full" label="Utah July weekday demand, net load and solar by hour, in MW" />;
+  return <EChart option={option} className="h-full w-full" label={`Utah ${month} weekday demand, net load and solar by hour, in MW`} />;
 }
 
 export function CarbonRibbon({ curve }: { curve: (number | null)[] }) {
@@ -120,7 +120,7 @@ export function ForecastPanel() {
   const { data } = useApp();
   const fr: Json = data!.forecast;
   const hours: string[] = fr.hours;
-  const obs: (number | null)[] = fr.observed.value;
+  const obs: (number | null)[] = fr.truth.value;
   const MODELS = ['K', 'W', 'L'] as const;
   const maes = MODELS.map((k) => fr.week_errors[k].mae.value as number);
   const maeL: number = fr.week_errors.L.mae.value;
@@ -139,7 +139,7 @@ export function ForecastPanel() {
         { name: 'band-lo', type: 'line', data: L.map((v) => (v == null ? null : Math.max(0, v - maeL))), stack: 'band', symbol: 'none', lineStyle: { width: 0 }, silent: true, tooltip: { show: false } },
         { name: `L ± ${Math.round(maeL)} (week MAE)`, type: 'line', data: L.map((v) => (v == null ? null : v - Math.max(0, v - maeL) + maeL)), stack: 'band', symbol: 'none', lineStyle: { width: 0 }, areaStyle: { color: 'rgba(91,73,63,.12)' }, silent: true, tooltip: { show: false } },
         ...MODELS.map((k) => ({ name: pname(k), type: 'line', data: fr.forecasts[k].value, symbol: 'none', lineStyle: { color: style[k][0], type: style[k][1], width: style[k][2] } })),
-        { name: 'Observed', type: 'line', data: obs, symbol: 'none', lineStyle: { color: C.ink, width: 2 }, z: 5 },
+        { name: 'Actual', type: 'line', data: obs, symbol: 'none', lineStyle: { color: C.ink, width: 2 }, z: 5 },
       ],
     };
   }, [fr, hours, obs, maeL]);

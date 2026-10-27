@@ -1,7 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { PolicyTable } from '../components/charts';
 import { Ev, Icon, SEALED } from '../components/ui';
-import { asNum, headline, plainLimitation, pname, stripCodes } from '../lib/data';
+import { DEADLINE_RULE, VALIDATION_LINE, asNum, headline, plainLimitations, pname, stripCodes } from '../lib/data';
 import { fmt, fmtDate, pct, pctRange, signed } from '../lib/format';
 import { useApp } from '../lib/store';
 
@@ -34,9 +34,9 @@ export function MethodDrawer() {
             <Sec title="What this result is">
               <p className="t-13" style={{ margin: 0 }}><span className="ink-3">Claim frame, verbatim:</span> “{man.claim_frame}”.</p>
               <p className="t-13 ink-2" style={{ margin: '8px 0 0' }}>
-                Every job runs either at its Utah reservation, under {pname('U')}, or where a policy places it. Every policy completes the same declared work. A job's deadline is its run-now finish plus its allowed delay:
+                Every job runs either at its Utah reservation, under {pname('U')}, or where a policy places it. Every policy completes the same declared work. {DEADLINE_RULE} The allowed delay is
                 up to {fmt((asNum(a.allowed_delay_s.SFT) ?? 0) / 3600)} h ({fmt((asNum(a.allowed_delay_s.Eval) ?? 0) / 3600)} h for eval jobs) <Ev e="assumed" />.
-                Emissions are EIA's consumption-basis carbon intensity times energy. Differences between policies are attributed emissions, not a measured change in what the grid emitted.
+                {VALIDATION_LINE} Emissions are EIA's consumption-basis carbon intensity times energy. Differences between policies are attributed emissions, not a measured change in what the grid emitted.
               </p>
             </Sec>
             <Sec title="Every policy, the validation cohort">
@@ -57,7 +57,7 @@ export function MethodDrawer() {
             </Sec>
             <Sec title="A bound, not a target">
               <p className="t-13" style={{ margin: 0 }}>
-                A relaxed hindsight bound that ignores capacity limits: {fmt(rb.primary.value / 1000, 0)} t when work may move, {fmt(rb.time_only.value / 1000, 0)} t when it may only wait. Every feasible policy sits above it{rb.all_feasible_policies_ok ? ' (checked)' : ''}. <Ev e="modeled" />
+                A relaxed hindsight bound that ignores competition between jobs for capacity (each job's own limits still apply): {fmt(rb.primary.value / 1000, 0)} t when work may move, {fmt(rb.time_only.value / 1000, 0)} t when it may only wait. Every feasible policy sits above it{rb.all_feasible_policies_ok ? ' (checked)' : ''}. <Ev e="modeled" />
               </p>
             </Sec>
             <Sec title="Forecasts in the replay week">
@@ -75,16 +75,16 @@ export function MethodDrawer() {
             </Sec>
             <Sec title="Limitations">
               <ul className="t-13" style={{ margin: 0, paddingLeft: 16 }}>
-                {man.limitations.map((l: string) => <li key={l} style={{ marginBottom: 4 }}>{plainLimitation(l)}</li>)}
+                {plainLimitations(man.limitations).map((l: string) => <li key={l} style={{ marginBottom: 4 }}>{l}</li>)}
                 <li style={{ marginBottom: 4 }}>Jobs run exactly as long as declared; uncertain runtimes are untested.</li>
-                {man.not_before_18?.length ? <li>Some planned sensitivity runs have not been run yet (listed in the source text).</li> : null}
+                {man.not_run?.length ? <li>Some sensitivity runs were not run (each with its reason, in the source text).</li> : null}
               </ul>
               <details className="t-12 ink-2" style={{ marginTop: 8 }}>
                 <summary className="cursor-pointer fw-500">Source text</summary>
                 <div style={{ marginTop: 8 }}>
                   <div className="fw-500">Limitations, as written in the results manifest</div>
                   <ul style={{ margin: '4px 0 0', paddingLeft: 16 }}>{man.limitations.map((l: string) => <li key={l} style={{ marginBottom: 4 }}>{l}</li>)}</ul>
-                  {man.not_before_18?.length ? <><div className="fw-500" style={{ marginTop: 8 }}>Not yet run</div><ul style={{ margin: '4px 0 0', paddingLeft: 16 }}>{man.not_before_18.map((l: string) => <li key={l}>{l}</li>)}</ul></> : null}
+                  {man.not_run?.length ? <><div className="fw-500" style={{ marginTop: 8 }}>Not run</div><ul style={{ margin: '4px 0 0', paddingLeft: 16 }}>{man.not_run.map((x: { item: string; reason: string }) => <li key={x.item}>{x.item}: {x.reason}</li>)}</ul></> : null}
                   <div className="fw-500" style={{ marginTop: 8 }}>Framing, as written in the metrics</div>
                   {Object.values((m.framing ?? {}) as Record<string, string>).map((t) => <p key={t} style={{ margin: '4px 0 0' }}>{t}</p>)}
                   <div className="fw-500" style={{ marginTop: 8 }}>Forecast issue rule</div>

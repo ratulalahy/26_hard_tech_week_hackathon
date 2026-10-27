@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { IntervalChart, Panel, PolicyTable, Strip, useWidth } from '../components/charts';
 import { Ev, EvCI, Icon } from '../components/ui';
 import { C, CI_MAX, CI_MID, ci2c } from '../lib/color';
-import { CORE, DESTS, REGION, asNum, dayCurve, headline, pname, pnote, yearMean, type Dest } from '../lib/data';
+import { CORE, DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, headline, loadMonth, pname, pnote, yearMean, type Dest } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
 import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange } from '../lib/format';
 import { useApp } from '../lib/store';
@@ -10,7 +10,7 @@ import type { Viewport } from '../lib/useViewport';
 import { useViewport } from '../lib/useViewport';
 
 export const dims = (vp: Viewport) => ({
-  left: vp.w >= 1600 ? 368 : 336,
+  left: vp.w >= 1600 ? 416 : 336,
   right: vp.w >= 1600 ? 376 : 344,
   tl: vp.h >= 1000 ? 184 : 164,
 });
@@ -37,21 +37,24 @@ function ResultDock({ compact }: { compact: boolean }) {
   const m = data!.metrics, g = data!.grid;
   const h = headline(m);
   const pm = asNum(yearMean(g, 'PACE'))!;
+  // the headline now carries the frame line, so below 1200 px the four sites drop their day strips (the timeline below still shows Utah's)
+  const strips = useViewport().h >= 1200;
   return (
     <Panel over className="flex flex-col" style={{ height: '100%', padding: 0, overflow: 'hidden' }}>
       <div style={{ padding: 16 }}>
-        <h1 className="t-20" style={{ margin: 0 }}>Moving Utah's AI jobs cuts their CO₂ by a fifth. Waiting barely helps.</h1>
+        <h1 className="t-20" style={{ margin: 0 }}>In a simulated replay, moving Utah's AI jobs cut their CO₂ by a fifth. Waiting barely helps.</h1>
         <div data-testid="hero-placement" style={{ marginTop: 12 }}>
           <div className="flex items-baseline gap-2">
             <span className="t-hero">{pctRange(h.placement.lo, h.placement.hi)}%</span>
             <span className="t-13 ink-2">less attributed CO₂</span>
           </div>
           <div className="t-12 ink-2" style={{ marginTop: 4 }}>
-            The four placement policies vs U local (stay in Utah): same jobs, every deadline met. 95% intervals {pct(h.placement.ciLo)}–{pct(h.placement.ciHi)}%. <Ev e="simulated" />
+            The four placement policies vs U local (stay in Utah): same jobs, {DEADLINES_MET}. 95% intervals {pct(h.placement.ciLo)}–{pct(h.placement.ciHi)}%. <Ev e="simulated" />
           </div>
           <div className="t-11 ink-3" style={{ marginTop: 4 }}>
             Attributed operational CO₂ (EIA consumption basis, modeled), including {transferMWh(m)} MWh of simulated transfer energy.
           </div>
+          <div className="t-12 ink-2" style={{ marginTop: 4 }} data-testid="hero-frame">{FRAME_LINE}</div>
         </div>
         <div data-testid="hero-timing" className="t-13" style={{ marginTop: 8 }}>
           Waiting for cleaner hours in Utah alone: <b className="fw-600">{pctRange(h.timing.lo, h.timing.hi)}%</b> <span className="t-12 ink-3">(95% {pct(h.timing.ciLo)}–{pct(h.timing.ciHi)}%)</span> <Ev e="simulated" />
@@ -62,7 +65,7 @@ function ResultDock({ compact }: { compact: boolean }) {
           <span className="fw-500 whitespace-nowrap" style={{ color: C.ink }}>Saving vs U, 95% interval</span>
           <span className="t-11 ink-3 whitespace-nowrap">{fmt(h.nWeeks.value as number)} weeks <Ev e="simulated" /></span>
         </div>
-        <IntervalChart m={m} rows={['S', 'K', 'W', 'L', 'W_time', 'L_time']} stacked rowH={26} />
+        <IntervalChart m={m} rows={['S', 'K', 'W', 'L', 'W_time', 'L_time']} stacked rowH={24} />
       </div>
       <hr className="rule" />
       {compact ? null : (<>
@@ -82,8 +85,8 @@ function ResultDock({ compact }: { compact: boolean }) {
               </span>
               <span className="t-13 fw-600" title={`Year mean ${fmt(ym)} g/kWh`}>{REGION[c].name} <span className="t-12 ink-3 fw-400">{c} · {c === 'PACE' ? `year ${fmt(ym)}` : `${pct(1 - ym / pm, 0)}% cleaner`}</span></span>
               <span className="t-15 num">{curve[hour] == null ? '–' : Math.round(curve[hour]!)}<span className="unit">g/kWh</span></span>
-              {!compact && <span />}
-              {!compact && <div style={{ gridColumn: '2 / 4' }}><Strip curve={curve} hour={hour} h={10} label={`${REGION[c].name} typical day carbon`} /></div>}
+              {strips && <span />}
+              {strips && <div style={{ gridColumn: '2 / 4' }}><Strip curve={curve} hour={hour} h={10} label={`${REGION[c].name} typical day carbon`} /></div>}
 
             </div>
           );
@@ -185,7 +188,7 @@ function RouterDock({ compact }: { compact: boolean }) {
   );
 }
 
-/** Bottom timeline: Utah's July weekday load (observed) over the typical-day carbon strip; drives the map's hour. */
+/** Bottom timeline: Utah's weekday load for the profile's month (observed) over the typical-day carbon strip; drives the map's hour. */
 function Timeline() {
   const { data, hour, month, set } = useApp();
   const g = data!.grid;
@@ -197,7 +200,7 @@ function Timeline() {
     timer.current = window.setInterval(() => set({ hour: (useApp.getState().hour + 1) % 24 }), 700);
     return () => { if (timer.current) clearInterval(timer.current); };
   }, [playing, set]);
-  const jul = g.pace_july_weekday;
+  const jul = g.pace_july_weekday, lm = loadMonth(g);
   const dem: number[] = jul.demand_mw.value, net: number[] = jul.net_load_mw.value, sol: number[] = jul.solar_mw.value;
   const curve = dayCurve(g, 'PACE', month);
   const rush = rushHours(g), clean = cleanest(curve);
@@ -243,13 +246,13 @@ function Timeline() {
             <text x={X(24) + 4} y={Math.max(Y(net[23]) + 4, Y(dem[23]) + 16)} fontSize={11} fill={C.ink} fontWeight={600}>Net load</text>
             <text x={X(13)} y={Y(sol[13] * 0.45)} textAnchor="middle" fontSize={11} fill={C.solarInk} fontWeight={600}>Solar</text>
             <text x={0} y={yL + 10} fontSize={12} fill={C.ink} fontWeight={500}>Load, MW</text>
-            <text x={0} y={yL + 24} fontSize={11} fill={C.ink3}>July weekday</text>
+            <text x={0} y={yL + 24} fontSize={11} fill={C.ink3}>{lm.short} weekday</text>
             <text x={0} y={yL + 38} fontSize={11} fill={C.ink3}>observed</text>
             <text x={0} y={yC + 6} fontSize={12} fill={C.ink} fontWeight={500}>Carbon, g/kWh</text>
             <text x={0} y={yC + 20} fontSize={11} fill={C.ink3}>modeled · EIA est.</text>
             {curve.map((v, i) => (
               <rect key={i} x={X(i) + 1} y={yC} width={cw - 2} height={hC} rx={3} fill={v == null ? '#fff' : ci2c(v)}>
-                <title>{`${fmtHour(i)} in Utah: carbon ${v == null ? '–' : Math.round(v)} g/kWh (modeled, EIA estimate, typical ${monthLabel(month)} day); net load ${fmt(net[i])} MW (observed, July weekday)`}</title>
+                <title>{`${fmtHour(i)} in Utah: carbon ${v == null ? '–' : Math.round(v)} g/kWh (modeled, EIA estimate, typical ${monthLabel(month)} day); net load ${fmt(net[i])} MW (observed, ${lm.short} weekday)`}</title>
               </rect>
             ))}
             {Array.from({ length: 8 }, (_, k) => k * 3).map((i) => <text key={i} x={X(i) + cw / 2} y={yA} textAnchor="middle" fontSize={11} fill={C.ink3}>{fmtHour(i)}</text>)}
