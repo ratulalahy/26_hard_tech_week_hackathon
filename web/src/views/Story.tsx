@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { IntervalChart, Panel, PolicyTable } from '../components/charts';
 import { Ev, EvCI, Icon } from '../components/ui';
-import { DESTS, REGION, asNum, dayCurve, headline, plainLimitation, pname, type Core, type Json } from '../lib/data';
+import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, VALIDATION_LINE, asNum, dayCurve, headline, loadMonth, plainLimitations, pname, type Core, type Json } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
 import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange } from '../lib/format';
 import { useViewport } from '../lib/useViewport';
@@ -17,7 +17,7 @@ export function Story() {
   const h = headline(m);
   const curve = dayCurve(g, 'PACE', month);
   const rush = rushHours(g), clean = cleanest(curve);
-  const jul = g.pace_july_weekday;
+  const jul = g.pace_july_weekday, lm = loadMonth(g);
   const net: number[] = jul.net_load_mw.value;
   const k: number = g.pace_top100_net_load.k.value;
   const cm: number[][] = g.pace_top100_net_load.counts_month_hour.value;
@@ -32,6 +32,8 @@ export function Story() {
 
   const box = useRef<HTMLDivElement>(null);
   const ij: Json = data!.jobs.illustrative_job;
+  const lit: Json = data!.jobs.illustrative_job_literal;
+  const litDur = lit.declared_duration_s.value < 3600 ? `${fmt(lit.declared_duration_s.value / 60, 1)} minutes` : `${fmt(lit.declared_duration_s.value / 3600, 1)} hours`;
   const w = data!.jobs.week.policies.W;
   const wyear = m.policies.W.metrics;
   const weekTop = [...w.arcs].sort((a: Json, b: Json) => b.gpu_h.value - a.gpu_h.value)[0];
@@ -49,7 +51,7 @@ export function Story() {
   const steps: { t: string; body: React.ReactNode; ev: React.ReactNode }[] = [
     {
       t: "Utah's grid has a rush hour, and it comes after sunset",
-      body: <>On a July weekday demand peaks at {fmtHour(argmax(jul.demand_mw.value))}. Then the sun sets and solar drops away, so net load, the load the rest of the fleet must carry, keeps climbing to {fmtHour(argmax(net))} ({fmt(net[argmax(net)])} MW). All year, the {fmt(k)} highest net-load hours fall on {monthSpan} evenings, mostly {spanLabel(rush)}. The cleanest hours are {spanLabel(clean)}, while the sun is up.</>,
+      body: <>On a {lm.short} weekday demand peaks at {fmtHour(argmax(jul.demand_mw.value))}. Then the sun sets and solar drops away, so net load, the load the rest of the fleet must carry, keeps climbing to {fmtHour(argmax(net))} ({fmt(net[argmax(net)])} MW). All year, the {fmt(k)} highest net-load hours fall on {monthSpan} evenings, mostly {spanLabel(rush)}. The cleanest hours are {spanLabel(clean)}, while the sun is up.</>,
       ev: <><Ev e="observed">load: EIA-930</Ev><EvCI /></>,
     },
     {
@@ -59,7 +61,7 @@ export function Story() {
     },
     {
       t: 'One job: stay, wait or move',
-      body: <>A {fmt(ij.gpus.value)}-GPU {ij.job_type} job of {ij.declared_duration_s.value < 3600 ? `${fmt(ij.declared_duration_s.value / 60, 1)} minutes` : `${fmt(ij.declared_duration_s.value / 3600, 1)} hours`} ({fmt(ij.declared_gpu_h.value, ij.declared_gpu_h.value < 1 ? 2 : 1)} GPU-h), arriving {fmtDate(ij.arrival, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}. It may start up to {fmt(ij.max_delay_s.value / 3600)} h late. Moving it adds a transfer delay but lands it on a cleaner grid. It was picked by a rule fixed before seeing its outcome: the GPU-hour-weighted median of the eligible flexible jobs. The registered count-median job runs only 3 minutes; see how this job was chosen.{ij.disclosure ? <details className="t-12 ink-3" style={{ marginTop: 8 }}><summary className="cursor-pointer fw-500">How this job was chosen (source text)</summary><span>{ij.disclosure}</span></details> : null}</>,
+      body: <>A {fmt(ij.gpus.value)}-GPU {ij.job_type} job of {ij.declared_duration_s.value < 3600 ? `${fmt(ij.declared_duration_s.value / 60, 1)} minutes` : `${fmt(ij.declared_duration_s.value / 3600, 1)} hours`} ({fmt(ij.declared_gpu_h.value, ij.declared_gpu_h.value < 1 ? 2 : 1)} GPU-h), arriving {fmtDate(ij.arrival, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}. It may start up to {fmt(ij.max_delay_s.value / 3600)} h late. Moving it adds a transfer delay but lands it on a cleaner grid. It was picked by a rule fixed before seeing its outcome: the GPU-hour-weighted median of the eligible flexible jobs. The registered count-median job runs only {litDur}; see how this job was chosen.{ij.disclosure ? <details className="t-12 ink-3" style={{ marginTop: 8 }}><summary className="cursor-pointer fw-500">How this job was chosen (source text)</summary><span>{ij.disclosure}</span></details> : null}</>,
       ev: <><Ev e="measured">job size</Ev><Ev e="modeled">option CO₂</Ev><Ev e="simulated">placements</Ev></>,
     },
     {
@@ -69,12 +71,12 @@ export function Story() {
     },
     {
       t: 'The count: moving beats waiting',
-      body: <span data-testid="story-result">Over the validation year, the four placement policies cut attributed CO₂ by <b className="fw-600">{pctRange(h.placement.lo, h.placement.hi)}%</b> against U local (stay in Utah), with every deadline met and the same work done. Waiting in Utah alone cut <b className="fw-600">{pctRange(h.timing.lo, h.timing.hi)}%</b>. Forecast choice barely matters; placement dominates. Most jobs are tiny, but most of the energy, and most of the saving, sits in a few large jobs: the largest {pct(top1.fraction.value, 0)}% of jobs use {pct(top1.energy_share.value, 0)}% of the energy and carry {pct(top1.saving_share.value, 0)}% of the saving.</span>,
+      body: <span data-testid="story-result">Over the validation year, the four placement policies cut attributed CO₂ by <b className="fw-600">{pctRange(h.placement.lo, h.placement.hi)}%</b> against U local (stay in Utah), with {DEADLINES_MET} and the same work done. Waiting in Utah alone cut <b className="fw-600">{pctRange(h.timing.lo, h.timing.hi)}%</b>. Forecast choice barely matters; placement dominates. Most jobs are tiny, but most of the energy, and most of the saving, sits in a few large jobs: the largest {pct(top1.fraction.value, 0)}% of jobs use {pct(top1.energy_share.value, 0)}% of the energy and carry {pct(top1.saving_share.value, 0)}% of the saving.<span className="block t-12 ink-3" style={{ marginTop: 8 }} data-testid="story-frame">{FRAME_LINE}</span></span>,
       ev: <><Ev e="simulated">{fmt(m.cohort.n_jobs.value)} jobs, 95% intervals</Ev><Ev e="measured">job sizes</Ev></>,
     },
     {
       t: 'Challenge it',
-      body: <>This is a simulated scheduling scenario on EIA's estimated emissions, with jobs running exactly as long as declared. Here is what the result does not say, and the method drawer lists every assumption and the run behind each number.</>,
+      body: <>This is a simulated scheduling scenario on EIA's estimated emissions, with jobs running exactly as long as declared. Here is what the result does not say, and the method drawer lists every assumption and the run behind each number. {VALIDATION_LINE}</>,
       ev: <button className="btn" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button>,
     },
   ];
@@ -106,7 +108,7 @@ const fill = (n: React.ReactNode) => <div className="grid h-full" style={{ gridT
 
 function Visual({ step, rush, clean, curve }: { step: number; rush: [number, number]; clean: [number, number]; curve: (number | null)[] }) {
   const { data } = useApp();
-  const jul = data!.grid.pace_july_weekday;
+  const jul = data!.grid.pace_july_weekday, lm = loadMonth(data!.grid);
   if (step === 2) return fill(<ForecastPanel />);
   if (step === 3) return <JobCard />;
   if (step === 4) return <PlaceWork />;
@@ -116,9 +118,9 @@ function Visual({ step, rush, clean, curve }: { step: number; rush: [number, num
     <div className="grid h-full" style={{ gridTemplateRows: 'minmax(0,1.4fr) minmax(0,1fr)', gap: 16 }}>
       <Panel className="flex flex-col min-h-0" style={{ padding: '12px 0 8px' }}>
         <div className="flex items-baseline justify-between" style={{ padding: '0 16px' }}>
-          <span className="t-15">Utah, a July weekday: load in MW, carbon below</span><Ev e="observed">load</Ev>
+          <span className="t-15">Utah, a {lm.short} weekday: load in MW, carbon below</span><Ev e="observed">load</Ev>
         </div>
-        <div className="flex-1 min-h-0"><LoadChart rush={rush} clean={clean} dem={jul.demand_mw.value} net={jul.net_load_mw.value} sol={jul.solar_mw.value} /></div>
+        <div className="flex-1 min-h-0"><LoadChart rush={rush} clean={clean} dem={jul.demand_mw.value} net={jul.net_load_mw.value} sol={jul.solar_mw.value} month={lm.short} /></div>
         <CarbonRibbon curve={curve} />
       </Panel>
       {fill(<YearHeat />)}
@@ -239,7 +241,7 @@ function Limits() {
     <Panel className="flex flex-col" style={{ gap: 12, overflow: 'auto', maxHeight: '100%' }}>
       <span className="t-15">What the result does not say</span>
       <ul className="t-13" style={{ margin: 0, paddingLeft: 16, columns: 2, columnGap: 32 }}>
-        {lim.map((l) => <li key={l} style={{ marginBottom: 8, breakInside: 'avoid' }}>{plainLimitation(l)}</li>)}
+        {plainLimitations(lim).map((l) => <li key={l} style={{ marginBottom: 8, breakInside: 'avoid' }}>{l}</li>)}
         <li style={{ breakInside: 'avoid' }}>Jobs run exactly as long as declared; what happens when runtimes are uncertain is untested.</li>
       </ul>
       <details className="t-12 ink-2">

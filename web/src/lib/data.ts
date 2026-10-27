@@ -22,7 +22,7 @@ export interface Results {
   workload: Json;
 }
 
-const base = import.meta.env.BASE_URL; // './' (relative deployment base)
+const base = import.meta.env?.BASE_URL ?? './'; // './' (relative deployment base)
 async function get(name: string): Promise<Json> {
   const url = `${base}data/results/${name}`;
   const r = await fetch(url);
@@ -59,6 +59,23 @@ export const NAME: Record<string, string> = {
   L_time: 'L wait-only',
 };
 export const pname = (p: string) => NAME[p] ?? p;
+
+/** The F12.5 qualifiers, in the one wording every headline view uses (control room, cockpit, story 5). */
+export const FRAME_LINE = 'Replay of a measured GPU-cluster trace mapped onto Utah · deadlines relative to the baseline, met by construction · exact declared runtimes; runtime uncertainty untested.';
+export const DEADLINES_MET = 'deadlines met by construction (baseline bookings)';
+/** The deadline rule (A4), as the drawer and the cockpit state it. */
+export const DEADLINE_RULE = "A job's deadline is the later of (a) its run-now finish plus its allowed delay and (b) its finish in the stay-in-Utah baseline (baseline-relative).";
+/** The one plain-language line about the validation year (A6). */
+export const VALIDATION_LINE = 'These are validation-year results, which shaped the design; the sealed test year is the real test.';
+
+/** The month the weekday-load profile covers, read from the data (grid-profile `pace_july_weekday.month`, "2025-07"). */
+export function loadMonth(grid: Json): { short: string; long: string } {
+  const ym: string | undefined = grid.pace_july_weekday?.month;
+  if (!ym) return { short: 'typical', long: 'typical' };
+  const [y, mo] = ym.split('-').map(Number);
+  const name = new Intl.DateTimeFormat('en-US', { month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(y, mo - 1, 15)));
+  return { short: name, long: `${name} ${y}` };
+}
 /** Plain-language rule of each policy, for hover titles (N9). */
 const ROLE: Record<string, string> = {
   U: 'Runs every job at its Utah reservation, first come, first served. The baseline.',
@@ -84,10 +101,13 @@ const PLAIN: [RegExp, string][] = [
   [/^Zero deadline misses/i, 'No job misses its deadline because each keeps its home reservation as a fallback. That is a property of the scenario, not evidence of how a real system would perform.'],
   [/effect on realized savings is not signed/i, 'We have not measured whether those reservations raise or lower the savings.'],
   [/shadow-U sensitivity/i, 'What is possible without advance reservations has not been tested yet.'],
+  [/^Validation results are development evidence/i, VALIDATION_LINE],
   [/workload phase 0/i, 'The workload was replayed from one starting offset; two other offsets are still to run.'],
 ];
 export const stripCodes = (s: string) => s.replace(/\s*\((?:F\d[\d.]*|§\s*\d[\d.]*)(?:[,;][^)]*)?\)/g, '').replace(/§\s*\d[\d.]*/g, '').replace(/\bF\d+(?:\.\d+)?\b/g, '').replace(/\s{2,}/g, ' ').trim();
 export const plainLimitation = (s: string) => PLAIN.find(([re]) => re.test(s))?.[1] ?? stripCodes(s);
+/** The plain limitations list; the validation-year line is stated once, in its own place, so it is left out here. */
+export const plainLimitations = (ls: string[]) => ls.map(plainLimitation).filter((t) => t !== VALIDATION_LINE);
 
 export interface Contrast {
   candidate: string;
@@ -117,7 +137,7 @@ export function headline(m: Json) {
   return { placement: group(['S', 'K', 'W', 'L']), timing: group(['W_time', 'L_time']), nWeeks: contrast(m, 'S')!.n_weeks };
 }
 
-/** One BA's 24-hour tier-1 consumed CI for a month (America/Denver hours), observed. */
+/** One BA's 24-hour tier-1 consumed CI for a month (America/Denver hours): EIA's estimate, modeled. */
 export function dayCurve(grid: Json, ba: Core, month: string): (number | null)[] {
   const i = grid.months.indexOf(month);
   return grid.ci.by_ba[ba].month_hour.value[i];

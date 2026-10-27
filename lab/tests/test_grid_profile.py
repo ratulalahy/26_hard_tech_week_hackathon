@@ -136,6 +136,7 @@ def test_build_profile_is_fully_enveloped_and_pre_seal():
     assert "eia.gov" in ref["provenance_id"]
     assert len(pace["month_hour"]["value"]) == 12
     assert prof["pace_july_weekday"]["net_load_mw"]["evidence"] == "observed"
+    assert prof["pace_july_weekday"]["month"] == "2025-07"
     assert sum(map(sum, prof["pace_top100_net_load"]["counts_month_hour"]["value"])) == 100
     ctx = prof["context_year_mean_ci"]["by_ba"]
     assert "AZPS" in ctx and ctx["AZPS"]["evidence"] == "modeled"

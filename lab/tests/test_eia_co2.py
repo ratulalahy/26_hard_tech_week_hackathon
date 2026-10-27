@@ -132,7 +132,7 @@ def test_build_carbon_truncates_at_seal_and_writes_lineage(out_paths):
     assert df["ts_utc"].to_list() == [datetime(2025, 10, 31, 22, tzinfo=UTC),
                                       datetime(2025, 10, 31, 23, tzinfo=UTC)]
     meta = json.loads((out_dir / "carbon_hourly.meta.json").read_text())
-    assert meta["evidence"] == "observed"
+    assert meta["evidence"] == "modeled"
     assert meta["unit"] == "lb/kWh" and meta["g_per_lb_factor"] == 453.592
     assert meta["cutoff_test_start"].startswith("2025-11-01T00:00:00")
     assert meta["source_workbooks_sha256"]["AAA.xlsx"] == hashlib.sha256(

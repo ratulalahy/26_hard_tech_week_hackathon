@@ -57,9 +57,6 @@ from gridpilot.data.truth_fill import (
 from gridpilot.eval import (
     BOOTSTRAP_LABEL,
     BOUND_TOL_KG,
-    KW_PER_GPU,
-    PUE,
-    TRANSFER_FRACTION,
     TruthTable,
     common_support,
     h2_decision,
@@ -78,6 +75,7 @@ from gridpilot.results import (
     LIMIT_BOOKINGS_UNSIGNED,
     LIMIT_PHASES,
     LIMIT_SHADOW_U,
+    LIMIT_VALIDATION_DEV,
     LIMIT_ZERO_MISSES,
     SCHEMA_VERSION,
     canonical_hash,
@@ -100,8 +98,10 @@ from gridpilot.sim import (
     simulate,
     tail_climatology,
 )
+from gridpilot.sim.power import GPU_KW, PUE, TRANSFER_FRACTION
 from gridpilot.splits import TEST_START, drop_sealed
 from gridpilot.workload import CYCLE_DAYS, cycle_stats, replay
+from gridpilot.workload_profile import top_share as _top_share
 
 log = logging.getLogger("run_slice")
 
@@ -483,7 +483,7 @@ def _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F) -> int
         "run_id": run_id, "window": args.window, "git_sha": sha, "git_clean": status == "",
         "init": iso(init), "eval_start": iso(eval_start), "A": iso(coh.A), "F": iso(F),
         "phase_days": PHASE_DAYS, "sites": SITES, "time_only_sites": TIME_ONLY_SITES,
-        "transfer_s": TRANSFER_S, "kw_per_gpu": KW_PER_GPU, "pue": PUE,
+        "transfer_s": TRANSFER_S, "kw_per_gpu": GPU_KW, "pue": PUE,
         "transfer_fraction": TRANSFER_FRACTION, "bound_tol_kg": BOUND_TOL_KG,
         "blocks": list(BLOCKS), "policies": list(POLICY_ORDER),
         "diagnosed_policies": list(DIAGNOSED_POLICIES), "s_ranking": ranking,
@@ -740,6 +740,15 @@ def _flex_shares(cj, run_id) -> dict:
     return out
 
 
+# D-058 cut items, each with its reason. Stage 3 T10 moves the items that actually run out of
+# this list; until then everything here is a cut by the owner.
+NOT_RUN_REASON = "cut by owner (D-058)"
+NOT_RUN = [{"item": item, "reason": NOT_RUN_REASON} for item in (
+    "shadow-U (no advance booking) sensitivity",
+    "PUE, power, transfer-energy, idle-power and flexibility-share sensitivities",
+    "1.25x home-capacity runs",
+    "missingness-blind scheduling sensitivity")]
+
 GREEDY_NOTE = ("Per-job greedy search, including hindsight H, is not a cohort optimum; holding "
                "scarce BPAT slots for cleaner hours pushes later jobs to dirtier sites.")
 
@@ -747,6 +756,12 @@ GREEDY_NOTE = ("Per-job greedy search, including hindsight H, is not a cohort op
 def _t(kg: float) -> str:
     t = kg / 1000
     return f"{0.0 if abs(t) < 0.05 else t:,.1f} t"  # no "-0.0 t"
+
+
+def _ts(kg: float) -> str:
+    """Signed tonnes: "+10.0 t", "-4.9 t", "0.0 t"."""
+    t = kg / 1000
+    return "0.0 t" if abs(t) < 0.05 else f"{t:+,.1f} t"
 
 
 def framing_text(acct) -> str:
@@ -772,13 +787,14 @@ def framing_text(acct) -> str:
         head = ("no dynamic carbon search (K, W, L) improves on the static clean-region "
                 "ranking S (H3 not supported)")
     parts = [head]
-    for p, d, lo, hi in worse:
-        parts.append(f"{p} emits more than S ({_t(-d)} more; S − {p} = {_t(d)}, b = 4 95% "
-                     f"interval [{_t(lo)}, {_t(hi)}]; the interval excludes zero)")
+    for p, d, lo, hi in worse:  # stated as candidate − S, so "more" is positive (C4)
+        parts.append(f"{p} emits more than S ({_t(-d)} more; {p} − S = {_ts(-d)}, b = 4 95% "
+                     f"interval [{_ts(-hi)}, {_ts(-lo)}]; the interval excludes zero)")
     if same:
         ps = [p for p, *_ in same]
         names = ps[0] if len(ps) == 1 else ", ".join(ps[:-1]) + " and " + ps[-1]
-        detail = "; ".join(f"S − {p} = {_t(d)} [{_t(lo)}, {_t(hi)}]" for p, d, lo, hi in same)
+        detail = "; ".join(f"{p} − S = {_ts(-d)} [{_ts(-hi)}, {_ts(-lo)}]"
+                           for p, d, lo, hi in same)
         parts.append(f"{names} {'is' if len(same) == 1 else 'are'} not distinguishable from S "
                      f"({detail})")
     t_save = [b4(p, "U")[2] for p in ("W_time", "L_time")]
@@ -798,13 +814,10 @@ def top_share(cj: pl.DataFrame, frac: float = 0.01) -> dict:
     """Energy share of the top `frac` of cohort jobs by declared GPU-h (ties to job_uid).
     Execution energy is 0.60 kW × PUE 1.20 per GPU-h for every job and policy, so the energy
     share equals the declared GPU-h share."""
-    g = cj.select("job_uid", (pl.col("gpus") * pl.col("duration_s") / 3600).alias("gh")) \
-        .sort(["gh", "job_uid"], descending=[True, False])
-    n = math.ceil(frac * g.height)
-    total = float(g["gh"].sum())
-    top = float(g["gh"][:n].sum())
-    return {"n_jobs": n, "n_cohort": g.height, "gpu_h": top,
-            "energy_kwh": top * KW_PER_GPU * PUE, "share": top / total if total else None}
+    t = _top_share(cj.select("job_uid", (pl.col("gpus") * pl.col("duration_s") / 3600)
+                             .alias("gpu_h")), frac)
+    return {"n_jobs": t["n_jobs"], "n_cohort": t["n_cohort"], "gpu_h": t["gpu_h"],
+            "energy_kwh": t["gpu_h"] * GPU_KW * PUE, "share": t["share"]}
 
 
 def _workload_summary(cj, run_id) -> dict:
@@ -823,7 +836,7 @@ def _workload_summary(cj, run_id) -> dict:
 
 def headline_wording(m) -> str:
     """F7 headline with the F12.5 frame; transfer energy is simulated (fix round 1 #6a)."""
-    return ("attributed operational CO₂ (EIA consumption basis), including "
+    return ("attributed operational CO₂ (EIA consumption basis, modeled), including "
             f"{m['transfer_kwh'] / 1000:,.1f} MWh of simulated transfer energy; "
             "baseline-relative deadlines, exact declared runtimes; runtime uncertainty untested")
 
@@ -918,7 +931,7 @@ def build_artifacts(**k) -> dict:
         "claim_frame": CLAIM_FRAME,
         "limitations": [
             fcmod.LIMITATION, IMPORT_CONVENTION, LIMIT_ZERO_MISSES, LIMIT_BOOKINGS_UNSIGNED,
-            LIMIT_SHADOW_U, LIMIT_PHASES,
+            LIMIT_SHADOW_U, LIMIT_PHASES, LIMIT_VALIDATION_DEV,
             "EIA's 2025-26 emission factors may be a provisional vintage (F7).",
             ("Baseline bookings are an assumed advance-reservation calendar synthesized from "
              "the whole U replay (F11, F12.7); the result is not a historical online-router "
@@ -968,7 +981,7 @@ def build_artifacts(**k) -> dict:
             "home_slots": env(SITES[HOME], "GPU_slots", "assumed", "spec§7:home_slots"),
             "destination_slots": {s: env(n, "GPU_slots", "assumed", f"spec§7:slots:{s}")
                                   for s, n in SITES.items() if s != HOME},
-            "kw_per_gpu": env(KW_PER_GPU, "kW", "assumed", "F7:kw_per_gpu"),
+            "kw_per_gpu": env(GPU_KW, "kW", "assumed", "F7:kw_per_gpu"),
             "pue": env(PUE, "ratio", "assumed", "F7:pue"),
             "transfer_energy_fraction": env(TRANSFER_FRACTION, "fraction", "assumed",
                                             "F7:transfer_fraction"),
@@ -998,10 +1011,7 @@ def build_artifacts(**k) -> dict:
                 "G_diagnosed": env(t["policy_G"], "s", "measured", f"{run_id}:timing:G_diag"),
                 "G_undiagnosed": env(t["policy_G_undiagnosed"], "s", "measured",
                                      f"{run_id}:timing:G_plain")}},
-        "not_before_18": ["phases 49 and 98", "sensitivity-scenario policy runs",
-                          "production-basis repricing",
-                          "shadow-U and missingness-blind sensitivities", "F12.6 rebuild"],
-        "task5_status": "merged",
+        "not_run": NOT_RUN,
         "artifacts": list(ARTIFACTS),
     }
     return {"manifest.json": manifest, "metrics.json": metrics,
@@ -1068,8 +1078,8 @@ def forecast_replay(k) -> dict:
     filled = k["filled"].filter(pl.col("ba") == HOME)
     obs = hrs.join(filled.select(pl.col("ts_utc").alias("target_ts"), "ci_g_kwh", "tier"),
                    on="target_ts", how="left")
-    observed = [v if t == 1 else None for v, t in zip(obs["ci_g_kwh"], obs["tier"],
-                                                      strict=True)]
+    truth_vals = [v if t == 1 else None for v, t in zip(obs["ci_g_kwh"], obs["tier"],
+                                                        strict=True)]
     series, issues_by_model = {}, {}
     for model in ("K", "W", "L"):
         f = hrs.join(fc.filter(pl.col("model") == model).select("target_ts", "issue_ts", "value"),
@@ -1087,7 +1097,7 @@ def forecast_replay(k) -> dict:
                    "target_day": [iso(fcmod.target_hours(i)[0]),
                                   iso(fcmod.target_hours(i)[-1] + H1)],
                    "data_cutoff_hour_start": iso(i - (1 + env_h) * H1)} for i in issues]
-    # Observed history ending at the first issue's publication cutoff (story beat 1).
+    # Tier-1 truth history ending at the first issue's publication cutoff (story beat 1).
     first = issues[0]
     cut = first - (1 + env_h) * H1
     hist_hours = pl.datetime_range(cut - 167 * H1, cut, "1h", time_unit="us", time_zone="UTC",
@@ -1095,7 +1105,7 @@ def forecast_replay(k) -> dict:
     hist = pl.DataFrame({"ts_utc": hist_hours}).join(
         filled.select("ts_utc", "ci_g_kwh", "tier"), on="ts_utc", how="left")
     errors = {}
-    obs_arr = np.array([np.nan if v is None else v for v in observed])
+    obs_arr = np.array([np.nan if v is None else v for v in truth_vals])
     for model, vals in series.items():
         v = np.array([np.nan if x is None else x for x in vals])
         ok = np.isfinite(v) & np.isfinite(obs_arr)
@@ -1116,8 +1126,8 @@ def forecast_replay(k) -> dict:
     def nulls_reason(xs):
         return TRUTH_NULL if any(x is None for x in xs) else None
 
-    truth_env = env(observed, "g/kWh", "modeled", f"{run_id}:fr:truth",
-                    reason=nulls_reason(observed))
+    truth_env = env(truth_vals, "g/kWh", "modeled", f"{run_id}:fr:truth",
+                    reason=nulls_reason(truth_vals))
     hist_vals = [v if t == 1 else None for v, t in zip(hist["ci_g_kwh"], hist["tier"],
                                                         strict=True)]
     hist_env = env(hist_vals, "g/kWh", "modeled", f"{run_id}:fr:history",
@@ -1136,14 +1146,12 @@ def forecast_replay(k) -> dict:
         "hours": [iso(h) for h in hours.to_list()],
         "truth": truth_env,
         "truth_provenance": EIA_CI_PROVENANCE + " (tier 1 of the F14.6 scoring truth)",
-        "observed": truth_env,  # deprecated alias of `truth` (same envelope, evidence modeled)
         "forecasts": {m: env(v, "g/kWh", "forecast", f"{k['fc_metrics']['run_id']}:{m}",
                              reason=nulls_reason(v) and "null = no issued forecast")
                       for m, v in series.items()},
         "history_to_first_cutoff": {
             "hours": [iso(h) for h in hist_hours.to_list()],
             "truth": hist_env,
-            "observed": hist_env,  # deprecated alias of `truth`
             "cutoff_hour_start": iso(cut)},
         "week_errors": errors,
         "selection_mae": sel_mae,
@@ -1158,10 +1166,10 @@ def _action_co2(tt, gpus, duration_s, site, start_us, arrival_us) -> tuple[float
     val, miss = tt.integral(site, np.array([start_us]), np.array([start_us + d_us]))
     if miss[0]:
         raise AssertionError("illustrative action touches missing truth")
-    ex = gpus * KW_PER_GPU * PUE * val[0] / 1000
+    ex = gpus * GPU_KW * PUE * val[0] / 1000
     tr = 0.0
     if site != HOME:
-        t_fac = TRANSFER_FRACTION * gpus * KW_PER_GPU * d_us / 3.6e9 * PUE
+        t_fac = TRANSFER_FRACTION * gpus * GPU_KW * d_us / 3.6e9 * PUE
         ch, _ = tt.point(HOME, np.array([arrival_us]))
         cd, _ = tt.point(site, np.array([arrival_us]))
         tr = 0.5 * t_fac * (ch[0] + cd[0]) / 1000

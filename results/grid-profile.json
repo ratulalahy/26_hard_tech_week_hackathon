@@ -2811,6 +2811,7 @@
   }
  },
  "pace_july_weekday": {
+  "month": "2025-07",
   "definition": "mean over July 2025 weekdays (America/Denver; holidays included) of EIA-930 adjusted demand (isolated spikes removed), solar and wind; net load = demand − wind − solar",
   "n_days": {
    "value": 23,

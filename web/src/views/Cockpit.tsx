@@ -3,7 +3,7 @@ import { EChart } from '../components/EChart';
 import { Panel, Strip, useWidth } from '../components/charts';
 import { Ev, EvCI, Icon } from '../components/ui';
 import { C, CI_MAX, ci2c } from '../lib/color';
-import { DESTS, REGION, asNum, dayCurve, headline, type Core, type Dest } from '../lib/data';
+import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, headline, type Core, type Dest } from '../lib/data';
 import { fmt, fmtHour, fmtSpan, monthLabel, pct, pctRange, sig2 } from '../lib/format';
 import { makePlan } from '../lib/plan';
 import { useApp, type Mode } from '../lib/store';
@@ -84,7 +84,7 @@ export function Cockpit() {
                 <span className="t-hero">{mode === 'now' ? fmt(V) : `${pct(Math.max(0, p.cut(V)), 0)}%`}<span className="unit">{mode === 'now' ? 'g/kWh average, illustrative' : 'less CO₂ than running now, illustrative'}</span></span>
               </div>
               <div className="t-12 ink-2" style={{ marginTop: 4 }}>
-                {fmt(p.kwh)} kWh for the run, about {sig2(p.kg(V))} kg CO₂ at {fmt(V)} g/kWh{mode === 'move' ? `, including a ${fmt(p.transferH * 60)}-minute transfer that draws ${pct(p.transferFrac, 0)}% extra energy in Utah` : ''}{best !== mode ? `. The cleanest option here is to ${best === 'move' ? 'move' : best === 'wait' ? 'wait' : 'run now'}.` : '.'} <Ev e="modeled" />
+                {fmt(p.kwh)} kWh for the run, about {sig2(p.kg(V))} kg CO₂ at {fmt(V)} g/kWh{mode === 'move' ? `, including a ${fmt(p.transferH * 60)}-minute transfer that adds ${pct(p.transferFrac, 0)}% more energy, half drawn in Utah and half in ${REGION[dest].name}` : ''}{best !== mode ? `. The cleanest option here is to ${best === 'move' ? 'move' : best === 'wait' ? 'wait' : 'run now'}.` : '.'} <Ev e="modeled" />
               </div>
             </div>
             <ModeSeg />
@@ -101,8 +101,9 @@ export function Cockpit() {
         <Panel style={{ padding: '12px 16px' }}>
           <div data-testid="cockpit-registered" className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
             <span className="t-15">Registered result, the whole validation year: moving cuts {pctRange(h.placement.lo, h.placement.hi)}%, waiting only {pctRange(h.timing.lo, h.timing.hi)}%</span>
-            <span className="t-12 ink-3">95% intervals {pct(h.placement.ciLo)}–{pct(h.placement.ciHi)}% and {pct(h.timing.ciLo)}–{pct(h.timing.ciHi)}%; {fmt(data!.metrics.cohort.n_jobs.value)} jobs, same work, deadlines met. <Ev e="simulated" /></span>
+            <span className="t-12 ink-3">95% intervals {pct(h.placement.ciLo)}–{pct(h.placement.ciHi)}% and {pct(h.timing.ciLo)}–{pct(h.timing.ciHi)}%; {fmt(data!.metrics.cohort.n_jobs.value)} jobs, same work, {DEADLINES_MET}. <Ev e="simulated" /></span>
           </div>
+          <div className="t-12 ink-3" style={{ marginTop: 4 }} data-testid="cockpit-frame">{FRAME_LINE}</div>
         </Panel>
       </div>
 

@@ -49,14 +49,19 @@ CLAIM_FRAME = (
 IMPORT_CONVENTION = (
     "EIA's consumption-basis intensity assigns imports from Canada and Mexico the average US "
     "emissions rate (EIA-930 convention).")
-# F12.5 / F12.7 limitations (fix round 1 #2); check_claim_frame requires the first two.
+# F12.5 / F12.7 limitations (fix round 1 #2); check_claim_frame requires the three in
+# REQUIRED_LIMITATIONS.
 LIMIT_ZERO_MISSES = ("Zero deadline misses hold by construction under baseline bookings; they "
                      "are not evidence of production reliability.")
 LIMIT_BOOKINGS_UNSIGNED = "The bookings' effect on realized savings is not signed."
 LIMIT_SHADOW_U = ("The shadow-U sensitivity ('possible without advance reservations') is "
                   "pending.")
 LIMIT_PHASES = "Only workload phase 0 is run; phases 49 and 98 are pending."
-REQUIRED_LIMITATIONS = (LIMIT_ZERO_MISSES, LIMIT_BOOKINGS_UNSIGNED)
+LIMIT_VALIDATION_DEV = (
+    "Validation results are development evidence: the validation year was profiled before "
+    "the design, and the same period selected the learned model's settings. The sealed test "
+    "year is the confirmatory evaluation.")
+REQUIRED_LIMITATIONS = (LIMIT_ZERO_MISSES, LIMIT_BOOKINGS_UNSIGNED, LIMIT_VALIDATION_DEV)
 
 _ISO = re.compile(r"^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?)?"
                   r"(Z|[+-]\d{2}:?\d{2})?$")
@@ -234,7 +239,8 @@ def check_claim_frame(manifest: dict) -> None:
     for need, what in ((LIMITATION, "the Task 2 forecast limitation"),
                        (IMPORT_CONVENTION, "the EIA import convention"),
                        (LIMIT_ZERO_MISSES, "the zero-misses-by-construction limitation"),
-                       (LIMIT_BOOKINGS_UNSIGNED, "the unsigned-bookings-effect limitation")):
+                       (LIMIT_BOOKINGS_UNSIGNED, "the unsigned-bookings-effect limitation"),
+                       (LIMIT_VALIDATION_DEV, "the development-evidence limitation (A6)")):
         if need not in lim:
             raise ValueError(f"manifest limitations must include {what}")
 

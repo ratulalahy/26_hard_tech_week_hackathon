@@ -20,7 +20,8 @@ tiers 2–4 are modeled fills. An hour is *missing* if it has no value, no row, 
 touches a missing hour raises. Rows at or after TEST_START are dropped, and any request
 for an hour at or after TEST_START raises (seal, F8).
 
-**Evidence.** Energy and CO₂ are `modeled`; schedule quantities are `simulated`.
+**Evidence.** Energy is `modeled`; CO₂ outputs and schedule quantities are `simulated` (the
+policy outcomes of a simulated run; T9 C5).
 """
 
 from __future__ import annotations
@@ -32,11 +33,10 @@ import numpy as np
 import polars as pl
 
 from gridpilot.sim import HOME, SITES, TRANSFER_S, WarmupState
+from gridpilot.sim.power import GPU_KW as KW_PER_GPU  # one source of the constants (A14)
+from gridpilot.sim.power import PUE, TRANSFER_FRACTION
 from gridpilot.splits import TEST_START
 
-KW_PER_GPU = 0.60  # active power per allocated GPU slot (assumed, F7)
-PUE = 1.20  # at every site (assumed, F7)
-TRANSFER_FRACTION = 0.05  # transfer IT energy as a share of the job's IT energy (F7)
 BOUND_TOL_KG = 1e-6  # "feasible ≥ bound" tolerance on the scored cohort (F14.5)
 WEEK_TZ = "America/Denver"
 
@@ -68,8 +68,8 @@ EVIDENCE = {
     "moved_share_energy": "modeled", "blocked_jobs": "simulated", "blocked_kwh": "modeled",
     "fit_rejected_jobs": "simulated", "fit_rejected_kwh": "modeled",
     "execution_kwh": "modeled", "transfer_kwh": "modeled", "transfer_it_kwh": "modeled",
-    "energy_kwh": "modeled", "co2_kg": "modeled", "execution_co2_kg": "modeled",
-    "transfer_co2_kg": "modeled", "co2_kg_per_1000_gpu_h": "modeled",
+    "energy_kwh": "modeled", "co2_kg": "simulated", "execution_co2_kg": "simulated",
+    "transfer_co2_kg": "simulated", "co2_kg_per_1000_gpu_h": "simulated",
     "kwh_share_tier_ge2": "modeled", "remote_energy_share": "modeled",
 }
 
@@ -443,7 +443,7 @@ def score(
     - Energy: `execution_kwh`, `transfer_kwh` (with PUE), `transfer_it_kwh`, and
       `energy_kwh` = execution + transfer. `kwh_share_tier_ge2` is the share of charged
       kWh priced on fill tiers 2–4 (F14.6).
-    - CO₂ (kg, attributed operational, modeled): `co2_kg` = execution + transfer.
+    - CO₂ (kg, attributed operational, simulated): `co2_kg` = execution + transfer.
     - F11/F12.7/F14.7 diagnostics: moved counts and energy; `blocked` (F14.7, only
       non-zero for a `diagnose_blocked=True` ledger) counts and energy; and
       `fit_rejected` (the engine's F12.7 bug signal: a returned action that did not
@@ -860,7 +860,7 @@ def influence(
         }
     top_rows = rank[: max(ks)].rename({src: "source_id"}).to_dicts()
     return {"reference": reference, "rank_by": "declared_gpu_h", "ranking": top_rows,
-            "by_k": by_k, "evidence": "modeled"}
+            "by_k": by_k, "evidence": "simulated"}
 
 
 def support_check(

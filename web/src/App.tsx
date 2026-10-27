@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { setMid } from './lib/color';
-import { Ev, Icon, SEALED } from './components/ui';
+import { Icon, SEALED } from './components/ui';
 import { DESTS, asNum, dayCurve, type Core } from './lib/data';
 import { loadResults } from './lib/data';
 import { fmtHour, monthLabel } from './lib/format';
@@ -146,8 +146,7 @@ function ErrorState({ msg }: { msg: string }) {
     <div className="fixed inset-0 z-10 grid place-items-center">
       <div className="panel" style={{ maxWidth: 480 }}>
         <div className="t-15">The results files did not load</div>
-        <p className="t-13 ink-2" style={{ margin: '8px 0 0' }}>{msg}. The dashboard reads <code>data/results/*.json</code> next to <code>index.html</code>. Serve the built folder with <code>npm run preview</code> (opening the file directly does not work), or run <code>npm run data</code> and rebuild.</p>
-        <div style={{ marginTop: 8 }}><Ev e="observed">no numbers are shown until the evidence loads</Ev></div>
+        <p className="t-13 ink-2" style={{ margin: '8px 0 0' }}>{msg}. The dashboard reads <code>data/results/*.json</code> next to <code>index.html</code>. Serve the built folder with <code>npm run preview</code> (opening the file directly does not work), or run <code>npm run data</code> and rebuild. No numbers are shown until the results load.</p>
       </div>
     </div>
   );

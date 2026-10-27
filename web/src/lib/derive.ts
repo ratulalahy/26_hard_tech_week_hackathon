@@ -1,4 +1,4 @@
-// Facts derived in the browser from the grid profile (observed). No number here is typed in.
+// Facts derived in the browser from the grid profile (net load and solar are observed; any carbon figure is EIA's estimate, modeled). No number here is typed in.
 import { fmtHour } from './format';
 import type { Json } from './data';
 
