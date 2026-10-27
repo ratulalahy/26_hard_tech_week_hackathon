@@ -69,7 +69,7 @@ from gridpilot.forecast import VAL_FIT_AT, VAL_HISTORY_START
 from gridpilot.results import SCHEMA_VERSION, env, iso
 from gridpilot.sim import HOME, SITES
 from gridpilot.sim.power import GPU_KW, PUE
-from gridpilot.splits import TEST_START
+from gridpilot.splits import TEST_START, drop_sealed
 
 TZ_NAME = "America/Denver"
 SITE = HOME  # PACE
@@ -91,8 +91,13 @@ MARGINAL_SOURCE = ("docs/data-profile/grid.md §8: PACE ΔCO₂/Δnet-load OLS s
                    "year, R² 0.47. An associational reference, not a causal marginal factor, and "
                    "not the spec §10 training-only proxy (not built), so it gives no defensible "
                    "hourly assignment.")
-HEADLINE_RULE = ("the smallest size whose fixed-schedule (A) cut, U load, η 0.85, is at least 90% "
-                 "of A's largest cut over the size grid")
+HEADLINE_E_MWH = 4.0
+HEADLINE_RULE = ("illustrative selection (lead ruling, T10b fix round 1): 4 MWh / 1 MW, sized to the "
+                 "charging room the site connection leaves free; not an optimum")
+PLATEAU_RULE = ("the smallest size whose fixed-schedule (A) cut, U load, η 0.85, is at least 90% "
+                "of A's largest cut over the size grid")
+CONNECTION_SENS = 1.25  # the one sensitivity: the site connection +25%
+RUSH_QUANTILES = (0.95, 0.98, 0.99)
 NOTE = ("not part of the registered experiment; validation-year profiles; storage not simulated "
         "in the scheduler")
 PQ_LINE = ("Fast power-quality buffering (seconds to minutes) is a future interface, outside the "
@@ -308,6 +313,10 @@ def outcome(load: np.ndarray, ci: np.ndarray, c: np.ndarray, d: np.ndarray,
             "shifted_mwh": sd / 1000, "charged_mwh": sc / 1000,
             "losses_mwh": (sc - sd) / 1000 - (float(soc[-1]) / 1000 if soc is not None and len(soc) else 0.0),
             "terminal_soc_mwh": float(soc[-1]) / 1000 if soc is not None and len(soc) else 0.0,
+            # threshold scenario: a flat marginal factor; storage adds what it draws and does
+            # not deliver (losses plus terminal energy)
+            "flat_cut_kg": -(sc - sd) * MARGINAL_FLAT_G_KWH / 1000,
+            "flat_cut_frac": -(sc - sd) / math.fsum(load.tolist()) if load.sum() else None,
             "charge_ci_g_kwh": math.fsum((c * ci).tolist()) / sc if sc else None,
             "discharge_ci_g_kwh": math.fsum((d * ci).tolist()) / sd if sd else None}
 
@@ -374,7 +383,7 @@ def peak_relief(loads: dict[str, dict[str, np.ndarray]], rush: np.ndarray, peak_
 
 
 def _truth_ci(run_dir: Path, grid: pl.DataFrame) -> np.ndarray:
-    t = pl.read_parquet(run_dir / "truth_fill.parquet").filter(pl.col("ts_utc") < TEST_START)
+    t = drop_sealed(pl.read_parquet(run_dir / "truth_fill.parquet"))
     t = t.filter(pl.col("ba") == SITE).select("ts_utc", "ci_g_kwh")
     j = grid.join(t, on="ts_utc", how="left")
     miss = j.filter(pl.col("ci_g_kwh").is_null() | ~pl.col("ci_g_kwh").is_finite())
@@ -414,15 +423,27 @@ def net_load() -> pl.DataFrame:
 EVID = {"co2_t": ("t_CO2", "simulated"), "cut_t": ("t_CO2", "simulated"),
         "cut_frac": ("fraction", "simulated"), "shifted_mwh": ("MWh", "simulated"),
         "losses_mwh": ("MWh", "simulated"), "terminal_soc_mwh": ("MWh", "simulated"),
-        "charge_ci_g_kwh": ("g/kWh", "simulated"), "discharge_ci_g_kwh": ("g/kWh", "simulated")}
-_SCALE = {"co2_t": ("co2_kg", 1e-3), "cut_t": ("cut_kg", 1e-3)}
+        "charge_ci_g_kwh": ("g/kWh", "simulated"), "discharge_ci_g_kwh": ("g/kWh", "simulated"),
+        "flat_marginal_cut_t": ("t_CO2", "simulated"),
+        "flat_marginal_cut_frac": ("fraction", "simulated"),
+        "throughput_mwh_per_day": ("MWh/day", "simulated"),
+        "cycles_per_day": ("full_cycles/day", "simulated")}
+_SCALE = {"co2_t": ("co2_kg", 1e-3), "cut_t": ("cut_kg", 1e-3),
+          "flat_marginal_cut_t": ("flat_cut_kg", 1e-3),
+          "flat_marginal_cut_frac": ("flat_cut_frac", 1.0)}
 
 
-def _block(rows: list, pid: str) -> dict:
+def _block(rows: list, pid: str, *, n_days: float, sizes: Sequence[float]) -> dict:
     out = {}
     for k, (unit, ev) in EVID.items():
-        src, sc = _SCALE.get(k, (k, 1.0))
-        v = [None if r[0][src] is None else r[0][src] * sc for r in rows]
+        if k == "throughput_mwh_per_day":
+            v = [r[0]["shifted_mwh"] / n_days for r in rows]
+        elif k == "cycles_per_day":
+            v = [None if e == 0 else r[0]["shifted_mwh"] / n_days / e
+                 for r, e in zip(rows, sizes, strict=True)]
+        else:
+            src, sc = _SCALE.get(k, (k, 1.0))
+            v = [None if r[0][src] is None else r[0][src] * sc for r in rows]
         null = any(x is None for x in v)
         out[k] = env(v, unit, ev, f"{pid}:{k}",
                      reason="no storage (E = 0) or no energy dispatched" if null else None)
@@ -443,7 +464,8 @@ def _e(v, unit, ev, pid):
 
 def build_artifact(*, run_id: str, mob_run_id: str, window: tuple[datetime, datetime],
                    grid: pl.DataFrame, ci: np.ndarray, sched: dict, rush: dict, cases: dict,
-                   totals: dict, relief: dict, sizes=SIZES_MWH, etas=ETAS) -> dict:
+                   totals: dict, relief: dict, sens: dict, rush_sens: list,
+                   arrivals_end: datetime, sizes=SIZES_MWH, etas=ETAS) -> dict:
     """`cases`: {name: {"label", "source", "load", "sweep"}}; `totals`: the cohort CO₂ (kg) of
     U and of W under mobility ≤ 8 GPUs, every site and transfer counted once, and W's Utah
     execution CO₂; `rush`: {"threshold_mw", "mask", "peak_idx", "n_train"}."""
@@ -451,8 +473,10 @@ def build_artifact(*, run_id: str, mob_run_id: str, window: tuple[datetime, date
     hour = grid["hour"].to_numpy()
     mask = rush["mask"]
     vprof = [_mean(ci[hour == h].tolist()) for h in range(24)]
-    e_head = headline_size(cases["U"]["sweep"]["A"][ETA_DEFAULT], sizes)
+    e_head = HEADLINE_E_MWH
+    e_plateau = headline_size(cases["U"]["sweep"]["A"][ETA_DEFAULT], sizes)
     i_head = list(sizes).index(e_head)
+    n_days = grid.height / 24
     out_cases = {}
     for name, cs in cases.items():
         load = cs["load"]
@@ -474,8 +498,13 @@ def build_artifact(*, run_id: str, mob_run_id: str, window: tuple[datetime, date
                               f"{pid}:{name}:load_hours"),
             "base_co2_t": env(base["base_co2_kg"] / 1000, "t_CO2", "simulated",
                               f"{pid}:{name}:base_co2"),
-            "strategies": {s: {f"{eta:.2f}": _block(sw[s][eta], f"{pid}:{name}:{s}:{eta:.2f}")
+            "strategies": {s: {f"{eta:.2f}": _block(sw[s][eta], f"{pid}:{name}:{s}:{eta:.2f}",
+                                                    n_days=n_days, sizes=sizes)
                                for eta in etas} for s in ("A", "B")},
+            "charge_headroom_mw": env(
+                [float(x) / 1000 for x in np.quantile(
+                    CONNECTION_KW - load[np.isin(hour, sched["charge_hours"])], [0.1, 0.5, 0.9])],
+                "MW", "simulated", f"{pid}:{name}:headroom"),
             "import_at_headline": imp,
         }
     # move small, store for big (η 0.85): the cohort totals, every site and transfer once
@@ -490,8 +519,6 @@ def build_artifact(*, run_id: str, mob_run_id: str, window: tuple[datetime, date
     mb = {h: MARGINAL_BLOCKS_G_KWH[h // 6] for h in range(24)}
     m_ch = _mean(mb[h] for h in sched["charge_hours"])
     m_dis = _mean(mb[h] for h in sched["discharge_hours"])
-    flat = {name: [-r[0]["losses_mwh"] * MARGINAL_FLAT_G_KWH for r in cs["sweep"]["A"][ETA_DEFAULT]]
-            for name, cs in cases.items()}
     peak_ts = grid["ts_utc"][rush["peak_idx"]]
     return {
         "schema_version": SCHEMA_VERSION,
@@ -503,7 +530,10 @@ def build_artifact(*, run_id: str, mob_run_id: str, window: tuple[datetime, date
         "site": SITE,
         "local_tz": TZ_NAME,
         "window": {"start": iso(window[0]), "end": iso(window[1]),
-                   "n_hours": env(grid.height, "hours", "simulated", f"{pid}:window:n_hours"),
+                   "n_hours": env(grid.height, "hours", "measured", f"{pid}:window:n_hours"),
+                   "arrivals_end": iso(arrivals_end),
+                   "drain": "arrivals stop at A; the window runs on until the last cohort job "
+                            "ends, so the cluster's load falls over the final hours (the drain)",
                    "rule": "the registered cohort window: eval_start to the last hour a cohort "
                            "job (U, or W under mobility ≤ 8 GPUs) still runs"},
         "assumptions": {
@@ -536,8 +566,8 @@ def build_artifact(*, run_id: str, mob_run_id: str, window: tuple[datetime, date
         },
         "validation_profile_g_kwh": env(vprof, "g/kWh", "modeled", f"{pid}:validation_profile"),
         "strategy_labels": {"A": "fixed daily schedule (training-year hours, no forecasts)",
-                            "B": "hindsight heuristic (each day planned on that day's actual "
-                                 "CI; not an optimum or a bound)"},
+                            "B": "hindsight heuristic (sees each day's actual carbon in "
+                                 "advance; one possible plan, not a limit)"},
         "break_even": {
             "rule": "storage cuts CO₂ only if charging intensity / η < displaced intensity",
             "train_charge_ci_g_kwh": env(ch_ci, "g/kWh", "modeled", f"{pid}:be:charge_ci"),
@@ -555,19 +585,30 @@ def build_artifact(*, run_id: str, mob_run_id: str, window: tuple[datetime, date
                 "reference_discharge_hours_g_kwh": env(m_dis, "g/kWh", "modeled",
                                                        f"{pid}:be:m_dis"),
                 "flat_g_kwh": env(MARGINAL_FLAT_G_KWH, "g/kWh", "modeled", f"{pid}:be:m_flat"),
-                "flat_scenario_cut_t_A": {k: env([x / 1000 for x in v], "t_CO2", "simulated",
-                                                 f"{pid}:be:{k}:flat_A")
-                                          for k, v in flat.items()},
+                "flat_rule": "−(charged − delivered) × 618 g/kWh: losses plus energy left stored "
+                             "at the end; per strategy and η in cases.*.strategies "
+                             "(flat_marginal_cut_t)",
             },
         },
         "rush": {
             "rule": f"validation hours with PACE net load ≥ the training years' "
                     f"{RUSH_QUANTILE:.0%} quantile (training-derived threshold)",
             "threshold_mw": env(rush["threshold_mw"], "MW", "observed", f"{pid}:rush:threshold"),
-            "n_hours": env(int(mask.sum()), "hours", "observed", f"{pid}:rush:n"),
-            "n_train_hours": env(rush["n_train"], "hours", "observed", f"{pid}:rush:n_train"),
+            "n_hours": env(int(mask.sum()), "hours", "measured", f"{pid}:rush:n"),
+            "n_days": env(rush["n_days"], "days", "measured", f"{pid}:rush:n_days"),
+            "n_train_hours": env(rush["n_train"], "hours", "measured", f"{pid}:rush:n_train"),
             "by_local_hour": env(np.bincount(hour[mask], minlength=24).tolist(), "hours",
-                                 "observed", f"{pid}:rush:by_hour"),
+                                 "measured", f"{pid}:rush:by_hour"),
+            "sensitivity": [{
+                "quantile": env(r["q"], "fraction", "assumed", f"{pid}:rush:q{r['q']}"),
+                "threshold_mw": env(r["threshold_mw"], "MW", "observed",
+                                    f"{pid}:rush:q{r['q']}:thr"),
+                "n_hours": env(r["n_hours"], "hours", "measured", f"{pid}:rush:q{r['q']}:n"),
+                "n_days": env(r["n_days"], "days", "measured", f"{pid}:rush:q{r['q']}:days"),
+                "relief": {p: {s: env(v, "MW", "simulated", f"{pid}:rush:q{r['q']}:{p}:{s}",
+                                      reason=None if v is not None else "no rush hours")
+                               for s, v in by.items()} for p, by in r["relief"].items()},
+            } for r in rush_sens],
             "peak_hour_utc": iso(peak_ts),
             "peak_net_load_mw": env(rush["peak_mw"], "MW", "observed", f"{pid}:rush:peak"),
         },
@@ -594,9 +635,28 @@ def build_artifact(*, run_id: str, mob_run_id: str, window: tuple[datetime, date
                                       f"{pid}:combined:move_only"),
             "move_and_store_cut_frac": {s: env(v, "fraction", "simulated",
                                                f"{pid}:combined:{s}") for s, v in comb.items()},
+            "flat_marginal_storage_cut_t": {s: env([r[0]["flat_cut_kg"] / 1000
+                                                     for r in mob[s][ETA_DEFAULT]], "t_CO2",
+                                                    "simulated", f"{pid}:combined:flat:{s}")
+                                            for s in ("A", "B")},
         },
         "headline": {"rule": HEADLINE_RULE,
-                     "e_mwh": env(e_head, "MWh", "assumed", f"{pid}:headline:e")},
+                     "e_mwh": env(e_head, "MWh", "simulated", f"{pid}:headline:e"),
+                     "plateau_rule": PLATEAU_RULE,
+                     "plateau_e_mwh": env(e_plateau, "MWh", "simulated", f"{pid}:headline:plateau")},
+        "sensitivity": {
+            "connection_plus_25": {
+                "rule": f"the site connection × {CONNECTION_SENS} "
+                        f"({CONNECTION_KW * CONNECTION_SENS / 1000:.3f} MW), U load, η 0.85",
+                "connection_mw": env(CONNECTION_KW * CONNECTION_SENS / 1000, "MW", "assumed",
+                                     f"{pid}:sens:conn"),
+                **{s: {"cut_frac": env([r[0]["cut_frac"] for r in sens[s][ETA_DEFAULT]],
+                                       "fraction", "simulated", f"{pid}:sens:conn:{s}:cut_frac"),
+                       "cut_t": env([r[0]["cut_kg"] / 1000 for r in sens[s][ETA_DEFAULT]],
+                                    "t_CO2", "simulated", f"{pid}:sens:conn:{s}:cut_t")}
+                   for s in ("A", "B")},
+            },
+        },
         "power_quality": PQ_LINE,
     }
 
@@ -609,6 +669,7 @@ def from_runs(run_dir: Path, mob_dir: Path) -> dict:
     if cfg.get("window") != "validation":
         raise ValueError(f"{run_dir} is not a validation run")
     t_start = datetime.fromisoformat(cfg["eval_start"].replace("Z", "+00:00"))
+    t_a = datetime.fromisoformat(cfg["A"].replace("Z", "+00:00"))
     led = {p: pl.read_parquet(run_dir / f"ledger_{p}.parquet") for p in ("U", "S", "W")}
     led_mob = pl.read_parquet(mob_dir / "ledger_W.parquet")
     last_end = max(x["end_ts"].max() for x in (*led.values(), led_mob))
@@ -636,7 +697,7 @@ def from_runs(run_dir: Path, mob_dir: Path) -> dict:
     for k in cases:
         cases[k]["load"] = loads[k]
         cases[k]["sweep"] = sweep(loads[k], ci, grid, sched)
-    tt = TruthTable(pl.read_parquet(run_dir / "truth_fill.parquet"))
+    tt = TruthTable(drop_sealed(pl.read_parquet(run_dir / "truth_fill.parquet")))
     jobs = led["U"].select("job_uid",
                            pl.col("job_uid").str.split("#").list.first().alias("source_id"),
                            "arrival_ts", "gpus", "duration_s")
@@ -650,10 +711,26 @@ def from_runs(run_dir: Path, mob_dir: Path) -> dict:
         b = cases[name]["sweep"]["A"][ETAS[0]][0][0]["base_co2_kg"]
         if not math.isclose(b, kg, rel_tol=1e-9):
             raise AssertionError(f"{name}: hourly-load CO₂ {b} != accounting {kg}")
-    relief = peak_relief({p: {s: hourly_load_kwh(led[p], s, t0, n) for s in SITES}
-                          for p in ("U", "S", "W")}, mask, peak_idx)
+    site_loads = {p: {s: hourly_load_kwh(led[p], s, t0, n) for s in SITES}
+                  for p in ("U", "S", "W")}
+    relief = peak_relief(site_loads, mask, peak_idx)
+    day = grid["day"].to_numpy()
+    net_train = net.filter((pl.col("ts_utc") >= TRAIN_START) & (pl.col("ts_utc") < TRAIN_END))
+    rush_sens = []
+    for q in RUSH_QUANTILES:
+        tq = rush_threshold(net_train, q)
+        mq = np.nan_to_num(nv, nan=-np.inf) >= tq
+        rq = peak_relief(site_loads, mq, peak_idx)
+        rush_sens.append({"q": q, "threshold_mw": tq, "n_hours": int(mq.sum()),
+                          "n_days": int(np.unique(day[mq]).size),
+                          "relief": {p: {s: rq[p][s]["rush_change_vs_U_mw"] for s in SITES}
+                                     for p in ("S", "W")}})
+    sens = sweep(loads["U"], ci, grid, sched, etas=(ETA_DEFAULT,),
+                 conn_kw=CONNECTION_KW * CONNECTION_SENS)
     return build_artifact(run_id=run_dir.name, mob_run_id=mob_dir.name, window=win, grid=grid,
                           ci=ci, sched=sched,
                           rush={"threshold_mw": thr, "mask": mask, "peak_idx": peak_idx,
-                                "n_train": n_train, "peak_mw": float(nv[peak_idx])},
-                          cases=cases, totals=totals, relief=relief)
+                                "n_train": n_train, "peak_mw": float(nv[peak_idx]),
+                                "n_days": int(np.unique(grid["day"].to_numpy()[mask]).size)},
+                          cases=cases, totals=totals, relief=relief, sens=sens,
+                          rush_sens=rush_sens, arrivals_end=t_a)

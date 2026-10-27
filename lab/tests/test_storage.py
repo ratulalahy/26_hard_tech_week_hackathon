@@ -248,6 +248,9 @@ def test_outcome_counts_losses_in_the_charging_energy():
     assert o["losses_mwh"] == pytest.approx(0.15 / 1000)
     assert o["terminal_soc_mwh"] == 0.0
     assert o["charge_ci_g_kwh"] == pytest.approx(100) and o["discharge_ci_g_kwh"] == pytest.approx(500)
+    # flat marginal threshold scenario: storage adds what it draws and does not deliver
+    assert o["flat_cut_kg"] == pytest.approx(-0.15 * 618 / 1000)
+    assert o["flat_cut_frac"] == pytest.approx(-0.15 / 4)
 
 
 def test_terminal_energy_is_valued_at_zero():
@@ -257,6 +260,8 @@ def test_terminal_energy_is_valued_at_zero():
     o = st.outcome(load, ci, c, d, soc)
     assert o["cut_kg"] == pytest.approx(-0.1) and o["terminal_soc_mwh"] == pytest.approx(0.00085)
     assert o["losses_mwh"] == pytest.approx(0.00015)
+    # the flat scenario counts the stranded terminal energy too
+    assert o["flat_cut_kg"] == pytest.approx(-1.0 * 618 / 1000)
 
 
 def test_import_view_and_rebound():
@@ -312,15 +317,20 @@ def test_window_covers_the_cohort_to_its_last_hour():
     assert s == datetime(2024, 11, 1, tzinfo=UTC) and e == datetime(2025, 10, 17, 18, tzinfo=UTC)
 
 
-def test_storage_module_reads_only_through_pre_seal_loaders():
-    """No direct parquet scans or unseal paths in the storage code (F8)."""
+def test_truth_reads_are_sealed_at_the_reader():
+    """Every truth_fill read in the storage code is the direct first argument of drop_sealed
+    (the T11 F8 guard's rule), and there are no direct scans or unseal paths."""
     for p in (Path(st.__file__),
               Path(__file__).resolve().parents[1] / "scripts" / "export_storage.py"):
         tree = ast.parse(p.read_text())
+        parents = {c: n for n in ast.walk(tree) for c in ast.iter_child_nodes(n)}
         names = {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)} | \
                 {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)}
         assert "scan_parquet" not in names, p.name
         assert not any("unseal" in x.lower() for x in names), p.name
         for n in ast.walk(tree):
-            if isinstance(n, ast.Constant) and isinstance(n.value, str):
-                assert "carbon_hourly" not in n.value and "balance.parquet" not in n.value, p.name
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) \
+                    and n.func.attr == "read_parquet" and "truth_fill" in ast.unparse(n):
+                w = parents.get(n)
+                assert isinstance(w, ast.Call) and getattr(w.func, "id", None) == "drop_sealed" \
+                    and w.args and w.args[0] is n, f"{p.name}:{n.lineno} unsealed truth read"

@@ -951,7 +951,7 @@
  "storage": {
   "artifact": "storage.json",
   "kind": "illustrative",
-  "sha256": "6e8d5d7b18436b7e173df1438467440db6db3ad9dc35d5e34458cb013ddecd8c",
-  "canonical_sha256": "678aaca319961fbedf522f71f8b831a5a3c1c609b03a2cfe1a9caf4901599c6c"
+  "sha256": "189369663a6f0fb595d27c7f03c2c2a2e298ef368f16f07422bb2c86a6d1572a",
+  "canonical_sha256": "f6c8064598a1c516674ca7007de8140245442a63ac93d679487564246b0f0d16"
  }
 }

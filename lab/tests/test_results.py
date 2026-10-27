@@ -235,7 +235,20 @@ def test_storage_evidence_classes():
     assert sto["note"] == ("not part of the registered experiment; validation-year profiles; "
                            "storage not simulated in the scheduler")
     assert "heuristic" in sto["strategy_labels"]["B"]
-    assert "bound" not in sto["strategy_labels"]["B"].replace("not an optimum or a bound", "")
+    assert "bound" not in sto["strategy_labels"]["B"] and "optim" not in sto["strategy_labels"]["B"]
+    # fix round 1: the headline is the lead's illustrative 4 MWh / 1 MW selection (simulated
+    # selection rule); counts are measured; the flat-marginal scenario is a loss at every size
+    h = sto["headline"]
+    assert h["e_mwh"]["value"] == 4 and h["e_mwh"]["evidence"] == "simulated"
+    assert "illustrative" in h["rule"] and h["plateau_e_mwh"]["evidence"] == "simulated"
+    for k in ("n_hours", "n_days", "n_train_hours", "by_local_hour"):
+        assert sto["rush"][k]["evidence"] == "measured", k
+    assert sto["window"]["n_hours"]["evidence"] == "measured"
+    for c in sto["cases"].values():
+        for by_eta in c["strategies"].values():
+            for b in by_eta.values():
+                assert all(x <= 0 for x in b["flat_marginal_cut_t"]["value"])
+    assert [r["quantile"]["value"] for r in sto["rush"]["sensitivity"]] == [0.95, 0.98, 0.99]
     a = sto["assumptions"]
     for k in ("sizes_mwh", "p_over_e", "etas", "eta_default", "connection_mw"):
         assert a[k]["evidence"] == "assumed", k
