@@ -9,7 +9,6 @@ test_results.py (ARTIFACTS)."""
 import hashlib
 import json
 import re
-import subprocess
 
 import pytest
 
@@ -17,7 +16,6 @@ from gridpilot.paths import REPO_ROOT, RESULTS_DIR
 
 PATH = RESULTS_DIR / "assumptions.json"
 NOTEBOOK = REPO_ROOT / "notebooks" / "40_assumptions_and_reality.ipynb"
-WATER_REF = "origin/s3/t14-water"
 BANNED = re.compile(r"\b(prove[sd]?|proving|confirm(s|ed)?)\b|(?<!not )\bavoided\b", re.IGNORECASE)
 
 REGISTER_IDS = {"flexible_mobile", "dest_slots", "transfer", "kw_per_gpu", "pue", "bookings",
@@ -36,28 +34,9 @@ def doc():
     return json.loads(PATH.read_text())
 
 
-def _water_text() -> str | None:
-    """The water illustration's text: results/water.json once merged, else the T14 branch's
-    committed file (pending merge), else None. The notebook resolves it the same way."""
-    p = RESULTS_DIR / "water.json"
-    if p.exists():
-        return p.read_text()
-    r = subprocess.run(["git", "show", f"{WATER_REF}:results/water.json"], cwd=REPO_ROOT,
-                       capture_output=True, text=True, check=False)
-    return r.stdout if r.returncode == 0 else None
-
-
-def _water():
-    t = _water_text()
-    return json.loads(t) if t is not None else None
-
-
 def _sources():
-    src = {p.name: json.loads(p.read_text()) for p in RESULTS_DIR.glob("*.json")
-           if p.name != "assumptions.json"}
-    if "water.json" not in src and (w := _water()) is not None:
-        src["water.json"] = w
-    return src
+    return {p.name: json.loads(p.read_text()) for p in RESULTS_DIR.glob("*.json")
+            if p.name != "assumptions.json"}
 
 
 def _resolve(src, ref):
@@ -122,16 +101,17 @@ def test_every_number_is_read_from_a_results_file(doc):
 
 
 def test_water_source_hash_matches_the_resolved_source(doc):
-    """Water envelopes must come from the water file the notebook read: its recorded sha256 equals
-    the sha256 of the source resolved now (results/water.json, or the T14 ref while it is pending).
-    Water envelopes with no resolvable source fail; they never skip."""
-    uses_water = any("water.json#" in e["provenance_id"] for _, e in _envs(doc))
-    if not uses_water:
-        assert "water.json" not in doc["sources"]
-        return
-    text = _water_text()
-    assert text is not None, "water envelopes exist but no water.json source resolves"
-    assert doc["sources"]["water.json"]["sha256"] == hashlib.sha256(text.encode()).hexdigest()
+    """Water envelopes must come from the committed results/water.json the notebook read (its
+    recorded sha256 equals the file's now); there is no other source (T20: no git-ref fallback,
+    no pending path, no PR numbers)."""
+    assert any("water.json#" in e["provenance_id"] for _, e in _envs(doc))
+    text = (RESULTS_DIR / "water.json").read_text()
+    assert doc["sources"]["water.json"] == {
+        "from": "results/water.json", "sha256": hashlib.sha256(text.encode()).hexdigest()}
+    assert "pending" not in doc
+    blob = json.dumps(doc) + NOTEBOOK.read_text()
+    blob += (REPO_ROOT / "docs" / "evidence" / "40_assumptions_and_reality.html").read_text()
+    assert not re.search(r"\bPR ?#\d+|origin/s3/|pending merge", blob)
 
 
 def test_register_rows_complete(doc):

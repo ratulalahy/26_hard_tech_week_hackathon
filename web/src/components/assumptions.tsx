@@ -30,7 +30,6 @@ function Chips({ x }: { x: Json }) {
 
 export function AssumptionsSection({ a }: { a: Json }) {
   const reg: Json[] = a.register ?? [], neg: Json[] = a.negative_results ?? [], w = a.weather;
-  const pending: Json[] = a.pending ?? [];
   return (
     <div className="flex flex-col gap-3" data-testid="method-assumptions">
       <p className="t-12 ink-2" style={{ margin: 0 }}>
@@ -70,7 +69,6 @@ export function AssumptionsSection({ a }: { a: Json }) {
             </li>
           ))}
         </ul>
-        {pending.length ? <p className="t-12 ink-3" style={{ margin: '4px 0 0' }}>{pending.map((p) => `The ${p.item} is ${p.status}`).join('; ')}: its numbers are illustrative and may change.</p> : null}
       </div>
       {w ? <div className="well" style={{ padding: 12 }}>
         <h4 className="t-13 fw-600" style={{ margin: '0 0 4px' }}>Would weather-aware forecasts help?</h4>
