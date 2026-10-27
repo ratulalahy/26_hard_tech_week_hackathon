@@ -1,0 +1,9 @@
+# Vendored from github.com/pbakaus/impeccable (see VENDORED.md).
+# Same rule as upstream's root .gitattributes: cmd.exe needs CRLF batch files,
+# and storing them normalized keeps our blobs identical to upstream's.
+*.cmd text eol=crlf
+# Upstream files stay byte-identical, so `git diff --check` skips them
+# (a few reference docs carry trailing spaces). Our own files stay checked.
+* -whitespace
+VENDORED.md whitespace
+.gitattributes whitespace
