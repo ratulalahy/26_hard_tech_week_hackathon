@@ -320,7 +320,8 @@ def test_sealed_read_logs_before_returning_sealed_rows(tmp_path, monkeypatch):
     assert r["time_range"] == [seal.iso(t0), seal.iso(sealkit.F_SYN)]
     assert "test_seal:test_sealed_read_logs_before_returning_sealed_rows" in r["caller"]
     assert log[2]["outcome"] == "ok" and log[2]["n_reads"] == 1
-    assert len(synced) == 3 + 1  # one fsync per line, and the directory when the log is new
+    # one fsync per line (log: 3, shared witness: 2) and per new file's directory (2)
+    assert len(synced) == 3 + 2 + 2
 
 
 def test_the_read_log_is_append_only_across_sessions(tmp_path):

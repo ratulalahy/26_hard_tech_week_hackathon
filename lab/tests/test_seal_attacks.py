@@ -217,7 +217,8 @@ def test_an_earlier_invocation_with_a_different_record_is_refused(tmp_path):
     repo, data, _ = sealkit.setup(tmp_path)
     res = tmp_path / "res"
     _write_log(res, "invocation", config="f" * 64)
-    refused(repo, data, r"\(b\).*different freeze record", results=res, rerun_reason="x")
+    refused(repo, data, r"\(b\).*freeze record ffffffffffff.*cannot be compared", results=res,
+            rerun_reason="x")
 
 
 # --------------------------------------------------------------------------- M2: hidden changes
@@ -408,7 +409,7 @@ def test_the_validation_reference_hashes_the_serialized_metrics(tmp_path):
 
 
 def test_S7_the_context_closes_and_an_authorization_is_single_use(tmp_path):
-    repo, data, results = sealkit.setup(tmp_path)
+    repo, data, _results = sealkit.setup(tmp_path)
     a = sealkit.authorize(repo, data)
     forged = dataclasses.replace(a, rerun_reason="forged", input_sha256={})
     with pytest.raises(RuntimeError), seal.test_mode(a):
@@ -423,7 +424,7 @@ def test_S7_the_context_closes_and_an_authorization_is_single_use(tmp_path):
         pass  # S7d: reused
     with pytest.raises(seal.SealError, match="unused Authorization"), seal.test_mode(forged):
         pass  # S7h: a dataclasses.replace copy
-    assert not (results / seal.LOCK_NAME).exists()
+    assert not a.lock_path.exists()
 
 
 def test_S7e_another_thread_cannot_read_while_the_context_is_active(tmp_path):
@@ -448,9 +449,10 @@ def test_S7e_another_thread_cannot_read_while_the_context_is_active(tmp_path):
 
 
 def test_M10_a_held_lock_refuses_a_second_session(tmp_path):
-    repo, data, results = sealkit.setup(tmp_path)
+    repo, data, _results = sealkit.setup(tmp_path)
     a = sealkit.authorize(repo, data)
-    (results / seal.LOCK_NAME).write_text("pid 1\n")
+    a.lock_path.parent.mkdir(parents=True, exist_ok=True)
+    a.lock_path.write_text("pid 1\n")  # pid 1 is alive
     with pytest.raises(seal.SealError, match="another test-mode session"), seal.test_mode(a):
         pass
 

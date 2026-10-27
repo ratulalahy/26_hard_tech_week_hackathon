@@ -42,6 +42,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import math
 import os
 from datetime import UTC, datetime, timedelta
 from functools import partial
@@ -274,3 +275,31 @@ def site_mask(
         .select("ba", "ts_utc", "truth_ok")
         .sort("ba", "ts_utc")
     )
+
+
+# Publication envelope of consumed CI, hours after the hour end (= forecast.ENVELOPE_H
+# ["ci_consumed"]; a test keeps them equal).
+CI_ENVELOPE_H = 96
+
+
+def s_ranking_at(start: datetime, fit_at: datetime, *, sites=CORE_BAS,
+                 path: Path | None = None) -> tuple[list[str], dict[str, float]]:
+    """S's site ranking at `fit_at` (Astra F05; for T12's freeze record and run_slice): the
+    mean consumed-basis CI per site over [start, fit_at) using only rows published by fit_at
+    (ts_utc + 1 h + 96 h <= fit_at, the forecasts' envelope), as math.fsum / n; sites sorted by
+    (mean, BA). Pre-seal only: `fit_at` must be at or before TEST_START."""
+    if fit_at > TEST_START or not start < fit_at:
+        raise ValueError(f"s_ranking_at needs start < fit_at <= TEST_START, got [{start}, "
+                         f"{fit_at})")
+    published = pl.col("ts_utc") + pl.duration(hours=1 + CI_ENVELOPE_H) <= fit_at
+    rows = (drop_sealed(pl.scan_parquet(path or CARBON_PATH))
+            .filter((pl.col("ts_utc") >= start) & (pl.col("ts_utc") < fit_at) & published
+                    & pl.col("ba").is_in(list(sites)))
+            .select("ba", "ts_utc", "ci_consumed_g_kwh").collect()
+            .drop_nulls("ci_consumed_g_kwh").sort("ba", "ts_utc"))
+    means = {}
+    for (ba,), g in rows.partition_by("ba", as_dict=True, maintain_order=True).items():
+        v = g["ci_consumed_g_kwh"].to_list()
+        means[ba] = math.fsum(v) / len(v)
+    order = sorted(means, key=lambda b: (means[b], b))
+    return order, {b: means[b] for b in order}

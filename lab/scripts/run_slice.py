@@ -68,7 +68,7 @@ from gridpilot import grid_profile as gpmod
 from gridpilot import seal
 from gridpilot import workload_profile as wpmod
 from gridpilot.cohort import SCENARIO_NOTES, SCENARIOS, ledger_hash, prefix_cohort
-from gridpilot.data.eia_co2 import CARBON_PATH, build_carbon
+from gridpilot.data.eia_co2 import CARBON_PATH, build_carbon, s_ranking_at
 from gridpilot.data.traces import TRACE_DIR
 from gridpilot.data.truth_fill import (
     BALANCE_PATH,
@@ -127,7 +127,6 @@ from gridpilot.sim import (
     tail_climatology,
 )
 from gridpilot.sim.power import GPU_KW, PUE, TRANSFER_FRACTION
-from gridpilot.splits import drop_sealed
 from gridpilot.workload import CYCLE_DAYS, cycle_stats, replay
 from gridpilot.workload_profile import top_share as _top_share
 
@@ -256,18 +255,7 @@ def s_ranking(window: Window | None = None) -> tuple[list[str], dict[str, float]
     if window is not None and window.is_test:
         fz = seal.require_active("s_ranking(test)").freeze
         return fz.s_order, {b: fz.s_means[b] for b in fz.s_order}
-    rows = (drop_sealed(pl.scan_parquet(CARBON_PATH))
-            .filter((pl.col("ts_utc") >= RANK_TRAIN[0]) & (pl.col("ts_utc") < RANK_TRAIN[1])
-                    & s_rank_published(RANK_FIT_AT) & pl.col("ba").is_in(list(SITES)))
-            .select("ba", "ts_utc", "ci_consumed_g_kwh").collect()
-            .drop_nulls("ci_consumed_g_kwh").sort("ba", "ts_utc"))
-    # Means as math.fsum / n, not a parallel group_by mean (T10 fix r1 M-4).
-    means = {}
-    for (ba,), g in rows.partition_by("ba", as_dict=True, maintain_order=True).items():
-        v = g["ci_consumed_g_kwh"].to_list()
-        means[ba] = math.fsum(v) / len(v)
-    order = sorted(means, key=lambda b: (means[b], b))
-    return order, {b: means[b] for b in order}
+    return s_ranking_at(RANK_TRAIN[0], RANK_FIT_AT, sites=tuple(SITES), path=CARBON_PATH)
 
 
 def bound_gap(acc: pl.DataFrame, per: pl.DataFrame) -> dict:

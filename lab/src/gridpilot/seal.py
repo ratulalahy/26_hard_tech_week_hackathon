@@ -42,6 +42,19 @@ point, after a recorded configuration freeze:
    fsynced JSONL line to `results/test_reads.jsonl`, and only then parses the same bytes.
 
 Inside the context, `gridpilot.window.Window.test()` is constructible; outside it raises.
+
+**Shared state in the git common dir** (fix round 2, N1/N2): every invocation is also appended
+(fsynced) to `<git-common-dir>/gridpilot/test_openings.jsonl`, the witness that all worktrees and
+the main checkout share, so an opening in one worktree is a prior opening in every other. The
+session lock is `<git-common-dir>/gridpilot/test_mode.lock`, holding the session's pid.
+
+**Recovery from a crashed session** (a stale lock, whose pid is no longer alive): check (a) names
+the stale lock. Then (1) delete the lock file; (2) commit **only** the read log
+(`results/test_reads.jsonl`), never edited; (3) rerun with `--rerun-reason "<what crashed, and
+the fix>"`. A code fix needs a new freeze record: a bug-fix rerun accepts it when the decision
+fields are identical, the new `freeze_commit` descends from the old one, and only
+`freeze_commit`, `frozen_at` and `validation_run` differ (lead ruling N3); both record hashes and
+the field diff are logged.
 """
 
 from __future__ import annotations
@@ -81,7 +94,15 @@ READ_LOG_REL = "results/test_reads.jsonl"
 TEST_RESULTS_REL = "results/test"
 TEST_HISTORY_DIR = "history"  # results/test/history/<run_id>/: earlier runs' artifacts (M9)
 TEST_RUNS_REL = "runs/test"
-LOCK_NAME = ".test_mode.lock"  # results/.test_mode.lock while a session is open (M10)
+# Shared across worktrees, under `git rev-parse --git-common-dir` (N1, N2).
+WITNESS_REL = "gridpilot/test_openings.jsonl"
+LOCK_REL = "gridpilot/test_mode.lock"
+GITHUB_ORIGIN = "https://github.com/ratulalahy/26_hard_tech_week_hackathon.git"  # N5
+# N3 (lead ruling): a bug-fix rerun may change only these record fields ...
+RERUN_MUTABLE = frozenset({"freeze_commit", "frozen_at", "validation_run"})
+# ... and must keep these identical.
+DECISION_FIELDS = ("deployed_policy", "L_max_leaf_nodes", "s_ranking", "test_F",
+                   "scenario_catalog", "input_sha256", "snapshot_id")
 COMPLETED_MARKER = "manifest.json"  # results/test/manifest.json = a completed test run
 # Paths that later commits may add or modify (never rename or delete) without reopening (a).
 POST_FREEZE_PATHS = (FREEZE_REL, f"{TEST_RESULTS_REL}/", READ_LOG_REL)
@@ -294,6 +315,9 @@ def freeze_errors(d: Any) -> list[str]:
                 a, b = (parse_utc(x, "s_ranking.window") for x in win)
                 if not a < b <= TEST_START:
                     errs.append("s_ranking.window must be a pre-seal range (end <= TEST_START)")
+                elif (a, b) != (TEST_HISTORY_START, TEST_FIT_AT):
+                    errs.append(f"s_ranking.window must be [{iso(TEST_HISTORY_START)}, "
+                                f"{iso(TEST_FIT_AT)}] (N11)")
             except SealError as e:
                 errs.append(str(e))
     sc = d["scenario_catalog"]
@@ -346,8 +370,15 @@ def load_freeze(path: Path | str | None = None) -> Freeze:
 
 
 def _git(root: Path, *args: str, timeout: float | None = None) -> subprocess.CompletedProcess:
+    env = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}  # never wait on a credential prompt
     return subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True,
-                          check=False, timeout=timeout)
+                          check=False, timeout=timeout, env=env)
+
+
+def git_common_dir(root: Path) -> Path:
+    """The git directory every worktree of `root` shares (N1, N2)."""
+    d = Path(_git_out(root, "rev-parse", "--git-common-dir"))
+    return (d if d.is_absolute() else Path(root) / d).resolve()
 
 
 def _git_out(root: Path, *args: str) -> str:
@@ -464,10 +495,21 @@ class Authorization:
     exceptions: tuple[str, ...] = ()
     remote_tag: str | None = None
     synthetic: bool = False
+    common_dir: Path | None = None
+    origin_url: str | None = None
+    record_changes: tuple = ()  # N3: accepted bug-fix record changes (dicts)
 
     @property
     def F(self) -> datetime:
         return self.freeze.test_F
+
+    @property
+    def witness_path(self) -> Path:
+        return Path(self.common_dir) / WITNESS_REL
+
+    @property
+    def lock_path(self) -> Path:
+        return Path(self.common_dir) / LOCK_REL
 
     @property
     def log_path(self) -> Path:
@@ -510,6 +552,41 @@ def _check_roots(root: Path, data: Path, results: Path, synthetic: bool) -> None
                         f"marker; {data} has none")
     if _same(data, paths.REPO_ROOT / "data") or _same(root, paths.REPO_ROOT):
         raise SealError("(I4) synthetic=True may not use the repository or its data dir")
+    if Path(results).resolve().is_relative_to(paths.REPO_ROOT.resolve()):
+        raise SealError(f"(N8) synthetic=True may not write into the repository: results_dir "
+                        f"{results} is under {paths.REPO_ROOT}")
+
+
+def _lock_state(path: Path) -> tuple[int | None, bool] | None:
+    """None without a lock; else (pid, alive)."""
+    if not path.exists():
+        return None
+    try:
+        pid = int(path.read_text().split()[1])
+    except (IndexError, ValueError, OSError):
+        return None, False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return pid, False
+    except PermissionError:
+        return pid, True
+    return pid, True
+
+
+def _lock_message(path: Path, pid: int | None, alive: bool) -> str:
+    if alive:
+        return (f"another test-mode session is open (pid {pid}; lock {path}): wait for it to "
+                f"finish")
+    return (f"a stale lock {path} from pid {pid}, a session that crashed. Recovery: delete the "
+            f"lock, commit only the read log (results/test_reads.jsonl), then rerun with "
+            f"--rerun-reason \"<what crashed, and the fix>\"")
+
+
+def _check_lock(path: Path) -> None:
+    st = _lock_state(path)
+    if st is not None:
+        raise SealError("(a) " + _lock_message(path, *st))
 
 
 def _load_committed_freeze(root: Path) -> Freeze:
@@ -591,8 +668,8 @@ def _check_tree(root: Path, freeze: Freeze) -> str:
     return head
 
 
-def _check_tag(root: Path, freeze: Freeze, head: str,
-               remote_override: str | None) -> str | None:
+def _check_tag(root: Path, freeze: Freeze, head: str, remote_override: str | None,
+               synthetic: bool = False) -> tuple[str | None, str | None]:
     """(b) and I3: the annotated tag binds the record to the freeze commit, locally and on
     origin. Returns the remote tag object (or None without an origin)."""
     ref = f"refs/tags/{FREEZE_TAG}"
@@ -627,26 +704,37 @@ def _check_tag(root: Path, freeze: Freeze, head: str,
                         f"{FREEZE_REL}: {only[:5]}")
     if _git(root, "merge-base", "--is-ancestor", tagged, head).returncode:
         raise SealError(f"(b) the {FREEZE_TAG!r} tag ({tagged[:12]}) is not HEAD or an ancestor")
-    if _git(root, "remote", "get-url", "origin").returncode:
-        return None
+    url = _git(root, "remote", "get-url", "origin")
+    if url.returncode:
+        if synthetic:
+            return None, None
+        raise SealError(f"(b) the repository has no origin; it must be {GITHUB_ORIGIN} (N5)")
+    origin = url.stdout.strip()
+    if not synthetic and origin != GITHUB_ORIGIN:
+        raise SealError(f"(b) origin is {origin}, not {GITHUB_ORIGIN} (N5)")
     local_obj = _git_out(root, "rev-parse", ref)
-    try:
-        r = _git(root, "ls-remote", "origin", ref, timeout=60)
-        failed = r.returncode != 0
-        out = r.stdout.strip()
-    except subprocess.TimeoutExpired:
-        failed, out = True, ""
+    failed, out = True, ""
+    for _ in range(2):  # N5: retry once
+        try:
+            r = _git(root, "ls-remote", "origin", ref, timeout=60)
+            failed, out = r.returncode != 0, r.stdout
+        except subprocess.TimeoutExpired:
+            failed, out = True, ""
+        if not failed:
+            break
     if failed:
         if remote_override:
-            return f"unverified: {remote_override}"
+            return f"unverified: {remote_override}", origin
         raise SealError(f"(b) cannot reach origin to verify the {FREEZE_TAG!r} tag; fix the "
                         f"network, or pass --remote-tag-override \"<reason>\" (logged)")
-    remote_obj = out.split()[0] if out else None
+    # N5: the exact refname line, never a decoy ref ending in the same path
+    exact = [ln.split("\t") for ln in out.splitlines() if ln.split("\t")[-1:] == [ref]]
+    remote_obj = exact[0][0] if exact else None
     if remote_obj != local_obj:
         raise SealError(f"(b) the {FREEZE_TAG!r} tag on origin ({str(remote_obj)[:12]}) differs "
                         f"from the local tag ({local_obj[:12]}): push it, or the local tag was "
                         f"moved")
-    return remote_obj
+    return remote_obj, origin
 
 
 def _check_manifests(root: Path, freeze: Freeze) -> dict[str, str]:
@@ -718,9 +806,21 @@ def _check_validation_ref(root: Path, freeze: Freeze) -> None:
                         f"committed results at HEAD {want}")
 
 
-def _check_inputs(freeze: Freeze, data_dir: Path) -> dict[str, str]:
-    """(c) Every input file's sha256 matches the freeze record."""
+def _check_inputs(freeze: Freeze, data_dir: Path, synthetic: bool = False) -> dict[str, str]:
+    """(c) Every input file's sha256 matches the freeze record. N8: a synthetic run's inputs
+    must really live in its marked data dir (no symlink into a real one)."""
     rec = freeze.input_sha256
+    if synthetic:
+        real = Path(paths.DATA_DIR).resolve()
+        real_marked = (real / SYNTHETIC_MARKER).exists()
+        for rel in rec:
+            rp = (data_dir / rel).resolve()
+            if not rp.is_relative_to(Path(data_dir).resolve()):
+                raise SealError(f"(N8) synthetic input {rel} resolves outside the synthetic data "
+                                f"dir: {rp}")
+            if not real_marked and rp.is_relative_to(real):
+                raise SealError(f"(N8) synthetic input {rel} resolves into GRIDPILOT_DATA_DIR "
+                                f"{real}")
     missing = [r for r in TEST_INPUTS if r not in rec]
     if missing:
         raise SealError(f"(c) the freeze record has no hash for the test inputs {missing}")
@@ -735,9 +835,19 @@ def _check_inputs(freeze: Freeze, data_dir: Path) -> dict[str, str]:
     return rec
 
 
+def _witness_events(root: Path) -> list[dict]:
+    w = git_common_dir(root) / WITNESS_REL
+    return read_log_events(w.read_bytes() if w.exists() else None)
+
+
 def prior_openings(root: Path, data_dir: Path, results_dir: Path) -> list[str]:
-    """I1: every trace of an earlier opening of the sealed window."""
+    """I1, N1, N4: every trace of an earlier opening of the sealed window, including the
+    witness in the git common dir that every worktree shares."""
     out = []
+    n_w = sum(r.get("event") in OPENING_EVENTS for r in _witness_events(root))
+    if n_w:
+        out.append(f"the shared witness ({WITNESS_REL} in the git common dir) holds {n_w} "
+                   f"invocation(s)")
     log = results_dir / Path(READ_LOG_REL).name
     for where, raw in (("working-tree read log", log.read_bytes() if log.exists() else None),
                        ("committed read log", committed_bytes(root, READ_LOG_REL))):
@@ -745,7 +855,7 @@ def prior_openings(root: Path, data_dir: Path, results_dir: Path) -> list[str]:
         n = sum(e in OPENING_EVENTS for e in ev)
         if n:
             out.append(f"{where} holds {n} invocation/read line(s)")
-    hist = _git_out(root, "log", "--all", "--format=%h", "--",
+    hist = _git_out(root, "log", "--all", "--reflog", "--full-history", "--format=%h", "--",
                     f"{TEST_RESULTS_REL}/{COMPLETED_MARKER}", READ_LOG_REL).split()
     if hist:
         out.append(f"git history touches the test outputs ({len(hist)} commit(s), "
@@ -760,17 +870,56 @@ def prior_openings(root: Path, data_dir: Path, results_dir: Path) -> list[str]:
     return out
 
 
-def _check_configs(root: Path, results_dir: Path, freeze: Freeze) -> None:
-    """I3: no earlier invocation used a different freeze record."""
+def _earlier_record(root: Path, sha: str, events: list[dict]) -> dict | None:
+    """The earlier freeze record with this sha256: logged with its invocation, or any version
+    of config/freeze.json in git history (reflog included)."""
+    for r in events:
+        if r.get("config_sha256") == sha and isinstance(r.get("freeze_record"), dict):
+            return r["freeze_record"]
+    revs = _git_out(root, "log", "--all", "--reflog", "--format=%H", "--", FREEZE_REL).split()
+    for c in revs:
+        raw = committed_bytes(root, FREEZE_REL, c)
+        if raw is not None and hashlib.sha256(raw).hexdigest() == sha:
+            return json.loads(raw)
+    return None
+
+
+def _check_configs(root: Path, results_dir: Path, freeze: Freeze,
+                   reason: str | None) -> tuple[dict, ...]:
+    """I3 and N3: an earlier invocation used a different freeze record only as a bug-fix rerun
+    (lead ruling): with a rerun reason, identical decision fields, a new freeze commit that
+    descends from the old one, and only freeze_commit / frozen_at / validation_run changed.
+    Returns the accepted changes (logged)."""
     log = results_dir / Path(READ_LOG_REL).name
-    for raw in (log.read_bytes() if log.exists() else None,
-                committed_bytes(root, READ_LOG_REL)):
-        other = {r.get("config_sha256") for r in read_log_events(raw)
-                 if r.get("event") in OPENING_EVENTS and r.get("config_sha256")} - {freeze.sha256}
-        if other:
-            raise SealError(f"(b) the read log holds an invocation with a different freeze "
-                            f"record ({min(other)[:12]}): the record was changed after "
-                            f"the window was opened")
+    events = (read_log_events(log.read_bytes() if log.exists() else None)
+              + read_log_events(committed_bytes(root, READ_LOG_REL)) + _witness_events(root))
+    other = sorted({r.get("config_sha256") for r in events
+                    if r.get("event") in OPENING_EVENTS and r.get("config_sha256")}
+                   - {freeze.sha256})
+    changes = []
+    for sha in other:
+        old = _earlier_record(root, sha, events)
+        if old is None:
+            raise SealError(f"(b) an earlier invocation used freeze record {sha[:12]}, which is "
+                            f"neither logged nor in git history: it cannot be compared")
+        new = freeze.raw
+        diff = {k: [old.get(k), new.get(k)] for k in sorted(set(old) | set(new))
+                if old.get(k) != new.get(k)}
+        if not reason:
+            raise SealError(f"(b) an earlier invocation used a different freeze record "
+                            f"({sha[:12]}; changed: {sorted(diff)}); a bug-fix rerun needs "
+                            f"--rerun-reason")
+        bad = [k for k in diff if k not in RERUN_MUTABLE]
+        if bad:
+            raise SealError(f"(b) the freeze record changed {bad} since an earlier opening "
+                            f"({sha[:12]}); a bug-fix rerun may change only "
+                            f"{sorted(RERUN_MUTABLE)} (N3)")
+        oc, nc = old.get("freeze_commit"), new.get("freeze_commit")
+        if oc != nc and _git(root, "merge-base", "--is-ancestor", str(oc), nc).returncode:
+            raise SealError(f"(b) the new freeze commit {nc[:12]} does not descend from the "
+                            f"earlier one {str(oc)[:12]} (N3)")
+        changes.append({"old_sha256": sha, "new_sha256": freeze.sha256, "changed": diff})
+    return tuple(changes)
 
 
 def _check_outputs(prior: list[str], rerun_reason: str | None) -> str | None:
@@ -808,20 +957,23 @@ def _authorize(repo_root, data_dir, results_dir, rerun_reason, remote_override, 
     results = Path(results_dir or root / "results")
     _check_roots(root, data, results, synthetic)
     freeze = _load_committed_freeze(root)
+    common = git_common_dir(root)
+    _check_lock(common / LOCK_REL)
     head = _check_tree(root, freeze)
-    remote = _check_tag(root, freeze, head, remote_override)
+    remote, origin = _check_tag(root, freeze, head, remote_override, synthetic)
     manifests = _check_manifests(root, freeze)
     exceptions = _check_manifest_inputs(root, freeze)
     _check_scenario(freeze)
     _check_validation_ref(root, freeze)
-    inputs = _check_inputs(freeze, data)
-    _check_configs(root, results, freeze)
+    inputs = _check_inputs(freeze, data, synthetic)
     prior = prior_openings(root, data, results)
     reason = _check_outputs(prior, rerun_reason)
+    changes = _check_configs(root, results, freeze, reason)
     auth = Authorization(freeze=freeze, repo_root=root, data_dir=data, results_dir=results,
                          code_commit=head, rerun_reason=reason, manifests_sha256=manifests,
                          input_sha256=inputs, prior_openings=tuple(prior),
-                         exceptions=exceptions, remote_tag=remote, synthetic=synthetic)
+                         exceptions=exceptions, remote_tag=remote, synthetic=synthetic,
+                         common_dir=common, origin_url=origin, record_changes=changes)
     with _ISSUED_LOCK:
         _ISSUED[id(auth)] = auth
     return auth
@@ -845,6 +997,7 @@ class Session:
     exported: bool = False
     n_reads: int = 0
     built: dict[str, str] = field(default_factory=dict)
+    closed: bool = False  # N6: a captured context cannot revive a closed session
 
     @property
     def F(self) -> datetime:
@@ -905,7 +1058,8 @@ _SESSION: contextvars.ContextVar[Session | None] = contextvars.ContextVar("gridp
 def active() -> Session | None:
     """The active test-mode session of this process and thread, or None (M6)."""
     s = _SESSION.get()
-    if s is None or s.pid != os.getpid() or s.thread != threading.get_ident():
+    if (s is None or s.closed or s.pid != os.getpid()
+            or s.thread != threading.get_ident()):
         return None
     return s
 
@@ -958,8 +1112,8 @@ def _lock(path: Path) -> None:
     try:
         fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
     except FileExistsError as e:
-        raise SealError(f"{path} exists: another test-mode session is open, or one crashed "
-                        f"(check the read log, then remove the lock)") from e
+        st = _lock_state(path) or (None, False)
+        raise SealError(_lock_message(path, *st)) from e
     with os.fdopen(fd, "w") as f:
         f.write(f"pid {os.getpid()} {datetime.now(UTC).isoformat()}\n")
 
@@ -987,17 +1141,28 @@ def test_mode(auth: Authorization) -> Iterator[Session]:
                         "(a copy, or a second entry, is refused)")
     if active() is not None or _SESSION.get() is not None:
         raise SealError("test mode is already active")
-    lock = auth.results_dir / LOCK_NAME
+    lock = auth.lock_path
     _lock(lock)
     s = Session(auth=auth, session_id=uuid.uuid4().hex[:16], pid=os.getpid(),
                 thread=threading.get_ident())
     try:
-        _append(s.log_path, _base_record(s, "invocation") | {
+        # N7: re-check, under the lock, that nothing was opened since the authorization
+        now = prior_openings(auth.repo_root, auth.data_dir, auth.results_dir)
+        new = [p for p in now if p not in auth.prior_openings]
+        if new:
+            raise SealError(f"(d) the sealed window was opened after this authorization "
+                            f"({'; '.join(new)}): authorize again")
+        inv = _base_record(s, "invocation") | {
             "test_F": iso(auth.F), "rerun_reason": auth.rerun_reason,
             "prior_openings": list(auth.prior_openings), "exceptions": list(auth.exceptions),
-            "remote_tag": auth.remote_tag, "synthetic": auth.synthetic,
+            "remote_tag": auth.remote_tag, "origin_url": auth.origin_url,
+            "synthetic": auth.synthetic, "record_changes": list(auth.record_changes),
+            "freeze_record": auth.freeze.raw, "repo_root": str(auth.repo_root),
+            "results_dir": str(auth.results_dir),
             "inputs_sha256": auth.input_sha256, "manifests_sha256": auth.manifests_sha256,
-            "argv": list(sys.argv)})
+            "argv": list(sys.argv)}
+        _append(auth.witness_path, inv)  # N1: the shared witness first, before any read
+        _append(s.log_path, inv)
     except BaseException:
         lock.unlink(missing_ok=True)
         raise
@@ -1010,12 +1175,15 @@ def test_mode(auth: Authorization) -> Iterator[Session]:
         outcome = f"error: {type(e).__name__}: {e}"[:500]
         raise
     finally:
+        s.closed = True
         _SESSION.reset(token)
         try:
             _read_only(s.run_dirs)
-            _append(s.log_path, _base_record(s, "close") | {
+            close = _base_record(s, "close") | {
                 "outcome": outcome, "rc": s.rc, "exported": s.exported, "n_reads": s.n_reads,
-                "run_id": s.run_id, "run_dirs": [str(d) for d in s.run_dirs]})
+                "run_id": s.run_id, "run_dirs": [str(d) for d in s.run_dirs]}
+            _append(s.log_path, close)
+            _append(auth.witness_path, close)
         finally:
             lock.unlink(missing_ok=True)
 
