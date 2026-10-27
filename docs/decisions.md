@@ -558,3 +558,7 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - a quantified weather point: hindsight router H, with perfect carbon foresight, ties the fixed ranking S, so weather-aware forecasts are unlikely to change the routing result;
   - the things not done, with their reasons.
 - **Timing:** before the freeze if ready by about 20:30, otherwise after the test run. Queued as T17.
+
+## D-069 · 2026-10-27 15:29 MT · High effort for the freeze, test and audit-triage agents
+- **Decided by:** owner ("sounds good", in reply to the lead's recommendation).
+- **Decision:** the T12 rebuild and freeze writer, its review (T12r), the T13 test-run support, and the audit-dispositions work run at **high** effort. The lead and the other agents stay at their defaults.
