@@ -167,18 +167,18 @@ Sol's corrections are adopted as written in spec §15 F13, unless noted below.
 
 | ID | Sev | Disposition | Where |
 |---|---|---|---|
-| R1 | important | **Fixed.** Three sets (envelope, operational, bound). The bound drops other jobs' occupancy, bookings **and** warm-up occupancy. | F13.1 |
-| R2 | important | **Fixed.** A prefix cutoff rule, with no suffix bookings, warm-up counted once, and the record written before scoring. U is causal (job k's slot depends only on earlier jobs), so the prefix's bookings are unchanged by truncation. | F13.2 |
-| R3 | important | **Fixed.** U's initial pass breaks ties by `(arrival, declared deadline, job_uid)`, which does not depend on U. The engine already does this (Task 4). | F13.3 |
-| R4 | minor | **Fixed.** The bootstrap is fully specified as Sol suggested. | F13.4 |
-| R5 | minor | **Fixed.** H2 direction must be consistent across b = 2, 4 and 8. | F13.4 |
-| R6 | important | **Fixed.** The fallback is a 91-day truth window [2025-07-25T00Z, 2025-10-24T00Z). The benchmark times forecast construction, carbon search and export. The fallback never replaces the registered selection. | F13.5 |
-| R7 | minor | **Fixed.** The wording now targets §10's marginal regressions. | F13.6 |
-| R8 | minor | **Fixed.** The exact counts are removed from F11. | F11 |
-| R9 | minor | **Fixed.** Ties go to the stable source ID. The blocked diagnostic is defined per job, counted once, with execution energy counted once. | F13.4, F13.7 |
-| R10 | important | **Fixed.** A plan amendment section points every remaining task at F11–F13, through the lead's per-task amendment files. | plan §"Amendments" |
-| R11 | minor | **Fixed.** Renamed to "missingness-blind scheduling sensitivity". | F13.6 |
-| R12 | minor | **Fixed.** D-049's counts are corrected to 11 important and 11 minor. | D-049 |
-| — | (interaction) | **Fixed.** Bookings are **not** exempt from truth support: every U booking is pre-checked (F12.3), and a failure is an accounting-support failure. The engine skips the runtime mask check for bookings only because the pre-check already passed. | F13.3 |
+| R1 | important | **Fixed (41b2e30).** Three sets (envelope, operational, bound). The bound drops other jobs' occupancy, bookings **and** warm-up occupancy. | F13.1 |
+| R2 | important | **Fixed (41b2e30).** A prefix cutoff rule, with no suffix bookings, warm-up counted once, and the record written before scoring. U is causal (job k's slot depends only on earlier jobs), so the prefix's bookings are unchanged by truncation. | F13.2 |
+| R3 | important | **Fixed (41b2e30).** U's initial pass breaks ties by `(arrival, declared deadline, job_uid)`, which does not depend on U. The engine already does this (Task 4). | F13.3 |
+| R4 | minor | **Fixed (41b2e30).** The bootstrap is fully specified as Sol suggested. | F13.4 |
+| R5 | minor | **Fixed (41b2e30).** H2 direction must be consistent across b = 2, 4 and 8. | F13.4 |
+| R6 | important | **Fixed (41b2e30).** The fallback is a 91-day truth window [2025-07-25T00Z, 2025-10-24T00Z). The benchmark times forecast construction, carbon search and export. The fallback never replaces the registered selection. | F13.5 |
+| R7 | minor | **Fixed (41b2e30).** The wording now targets §10's marginal regressions. | F13.6 |
+| R8 | minor | **Fixed (41b2e30).** The exact counts are removed from F11. | F11 |
+| R9 | minor | **Fixed (41b2e30).** Ties go to the stable source ID. The blocked diagnostic is defined per job, counted once, with execution energy counted once. | F13.4, F13.7 |
+| R10 | important | **Fixed (41b2e30).** A plan amendment section points every remaining task at F11–F13, through the lead's per-task amendment files. | plan §"Amendments" |
+| R11 | minor | **Fixed (41b2e30).** Renamed to "missingness-blind scheduling sensitivity". | F13.6 |
+| R12 | minor | **Fixed (41b2e30).** D-049's counts are corrected to 11 important and 11 minor. | D-049 |
+| — | (interaction) | **Fixed (41b2e30).** Bookings are **not** exempt from truth support: every U booking is pre-checked (F12.3), and a failure is an accounting-support failure. The engine skips the runtime mask check for bookings only because the pre-check already passed. | F13.3 |
 
 **Gate status.** Sol r2 is not_ready. The remaining items are precision corrections adopted verbatim. The owner's 3-run budget leaves one run, the Wed results audit. So the F13 re-check is done by a fresh-context Claude reviewer, recorded as a substitution per `.claude/skills/codex-gates`. Sol states that validation-only implementation can proceed now.
