@@ -31,7 +31,8 @@ const results = readdirSync(join(repo, 'results')).filter((f) => f.endsWith('.js
 const REQUIRED = ['metrics.json', 'manifest.json', 'forecast-replay.json', 'job-replay.json', 'grid-profile.json', 'workload-profile.json',
   'extensions.json', 'scenario-flows.json', 'flexibility-budget.json'];
 const missing = REQUIRED.filter((f) => !results.includes(f));
-if (missing.length) { console.error('results/ is missing ' + missing.join(', ') + ' (make slice / profile / extensions / flows)'); process.exit(1); }
+// (a COPY_DATA_REPO test checkout carries only what its test needs)
+if (missing.length && !process.env.COPY_DATA_REPO) { console.error('results/ is missing ' + missing.join(', ') + ' (make slice / profile / extensions / flows)'); process.exit(1); }
 for (const f of results) {
   copyFileSync(join(repo, 'results', f), join(out, 'results', f));
   console.log('results/' + f, kb(join(out, 'results', f)));

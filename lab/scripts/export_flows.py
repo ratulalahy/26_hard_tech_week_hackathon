@@ -36,6 +36,7 @@ from gridpilot.flows import (
 from gridpilot.paths import REPO_ROOT, RESULTS_DIR
 from gridpilot.results import canonical_hash, validate_artifact, write_json_atomic
 from gridpilot.scenario import Window
+from gridpilot.splits import drop_sealed
 from gridpilot.workload import replay
 
 SCENARIOS = (
@@ -146,7 +147,7 @@ def build(run: Path, ext_root: Path) -> tuple[dict, dict]:
     cj = jobs.filter((pl.col("arrival_ts") >= window.eval_start) & (pl.col("arrival_ts") < A))
     if ids_hash(cj["job_uid"].to_list()) != _json(run / "cohort.json")["cohort_ids_sha256"]:
         raise AssertionError("rebuilt cohort differs from the registered cohort ids")
-    tf = pl.read_parquet(run / "truth_fill.parquet")
+    tf = drop_sealed(pl.read_parquet(run / "truth_fill.parquet"))  # F8: pre-seal truth only
     tt = TruthTable(tf, fill_mask(tf))
     jcols = cj.select("job_uid", "source_id", "arrival_ts", "gpus", "duration_s")
     acct_u = job_accounting(led["U"], jcols, tt)
