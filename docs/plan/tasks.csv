@@ -19,6 +19,7 @@ FZ,Freeze,Write freeze.json on main + tag config-freeze,Claude lead,queued,T12r,
 T13,Test,Sealed test year: one logged run + export,Claude lead,queued,FZ,Tue 21:30,Tue 22:15,,results/test + test_reads.jsonl,Opened exactly once (D-059)
 T14,Post-test,Water footprint (illustrative),Claude agent,in progress,T10b,Tue 15:21,Tue 20:00,,PR (merge after T13),NREL factors x fuel mix; heavy caveats
 T16,Post-test,Utah's toughest grid days case study (pre-registered top-3 net-load days),Claude agent,queued,T11,Tue ~17:30,Tue 20:30,,PR (merge after T13),D-066; cut after water if time is short
+T17,Evidence,Notebook: assumptions vs reality + negative results (incl. weather point quantified),Claude agent,queued,,next free slot,Tue 20:30,,notebooks/40_assumptions_and_reality.ipynb,D-068; reads committed results only
 MG,Post-test,Merge T15 + T14 + T16 after review; rebuild dashboard with test view,Claude lead,queued,T13;T15;T14;T16,Tue 22:15,Wed 00:30,,dashboard + artifact link,
 AU,Audit,Astra results audit (Codex),Codex,queued,T13,Tue 23:00,Wed 01:00,,docs/reviews/*results-audit*,Runs overnight; pre-approved
 AD,Audit,Disposition audit findings,Claude lead,queued,AU,Wed 07:00,Wed 09:00,,dispositions,
