@@ -457,3 +457,19 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - the remaining §7 sensitivities (PUE, power, transfer energy, idle power, flexibility shares, 1.25× home capacity runs);
   - the missingness-blind scheduling sensitivity.
 - **Evidence:** the owner's answer in session; Stage 3 plan `docs/superpowers/plans/2026-10-27-stage3-freeze-test.md`.
+
+## D-059 · 2026-10-27 ~12:15 MT · G1: spec approved; the sealed test year may open once, after the freeze
+- **Decided by:** owner.
+- **Decision:**
+  - The spec is approved: `docs/superpowers/specs/2026-10-27-gridpilot-design.md`, including §15 F1–F14.
+  - The sealed test window (2025-11-01 → the frozen cutoff) may be opened **exactly once**, through the logged entry point (`make slice WINDOW=test`), after the configuration freeze is recorded and tagged `config-freeze`.
+  - Any rerun needs a logged reason.
+- **Evidence:** the owner's answer in session ("Yes, after the freeze").
+
+## D-060 · 2026-10-27 ~12:15 MT · Seal-machinery rulings (T11)
+- **Decided by:** lead (Claude).
+- **Decision:**
+  1. Test forecast issues start at the test fit date 2025-10-29, as in spec §5 and as validation does. Only targets from 2025-11-01 are scored.
+  2. Entry-point check (a) accepts a HEAD that differs from `freeze_commit` only by `config/freeze.json` and test outputs, because a commit cannot contain its own hash. Check (b) pins the record through the annotated `config-freeze` tag.
+  3. The freeze record uses snapshot `8a1b36b24b91` (openmeteo final; nothing else changed).
+- **Note:** during T11 the implementer attempted `make slice WINDOW=test` against the real data, against its brief. The permission classifier blocked it, and it would have refused anyway (no freeze record). The lead verified that no `results/test_reads.jsonl`, `results/test/` or test carbon parquet exists anywhere.
