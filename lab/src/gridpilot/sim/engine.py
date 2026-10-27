@@ -55,7 +55,7 @@ JOB_COLUMNS = ["job_uid", "arrival_ts", "duration_s", "gpus", "job_type", "flexi
 BOOKING_COLUMNS = ["job_uid", "site", "start_us", "end_us", "deadline_us"]
 LEDGER_COLUMNS = [
     "job_uid", "site", "start_ts", "end_ts", "transfer", "late", "deadline_ts", "gpus",
-    "arrival_ts", "duration_s", "moved", "booking_site", "blocked",
+    "arrival_ts", "duration_s", "moved", "booking_site", "blocked", "fit_rejected",
 ]
 
 Ledger = pl.DataFrame
@@ -63,12 +63,17 @@ Ledger = pl.DataFrame
 
 start_ts/end_ts are execution (after any transfer), datetime[us, UTC]; end_ts − start_ts
 is the duration rounded to the µs, and duration_s is the exact input value. `transfer`
-is True when the job ran away from home; `moved` when it did not run on its booking;
-`blocked` (F12.7) when the policy returned a legal, on-time action that did not fit
-(another booking or an earlier move held its capacity), so the job fell back to its
-booking — or, under `simulate(..., diagnose_blocked=True)`, the F14.7 diagnostic (the
-policy would have chosen better without other jobs' pending bookings); `late` is always
-False under bookings (kept for the accounting contract).
+is True when the job ran away from home; `moved` when it did not run on its booking.
+
+- `blocked` is the F14.7 diagnostic only: under `simulate(..., diagnose_blocked=True)`,
+  the policy would have chosen better without other jobs' pending bookings. It is
+  False on every row when the run is not diagnosing.
+- `fit_rejected` is the engine's F12.7 signal, always recorded: the policy returned a
+  legal, on-time action that did not fit (another booking or an earlier move held its
+  capacity), so the job fell back to its booking. Policies that check `fits` (U, G, S,
+  K/W/L/H) never trigger it; a non-zero count on them is a bug signal.
+
+`late` is always False under bookings (kept for the accounting contract).
 """
 
 
@@ -339,8 +344,10 @@ class S:
         return None
 
     def blocked(self, job, now, actual, real, cf, ctx):
-        """F14.7: a higher-ranked site (or the same site, earlier) without pending
-        bookings."""
+        """F14.7: a higher-ranked site, or the same site with an earlier start, without
+        pending bookings. Ruling (Task 5 fix r1, #6): S's own objective is the earliest
+        on-time start at the first ranked site that has one, so "same site, earlier
+        start" is an improvement of S's own score and counts as blocked."""
         order = self._order(job, ctx)
         for site in order:
             s = _cf_start(job, site, real, cf, ctx, latest=job.latest_start_us)
@@ -516,7 +523,8 @@ class _Run:
     start: np.ndarray
     late: np.ndarray
     moved: np.ndarray
-    blocked: np.ndarray
+    blocked: np.ndarray  # F14.7 (only when diagnosing)
+    fit_rejected: np.ndarray  # F12.7 engine signal
 
 
 def _run(
@@ -586,6 +594,7 @@ def _run(
     late_out = np.zeros(n, dtype=bool)
     moved_out = np.zeros(n, dtype=bool)
     blocked_out = np.zeros(n, dtype=bool)
+    rejected_out = np.zeros(n, dtype=bool)
     cap_list = list(caps.values())
 
     for k in range(n):
@@ -608,7 +617,7 @@ def _run(
                 if not ctx.on_time(job, action.start_us):
                     action = None  # late: run on the booking
                 elif not caps[action.site].fits(action.start_us, action.start_us + d, g):
-                    blocked_out[k] = True  # F12.7: reservation-blocked preferred action
+                    rejected_out[k] = True  # F12.7: the returned action did not fit
                     action = None
         if action is None:
             if not booked:
@@ -628,7 +637,7 @@ def _run(
         if booked and late_out[k]:
             raise AssertionError(f"{policy.name}: {job.job_uid} is late under bookings (F11)")
 
-    return _Run(frame, site_out, start_out, late_out, moved_out, blocked_out)
+    return _Run(frame, site_out, start_out, late_out, moved_out, blocked_out, rejected_out)
 
 
 def _check_action(policy: Policy, job: Job, action: Action, ctx: SimContext) -> None:
@@ -677,6 +686,7 @@ def _ledger(r: _Run, home: str) -> Ledger:
         "moved": pl.Series(r.moved, dtype=pl.Boolean),
         "booking_site": bsite,
         "blocked": pl.Series(r.blocked, dtype=pl.Boolean),
+        "fit_rejected": pl.Series(r.fit_rejected, dtype=pl.Boolean),
     }).select(LEDGER_COLUMNS)
 
 
@@ -704,10 +714,11 @@ def simulate(
     µs intervals (F3; build it with `closed_intervals(site_mask(...))`).
     `on_commit(job, action)` is an optional diagnostic hook called after each placement.
 
-    `diagnose_blocked` (F14.7, off by default; it roughly doubles the policy's cost):
-    the ledger's `blocked` column becomes "the policy's choice without other jobs'
-    pending bookings differs and scores better" (`policy.blocked`), instead of the
-    default "the returned on-time action did not fit". Placements are identical.
+    `diagnose_blocked` (F14.7, off by default; it roughly doubles the policy's cost)
+    fills the ledger's `blocked` column: "the policy's choice without other jobs'
+    pending bookings differs and scores better" (`policy.blocked`). Without it,
+    `blocked` is False on every row. Placements are identical either way, and
+    `fit_rejected` (F12.7) is recorded in both modes.
     """
     r = _run(jobs, policy, sites=sites, bookings=bookings, warm=warm, transfer_s=transfer_s,
              closed=closed, home=home, on_commit=on_commit, diagnose_blocked=diagnose_blocked)

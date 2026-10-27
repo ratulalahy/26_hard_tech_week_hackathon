@@ -12,7 +12,8 @@ built later by the Task 7 driver. The S ranking is a placeholder (Task 7 supplie
 training-mean order).
 
     cd lab && GRIDPILOT_DATA_DIR=... uv run python scripts/bench_carbon_search.py \\
-        [--weeks N] [--policies K,W,L,H] [--diagnose] [--forecast-run DIR] [--json PATH]
+        --forecast-run ../runs/forecast/<id> [--weeks N] [--policies K,W,L,H] \\
+        [--diagnose] [--json PATH]
 """
 
 from __future__ import annotations
@@ -37,7 +38,7 @@ from gridpilot.sim import (
     tail_climatology,
     u_bookings,
 )
-from gridpilot.sim.carbon_search import GRID_END, GRID_START, latest_forecast_run
+from gridpilot.sim.carbon_search import GRID_END, GRID_START
 from gridpilot.workload import replay
 
 VAL_START = datetime(2024, 11, 1, tzinfo=UTC)
@@ -50,15 +51,16 @@ def main() -> None:
     ap.add_argument("--weeks", type=float, default=None)
     ap.add_argument("--policies", default="K,W,L,H")
     ap.add_argument("--diagnose", action="store_true")
-    ap.add_argument("--forecast-run", type=Path, default=None)
+    ap.add_argument("--forecast-run", type=Path, required=True,
+                    help="the pinned Task 2 run directory (runs/forecast/<id>)")
     ap.add_argument("--json", type=Path, default=None)
     args = ap.parse_args()
     out: dict = {"evidence": "simulated", "policies": {}}
 
     t = time.perf_counter()
-    run_dir = args.forecast_run or latest_forecast_run()
+    run_dir = args.forecast_run
     fc = load_forecasts(run_dir)
-    tail = tail_climatology(CORE_BAS)
+    tail = tail_climatology(run_dir, CORE_BAS)
     t_fc = time.perf_counter() - t
     carbon = load_carbon()
     mask = site_mask(carbon, GRID_START, GRID_END, CORE_BAS)
@@ -112,14 +114,15 @@ def main() -> None:
                 "us_per_job": t_run / n * 1e6, "moved": moved, "moved_share": moved / n,
                 "moved_share_of_mobile": float(j.filter("mobile")["moved"].mean()),
                 "remote": int(led["transfer"].sum()), "retimed_at_home": retimed,
-                "late": int(led["late"].sum()), "engine_blocked": int(led["blocked"].sum()),
+                "late": int(led["late"].sum()),
+                "fit_rejected": int(led["fit_rejected"].sum()),
             }
             print(f"{name}: build {t_build:5.1f} s, replay {t_run:6.1f} s "
                   f"({res['us_per_job']:5.1f} us/job), export {t_exp:4.1f} s; "
                   f"moved {res['moved_share']:.2%} (of mobile "
                   f"{res['moved_share_of_mobile']:.2%}), remote {res['remote']:,}, "
                   f"retimed at home {retimed:,}, late {res['late']}, "
-                  f"engine-blocked {res['engine_blocked']}")
+                  f"fit-rejected {res['fit_rejected']}")
             if args.diagnose:
                 t = time.perf_counter()
                 d = simulate(jobs, make(name), bookings=bookings, closed=closed,

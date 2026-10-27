@@ -320,17 +320,19 @@ def test_fallback_runs_on_booking():
     led = simulate(jobs, _Prefer(360), sites, bookings=b)
     f = row(led, "F")
     assert minutes_after_t0(f["start_ts"]) == 0 and not f["moved"]
-    assert f["blocked"]  # F12.7: the returned action was rejected for capacity
+    assert f["fit_rejected"]  # F12.7 engine signal: the returned action did not fit
+    assert not led["blocked"].any()  # `blocked` is F14.7 only: False when not diagnosing
     # [300, 360) fits around X's booking and meets F's 7 h deadline -> moved.
     led = simulate(jobs, _Prefer(300), sites, bookings=b)
     assert minutes_after_t0(row(led, "F")["start_ts"]) == 300 and row(led, "F")["moved"]
-    assert not led["blocked"].any()
+    assert not led["fit_rejected"].any()
     # A proposal that fits but is late (ends after 420 min), or None, also falls back,
-    # but neither counts as reservation-blocked.
+    # but neither counts as fit-rejected.
     for pref in (460, None):
         led = simulate(jobs, _Prefer(pref), sites, bookings=b)
         f = row(led, "F")
-        assert minutes_after_t0(f["start_ts"]) == 0 and not f["moved"] and not f["blocked"]
+        assert minutes_after_t0(f["start_ts"]) == 0 and not f["moved"]
+        assert not f["fit_rejected"] and not f["blocked"]
 
 
 # --------------------------------------------------------------------------- F3 mask
@@ -564,11 +566,11 @@ def test_ledger_schema_and_sites():
     ledger = run(jobs, G())
     assert ledger.columns == LEDGER_COLUMNS == [
         "job_uid", "site", "start_ts", "end_ts", "transfer", "late", "deadline_ts", "gpus",
-        "arrival_ts", "duration_s", "moved", "booking_site", "blocked",
+        "arrival_ts", "duration_s", "moved", "booking_site", "blocked", "fit_rejected",
     ]
     for c in ("start_ts", "end_ts", "deadline_ts", "arrival_ts"):
         assert ledger.schema[c] == pl.Datetime("us", "UTC")
-    for c in ("transfer", "late", "moved", "blocked"):
+    for c in ("transfer", "late", "moved", "blocked", "fit_rejected"):
         assert ledger.schema[c] == pl.Boolean
     assert ledger.schema["gpus"] == pl.Int64
     a = row(ledger, "a")
