@@ -33,4 +33,4 @@ profile:
 # The dashboard: copy results/*.json and the map layers into web/public/data, then build web/dist.
 # Needs the web dependencies (cd web && npm ci). Without a data dir it keeps the committed map layers.
 web:
-	cd web && npm run data && npm run build
+	cd web && { [ -d node_modules ] || npm ci; } && npm run data && npm run build
