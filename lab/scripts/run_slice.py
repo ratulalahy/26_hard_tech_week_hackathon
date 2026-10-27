@@ -1192,8 +1192,8 @@ def _illustrative_record(uid, rule, k, extra) -> dict:
     best = min(actions, key=lambda a: a["co2_kg"]["value"])
     stay = next((a for a in actions if a["site"] == HOME), None)
     expl = (f"Staying at {HOME} from its earliest feasible start would emit "
-            f"{stay['co2_kg']['value']:.3g} kg CO2 (modeled); the lowest-CO2 earliest action "
-            f"is {best['site']} at {best['co2_kg']['value']:.3g} kg including transfer."
+            f"{_num(stay['co2_kg']['value'])} kg CO2 (modeled); the lowest-CO2 earliest action "
+            f"is {best['site']} at {_num(best['co2_kg']['value'])} kg including transfer."
             if stay else f"The lowest-CO2 earliest action is {best['site']}.")
     return {
         "rule": rule, **extra,
@@ -1220,13 +1220,19 @@ def _illustrative_record(uid, rule, k, extra) -> dict:
     }
 
 
+def _num(x: float) -> str:
+    """Readable display number: thousands separators, three significant digits when small."""
+    return f"{x:,.0f}" if abs(x) >= 100 else f"{x:.3g}"
+
+
 def _describe(cj, uid) -> str:
     r = cj.filter(pl.col("job_uid") == uid).row(0, named=True)
     gh = r["gpus"] * r["duration_s"] / 3600
     dur = (f"{r['duration_s']:.0f} s" if r["duration_s"] < 3600
            else f"{r['duration_s'] / 3600:.1f} h")
     ghs = f"{gh:,.1f}" if gh >= 10 else f"{gh:.3g}"
-    return f"{uid} ({r['job_type']}, {r['gpus']} GPUs, {dur}, {ghs} GPU-h)"
+    gpus = f"{r['gpus']} GPU" + ("" if r["gpus"] == 1 else "s")
+    return f"{uid} ({r['job_type']}, {gpus}, {dur}, {ghs} GPU-h)"
 
 
 def job_replay(k) -> dict:
