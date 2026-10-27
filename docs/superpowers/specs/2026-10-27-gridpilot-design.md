@@ -623,11 +623,18 @@ The Mac offline rehearsal moves to Wed morning.
 - Capacity uses an interval or segment-tree structure.
 - Benchmark on a 2-week slice first.
 
-### F11. Rigid jobs are pinned to their U placement (lead ruling during Stage 2, Task 4)
-- **Observed** on a 2-week synthetic slice: under F1 deadlines, G and S miss deadlines (11 and 5 late jobs at 1.0×; 985 and 203 at 1.6×). Almost all are non-flexible jobs.
-- **Cause:** a zero-slack job's deadline equals its U finish, and greedy list scheduling is not monotone. Moving some jobs off PACE lets others backfill, which pushes a later rigid job past its U finish. A sweep-line check found every ledger legal on capacity, so it is not a capacity bug.
-- **Rule:** a job is pinned when `deadline − duration ≤ its U start`; every non-flexible job is pinned. In every policy run, a pinned job is pre-booked at its U site and start, and policies schedule the remaining jobs into the capacity left over.
-- **Why it adds no foresight:** F1 deadlines already come from one offline U run over the whole replay. Pinned jobs could not benefit from routing anyway, so the savings come only from flexible jobs.
-- **Label:** assumed ("rigid jobs are committed bookings at their baseline time").
+### F11. Baseline bookings: every job holds its U slot as a fallback (lead ruling during Stage 2, Task 4; revised after the task review)
+- **Observed** on a 2-week synthetic slice: under F1 deadlines, G and S miss deadlines (11 and 5 late jobs at 1.0×; 985 and 203 at 1.6×). Every ledger was legal on capacity.
+- **Cause:** a zero-slack job's deadline equals its U finish, and greedy list scheduling is not monotone. Moving or advancing some jobs lets others backfill, which pushes a later job past its U finish. Small-slack flexible jobs are exposed the same way.
+- **Rule (bookings):**
+  - Every job in the run holds a booking: its U site and interval, computed once per scenario from the U run (F1).
+  - Every policy run starts with all bookings reserved.
+  - When job *j* arrives, the policy may choose any on-time action that fits the capacity left after releasing *j*'s own booking, while still respecting every other booking and every earlier move. *j*'s booking is then released.
+  - If no such action fits, or the policy returns none, *j* runs on its booking.
+  - Releasing only ever adds capacity, so no other booking can become infeasible. **Every policy is on time by construction.**
+- **Assumption (label: assumed, disclosed on the method page):** the baseline booking calendar is known in advance, as day-ahead reservations of the cluster's normal schedule. This is the one exception to §8's "future arrivals are unavailable". It is the same for every policy, and it carries no grid information, so the H1–H4 contrasts stay paired and fair.
+- **Consequence:** routing can use only capacity that the baseline schedule leaves free, plus capacity freed by earlier moves. Savings are therefore conservative.
+- **The F1 fallback rule stays** as a guard. With bookings it should never fire; a fired fallback is a bug.
 - **Search window for flexible jobs:** starts lie in `[arrival, deadline − duration]`, capped by R_max.
-- **What stays possible:** flexible jobs can still be late. The F1 fallback rule still applies, and late counts are reported.
+- **Arithmetic:** time in the engine and in capacity is integer microseconds, so bookings and tolerances are exact.
+- **F3 mask:** it is enforced inside the engine, for every policy and fallback. Bookings sit at PACE, which has no missing truth in validation.

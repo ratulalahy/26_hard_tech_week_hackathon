@@ -359,3 +359,15 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 - **Alternatives rejected:**
   - slack tolerance for rigid jobs, which breaks the owner's hard-deadline decision;
   - reporting lateness and relying on the F1 fallback, which would make the headline carry late jobs that are a scheduling artifact.
+
+## D-048 · 2026-10-27 02:35 MT · F11 revised: bookings as fallback, not pins
+- **Decided by:** lead (Claude), as an SDD ruling. It is reversible and goes to the Astra gate.
+- **Decision:** replaces D-047.
+  - Every job holds its U slot as a booking. A policy may move a job only to an on-time action that fits without disturbing any other booking.
+  - Every policy is on time by construction.
+  - The assumption that bookings are known in advance is labelled and disclosed.
+- **Evidence:** the Task 4 task review (finding 4). Pins leaked future arrivals unlabelled, pinned queued mobile flexible jobs (biasing results toward U), and still left small-slack flexible jobs late.
+- **Alternatives rejected:**
+  - pins (D-047);
+  - a slack tolerance, which breaks hard deadlines;
+  - accepting lateness, which would make the headline carry a scheduling artifact.
