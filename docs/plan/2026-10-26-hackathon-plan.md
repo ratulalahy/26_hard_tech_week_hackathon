@@ -331,3 +331,13 @@
   - axe reports 0 violations;
   - offline run on the laptop at 60 fps;
   - story mode fits 8 minutes over three timed rehearsals.
+
+## Amendments after approval
+
+- **2026-10-26 23:05 MT.** Codex's setup proposal was merged in, keeping one source of truth:
+  - the `experiment-protocol` skill is named `hackathon-evidence`;
+  - the evidence labels grew to six: observed, measured, forecast, modeled, assumed, simulated;
+  - Codex, as planning partner, has its own checkout (`26_hard_tech_week_hackathon-codex`, branch `codex/planning`) and writes its own spec version there;
+  - status between the agents lives in `docs/HANDOFF.md`.
+- **2026-10-26 23:00 MT.** The basemap uses public-domain Natural Earth layers instead of Protomaps PMTiles, because the auto-mode classifier blocked downloading the `pmtiles` binary. PMTiles is still possible later, with the owner's OK.
+- **The demo laptop** is a MacBook Pro running Chrome.

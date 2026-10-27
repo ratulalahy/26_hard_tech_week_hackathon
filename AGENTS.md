@@ -10,10 +10,24 @@ The entry has two parts:
 - a day-ahead traffic report for the US grid;
 - a simulated router that keeps AI jobs out of the grid's rush hour.
 
+The headline is Option 2, Compute Follows the Sun; the traffic report is its engine. Utah's PACE is the hero region.
+
 Key documents:
 - the brief: `docs/brief.md`;
 - the approved plan: `docs/plan/2026-10-26-hackathon-plan.md`;
 - the spec, once written: under `docs/superpowers/specs/`.
+
+## Roles
+
+- **Owner:** product decisions, gate approvals, the pitch.
+- **Claude** (lead; checkout `26_hard_tech_week_hackathon`): downloads, the data pipeline, experiment code, the dashboard, and merges to `main`.
+- **Codex** (planning partner; checkout `26_hard_tech_week_hackathon-codex`, branch `codex/planning`): its own version of the experiment spec, evidence review, and the presentation narrative.
+- **Codex reviews** run through `scripts/review.sh` in separate fresh sessions, and never edit.
+- **Between agents:** `docs/HANDOFF.md`. Each topic has one source of truth:
+  - rules: here;
+  - decisions: `docs/brief.md`;
+  - the plan: `docs/plan/`;
+  - the design: the spec.
 
 ## Layout
 
@@ -23,7 +37,7 @@ Key documents:
 - `data/`:
   - `raw/`, `interim/` and `processed/` are gitignored;
   - `data/manifests/<source>.json` is committed and records each download's URL, retrieval time and sha256.
-- `docs/`: brief, plan, data profile, spec, implementation plans, and Codex reviews (`docs/reviews/`).
+- `docs/`: brief, plan, data profile, spec, implementation plans, Codex reviews (`docs/reviews/`), and the agent handoff (`docs/HANDOFF.md`).
 - `scripts/review.sh`: Codex reviews (see `.claude/skills/codex-gates/SKILL.md`).
 
 ## Commands
@@ -38,7 +52,7 @@ Every command listed here must work. Add a command when its target lands.
   - Until the spec is approved and a model or policy is final, nothing reads values from this window except completeness checks (row counts, missing hours).
   - After that, it is read only through the test-evaluation entry point, which logs every read.
 - **No lookahead.** A forecast issued at time t uses only data published before t. Weather features come from archived forecasts, never from observed weather.
-- **Provenance labels.** Every input and output field is `measured`, `derived`, `assumed` or `simulated`. The label travels into `results/` and the UI.
+- **Evidence labels.** Every field that reaches `results/`, the UI or a slide is labeled `observed`, `measured`, `forecast`, `modeled`, `assumed` or `simulated`. The definitions are in `.claude/skills/hackathon-evidence/SKILL.md`.
 - **Raw data is immutable.**
   - Downloads go to `data/raw/<source>/` and are recorded in that source's manifest.
   - Cleaning writes to `data/interim/` or `data/processed/`.
@@ -49,7 +63,7 @@ Every command listed here must work. Add a command when its target lands.
 
 ## Experiments
 
-Follow `.claude/skills/experiment-protocol/SKILL.md`:
+Follow `.claude/skills/hackathon-evidence/SKILL.md`:
 - one run directory per run, holding the config, git SHA and metrics;
 - fixed seeds;
 - anything that reaches `results/` can be rebuilt from the raw cache.
@@ -83,4 +97,4 @@ Status reports cite evidence: test output, metric files, commit SHAs.
 
 ## Skills
 
-Task skills live in `.claude/skills/<name>/SKILL.md`. Claude loads them; Codex reads them by path when a task names them.
+Task skills live in `.claude/skills/<name>/SKILL.md`. `.agents/skills` links to the same folder, so Claude and Codex read the same files.
