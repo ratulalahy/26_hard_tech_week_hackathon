@@ -639,7 +639,7 @@ def _sweep_ok(ledger: pl.DataFrame, sites: dict[str, int]) -> None:
 @given(_workloads(), st.booleans())
 def test_ledger_invariants(jobs, masked):
     sites = {"PACE": 8, "CISO": 4, "BPAT": 6, "NEVP": 3}
-    closed = {"BPAT": [(T0_US + 30 * MIN, T0_US + 150 * MIN)]} if masked else None
+    closed = {"BPAT": [(T0_US + HOUR, T0_US + 3 * HOUR)]} if masked else None
     bookings = u_bookings(jobs, sites)
     for policy in (U(), G(), S(ranking=["NEVP", "BPAT", "CISO"])):
         ledger = simulate(jobs, policy, sites, bookings=bookings, closed=closed)
@@ -655,9 +655,93 @@ def test_ledger_invariants(jobs, masked):
         ).item()
         if masked:  # no BPAT execution touches the closed window
             bp = j.filter(pl.col("site") == "BPAT")
-            lo, hi = T0 + timedelta(minutes=30), T0 + timedelta(minutes=150)
+            lo, hi = T0 + timedelta(hours=1), T0 + timedelta(hours=3)
             assert not ((bp["start_ts"] < hi) & (bp["end_ts"] > lo)).any()
             # F12.1: nor does a move to BPAT arrive inside it (transfer charged there).
             assert not ((bp["arrival_ts"] >= lo) & (bp["arrival_ts"] < hi)).any()
         if policy.name == "U":
             assert not ledger["moved"].any()
+
+
+# --------------------------------------------------------------------------- hardening (Task 5)
+
+
+def test_closed_must_be_hour_aligned():
+    """M1: closures are whole UTC hours (F3, F14.5)."""
+    jobs = jobs_frame([{"job_uid": "x", "flexible": True}])
+    b = u_bookings(jobs)
+    with pytest.raises(ValueError, match="hour-aligned"):
+        simulate(jobs, G(), bookings=b, closed={"BPAT": [(T0_US + MIN, T0_US + HOUR)]})
+    with pytest.raises(ValueError, match="hour-aligned"):
+        u_bookings(jobs, closed={"PACE": [(T0_US, T0_US + 90 * MIN)]})
+
+
+def test_transfer_hour_is_the_utc_hour_of_arrival():
+    """F12.1/F14.5: the transfer charge sits in [floor_hour(arrival), +1 h)."""
+    sites = {"PACE": 4, "CISO": 0, "BPAT": 4, "NEVP": 0}
+    jobs = jobs_frame([
+        {"job_uid": "blocker", "at_min": 0, "dur_min": 600, "gpus": 4},
+        {"job_uid": "x", "at_min": 59, "dur_min": 60, "gpus": 2, "flexible": True},
+    ])
+    b = u_bookings(jobs, sites)
+    closed = {"BPAT": [(T0_US, T0_US + HOUR)]}  # x arrives at 0:59, inside this hour
+    r = row(simulate(jobs, G(), sites, bookings=b, closed=closed), "x")
+    assert r["site"] == "PACE" and not r["moved"]
+    closed = {"BPAT": [(T0_US + HOUR, T0_US + 2 * HOUR)]}  # x's execution [89, 149) touches it
+    r = row(simulate(jobs, G(), sites, bookings=b, closed=closed), "x")
+    assert (r["site"], minutes_after_t0(r["start_ts"])) == ("BPAT", 120)
+
+
+def test_bookings_checked_for_deadline_and_site():
+    """M3: a booking's deadline is max(arrival + duration + delay, end), and its site
+    is legal for the job."""
+    jobs = jobs_frame([{"job_uid": "a", "at_min": 0, "gpus": 2},
+                       {"job_uid": "f", "at_min": 5, "gpus": 2, "flexible": True}])
+    b = u_bookings(jobs, OVER_SITES)
+    simulate(jobs, U(), OVER_SITES, bookings=b)
+    longer = b.with_columns(pl.when(pl.col("job_uid") == "a").then(pl.col("deadline_us") + 1)
+                            .otherwise(pl.col("deadline_us")).alias("deadline_us"))
+    with pytest.raises(ValueError, match="deadline"):
+        simulate(jobs, U(), OVER_SITES, bookings=longer)
+    remote = b.with_columns(pl.when(pl.col("job_uid") == "a").then(pl.lit("BPAT"))
+                            .otherwise(pl.col("site")).alias("site"))
+    with pytest.raises(ValueError, match="legal"):
+        simulate(jobs, U(), OVER_SITES, bookings=remote)  # an immobile job off home
+    tiny = {"PACE": 8, "CISO": 1, "BPAT": 4, "NEVP": 4}
+    b2 = u_bookings(jobs, tiny).with_columns(
+        pl.when(pl.col("job_uid") == "f").then(pl.lit("CISO")).otherwise(pl.col("site"))
+        .alias("site"))
+    with pytest.raises(ValueError, match="legal"):
+        simulate(jobs, U(), tiny, bookings=b2)  # 2 GPUs on a 1-slot site
+
+
+def test_u_bookings_respect_closed():
+    """M5: u_bookings takes the run's `closed`, so U reproduces its bookings under a mask."""
+    sites = {"PACE": 4, "CISO": 0, "BPAT": 0, "NEVP": 0}
+    jobs = jobs_frame([{"job_uid": "r", "at_min": 10, "dur_min": 30, "gpus": 2},
+                       {"job_uid": "s", "at_min": 70, "dur_min": 30, "gpus": 2}])
+    closed = {"PACE": [(T0_US, T0_US + HOUR)]}
+    b = u_bookings(jobs, sites, closed=closed)
+    assert b.filter(pl.col("job_uid") == "r")["start_us"].item() == T0_US + HOUR
+    led = simulate(jobs, U(), sites, bookings=b, closed=closed)
+    got = led.select("job_uid", pl.col("start_ts").dt.epoch("us").alias("start_us"))
+    assert got.equals(b.select("job_uid", "start_us")) and not led["moved"].any()
+
+
+def test_view_hides_capacity():
+    """M2: a policy's view exposes no path to the mutable Capacity."""
+    cap = Capacity(4)
+    v = cap.view()
+    for name in ("reserve", "release", "_c", "_range_add", "advance"):
+        assert not hasattr(v, name), name
+    for name in dir(v):
+        obj = getattr(v, name)
+        assert not isinstance(obj, Capacity), name
+        assert not isinstance(getattr(obj, "__self__", None), Capacity), name
+    with pytest.raises(AttributeError):
+        v.fits = None
+    assert v.fits(0, 10, 4) and v.slots == 4 and v.max_in(0, 10) == 0
+    cap.reserve(0, 10, 3)
+    assert v.max_in(0, 10) == 3 and v.earliest_start(0, 10, 2) == 10
+    cap.advance(5)
+    assert v.horizon == 5
