@@ -4,9 +4,9 @@ import { Panel, Strip, useWidth } from '../components/charts';
 import { Ev, EvCI } from '../components/ui';
 import { Legend } from './ControlRoom';
 import { C, ci2c } from '../lib/color';
-import { CORE, REGION, asNum, dayCurve, headline, loadMonth, pname, yearMean, type Json } from '../lib/data';
+import { CORE, REGION, asNum, dayCurve, loadMonth, own, pname, yearMean, type Json } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
-import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange } from '../lib/format';
+import { fmt, fmtDate, fmtHour, monthLabel, pct } from '../lib/format';
 import { cap } from '../lib/copy';
 import { useApp } from '../lib/store';
 import { useCopy } from '../lib/useCopy';
@@ -21,7 +21,6 @@ export function Ribbon() {
   const rush = rushHours(g), clean = cleanest(curve);
   const jul = g.pace_july_weekday, lm = loadMonth(g);
   const net: number[] = jul.net_load_mw.value, dem: number[] = jul.demand_mw.value;
-  const h = headline(data!.metrics);
   const delayH = (asNum(data!.manifest.assumptions.allowed_delay_s.SFT) ?? 0) / 3600;
   const night = curve.slice(0, 7) as number[];
   const k: number = g.pace_top100_net_load.k.value;
@@ -31,13 +30,18 @@ export function Ribbon() {
         <div>
           <h1 className="t-20" style={{ margin: 0 }}>In Utah, the clean hours aren't the rush hours</h1>
           <p className="t-13 ink-2" style={{ margin: '4px 0 0', maxWidth: '84ch' }}>
-            On a {lm.short} weekday, carbon is lowest {spanLabel(clean)} while the sun is up. The grid's rush comes after sunset: net load peaks at {fmtHour(argmax(net))} at {fmt(net[argmax(net)])} MW, and {fmtHour(rush[0])}–{fmtHour(rush[1])} holds most of {copy.yearPoss} {fmt(k)} highest net-load hours.
+            On a {lm.short} weekday, carbon is lowest {spanLabel(clean)} while the sun is up. The grid's rush comes as solar fades: net load peaks at {fmtHour(argmax(net))} at {fmt(net[argmax(net)])} MW, and {fmtHour(rush[0])}–{fmtHour(rush[1])} holds most of {copy.yearPoss} {fmt(k)} highest net-load hours.
             Night hours, midnight to 7 AM, run {fmt(Math.min(...night))}–{fmt(Math.max(...night))} g/kWh.
           </p>
         </div>
-        <div data-testid="ribbon-timing" className="panel flex-none" style={{ padding: '8px 12px', maxWidth: 440 }}>
-          <div className="flex items-baseline gap-2"><span className="t-hero" style={{ fontSize: 28 }}>{pctRange(h.timing.lo, h.timing.hi)}%</span><span className="t-12 ink-2">saved by waiting in Utah alone, {copy.allYear}</span></div>
-          <div className="t-11 ink-3">A flexible job may wait {fmt(delayH)} h, which rarely reaches the midday solar stretch from an evening or night start. 95% {pct(h.timing.ciLo)}–{pct(h.timing.ciHi)}%. <Ev e="simulated" /></div>
+        <div data-testid="ribbon-timing" className="panel flex-none" style={{ padding: '8px 12px', maxWidth: 460 }}>
+          <div className="t-12 ink-2">Saved by waiting in Utah alone, {copy.allYear}; each policy's own estimate</div>
+          <div className="flex items-baseline gap-4" style={{ marginTop: 2 }}>
+            {(['W_time', 'L_time'] as const).map((p) => { const o = own(data!.metrics, p); return o ? (
+              <span key={p} className="flex items-baseline gap-1" data-testid={`ribbon-own-${p}`}><span className="t-hero" style={{ fontSize: 28 }}>{pct(o.v)}%</span><span className="t-11 ink-2">{pname(p)} <span className="ink-3">[{pct(o.lo)}, {pct(o.hi)}]</span></span></span>
+            ) : null; })}
+          </div>
+          <div className="t-11 ink-3">A flexible job may wait {fmt(delayH)} h, which rarely reaches the midday solar stretch from an evening or night start. Brackets: 95% intervals. <Ev e="simulated" /></div>
         </div>
       </div>
 
@@ -140,7 +144,7 @@ export function ForecastPanel() {
       series: [
         // L ± its week MAE, drawn as a stacked band (the lower edge is invisible)
         { name: 'band-lo', type: 'line', data: L.map((v) => (v == null ? null : Math.max(0, v - maeL))), stack: 'band', symbol: 'none', lineStyle: { width: 0 }, silent: true, tooltip: { show: false } },
-        { name: `L ± ${Math.round(maeL)} (week MAE)`, type: 'line', data: L.map((v) => (v == null ? null : v - Math.max(0, v - maeL) + maeL)), stack: 'band', symbol: 'none', lineStyle: { width: 0 }, areaStyle: { color: 'rgba(91,73,63,.12)' }, silent: true, tooltip: { show: false } },
+        { name: `L ± ${Math.round(maeL)}: retrospective ±week MAE; not a prediction interval`, type: 'line', data: L.map((v) => (v == null ? null : v - Math.max(0, v - maeL) + maeL)), stack: 'band', symbol: 'none', lineStyle: { width: 0 }, areaStyle: { color: 'rgba(91,73,63,.12)' }, silent: true, tooltip: { show: false } },
         ...MODELS.map((k) => ({ name: pname(k), type: 'line', data: fr.forecasts[k].value, symbol: 'none', lineStyle: { color: style[k][0], type: style[k][1], width: style[k][2] } })),
         { name: 'Actual', type: 'line', data: obs, symbol: 'none', lineStyle: { color: C.ink, width: 2 }, z: 5 },
       ],
@@ -157,7 +161,7 @@ export function ForecastPanel() {
       </div>
       <div className="flex flex-wrap gap-x-4 gap-y-1 t-11 ink-2" style={{ marginTop: 4 }} aria-hidden="true">
         <span className="flex items-center gap-1"><svg width="20" height="6"><line x1="0" x2="20" y1="3" y2="3" stroke={C.ink} strokeWidth="2" /></svg>actual</span>
-        <span className="flex items-center gap-1"><svg width="20" height="8"><rect x="0" y="0" width="20" height="8" fill="rgba(91,73,63,.12)" /><line x1="0" x2="20" y1="4" y2="4" stroke={C.ink2} strokeWidth="1.5" /></svg>{pname('L')} ± {fmt(maeL)}</span>
+        <span className="flex items-center gap-1"><svg width="20" height="8"><rect x="0" y="0" width="20" height="8" fill="rgba(91,73,63,.12)" /><line x1="0" x2="20" y1="4" y2="4" stroke={C.ink2} strokeWidth="1.5" /></svg>{pname('L')} ± {fmt(maeL)}: retrospective ±week MAE; not a prediction interval</span>
         <span className="flex items-center gap-1"><svg width="20" height="6"><line x1="0" x2="20" y1="3" y2="3" stroke={C.ink3} strokeWidth="1.5" strokeDasharray="5 3" /></svg>{pname('W')}</span>
         <span className="flex items-center gap-1"><svg width="20" height="6"><line x1="0" x2="20" y1="3" y2="3" stroke={C.ink3} strokeWidth="1.5" strokeDasharray="1 3" /></svg>{pname('K')}</span>
       </div>

@@ -4,6 +4,8 @@ import type { Dest, Results, ResultsIndex } from './data';
 
 export type View = 'control' | 'cockpit' | 'ribbon' | 'story';
 export type Mode = 'now' | 'wait' | 'move';
+/** The control-room toggle (T15, D-064): which already-computed validation scenario the map, rows and hero show. */
+export type ScenarioId = 'registered' | 'mobility_le_8gpus' | 'dest_slots_0' | 'dest_slots_1024';
 export const VIEWS: { id: View; label: string }[] = [
   { id: 'control', label: 'Control room' },
   { id: 'cockpit', label: 'Decision cockpit' },
@@ -24,6 +26,7 @@ interface State {
   mode: Mode;
   dest: Dest;
   arcPolicy: 'S' | 'W' | 'L';
+  scenario: ScenarioId;
   gpus: number;
   hours: number;
   maxWait: number;
@@ -47,7 +50,8 @@ export const useApp = create<State>((set) => ({
   month: '2025-07',
   mode: 'move',
   dest: 'BPAT',
-  arcPolicy: 'W',
+  arcPolicy: 'S', // F23: S, the likely deployed choice, is the default
+  scenario: 'registered',
   gpus: 64,
   hours: 8,
   maxWait: 6,

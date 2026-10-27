@@ -2,7 +2,8 @@ import { useEffect, useMemo } from 'react';
 import { setMid } from './lib/color';
 import { Icon } from './components/ui';
 import { testOptionLabel, windowCopy, type EvalWindow } from './lib/copy';
-import { DESTS, asNum, dayCurve, type Core } from './lib/data';
+import { asNum, dayCurve, type Core } from './lib/data';
+import { arcsOf, flowOf } from './components/flows';
 import { loadIndex, loadResults } from './lib/data';
 import { fmtHour, monthLabel } from './lib/format';
 import { VIEWS, useApp } from './lib/store';
@@ -59,7 +60,7 @@ export function App() {
 
 /** The one shared map: full colour on the Control room, a faint watermark everywhere else. */
 function SharedMap() {
-  const { data, view, hour, month, arcPolicy, dest, set } = useApp();
+  const { data, view, hour, month, arcPolicy, dest, scenario, set } = useApp();
   const vp = useViewport();
   const on = view === 'control';
   const ci = useMemo(() => {
@@ -71,19 +72,13 @@ function SharedMap() {
     return Object.fromEntries(Object.entries(data.grid.context_year_mean_ci.by_ba).map(([k, e]) => [k, asNum(e as never)]));
   }, [data]);
   const arcs = useMemo<ArcSpec[]>(() => {
-    if (!data) return [];
+    if (!data || !on) return []; // no arcs in the watermark
+    // T15: the toggled scenario's replay-week arcs (scenario-flows.json); the registered job-replay.json week otherwise
+    const f = flowOf(data.flows, scenario, arcPolicy);
+    if (f) return arcsOf(f, dest);
     const pol = data.jobs.week.policies[arcPolicy];
-    if (!pol) return [];
-    if (!on) return []; // no arcs in the watermark
-    const gh = (a: { gpu_h: { value: number } }) => a.gpu_h.value ?? 0;
-    const max = Math.max(...pol.arcs.map(gh), 1), tot = pol.arcs.map(gh).reduce((x: number, y: number) => x + y, 0) || 1;
-    return DESTS.flatMap((d) => {
-      const a = pol.arcs.find((x: { to: string }) => x.to === d);
-      const g = a ? gh(a) : 0;
-      if (g / tot < 0.01) return []; // arcs under 1% of the week's moved GPU-hours are not drawn
-      return [{ to: d, weight: Math.sqrt(g / max), label: `${Math.round(g).toLocaleString('en-US')} GPU-h`, selected: d === dest }];
-    });
-  }, [data, arcPolicy, dest, on]);
+    return pol ? arcsOf({ week_arcs: pol.arcs }, dest) : [];
+  }, [data, arcPolicy, dest, on, scenario]);
   return (
     <div className={`scene ${on ? '' : 'watermark'}`} aria-hidden={!on} inert={!on}>
       {data && (

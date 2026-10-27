@@ -71,3 +71,33 @@ export const storageFlatT = (Math.round(flat / p10) * p10).toLocaleString('en-US
 /** The same ranges from the synthetic test fixture (its savings are halved, so they differ from validation). */
 export const testPlacementRange = range(['S', 'K', 'W', 'L'].map((p) => saving(p, 'U', fixtureMetrics)));
 export const testTimeOnlyRange = range(['W_time', 'L_time'].map((p) => saving(p, 'U', fixtureMetrics)));
+/** F10 (T15): S's own saving in the synthetic test fixture, as the hero prints it. */
+export const testSOwn = `${pct(saving('S', 'U', fixtureMetrics))}%`;
+
+/** F10: S's own registered estimate and its own interval, e.g. "22.6%" and "18.4–26.8%". */
+const sB4 = metrics.contrasts.find((x: { candidate: string; reference: string }) => x.candidate === 'S' && x.reference === 'U').blocks['4'];
+export const sOwn = `${pct(sB4.saving.value)}%`;
+export const sOwnCI = `${pct(sB4.saving_ci95.value[0])}–${pct(sB4.saving_ci95.value[1])}%`;
+/** F06: "about 22.5" (S to the nearest half percent). */
+export const sAbout = String(Math.round(sB4.saving.value * 200) / 2);
+
+/** T15: results/scenario-flows.json and results/flexibility-budget.json. */
+export const flows = JSON.parse(readFileSync(join(results, 'scenario-flows.json'), 'utf8'));
+export const budget = JSON.parse(readFileSync(join(results, 'flexibility-budget.json'), 'utf8'));
+const flow = (id: string, p = 'S') => flows.scenarios.find((s: { id: string }) => s.id === id).policies[p];
+/** S under "only jobs of 8 GPUs or fewer may move", e.g. "3.2%". */
+export const sMobility = `${pct(flow('mobility_le_8gpus').saving_vs_U.saving.value)}%`;
+/** S's replay-week GPU-hours to BPAT in a scenario, as the rows print them ("17,168"). */
+export const bpatGpuH = (id: string) => Math.round(flow(id).week_arcs.find((a: { to: string }) => a.to === 'BPAT').gpu_h.value).toLocaleString('en-US');
+const bs = budget.policies.S;
+/** The flexibility budget's one-sentence headline for S. */
+export const budgetHeadline = `${Math.round(bs.flexible_mobile_share.value * 100)}% of the energy sits in jobs flagged movable (${Math.round(bs.fits_remote_share.value * 100)}% fit a remote site); ${Math.round(bs.must_stay_share.value * 100)}% must stay in Utah.`;
+/** I1: S's registered remote share on the execution basis, as the remote line prints it ("30.9%"). */
+export const sRemoteExec = `${pct(flow('registered').remote_execution_share.value)}%`;
+export const sMovedExec = `${pct(flow('registered').moved_share_energy.value)}%`;
+/** I7: a percentage that is not the end of a span ("22.6%" but not "22.4–22.6%"). */
+export const exact = (s: string) => new RegExp(`(?<![–\\d.])${s.replace(/[.]/g, '\\.')}`);
+/** Each wait-only policy's own saving in the synthetic test fixture (M9). */
+export const testOwn = (p: string) => `${pct(saving(p, 'U', fixtureMetrics))}%`;
+const wp = (xs: number[]) => (Math.min(...xs) >= 0 && Math.max(...xs) < 0.01 ? 'under 1%' : null);
+export const testWaitPhrase = wp(['W_time', 'L_time'].map((p) => saving(p, 'U', fixtureMetrics))) ?? testTimeOnlyRange;

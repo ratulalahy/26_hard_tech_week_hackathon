@@ -4,8 +4,8 @@ import { Panel, Strip, useWidth } from '../components/charts';
 import { Ev, EvCI, Icon } from '../components/ui';
 import { C, CI_MAX, ci2c } from '../lib/color';
 import { useCopy } from '../lib/useCopy';
-import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, headline, type Core, type Dest } from '../lib/data';
-import { fmt, fmtHour, fmtSpan, monthLabel, pct, pctRange, sig2 } from '../lib/format';
+import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, own, pname, waitPhrase, type Core, type Dest } from '../lib/data';
+import { fmt, fmtHour, fmtSpan, monthLabel, pct, sig2 } from '../lib/format';
 import { makePlan } from '../lib/plan';
 import { useApp, type Mode } from '../lib/store';
 import { WestMap, type ArcSpec } from '../map/WestMap';
@@ -51,7 +51,7 @@ export function Cockpit() {
   const short = useViewport().h < 1000;
   const { data, mode, dest, month } = s;
   const p = useMemo(() => makePlan(data!, { month, hour: s.hour, hours: s.hours, gpus: s.gpus, maxWait: s.maxWait }), [data, month, s.hour, s.hours, s.gpus, s.maxWait]);
-  const h = headline(data!.metrics);
+  const reg = own(data!.metrics, 'S')!;
   const copy = useCopy();
   const best = ([['now', p.now], ['wait', p.wait.v], ['move', p.moves[dest]]] as [Mode, number][]).sort((a, b) => a[1] - b[1])[0][0];
   const V = mode === 'move' ? p.moves[dest] : mode === 'wait' ? p.wait.v : p.now;
@@ -69,7 +69,10 @@ export function Cockpit() {
             <h1 className="t-20" style={{ margin: 0, maxWidth: '46ch', lineHeight: 1.5 }}>
               Run <Scrub k="gpus" /> GPUs for <Scrub k="hours" /> hours, arriving in Utah at <Scrub k="hour" />. It can wait up to <Scrub k="maxWait" /> hours.
             </h1>
-            <span className="ev" data-ev="modeled" style={{ padding: '2px 8px', borderRadius: 8, boxShadow: 'inset 0 0 0 1px var(--hair)', color: 'var(--ink-2)' }}>illustrative · modeled</span>
+            <span className="flex flex-col items-end gap-1 flex-none">
+              <span className="ev" data-ev="modeled" style={{ padding: '2px 8px', borderRadius: 8, boxShadow: 'inset 0 0 0 1px var(--hair)', color: 'var(--ink-2)' }}>illustrative · modeled</span>
+              <span className="t-11 ink-2 whitespace-nowrap" data-testid="cockpit-caption">one hypothetical job; typical-day profile; capacity unconstrained</span>
+            </span>
           </div>
           <div className="flex flex-wrap items-center gap-4 t-12 ink-3" style={{ marginTop: 8 }}>
             <span>Drag a number sideways, or focus it and use the arrow keys.</span>
@@ -83,10 +86,10 @@ export function Cockpit() {
             <div>
               <h2 className="t-15" style={{ margin: 0 }}>{verdict}{best === mode ? ': the cleanest of the three' : ''}</h2>
               <div className="flex items-baseline gap-2" style={{ marginTop: 4 }}>
-                <span className="t-hero">{mode === 'now' ? fmt(V) : `${pct(Math.max(0, p.cut(V)), 0)}%`}<span className="unit">{mode === 'now' ? 'g/kWh average, illustrative' : 'less CO₂ than running now, illustrative'}</span></span>
+                <span className="t-hero">{mode === 'now' ? fmt(V) : `${pct(Math.abs(p.cut(V)), 0)}%`}<span className="unit">{mode === 'now' ? 'g/kWh average, illustrative' : `${p.cut(V) < 0 ? 'more' : 'less'} CO₂ than running now, illustrative`}</span></span>
               </div>
               <div className="t-12 ink-2" style={{ marginTop: 4 }}>
-                {fmt(p.kwh)} kWh for the run, about {sig2(p.kg(V))} kg CO₂ at {fmt(V)} g/kWh{mode === 'move' ? `, including a ${fmt(p.transferH * 60)}-minute transfer that adds ${pct(p.transferFrac, 0)}% more energy, half drawn in Utah and half in ${REGION[dest].name}` : ''}{best !== mode ? `. The cleanest option here is to ${best === 'move' ? 'move' : best === 'wait' ? 'wait' : 'run now'}.` : '.'} <Ev e="modeled" />
+                {fmt(p.kwh)} kWh of execution energy{mode === 'move' ? `, ${fmt(p.kwh * (1 + p.transferFrac))} kWh in all with the transfer` : ''}; about {sig2(p.kg(V))} kg CO₂{mode === 'move' ? `, including a ${fmt(p.transferH * 60)}-minute transfer that adds ${pct(p.transferFrac, 0)}% more energy, half drawn in Utah and half in ${REGION[dest].name}` : ` at ${fmt(V)} g/kWh`}{best !== mode ? `. The cleanest option here is to ${best === 'move' ? 'move' : best === 'wait' ? 'wait' : 'run now'}.` : '.'} <Ev e="modeled" />
               </div>
             </div>
             <ModeSeg />
@@ -102,8 +105,8 @@ export function Cockpit() {
 
         <Panel style={{ padding: '12px 16px' }}>
           <div data-testid="cockpit-registered" className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-            <span className="t-15">{copy.resultLead}: moving cuts {pctRange(h.placement.lo, h.placement.hi)}%, waiting only {pctRange(h.timing.lo, h.timing.hi)}%</span>
-            <span className="t-12 ink-3">95% intervals {pct(h.placement.ciLo)}–{pct(h.placement.ciHi)}% and {pct(h.timing.ciLo)}–{pct(h.timing.ciHi)}%; {fmt(data!.metrics.cohort.n_jobs.value)} jobs, same work, {DEADLINES_MET}. <Ev e="simulated" /></span>
+            <span className="t-15">{copy.resultLead}, with fleet contention: {pname('S')} {reg.v < 0 ? 'raised' : 'cut'} {pct(Math.abs(reg.v))}%; waiting only, {waitPhrase(data!.metrics)}</span>
+            <span className="t-12 ink-3">S's own 95% interval {pct(reg.lo)}–{pct(reg.hi)}%; {fmt(data!.metrics.cohort.n_jobs.value)} jobs, same work, {DEADLINES_MET}. <Ev e="simulated" /></span>
           </div>
           <div className="t-12 ink-3" style={{ marginTop: 4 }} data-testid="cockpit-frame">{FRAME_LINE}</div>
         </Panel>

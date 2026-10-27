@@ -643,7 +643,7 @@
      "reason": null
     },
     "co2_kg": {
-     "value": 4669221.9068728145,
+     "value": 4669454.015095027,
      "unit": "kg_CO2",
      "evidence": "simulated",
      "provenance_id": "20261027T160656Z:G:co2_kg",
@@ -991,7 +991,7 @@
      "reason": null
     },
     "co2_kg": {
-     "value": 3613423.1667785128,
+     "value": 4141554.645047876,
      "unit": "kg_CO2",
      "evidence": "simulated",
      "provenance_id": "20261027T160656Z:S:co2_kg",
@@ -1339,7 +1339,7 @@
      "reason": null
     },
     "co2_kg": {
-     "value": 3623430.3672101563,
+     "value": 4146558.245263698,
      "unit": "kg_CO2",
      "evidence": "simulated",
      "provenance_id": "20261027T160656Z:K:co2_kg",
@@ -1687,7 +1687,7 @@
      "reason": null
     },
     "co2_kg": {
-     "value": 3618363.0647760523,
+     "value": 4144024.594046646,
      "unit": "kg_CO2",
      "evidence": "simulated",
      "provenance_id": "20261027T160656Z:W:co2_kg",
@@ -2035,7 +2035,7 @@
      "reason": null
     },
     "co2_kg": {
-     "value": 3618527.0340053807,
+     "value": 4144106.5786613105,
      "unit": "kg_CO2",
      "evidence": "simulated",
      "provenance_id": "20261027T160656Z:L:co2_kg",
@@ -2383,7 +2383,7 @@
      "reason": null
     },
     "co2_kg": {
-     "value": 3613909.434097387,
+     "value": 4141797.7787073134,
      "unit": "kg_CO2",
      "evidence": "simulated",
      "provenance_id": "20261027T160656Z:H:co2_kg",
@@ -2731,7 +2731,7 @@
      "reason": null
     },
     "co2_kg": {
-     "value": 4635982.108262389,
+     "value": 4652834.115789814,
      "unit": "kg_CO2",
      "evidence": "simulated",
      "provenance_id": "20261027T160656Z:W_time:co2_kg",
@@ -3114,7 +3114,7 @@
      "reason": null
     },
     "co2_kg": {
-     "value": 4634874.442330118,
+     "value": 4652280.282823678,
      "unit": "kg_CO2",
      "evidence": "simulated",
      "provenance_id": "20261027T160656Z:L_time:co2_kg",
@@ -3410,7 +3410,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 464.21644442528486,
+      "value": 232.10822221264243,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:G_vs_U:b2:diff_kg",
@@ -3419,8 +3419,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       10.16867119630333,
-       1132.8459773603827
+       5.084335598151665,
+       566.4229886801913
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -3468,7 +3468,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 464.21644442528486,
+      "value": 232.10822221264243,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:G_vs_U:b4:diff_kg",
@@ -3477,8 +3477,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       12.84562861463055,
-       1127.0088712061056
+       6.422814307315275,
+       563.5044356030528
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -3526,7 +3526,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 464.21644442528486,
+      "value": 232.10822221264243,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:G_vs_U:b8:diff_kg",
@@ -3535,8 +3535,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       15.00253981538117,
-       929.9737137126502
+       7.501269907690585,
+       464.9868568563251
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -3592,7 +3592,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 1056262.956538727,
+      "value": 528131.4782693635,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:S_vs_U:b2:diff_kg",
@@ -3601,8 +3601,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       881989.5940960315,
-       1226288.5444656266
+       440994.79704801575,
+       613144.2722328133
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -3650,7 +3650,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 1056262.956538727,
+      "value": 528131.4782693635,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:S_vs_U:b4:diff_kg",
@@ -3659,8 +3659,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       910438.3027177769,
-       1195249.603215583
+       455219.1513588884,
+       597624.8016077915
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -3708,7 +3708,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 1056262.956538727,
+      "value": 528131.4782693635,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:S_vs_U:b8:diff_kg",
@@ -3717,8 +3717,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       926824.3437938212,
-       1184903.8264017543
+       463412.1718969106,
+       592451.9132008771
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -3774,7 +3774,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 1046255.7561070835,
+      "value": 523127.87805354176,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:K_vs_U:b2:diff_kg",
@@ -3783,8 +3783,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       873759.5351256038,
-       1214111.5544470835
+       436879.7675628019,
+       607055.7772235418
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -3832,7 +3832,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 1046255.7561070835,
+      "value": 523127.87805354176,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:K_vs_U:b4:diff_kg",
@@ -3841,8 +3841,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       900348.8458635382,
-       1185361.5353949466
+       450174.4229317691,
+       592680.7676974733
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -3890,7 +3890,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 1046255.7561070835,
+      "value": 523127.87805354176,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:K_vs_U:b8:diff_kg",
@@ -3899,8 +3899,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       917888.7297429381,
-       1174409.593368647
+       458944.36487146904,
+       587204.7966843235
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -3956,7 +3956,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 1051323.0585411876,
+      "value": 525661.5292705938,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_vs_U:b2:diff_kg",
@@ -3965,8 +3965,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       879042.0765629524,
-       1218137.1052043568
+       439521.0382814762,
+       609068.5526021784
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4014,7 +4014,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 1051323.0585411876,
+      "value": 525661.5292705938,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_vs_U:b4:diff_kg",
@@ -4023,8 +4023,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       908080.0433666729,
-       1187002.2808083168
+       454040.02168333647,
+       593501.1404041584
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4072,7 +4072,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 1051323.0585411876,
+      "value": 525661.5292705938,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_vs_U:b8:diff_kg",
@@ -4081,8 +4081,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       922509.4051302464,
-       1175262.1214285328
+       461254.7025651232,
+       587631.0607142664
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4138,7 +4138,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 1051159.089311859,
+      "value": 525579.5446559296,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_vs_U:b2:diff_kg",
@@ -4147,8 +4147,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       881786.4642233666,
-       1217462.8521191224
+       440893.2321116833,
+       608731.4260595612
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4196,7 +4196,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 1051159.089311859,
+      "value": 525579.5446559296,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_vs_U:b4:diff_kg",
@@ -4205,8 +4205,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       908120.1343859029,
-       1187518.4699711646
+       454060.06719295145,
+       593759.2349855823
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4254,7 +4254,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 1051159.089311859,
+      "value": 525579.5446559296,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_vs_U:b8:diff_kg",
@@ -4263,8 +4263,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       921682.8666854347,
-       1178130.6495483906
+       460841.43334271736,
+       589065.3247741953
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4320,7 +4320,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 1055776.6892198534,
+      "value": 527888.3446099267,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:H_vs_U:b2:diff_kg",
@@ -4329,8 +4329,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       883590.8239084911,
-       1222591.9865086793
+       441795.41195424553,
+       611295.9932543397
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4378,7 +4378,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 1055776.6892198534,
+      "value": 527888.3446099267,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:H_vs_U:b4:diff_kg",
@@ -4387,8 +4387,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       911708.4983031447,
-       1192553.0545545905
+       455854.24915157235,
+       596276.5272772952
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4436,7 +4436,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 1055776.6892198534,
+      "value": 527888.3446099267,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:H_vs_U:b8:diff_kg",
@@ -4445,8 +4445,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       926732.5912433849,
-       1180039.0552131294
+       463366.29562169244,
+       590019.5276065647
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4502,7 +4502,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 33704.01505485084,
+      "value": 16852.00752742542,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_time_vs_U:b2:diff_kg",
@@ -4511,8 +4511,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       26924.094509928487,
-       40108.996690720036
+       13462.047254964244,
+       20054.498345360018
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4560,7 +4560,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 33704.01505485084,
+      "value": 16852.00752742542,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_time_vs_U:b4:diff_kg",
@@ -4569,8 +4569,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       25953.038487138692,
-       40726.11595469979
+       12976.519243569346,
+       20363.057977349894
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4618,7 +4618,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 33704.01505485084,
+      "value": 16852.00752742542,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_time_vs_U:b8:diff_kg",
@@ -4627,8 +4627,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       24412.10144189389,
-       41823.73105384616
+       12206.050720946945,
+       20911.86552692308
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4684,7 +4684,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 34811.68098712247,
+      "value": 17405.840493561234,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_time_vs_U:b2:diff_kg",
@@ -4693,8 +4693,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       28384.95391906898,
-       41109.211793925795
+       14192.47695953449,
+       20554.605896962898
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4742,7 +4742,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 34811.68098712247,
+      "value": 17405.840493561234,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_time_vs_U:b4:diff_kg",
@@ -4751,8 +4751,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       27909.875234935596,
-       41369.68095468571
+       13954.937617467798,
+       20684.840477342856
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4800,7 +4800,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 34811.68098712247,
+      "value": 17405.840493561234,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_time_vs_U:b8:diff_kg",
@@ -4809,8 +4809,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       26765.133345738635,
-       42424.91042750397
+       13382.566672869318,
+       21212.455213751986
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4866,7 +4866,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1056262.956538727,
+      "value": -528131.4782693638,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:U_vs_S:b2:diff_kg",
@@ -4875,8 +4875,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1226288.5444656268,
-       -881989.5940960315
+       -698157.0661962635,
+       -353858.1158266682
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4885,7 +4885,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.29231642898897464,
+      "value": -0.1275201038095342,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:U_vs_S:b2:saving",
@@ -4924,7 +4924,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1056262.956538727,
+      "value": -528131.4782693638,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:U_vs_S:b4:diff_kg",
@@ -4933,8 +4933,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1195249.603215583,
-       -910438.3027177769
+       -667118.1249462196,
+       -382306.82444841356
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -4943,7 +4943,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.29231642898897464,
+      "value": -0.1275201038095342,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:U_vs_S:b4:saving",
@@ -4982,7 +4982,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1056262.956538727,
+      "value": -528131.4782693638,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:U_vs_S:b8:diff_kg",
@@ -4991,8 +4991,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1184903.8264017543,
-       -926824.3437938213
+       -656772.348132391,
+       -398692.865524458
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5001,7 +5001,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.29231642898897464,
+      "value": -0.1275201038095342,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:U_vs_S:b8:saving",
@@ -5048,7 +5048,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1055798.7400943018,
+      "value": -527899.3700471511,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:G_vs_S:b2:diff_kg",
@@ -5057,8 +5057,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1225827.659380985,
-       -881610.1799072234
+       -697928.2893338343,
+       -353710.8098600728
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5067,7 +5067,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.29218795899722466,
+      "value": -0.1274640600670014,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:G_vs_S:b2:saving",
@@ -5106,7 +5106,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1055798.7400943018,
+      "value": -527899.3700471511,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:G_vs_S:b4:diff_kg",
@@ -5115,8 +5115,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1195234.8685431317,
-       -910170.619682352
+       -667335.4984959811,
+       -382271.2496352013
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5125,7 +5125,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.29218795899722466,
+      "value": -0.1274640600670014,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:G_vs_S:b4:saving",
@@ -5164,7 +5164,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1055798.7400943018,
+      "value": -527899.3700471511,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:G_vs_S:b8:diff_kg",
@@ -5173,8 +5173,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1184807.9549745866,
-       -926143.8145180165
+       -656908.584927436,
+       -398244.4444708659
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5183,7 +5183,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.29218795899722466,
+      "value": -0.1274640600670014,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:G_vs_S:b8:saving",
@@ -5230,7 +5230,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -10007.20043164352,
+      "value": -5003.600215821993,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:K_vs_S:b2:diff_kg",
@@ -5239,8 +5239,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -19726.376606005255,
-       -1230.7130267624425
+       -14722.776390183728,
+       3772.8871890590844
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5249,7 +5249,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.00276945156151342,
+      "value": -0.0012081454054469324,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:K_vs_S:b2:saving",
@@ -5288,7 +5288,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -10007.20043164352,
+      "value": -5003.600215821993,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:K_vs_S:b4:diff_kg",
@@ -5297,8 +5297,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -19330.03812382475,
-       -1521.6369953281858
+       -14326.437908003223,
+       3481.9632204933414
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5307,7 +5307,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.00276945156151342,
+      "value": -0.0012081454054469324,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:K_vs_S:b4:saving",
@@ -5346,7 +5346,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -10007.20043164352,
+      "value": -5003.600215821993,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:K_vs_S:b8:diff_kg",
@@ -5355,8 +5355,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -18525.485038205596,
-       -1562.815217700043
+       -13521.884822384069,
+       3440.784998121484
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5365,7 +5365,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.00276945156151342,
+      "value": -0.0012081454054469324,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:K_vs_S:b8:saving",
@@ -5412,7 +5412,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -4939.8979975394905,
+      "value": -2469.9489987697452,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_vs_S:b2:diff_kg",
@@ -5421,8 +5421,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -14149.288904224557,
-       2979.6947840635876
+       -11679.339905454812,
+       5449.643782833333
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5431,7 +5431,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.001367096453843676,
+      "value": -0.0005963820860659423,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_vs_S:b2:saving",
@@ -5470,7 +5470,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -4939.8979975394905,
+      "value": -2469.9489987697452,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_vs_S:b4:diff_kg",
@@ -5479,8 +5479,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -14832.211404296313,
-       3641.9935981908134
+       -12362.262405526568,
+       6111.942596960558
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5489,7 +5489,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.001367096453843676,
+      "value": -0.0005963820860659423,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_vs_S:b4:saving",
@@ -5528,7 +5528,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -4939.8979975394905,
+      "value": -2469.9489987697452,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_vs_S:b8:diff_kg",
@@ -5537,8 +5537,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -15316.098836479965,
-       4185.222128958404
+       -12846.14983771022,
+       6655.171127728149
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5547,7 +5547,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.001367096453843676,
+      "value": -0.0005963820860659423,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_vs_S:b8:saving",
@@ -5594,7 +5594,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -5103.867226867937,
+      "value": -2551.933613434434,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_vs_S:b2:diff_kg",
@@ -5603,8 +5603,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -15148.367759723205,
-       3556.5515308374725
+       -12596.434146289703,
+       6108.485144270975
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5613,7 +5613,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.0014124742636822702,
+      "value": -0.0006161776994747184,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_vs_S:b2:saving",
@@ -5652,7 +5652,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -5103.867226867937,
+      "value": -2551.933613434434,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_vs_S:b4:diff_kg",
@@ -5661,8 +5661,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -15294.081363086367,
-       4152.154192998783
+       -12742.147749652864,
+       6704.087806432286
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5671,7 +5671,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.0014124742636822702,
+      "value": -0.0006161776994747184,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_vs_S:b4:saving",
@@ -5710,7 +5710,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -5103.867226867937,
+      "value": -2551.933613434434,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_vs_S:b8:diff_kg",
@@ -5719,8 +5719,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -12213.756580841018,
-       2190.1967057325405
+       -9661.822967407516,
+       4742.130319166043
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5729,7 +5729,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.0014124742636822702,
+      "value": -0.0006161776994747184,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_vs_S:b8:saving",
@@ -5776,7 +5776,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -486.2673188736662,
+      "value": -243.13365943729877,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:H_vs_S:b2:diff_kg",
@@ -5785,8 +5785,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -9669.13263962915,
-       7728.46986687274
+       -9425.998980192782,
+       7971.603526309107
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5795,7 +5795,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.00013457248056202335,
+      "value": -0.00005870589193553624,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:H_vs_S:b2:saving",
@@ -5834,7 +5834,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -486.2673188736662,
+      "value": -243.13365943729877,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:H_vs_S:b4:diff_kg",
@@ -5843,8 +5843,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -9947.884585312266,
-       8035.020471365645
+       -9704.750925875898,
+       8278.154130802013
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5853,7 +5853,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.00013457248056202335,
+      "value": -0.00005870589193553624,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:H_vs_S:b4:saving",
@@ -5892,7 +5892,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -486.2673188736662,
+      "value": -243.13365943729877,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:H_vs_S:b8:diff_kg",
@@ -5901,8 +5901,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -10595.163261551654,
-       8515.278891424194
+       -10352.029602115286,
+       8758.412550860561
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5911,7 +5911,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.00013457248056202335,
+      "value": -0.00005870589193553624,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:H_vs_S:b8:saving",
@@ -5958,7 +5958,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1022558.9414838762,
+      "value": -511279.47074193787,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_time_vs_S:b2:diff_kg",
@@ -5967,8 +5967,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1193745.5252806314,
-       -850346.8021645878
+       -682466.054538693,
+       -339067.33142264944
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -5977,7 +5977,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.2829889814415292,
+      "value": -0.12345109857557549,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_time_vs_S:b2:saving",
@@ -6016,7 +6016,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1022558.9414838762,
+      "value": -511279.47074193787,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_time_vs_S:b4:diff_kg",
@@ -6025,8 +6025,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1156237.1273278,
-       -881305.9649323586
+       -644957.6565858617,
+       -370026.49419042026
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6035,7 +6035,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.2829889814415292,
+      "value": -0.12345109857557549,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_time_vs_S:b4:saving",
@@ -6074,7 +6074,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1022558.9414838762,
+      "value": -511279.47074193787,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_time_vs_S:b8:diff_kg",
@@ -6083,8 +6083,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1147807.7259432701,
-       -897400.852856687
+       -636528.2552013318,
+       -386121.3821147487
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6093,7 +6093,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.2829889814415292,
+      "value": -0.12345109857557549,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_time_vs_S:b8:saving",
@@ -6140,7 +6140,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1021451.2755516046,
+      "value": -510725.63777580205,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_time_vs_S:b2:diff_kg",
@@ -6149,8 +6149,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1191324.29668624,
-       -849096.9773608088
+       -680598.6589104375,
+       -338371.33958500624
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6159,7 +6159,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.282682439450418,
+      "value": -0.12331737271328412,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_time_vs_S:b2:saving",
@@ -6198,7 +6198,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1021451.2755516046,
+      "value": -510725.63777580205,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_time_vs_S:b4:diff_kg",
@@ -6207,8 +6207,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1155917.2782949954,
-       -879533.614256723
+       -645191.6405191929,
+       -368807.97648092045
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6217,7 +6217,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.282682439450418,
+      "value": -0.12331737271328412,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_time_vs_S:b4:saving",
@@ -6256,7 +6256,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1021451.2755516046,
+      "value": -510725.63777580205,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_time_vs_S:b8:diff_kg",
@@ -6265,8 +6265,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1146679.392663819,
-       -895520.0223886059
+       -635953.7548880165,
+       -384794.38461280335
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6275,7 +6275,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.282682439450418,
+      "value": -0.12331737271328412,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_time_vs_S:b8:saving",
@@ -6322,7 +6322,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1051323.0585411876,
+      "value": -525661.529270594,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:U_vs_W:b2:diff_kg",
@@ -6331,8 +6331,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1218137.1052043568,
-       -879042.0765629524
+       -692475.5759337633,
+       -353380.5472923588
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6341,7 +6341,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.29055211976254686,
+      "value": -0.12684807180579127,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:U_vs_W:b2:saving",
@@ -6380,7 +6380,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1051323.0585411876,
+      "value": -525661.529270594,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:U_vs_W:b4:diff_kg",
@@ -6389,8 +6389,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1187002.280808317,
-       -908080.0433666729
+       -661340.7515377235,
+       -382418.5140960794
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6399,7 +6399,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.29055211976254686,
+      "value": -0.12684807180579127,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:U_vs_W:b4:saving",
@@ -6438,7 +6438,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1051323.0585411876,
+      "value": -525661.529270594,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:U_vs_W:b8:diff_kg",
@@ -6447,8 +6447,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1175262.1214285328,
-       -922509.4051302467
+       -649600.5921579392,
+       -396847.8758596531
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6457,7 +6457,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.29055211976254686,
+      "value": -0.12684807180579127,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:U_vs_W:b8:saving",
@@ -6504,7 +6504,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1050858.8420967623,
+      "value": -525429.4210483814,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:G_vs_W:b2:diff_kg",
@@ -6513,8 +6513,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1217676.220119715,
-       -878429.2206718274
+       -692246.7990713341,
+       -352999.79962344654
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6523,7 +6523,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.29042382516189047,
+      "value": -0.12679206146682126,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:G_vs_W:b2:saving",
@@ -6562,7 +6562,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1050858.8420967623,
+      "value": -525429.4210483814,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:G_vs_W:b4:diff_kg",
@@ -6571,8 +6571,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1186543.8287735346,
-       -907342.8719551929
+       -661114.4077251537,
+       -381913.450906812
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6581,7 +6581,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.29042382516189047,
+      "value": -0.12679206146682126,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:G_vs_W:b4:saving",
@@ -6620,7 +6620,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1050858.8420967623,
+      "value": -525429.4210483814,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:G_vs_W:b8:diff_kg",
@@ -6629,8 +6629,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1174983.5413520955,
-       -922240.3012895352
+       -649554.1203037146,
+       -396810.88024115434
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6639,7 +6639,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.29042382516189047,
+      "value": -0.12679206146682126,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:G_vs_W:b8:saving",
@@ -6686,7 +6686,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 4939.8979975394905,
+      "value": 2469.9489987697452,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:S_vs_W:b2:diff_kg",
@@ -6695,8 +6695,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -2979.69478406359,
-       14149.288904224555
+       -5449.643782833335,
+       11679.33990545481
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6705,7 +6705,7 @@
       "reason": null
      },
      "saving": {
-      "value": 0.0013652300526799763,
+      "value": 0.0005960266264631013,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:S_vs_W:b2:saving",
@@ -6744,7 +6744,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 4939.8979975394905,
+      "value": 2469.9489987697452,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:S_vs_W:b4:diff_kg",
@@ -6753,8 +6753,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -3641.993598190823,
-       14832.211404296302
+       -6111.942596960568,
+       12362.262405526557
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6763,7 +6763,7 @@
       "reason": null
      },
      "saving": {
-      "value": 0.0013652300526799763,
+      "value": 0.0005960266264631013,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:S_vs_W:b4:saving",
@@ -6802,7 +6802,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 4939.8979975394905,
+      "value": 2469.9489987697452,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:S_vs_W:b8:diff_kg",
@@ -6811,8 +6811,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -4185.222128958407,
-       15316.098836479963
+       -6655.171127728152,
+       12846.149837710218
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6821,7 +6821,7 @@
       "reason": null
      },
      "saving": {
-      "value": 0.0013652300526799763,
+      "value": 0.0005960266264631013,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:S_vs_W:b8:saving",
@@ -6868,7 +6868,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -5067.302434104029,
+      "value": -2533.6512170522474,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:K_vs_W:b2:diff_kg",
@@ -6877,8 +6877,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -13252.355207169521,
-       1051.5304484442095
+       -10718.70399011774,
+       3585.181665495991
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6887,7 +6887,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.0014004405703322241,
+      "value": -0.0006113986921535457,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:K_vs_W:b2:saving",
@@ -6926,7 +6926,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -5067.302434104029,
+      "value": -2533.6512170522474,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:K_vs_W:b4:diff_kg",
@@ -6935,8 +6935,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -13854.98481803299,
-       1339.7100168708457
+       -11321.333600981208,
+       3873.3612339226274
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -6945,7 +6945,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.0014004405703322241,
+      "value": -0.0006113986921535457,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:K_vs_W:b4:saving",
@@ -6984,7 +6984,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -5067.302434104029,
+      "value": -2533.6512170522474,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:K_vs_W:b8:diff_kg",
@@ -6993,8 +6993,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -14410.369947573112,
-       1681.0872611385294
+       -11876.71873052133,
+       4214.738478190311
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -7003,7 +7003,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.0014004405703322241,
+      "value": -0.0006113986921535457,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:K_vs_W:b8:saving",
@@ -7050,7 +7050,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -163.9692293284461,
+      "value": -81.9846146646887,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_vs_W:b2:diff_kg",
@@ -7059,8 +7059,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -7498.332658585789,
-       6535.740300261253
+       -7416.348043922032,
+       6617.72491492501
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -7069,7 +7069,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.00004531585868887772,
+      "value": -0.000019783814696097307,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_vs_W:b2:saving",
@@ -7108,7 +7108,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -163.9692293284461,
+      "value": -81.9846146646887,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_vs_W:b4:diff_kg",
@@ -7117,8 +7117,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -8769.972298563982,
-       7160.565784699421
+       -8687.987683900225,
+       7242.550399363178
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -7127,7 +7127,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.00004531585868887772,
+      "value": -0.000019783814696097307,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_vs_W:b4:saving",
@@ -7166,7 +7166,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -163.9692293284461,
+      "value": -81.9846146646887,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_vs_W:b8:diff_kg",
@@ -7175,8 +7175,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -8042.851992208848,
-       7124.070571827357
+       -7960.867377545091,
+       7206.055186491114
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -7185,7 +7185,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.00004531585868887772,
+      "value": -0.000019783814696097307,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_vs_W:b8:saving",
@@ -7232,7 +7232,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 4453.630678665824,
+      "value": 2226.8153393324465,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:H_vs_W:b2:diff_kg",
@@ -7241,8 +7241,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       2113.2533044350103,
-       7150.560856392686
+       -113.56203489836753,
+       4923.745517059308
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -7251,7 +7251,7 @@
       "reason": null
      },
      "saving": {
-      "value": 0.00123084129451268,
+      "value": 0.0005373557248022889,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:H_vs_W:b2:saving",
@@ -7290,7 +7290,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 4453.630678665824,
+      "value": 2226.8153393324465,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:H_vs_W:b4:diff_kg",
@@ -7299,8 +7299,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       2255.800314881583,
-       6887.298072421874
+       28.984975548205057,
+       4660.482733088496
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -7309,7 +7309,7 @@
       "reason": null
      },
      "saving": {
-      "value": 0.00123084129451268,
+      "value": 0.0005373557248022889,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:H_vs_W:b4:saving",
@@ -7348,7 +7348,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": 4453.630678665824,
+      "value": 2226.8153393324465,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:H_vs_W:b8:diff_kg",
@@ -7357,8 +7357,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       2359.4277551838663,
-       6558.863681610858
+       132.61241585048856,
+       4332.0483422774805
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -7367,7 +7367,7 @@
       "reason": null
      },
      "saving": {
-      "value": 0.00123084129451268,
+      "value": 0.0005373557248022889,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:H_vs_W:b8:saving",
@@ -7414,7 +7414,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1017619.0434863367,
+      "value": -508809.5217431681,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_time_vs_W:b2:diff_kg",
@@ -7423,8 +7423,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1184940.4849776307,
-       -846645.8777896903
+       -676130.9632344621,
+       -337836.3560465217
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -7433,7 +7433,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.28123740632680794,
+      "value": -0.12278149180729521,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_time_vs_W:b2:saving",
@@ -7472,7 +7472,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1017619.0434863367,
+      "value": -508809.5217431681,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_time_vs_W:b4:diff_kg",
@@ -7481,8 +7481,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1150259.209966162,
-       -879373.5853700704
+       -641449.6882229934,
+       -370564.0636269018
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -7491,7 +7491,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.28123740632680794,
+      "value": -0.12278149180729521,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_time_vs_W:b4:saving",
@@ -7530,7 +7530,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1017619.0434863367,
+      "value": -508809.5217431681,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_time_vs_W:b8:diff_kg",
@@ -7539,8 +7539,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1139747.8390849233,
-       -892903.4404575727
+       -630938.3173417547,
+       -384093.9187144041
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -7549,7 +7549,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.28123740632680794,
+      "value": -0.12278149180729521,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:W_time_vs_W:b8:saving",
@@ -7596,7 +7596,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1016511.3775540651,
+      "value": -508255.6887770323,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_time_vs_W:b2:diff_kg",
@@ -7605,8 +7605,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1182935.8230369324,
-       -846564.7104709754
+       -674680.1342598996,
+       -338309.0216939426
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -7615,7 +7615,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.2809312828360354,
+      "value": -0.12264784564917842,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_time_vs_W:b2:saving",
@@ -7654,7 +7654,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1016511.3775540651,
+      "value": -508255.6887770323,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_time_vs_W:b4:diff_kg",
@@ -7663,8 +7663,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1150151.897984896,
-       -877607.5367394027
+       -641896.2092078633,
+       -369351.8479623699
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -7673,7 +7673,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.2809312828360354,
+      "value": -0.12264784564917842,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_time_vs_W:b4:saving",
@@ -7712,7 +7712,7 @@
       "reason": null
      },
      "diff_kg": {
-      "value": -1016511.3775540651,
+      "value": -508255.6887770323,
       "unit": "kg_CO2",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_time_vs_W:b8:diff_kg",
@@ -7721,8 +7721,8 @@
      },
      "diff_kg_ci95": {
       "value": [
-       -1138925.1489420542,
-       -892003.881823229
+       -630669.4601650215,
+       -383748.19304619625
       ],
       "unit": "kg_CO2",
       "evidence": "simulated",
@@ -7731,7 +7731,7 @@
       "reason": null
      },
      "saving": {
-      "value": -0.2809312828360354,
+      "value": -0.12264784564917842,
       "unit": "fraction",
       "evidence": "simulated",
       "provenance_id": "20261027T160656Z:L_time_vs_W:b8:saving",
