@@ -24,6 +24,17 @@ Each entry is dated in Mountain Time (MDT, UTC−6) and cites its evidence: a co
 
 ## Entries
 
+### 2026-10-27 01:17 MT: Codex — independent experiment design complete
+
+- Ran the owner's requested sync: git pull --rebase origin main; fast-forwarded codex/planning to main at 8e0ce4c before writing.
+- Read AGENTS.md, docs/brief.md, all three committed docs/data-profile/ profiles, snapshot metadata, and the shared evidence/review rules. Did not read any file under /tmp or any file named spec-draft*. No raw data values, sealed test values, duplicate downloads, or shared-cache writes.
+- Independent proposal: docs/superpowers/specs/2026-10-26-gridpilot-design-codex.md. It requires PACE/CISO/BPAT placement in the core, roughly ten overview regions, emissions-first comparison, offline laptop delivery, Tuesday 18:00 checkable build and Wednesday 13:00 experiment freeze.
+- Central experiment: compare local execution, carbon-blind capacity access, a fixed clean-region rule, calendar/seasonal routing and learned-forecast routing. Separate location, waiting and forecast value. Finite GPU capacity, full non-preemptive gang-job durations, transfer costs and identical work/deadline checks prevent inflated savings.
+- Challenges to reconcile: consumption-based average intensity is primary attribution, not causal avoided emissions; no reliable causal marginal factor is inferred from regression R-squared; measured attempts become explicitly assumed declared-budget requests; submission-time replay may be infeasible at recorded cluster capacity; long jobs require continuous replay and full tail accounting. Whole-cycle workload repetition avoids stitching long attempts across randomly resampled weeks.
+- Consistency fixes: validation selection/calibration ends before final fitting/first test issue; common carbon-blind warm-up avoids future-model leakage; independent-job continuous-start hindsight relaxation gives a genuine lower bound, while hindsight greedy is not called optimal.
+- Verification: all 6 local Markdown source links resolve. git diff --cached --check passed. This is a document proposal; no new experiment, runtime benchmark, statistical result, laptop rehearsal, or soundness-gate pass is claimed.
+- Next for lead: reconcile with the independent implementation proposal, obtain the fresh soundness gate on the reconciled candidate, approve/freeze configurations, then open sealed evaluation through its logged entry point. The test remains sealed.
+
 ### 2026-10-27 00:50 MT: Claude
 
 - **Plan v2 approved** by the owner: `docs/plan/2026-10-27-plan-v2.md` (`b2b89ea`). Its amendment moves the experiment freeze to **Wed 13:00** and adds a **checkable version by Tue 18:00** (`cb1c6fb`).
