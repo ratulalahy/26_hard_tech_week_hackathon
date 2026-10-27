@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { IntervalChart, Panel, PolicyTable } from '../components/charts';
 import { extRows, placementSpan } from '../components/extensions';
-import { ImportChart, ReliefTable, StorageCurve, StorageDayStrip, hourSpans, storageFacts } from '../components/storage';
-import { C } from '../lib/color';
+import { ImportChart, StorageCurve, hourSpans, storageFacts } from '../components/storage';
 import { Ev, EvCI, Icon } from '../components/ui';
 import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, VALIDATION_LINE, asNum, dayCurve, headline, loadMonth, pname, type Core, type Json } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
-import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange } from '../lib/format';
+import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange, sig2 } from '../lib/format';
 import { useViewport } from '../lib/useViewport';
 import { initialStep, useApp } from '../lib/store';
 import { WestMap, type ArcSpec } from '../map/WestMap';
@@ -84,8 +83,8 @@ export function Story() {
     },
     {
       t: "Move what you can, store for what you can't",
-      body: sf ? <span data-testid="story-storage">Moving cuts {pctRange(h.placement.lo, h.placement.hi)}%, but it leans on large multi-node jobs: {spanMob ? <>if only jobs of 8 GPUs or fewer may move, the cut is <b className="fw-600">{pctRange(spanMob[0], spanMob[1])}%</b></> : 'the small-jobs-only check did not run'}. For the work that stays, a battery at the Utah cluster can move its <i>energy</i> instead. <b className="fw-600" data-testid="storage-headline">{/^(8|11|18)/.test(String(sf.E)) ? "An" : "A"} {fmt(sf.E)} MWh battery ({fmt(sf.P)} MW), about {fmt(sf.hours, 0)} hours of the cluster's load, cuts its CO₂ by {pct(sf.cutA, 1)}% with a fixed daily schedule</b> (charge {hourSpans(sf.charge).join(', ')}, discharge {hourSpans(sf.discharge).join(', ')}; hours set from 2022–24 data); planning each day on that day's actual carbon, a hindsight heuristic, gets {pct(sf.cutB, 1)}%. <span data-testid="storage-combined">Move the small jobs and store for the big ones: <b className="fw-600">{pct(sf.moveStoreA, 1)}%</b> less CO₂ than {pname('U')}, against {pct(sf.moveOnly, 1)}% from moving alone.</span> <span data-testid="storage-skeptic">It pays only while charging carbon ÷ efficiency stays below the carbon it displaces: {fmt(sf.chargeCI)} ÷ {fmt(sf.eta, 2)} = {fmt(sf.chargeOverEta)} against {fmt(sf.dischargeCI)} g/kWh. On the margin it may not: Utah's marginal emissions barely dip at midday (about {fmt(sf.mCharge)} vs {fmt(sf.mDischarge)} g/kWh on our rough reference, where {fmt(sf.ratio, 2)}× is needed), and at a flat {fmt(sf.mFlat)} g/kWh the same battery adds about {fmt(sf.flatAddT)} t of CO₂ a year, its losses.</span> <span data-testid="storage-relief-line">For the grid: in Utah's {fmt(sf.rushN)} rush hours, {pname('W')} took {fmt(sf.reliefW, 2)} MW off the cluster and added {fmt(sf.destW, 2)} MW elsewhere. The battery, scheduled for carbon, discharges after the rush and trims only {fmt(sf.rushBefore - sf.rushAfter, 2)} MW, while its charging adds {fmt(sf.rebound, 2)} MW at midday.</span></span> : <>{VALIDATION_LINE}</>,
-      ev: <><span className="ev" data-ev="modeled" style={{ padding: '2px 8px', borderRadius: 8, boxShadow: 'inset 0 0 0 1px var(--hair)', color: 'var(--ink-2)' }}>illustrative · not the registered result</span><EvCI /><Ev e="simulated">dispatch, peak relief</Ev><Ev e="assumed">battery, schedule</Ev><button className="btn" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button></>,
+      body: sf ? <span data-testid="story-storage">Moving cuts {pctRange(h.placement.lo, h.placement.hi)}%, but only if large multi-node jobs can move; {spanMob ? <>if only jobs of 8 GPUs or fewer may, it falls to {pctRange(spanMob[0], spanMob[1])}%</> : 'the small-jobs-only check did not run'}. For work that stays, a battery can shift its energy instead. <b className="fw-600" data-testid="storage-headline">{/^(8|11|18)/.test(String(sf.E)) ? 'An' : 'A'} {fmt(sf.E)} MWh, {fmt(sf.P)} MW battery cuts the Utah cluster's CO₂ by {pct(sf.cutA, 1)}%</b> on a fixed daily schedule; charging is limited to the roughly {fmt(sf.headroomLo, 1)}–{fmt(sf.headroomMid, 1)} MW the site connection leaves free. <span data-testid="storage-combined">Moving the small jobs and storing for the big ones cuts <b className="fw-600">{pct(sf.moveStoreA, 1)}%</b> against {pname('U')}.</span> <b className="fw-600 block" style={{ marginTop: 8 }} data-testid="storage-skeptic">On a flat marginal basis it may add about {sig2(sf.flatAddT)} t: storage only helps if charging carbon ÷ η &lt; displaced carbon.</b></span> : <>{VALIDATION_LINE}</>,
+      ev: <><span className="chip-neutral">illustrative · not the registered result</span><EvCI /><Ev e="simulated">dispatch</Ev><Ev e="assumed">battery, schedule</Ev><button className="btn" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button></>,
     },
   ];
   return (
@@ -245,36 +244,23 @@ function Count() {
 function StorageBeat() {
   const { data } = useApp();
   const sto = data!.storage;
-  const tight = useViewport().h < 1000;
   if (!sto) return <Panel><span className="t-13 ink-3">The storage illustration was not exported (results/storage.json is missing).</span></Panel>;
   const f = storageFacts(sto);
   return (
-    <div className="grid h-full" style={{ gridTemplateRows: 'minmax(0,1fr) auto', gap: tight ? 12 : 16 }}>
-      <div className="grid min-h-0" style={{ gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 16 }}>
-        <Panel className="flex flex-col min-h-0" style={{ gap: 8 }}>
-          <div className="flex items-baseline justify-between gap-2"><span className="t-15">Utah cluster's CO₂ cut by battery size</span><Ev e="simulated" /></div>
-          <div className="flex-1 min-h-0" style={{ minHeight: 150 }}><StorageCurve s={sto} /></div>
-          <div className="t-12 ink-3">Every job in Utah ({pname('U')}), {pct(f.eta, 0)}% round trip (also run at 75% and 90%). Gains level off because charging must fit under the site's {fmt(f.conn, 2)} MW connection. <Ev e="assumed">η, size</Ev></div>
-        </Panel>
-        <Panel className="flex flex-col min-h-0" style={{ gap: 8 }}>
-          <div className="flex items-baseline justify-between gap-2"><span className="t-15">Utah cluster's grid import, typical day</span><Ev e="simulated" /></div>
-          <div className="flex-1 min-h-0" style={{ minHeight: 150 }}><ImportChart s={sto} /></div>
-          <div className="t-12 ink-3">{fmt(f.E)} MWh, {fmt(f.P)} MW, fixed schedule. Peak import {fmt(f.peakBefore, 2)} → {fmt(f.peakAfter, 2)} MW (charging rebound); rush hours {fmt(f.rushBefore, 2)} → {fmt(f.rushAfter, 2)} MW ({fmt(f.rushAfterB, 2)} with the hindsight heuristic).</div>
-        </Panel>
-      </div>
-      <Panel className={`flex flex-col ${tight ? 'tight' : ''}`} style={{ gap: tight ? 6 : 10 }}>
-        <div className="flex items-baseline justify-between gap-2"><span className="t-15">The fixed schedule on Utah's day</span><EvCI extra="validation-year mean" /></div>
-        <StorageDayStrip s={sto} />
-        <div className="flex flex-wrap items-center gap-4 t-11 ink-2">
-          <span className="inline-flex items-center gap-1"><svg width="18" height="10" aria-hidden="true"><rect x="1" y="1" width="16" height="8" rx="2" fill="#fff" stroke={C.ink} strokeWidth="1.5" /></svg>charge</span>
-          <span className="inline-flex items-center gap-1"><svg width="18" height="10" aria-hidden="true"><rect x="1" y="1" width="16" height="8" rx="2" fill={C.ink} /></svg>discharge</span>
-          <span className="inline-flex items-center gap-1"><svg width="18" height="10" aria-hidden="true"><rect x="1" y="1" width="16" height="8" rx="2" fill="none" stroke={C.stored} strokeWidth="1.5" strokeDasharray="3 2" /></svg>stored</span>
-          <span className="inline-flex items-center gap-1"><svg width="18" height="10" aria-hidden="true"><rect x="1" y="1" width="16" height="8" rx="2" fill={C.rushFill} stroke={C.rush} /></svg>rush hours: net load above the 2022–24 top 1% ({fmt(f.rushThr)} MW)</span>
+    <div className="grid h-full" style={{ gridTemplateRows: 'minmax(0,1.15fr) minmax(0,1fr)', gap: 16 }}>
+      <Panel className="flex flex-col min-h-0" style={{ gap: 8 }}>
+        <div className="flex items-baseline justify-between gap-2"><span className="t-15">Utah cluster's CO₂ change by battery size, over the validation window (Nov 2024–Oct 2025)</span><Ev e="simulated" /></div>
+        <div className="flex-1 min-h-0" style={{ minHeight: 160 }}><StorageCurve s={sto} /></div>
+        <div className="t-12 ink-3">
+          Every job in Utah ({pname('U')}), {pct(f.eta, 0)}% round trip. Solid: a fixed daily schedule set from 2022–24 data; it levels off near {fmt(f.plateau)} MWh ({pct(f.cutAplateau, 1)}%) because charging must fit under the site connection{f.sensCutA != null ? ` (+25% connection: ${pct(f.sensCutA, 1)}% at ${fmt(f.E)} MWh)` : ''}. Dashed: a hindsight heuristic that sees each day's actual carbon in advance, one possible plan, not a limit ({pct(f.cutB, 1)}%). Dotted: the same fixed schedule on a flat marginal factor, a threshold scenario. <Ev e="assumed">η, size</Ev>
         </div>
-        <hr className="rule" />
-        <div className="flex items-baseline justify-between gap-2"><span className="t-15">Router peak relief: cluster load in Utah's rush</span><Ev e="simulated">registered ledgers</Ev></div>
-        <ReliefTable s={sto} />
-        <div className="t-11 ink-3">{sto.power_quality} Not part of the registered experiment; storage is not simulated in the scheduler.</div>
+      </Panel>
+      <Panel className="flex flex-col min-h-0" style={{ gap: 8 }}>
+        <div className="flex items-baseline justify-between gap-2"><span className="t-15">Utah cluster's grid import, a typical day, {fmt(f.E)} MWh / {fmt(f.P)} MW</span><Ev e="simulated" /></div>
+        <div className="flex-1 min-h-0" style={{ minHeight: 140 }}><ImportChart s={sto} /></div>
+        <div className="t-12 ink-3">
+          Charge {hourSpans(f.charge).join(', ')} (outlined), discharge {hourSpans(f.discharge).join(', ')} (shaded), energy held between (teal). Charging adds {fmt(f.rebound, 2)} MW at midday; Utah's rush hours fall mostly near 8 PM, so this carbon schedule trims them by only {fmt(f.rushBefore - f.rushAfter, 2)} MW. Scale: one 2,288-GPU cluster, about {fmt(f.peakBefore, 1)} MW at most; Utah's peak net load is about {fmt(Math.round(f.peakNet / 100) * 100)} MW. Peak relief by the router is in the method drawer. {sto.power_quality}
+        </div>
       </Panel>
     </div>
   );

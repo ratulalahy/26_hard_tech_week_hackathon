@@ -1,10 +1,10 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { PolicyTable } from '../components/charts';
 import { CONSUMPTION_CHECKS, ExtensionsTable, PHRASE, extRows, listJoin, placementSpan } from '../components/extensions';
-import { hourSpans, storageFacts } from '../components/storage';
+import { ReliefTable, RushSensitivity, hourSpans, storageFacts } from '../components/storage';
 import { Ev, Icon, SEALED } from '../components/ui';
 import { DEADLINE_RULE, VALIDATION_LINE, asNum, headline, plainLimitations, pname, stripCodes } from '../lib/data';
-import { fmt, fmtDate, pct, pctRange, signed } from '../lib/format';
+import { fmt, fmtDate, pct, pctRange, sig2, signed } from '../lib/format';
 import { useApp } from '../lib/store';
 
 const iso = (s: string) => fmtDate(s, { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }) + ' UTC';
@@ -78,19 +78,6 @@ export function MethodDrawer() {
               {span ? <p className="t-13" style={{ margin: '0 0 8px' }} data-testid="method-checks">We checked it {xRun.length} more ways. {listJoin(keptRun.map((r) => PHRASE[r.id] ?? r.label)).replace(/^./, (c) => c.toUpperCase())}, {pname('S')}, {pname('W')} and {pname('L')} still cut <b className="fw-600">{pctRange(span[0], span[1])}%</b>.{spanProd ? ` On production-basis carbon the cut is ${pctRange(spanProd[0], spanProd[1])}%; production basis flatters hydro-heavy destinations.` : ''}{spanBig ? ` Twice the room at the destinations raises it to ${pctRange(spanBig[0], spanBig[1])}%` : ''}{w0.length ? `; with no room there, waiting alone saves ${pctRange(Math.min(...w0), Math.max(...w0))}%` : ''}.{allOnTime ? ' No job was late in any run.' : ''}{xMiss.length ? ` ${xMiss.length} more check${xMiss.length > 1 ? 's' : ''} did not run (${xMiss[0].reason}).` : ''}</p> : null}
               <ExtensionsTable m={m} ext={data!.ext} testId="method-extensions" />
             </Sec> : null}
-            {sto && sf ? <Sec title="Storage illustration (not the registered result)">
-              <p className="t-13" style={{ margin: 0 }} data-testid="method-storage">
-                {sto.note.replace(/^./, (c: string) => c.toUpperCase())}. A battery behind the meter at the Utah cluster is dispatched against the cluster's hourly energy from the registered ledgers ({pname('U')}, and {pname('W')} with only jobs of 8 GPUs or fewer allowed to move), over the registered cohort window, on the same EIA consumption-basis carbon. <Ev e="simulated">dispatch</Ev> <Ev e="modeled">carbon</Ev>
-              </p>
-              <ul className="t-13 ink-2" style={{ margin: '8px 0 0', paddingLeft: 16 }}>
-                <li>Sizes {VS_LIST(sto.assumptions.sizes_mwh)} MWh, power = size ÷ 4; round-trip efficiency {fmt(sf.eta, 2)} (also 0.75 and 0.90), all lost on the charging side. Charging fits under the site connection, {fmt(sf.conn, 3)} MW (2,288 GPUs × 0.60 kW × 1.20) minus the cluster's load; discharge never exceeds the load (no export). The state of charge runs from empty through the whole window; energy left at the end ({fmt(sf.terminal, 1)} MWh for the fixed schedule at {fmt(sf.E)} MWh) is valued at zero. Degradation, self-discharge and cost are ignored. <Ev e="assumed" /></li>
-                <li>Fixed daily schedule: charge in the 6 local hours with the lowest mean carbon in 2022 to Oct 2024 ({hourSpans(sf.charge).join(', ')}), discharge in the 6 highest of the rest ({hourSpans(sf.discharge).join(', ')}); no forecasts, no validation data. <Ev e="assumed">schedule</Ev></li>
-                <li>Hindsight heuristic: each day is planned on that day's actual carbon (a small linear program per day), so it sees the future within a day; it is not an optimum over the year and not a bound.</li>
-                <li>Break-even: storing 1 kWh helps only if charging carbon ÷ efficiency is below the carbon it displaces. Marginal emissions have no defensible hourly estimate here (the training-only proxy was not built; our reference is a rough validation-year regression by 6-hour block), so the skeptic number is a threshold scenario: at a flat {fmt(sf.mFlat)} g/kWh, storage only adds its losses.</li>
-                <li>Rush hours: validation hours with Utah net load at or above the 2022–24 top 1% ({fmt(sf.rushThr)} MW); {fmt(sf.rushN)} hours. Peak relief compares each site's cluster load in those hours under {pname('U')}, {pname('S')} and {pname('W')}. <Ev e="observed">net load</Ev> <Ev e="simulated">cluster load</Ev></li>
-                <li>{sto.power_quality}</li>
-              </ul>
-            </Sec> : null}
             <Sec title="A bound, not a target">
               <p className="t-13" style={{ margin: 0 }}>
                 A relaxed hindsight bound that ignores competition between jobs for capacity (each job's own limits still apply): {fmt(rb.primary.value / 1000, 0)} t when work may move, {fmt(rb.time_only.value / 1000, 0)} t when it may only wait. Every feasible policy sits above it{rb.all_feasible_policies_ok ? ' (checked)' : ''}. <Ev e="modeled" />
@@ -128,6 +115,26 @@ export function MethodDrawer() {
                 </div>
               </details>
             </Sec>
+            {sto && sf ? <div className="well" style={{ padding: 12 }}><Sec title="Storage illustration (not the registered result)">
+              <p className="t-13" style={{ margin: 0 }} data-testid="method-storage">
+                {sto.note.replace(/^./, (c: string) => c.toUpperCase())}. A battery behind the meter at the Utah cluster is dispatched against the cluster's hourly energy from the registered ledgers ({pname('U')}, and {pname('W')} with only jobs of 8 GPUs or fewer allowed to move), over the registered cohort window, on the same EIA consumption-basis carbon. <span className="chip-neutral">illustrative</span> <Ev e="simulated">dispatch</Ev> <Ev e="modeled">carbon</Ev>
+              </p>
+              <ul className="t-13 ink-2" style={{ margin: '8px 0 0', paddingLeft: 16 }}>
+                <li>Battery: sizes {VS_LIST(sto.assumptions.sizes_mwh)} MWh, power = size ÷ 4; round-trip efficiency {fmt(sf.eta, 2)} (also 0.75 and 0.90), all lost on the charging side. Charging fits under the site connection, {fmt(sf.conn, 3)} MW (2,288 GPUs × 0.60 kW × 1.20) minus the cluster's load, which leaves roughly {fmt(sf.headroomLo, 1)}–{fmt(sf.headroomMid, 1)} MW in the charging hours; discharge never exceeds the load (no export). The state of charge runs from empty through the whole window; energy left at the end ({fmt(sf.terminal, 1)} MWh at {fmt(sf.E)} MWh) is valued at zero. Degradation, self-discharge and cost are ignored; standby losses would reduce this, most at low utilisation. <Ev e="assumed" /></li>
+                <li>Headline size: {fmt(sf.E)} MWh / {fmt(sf.P)} MW, an illustrative selection sized to the charging room the connection leaves ({sto.headline.rule}). It delivers {fmt(sf.throughput, 1)} MWh a day, {fmt(sf.cycles, 2)} full cycles. The curve levels off near {fmt(sf.plateau)} MWh ({pct(sf.cutAplateau, 1)}%).{sf.sensCutA != null ? ` With a 25% larger connection (${fmt(sf.sensConn ?? 0, 2)} MW) the ${fmt(sf.E)} MWh battery cuts ${pct(sf.sensCutA, 1)}%.` : ''}</li>
+                <li>Fixed daily schedule: charge in the 6 local hours with the lowest mean carbon in 2022 to Oct 2024 ({hourSpans(sf.charge).join(', ')}), discharge in the 6 highest of the rest ({hourSpans(sf.discharge).join(', ')}); no forecasts, no validation data. <Ev e="assumed">schedule</Ev></li>
+                <li>Hindsight heuristic: sees each day's actual carbon in advance and plans that day (a small linear program); one possible plan, not a limit. It cuts {pct(sf.cutB, 1)}% at {fmt(sf.E)} MWh.</li>
+                <li data-testid="method-breakeven">Break-even: storing 1 kWh helps only if charging carbon ÷ efficiency is below the carbon it displaces. On the 2022–24 profile it is: {fmt(sf.chargeCI)} ÷ {fmt(sf.eta, 2)} = {fmt(sf.chargeOverEta)} against {fmt(sf.dischargeCI)} g/kWh. On our rough reference the charging hours are no cleaner on the margin ({fmt(sf.mCharge)} vs {fmt(sf.mDischarge)} g/kWh; {fmt(sf.ratio, 2)}× would be needed). That reference is a validation-year regression by 6-hour block, not an hourly estimate, so the marginal view is a threshold scenario: at a flat {fmt(sf.mFlat)} g/kWh the battery adds what it draws and does not deliver, about {sig2(sf.flatAddT)} t on the fixed schedule ({sig2(sf.flatAddTB)} t on the hindsight heuristic).</li>
+                <li>Move small, store for big: {pname('W')} with only jobs of 8 GPUs or fewer moving cuts {pct(sf.moveOnly, 1)}% against {pname('U')} (ratio of totals); adding the {fmt(sf.E)} MWh battery to the work left in Utah gives {pct(sf.moveStoreA, 1)}% ({pct(sf.moveStoreB, 1)}% with the hindsight heuristic). Utah execution, remote execution and transfer energy are each counted once.</li>
+                <li>Window: the registered cohort window, arrivals from Nov 1, 2024 until {iso(sto.window.arrivals_end)}; it runs on until the last job ends, so the cluster's load falls over the final hours (the drain).</li>
+                <li>{sto.power_quality}</li>
+              </ul>
+              <h4 className="t-13 fw-600" style={{ margin: '12px 0 4px' }}>Router peak relief in Utah's rush hours</h4>
+              <p className="t-12 ink-2" style={{ margin: '0 0 6px' }} data-testid="method-rush">Rush hours: validation hours with Utah net load at or above the 2022–24 top 1% ({fmt(sf.rushThr)} MW): {fmt(sf.rushN)} hours on {fmt(sf.rushDays)} days. Each site's cluster load in those hours and at the year's peak net-load hour, from the registered ledgers; MW = MWh per hour. One 2,288-GPU cluster against a Utah peak net load of about {fmt(Math.round(sf.peakNet / 100) * 100)} MW. <Ev e="observed">net load</Ev> <Ev e="simulated">cluster load</Ev></p>
+              <div style={{ overflowX: 'auto' }}><ReliefTable s={sto} /></div>
+              <p className="t-12 ink-2" style={{ margin: '8px 0 6px' }}>The same relief at lower thresholds:</p>
+              <div style={{ overflowX: 'auto' }}><RushSensitivity s={sto} /></div>
+            </Sec></div> : null}
             <Sec title="Evidence labels">
               <div className="flex flex-wrap gap-4"><Ev e="observed" /><Ev e="measured" /><Ev e="forecast" /><Ev e="modeled" /><Ev e="assumed" /><Ev e="simulated" /></div>
               <p className="t-12 ink-2" style={{ margin: '8px 0 0' }}>Observed: EIA-930 load and the EIA US average. Measured: job sizes from the trace, forecast errors. Modeled: EIA's hourly carbon-intensity estimates, and bounds computed from them. Assumed: parameters we chose. Simulated: schedule outcomes and their energy.</p>

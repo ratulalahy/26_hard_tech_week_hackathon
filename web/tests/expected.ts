@@ -54,8 +54,12 @@ export const storage = JSON.parse(readFileSync(join(results, 'storage.json'), 'u
 const sz: number[] = storage.assumptions.sizes_mwh.value;
 const E: number = storage.headline.e_mwh.value, iE = sz.indexOf(E);
 const cutA: number = storage.cases.U.strategies.A['0.85'].cut_frac.value[iE];
-const hrs: number = storage.cases.U.load_hours.value[iE];
-/** e.g. "A 8 MWh battery (2 MW), about 8 hours of the cluster's load, cuts its CO₂ by 3.8%" */
-export const storageHeadline = `${/^(8|11|18)/.test(String(E)) ? "An" : "A"} ${E} MWh battery (${E * storage.assumptions.p_over_e.value} MW), about ${Math.round(hrs)} hours of the cluster's load, cuts its CO₂ by ${pct(cutA)}% with a fixed daily schedule`;
-export const storageCombined = `${pct(storage.combined.move_and_store_cut_frac.A.value[iE])}% less CO₂`;
+/** e.g. "A 4 MWh, 1 MW battery cuts the Utah cluster's CO₂ by 3.5%" */
+export const storageHeadline = `${/^(8|11|18)/.test(String(E)) ? 'An' : 'A'} ${E} MWh, ${E * storage.assumptions.p_over_e.value} MW battery cuts the Utah cluster's CO₂ by ${pct(cutA)}%`;
+export const storageCombined = `cuts ${pct(storage.combined.move_and_store_cut_frac.A.value[iE])}%`;
 export const storageRushN = String(storage.rush.n_hours.value);
+export const storageRushDays = String(storage.rush.n_days.value);
+/** two significant figures, as the beat rounds "about X t" */
+const flat = -storage.cases.U.strategies.A['0.85'].flat_marginal_cut_t.value[iE];
+const p10 = Math.pow(10, Math.floor(Math.log10(Math.abs(flat))) - 1);
+export const storageFlatT = (Math.round(flat / p10) * p10).toLocaleString('en-US');
