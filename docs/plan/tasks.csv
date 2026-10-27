@@ -7,8 +7,8 @@ T10,Stage 3,Robustness + sensitivities (7 runs),Claude agent,done,T9,Tue 10:40,,
 AS1,Review,Astra strategy reviews (lead + owner sessions),Codex,done,,Tue 14:27,,Tue 14:46,docs/reviews/*plan-astra*,Both: credible path to winning
 T11,Stage 3,Seal machinery: fix round from adversarial review,Claude agent,in progress,T10,Tue 14:30,Tue 17:00,,PR #44,6 Important gaps + S-ranking envelope (D-062)
 T11r,Review,Re-check T11 fixes,Claude reviewer,next,T11,Tue 17:00,Tue 17:45,,review note,
-T10b,Stage 3,Storage + Utah peak relief (illustrative),Claude agent,in progress,T10,Tue 14:30,Tue 17:30,,PR (storage),Astra corrections applied: heuristic not bound; SOC; connection limit
-T10br,Review,Review storage piece,Claude reviewer,next,T10b,Tue 17:30,Tue 18:15,,review note,
+T10b,Stage 3,Storage + Utah peak relief (illustrative),Claude agent,done,T10,Tue 14:30,Tue 17:30,Tue 14:54,PR #56,Storage 3.8% (8 MWh fixed schedule); small-moves+storage 7.6%; marginal skeptic: storage adds ~115 t
+T10br,Review,Review storage piece,Claude reviewer,in progress,T10b,Tue 14:54,Tue 18:15,,review note,
 P1,Pitch,Draft 4:30 script + Q&A + one-pager + deck outline,Claude agent,done,AS1,Tue 14:45,Tue 16:00,Tue 14:50,docs/pitch/* (PR #53),Placeholders for test numbers
 O1,Owner,Review pitch drafts,Owner,next,P1,Tue 16:00,Tue 21:00,,comments,Tonight; anytime
 O2,Owner,Mac check: make web + preview in Chrome,Owner,next,,Tue 15:00,Tue 21:00,,ok / issues,git pull && make web && cd web && npm run preview
