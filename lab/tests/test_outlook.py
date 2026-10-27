@@ -4,7 +4,9 @@ synthetic series (no grid file is read here)."""
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
+import subprocess
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -159,57 +161,128 @@ def test_the_cli_refuses_sealed_dates_and_live_before_any_read(monkeypatch, tmp_
     assert not (tmp_path / "o.json").exists() and not (tmp_path / "runs").exists()
 
 
+RUN = "20261028T040000Z"
+
+
 def _parquet(tmp_path: Path) -> Path:
-    p = tmp_path / "PACE.parquet"
+    d = tmp_path / "runs" / RUN / "raw"
+    d.mkdir(parents=True)
+    p = d / "PACE.parquet"
     ts = [TEST_START + timedelta(hours=k) for k in range(48)]
     pl.DataFrame({"ba": "PACE", "ts_utc": ts, "ci_consumed_g_kwh": np.arange(48.0)}).with_columns(
         pl.col("ts_utc").dt.cast_time_unit("us")).write_parquet(p)
     return p
 
 
-def _read(p, results, live=True, purpose="test read"):
+def _repo(tmp_path: Path, tag: bool) -> Path:
+    r = tmp_path / "repo"
+    r.mkdir()
+    g = ["git", "-C", str(r), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run([*g, "init", "-q"], check=True)
+    subprocess.run([*g, "commit", "-q", "--allow-empty", "-m", "x"], check=True)
+    if tag:
+        subprocess.run([*g, "tag", "-a", "config-freeze", "-m", "t"], check=True)
+    return r
+
+
+def _open(results: Path, log: bool = True) -> None:
+    (results / "test").mkdir(parents=True, exist_ok=True)
+    (results / "test" / "manifest.json").write_text("{}")
+    if log:
+        (results / "test_reads.jsonl").write_text('{"event": "invocation"}\n')
+
+
+def _read(p, tmp_path, live=True, purpose="test read", repo=None):
     return ol.live_read(p, purpose=purpose, columns=["ts_utc", "ci_consumed_g_kwh"],
                         time_range=(TEST_START, TEST_START + timedelta(hours=24)), live=live,
-                        reader=lambda b: pl.read_parquet(b), results_dir=results)
+                        reader=lambda b: pl.read_parquet(b), results_dir=tmp_path / "results",
+                        repo_root=repo or tmp_path / "repo", live_root=tmp_path / "runs")
+
+
+def test_seal_opened_needs_the_manifest_a_read_log_and_the_freeze_tag(tmp_path):
+    results = tmp_path / "results"
+    assert not ol.seal_opened(results, _repo(tmp_path, tag=True))
+    _open(results, log=False)
+    assert not ol.seal_opened(results, tmp_path / "repo")
+    _open(results)
+    assert ol.seal_opened(results, tmp_path / "repo")
+    untagged = tmp_path / "u"
+    untagged.mkdir()
+    assert not ol.seal_opened(results, _repo(untagged, tag=False))
 
 
 def test_live_read_refuses_without_live_or_before_the_seal_opens(tmp_path):
-    p, results = _parquet(tmp_path), tmp_path / "results"
+    p = _parquet(tmp_path)
+    _repo(tmp_path, tag=True)
     with pytest.raises(ol.OutlookSealError, match="--live"):
-        _read(p, results, live=False)
+        _read(p, tmp_path, live=False)
     with pytest.raises(ol.OutlookSealError, match="not been opened"):
-        _read(p, results)
-    (results / "test").mkdir(parents=True)
-    (results / "test" / "manifest.json").write_text("{}")
+        _read(p, tmp_path)
+    _open(tmp_path / "results")
     with pytest.raises(ol.OutlookSealError, match="purpose"):
-        _read(p, results, purpose=" ")
-    assert not (results / ol.LIVE_LOG_NAME).exists()
+        _read(p, tmp_path, purpose=" ")
+    assert not (tmp_path / "results" / ol.LIVE_LOG_NAME).exists()
+
+
+def test_live_read_refuses_anything_but_a_fresh_download_in_a_run_dir(tmp_path):
+    p = _parquet(tmp_path)
+    _repo(tmp_path, tag=True)
+    _open(tmp_path / "results")
+    frozen = tmp_path / "data" / "processed" / "carbon_hourly.parquet"
+    frozen.parent.mkdir(parents=True)
+    frozen.write_bytes(p.read_bytes())
+    stray = tmp_path / "runs" / RUN / "PACE.parquet"
+    stray.write_bytes(p.read_bytes())
+    for bad in (frozen, stray, tmp_path / "runs" / "latest" / "raw" / "PACE.parquet"):
+        with pytest.raises(ol.OutlookSealError, match="live_read reads only"):
+            _read(bad, tmp_path)
+    assert not (tmp_path / "results" / ol.LIVE_LOG_NAME).exists()
 
 
 def test_live_read_logs_every_read_before_returning_rows(tmp_path):
-    p, results = _parquet(tmp_path), tmp_path / "results"
-    (results / "test").mkdir(parents=True)
-    (results / "test" / "manifest.json").write_text("{}")
-    rows = _read(p, results)
+    p = _parquet(tmp_path)
+    _repo(tmp_path, tag=True)
+    _open(tmp_path / "results")
+    rows = _read(p, tmp_path)
     assert rows.height == 24 and rows.columns == ["ts_utc", "ci_consumed_g_kwh"]
-    _read(p, results, purpose="second")
-    lines = [json.loads(x) for x in (results / ol.LIVE_LOG_NAME).read_text().splitlines()]
+    _read(p, tmp_path, purpose="second")
+    log = tmp_path / "results" / ol.LIVE_LOG_NAME
+    lines = [json.loads(x) for x in log.read_text().splitlines()]
     assert [x["purpose"] for x in lines] == ["test read", "second"]
-    import hashlib
     assert lines[0]["sha256"] == hashlib.sha256(p.read_bytes()).hexdigest()
     assert lines[0]["time_range"][0].startswith("2025-11-01") and lines[0]["code_commit"]
 
 
-def test_only_the_outlook_cli_calls_live_read():
-    callers = set()
+def test_stale_live_data_is_refused():
+    issue = datetime(2026, 10, 27, 16, tzinfo=UTC)
+    ts = [issue - timedelta(days=5, hours=k) for k in range(48)]
+    fresh = pl.DataFrame({"ba": [b for b in ol.SITES for _ in ts], "ts_utc": ts * 4,
+                          "value": [1.0] * 192})
+    assert set(ol.check_fresh(fresh, issue)) == set(ol.SITES)
+    old = fresh.with_columns(pl.when(pl.col("ba") == "NEVP").then(None)
+                             .otherwise(pl.col("value")).alias("value"))
+    with pytest.raises(ol.StaleDataError, match="NEVP"):
+        ol.check_fresh(old, issue)
+    with pytest.raises(ol.StaleDataError, match="PACE"):
+        ol.check_fresh(fresh.with_columns(pl.col("ts_utc") - timedelta(days=3)), issue)
+
+
+def test_only_the_outlook_cli_uses_live_read():
+    """Any reference counts (a call, a callback, an alias import), not just a call by name."""
+    users = set()
     for root in (LAB / "src", LAB / "scripts"):
         for f in root.rglob("*.py"):
             rel = f.relative_to(LAB).as_posix()
+            if rel == "src/gridpilot/outlook.py":
+                continue
             for n in ast.walk(ast.parse(f.read_text())):
-                if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute | ast.Name) and (
-                        getattr(n.func, "attr", None) or getattr(n.func, "id", None)) == "live_read":
-                    callers.add(rel)
-    assert callers == {"scripts/outlook.py"}
+                hit = (isinstance(n, ast.Name) and n.id == "live_read") or (
+                    isinstance(n, ast.Attribute) and n.attr == "live_read") or (
+                    isinstance(n, ast.ImportFrom) and any(a.name == "live_read" for a in n.names)) or (
+                    isinstance(n, ast.Constant) and n.value == "live_read")
+                if hit:
+                    users.add(rel)
+    assert users == {"scripts/outlook.py"}
 
 
 # ------------------------------------------------------------------------ artifact
@@ -236,6 +309,10 @@ def test_the_outlook_is_enveloped_banded_and_labelled(setup, tmp_path):
 
 def test_write_outlook_refuses_sealed_dates_in_a_demo_and_needs_window_live(tmp_path):
     bad = {"window": "validation", "issue_utc": "2026-10-27T16:00:00Z"}
+    with pytest.raises(ValueError, match="contract errors"):  # m7: the full validator in live mode
+        ol.write_outlook(tmp_path / "o.json", {"window": "live", "x": {
+            "value": 1.0, "unit": "g", "evidence": "guessed", "provenance_id": "p", "status": "ok",
+            "reason": None}}, live=True)
     with pytest.raises(ValueError, match="sealed timestamp"):
         ol.write_outlook(tmp_path / "o.json", bad, live=False)
     with pytest.raises(ValueError, match="window 'live'"):
@@ -259,5 +336,8 @@ def test_the_committed_outlook_is_a_labelled_demo_or_a_live_run_after_the_seal()
     if art["window"] == "validation":
         assert art["demo"] is True and "demo" in art["note"]
         assert validate_artifact(art) == []
+        assert art["lineage"]["git_clean"] is True, "export the demo at a clean commit (M2)"
+        issue = datetime.fromisoformat(art["issue_utc"])
+        assert issue not in ol.skill_issues(), "the demo issue must not be a skill issue (m5)"
     else:
         assert art["window"] == "live" and art["demo"] is False and ol.seal_opened()

@@ -52,7 +52,7 @@ function OutlookBody({ o }: { o: Json }) {
   const days: Json[] = o.days;
   const pick: Core = o.router.s_ranking[0];
   const agree = days.every((d) => d.s_agrees_with_forecast);
-  const skillDays: number = v(o.days_with_skill_home) ?? 0;
+  const sk = skillSummary(o);
   // the most common start of Utah's cleanest 4 hours across the days shown (ties: the earlier hour)
   const starts = days.map((d) => d.home_cleanest_block.start_utc as string);
   const count = (iso: string) => starts.filter((x) => hourOf(x) === hourOf(iso)).length;
@@ -71,12 +71,12 @@ function OutlookBody({ o }: { o: Json }) {
       <header className="flex items-end justify-between gap-6 flex-wrap">
         <div>
           <h1 className="t-20" style={{ margin: 0 }} data-testid="outlook-title">
-            {agree ? `Next ${days.length} days: ${REGION[pick].name} stays the cleanest place to run; in Utah, the cleanest hours are ${span}${count(mode) * 2 >= days.length ? " on most days" : ""}`
+            {agree ? `Next ${days.length} days: ${REGION[pick].name} stays the cleanest place to run; in Utah, the cleanest hours are ${sk.utahNone ? 'typically ' : ''}${span}${count(mode) * 2 >= days.length ? ' on most days' : ''}`
               : `Next ${days.length} days: the forecast and the router's fixed ranking disagree on some days`}
           </h1>
-          <p className="t-13 ink-2" style={{ margin: '4px 0 0', maxWidth: '92ch' }}>
+          <p className="t-13 fw-500" style={{ margin: '6px 0 0', maxWidth: '100ch' }} data-testid="outlook-skill-line">{sk.line}</p>
+          <p className="t-13 ink-2" style={{ margin: '4px 0 0', maxWidth: '100ch' }}>
             Consumed CO₂ intensity for {dayLabel(first)} to {dayLabel(last)}, issued {issued}. The deployed router (policy S) sends a movable job to the first region in a fixed ranking learned from training years; it does not read this forecast. The forecast adds the time-shift view: which hours of each day are cleanest.
-            Utah's forecast beats the seasonal average on the first {skillDays} day{skillDays === 1 ? '' : 's'}; after that its days show the average, flagged.
           </p>
         </div>
         <div className="flex gap-3 items-center"><Ev e="forecast">forecast · p10–p90 band</Ev><Ev e="measured">skill: validation year</Ev></div>
@@ -87,7 +87,7 @@ function OutlookBody({ o }: { o: Json }) {
         <div className="panel" style={{ padding: '12px 8px 8px' }}>
           <div className="flex items-baseline justify-between" style={{ padding: '0 8px' }}>
             <span className="t-15">Hourly forecast by region, g CO₂/kWh</span>
-            <span className="t-11 ink-3">Hours are America/Denver · line: median forecast · band: p10–p90 from validation errors · hatched days: seasonal average only</span>
+            <span className="t-11 ink-3">Hours are America/Denver · line: median · band: p10–p90 from validation errors · shaded days: seasonal average only · Utah has its own y scale; the destinations share one</span>
           </div>
           {SITES.map((ba) => <RegionChart key={ba} o={o} ba={ba} big={ba === 'PACE'} />)}
         </div>
@@ -119,12 +119,38 @@ function DayStrip({ o }: { o: Json }) {
               <span className="t-13 fw-600 whitespace-nowrap">{timeLabel(b.start_utc)}–{timeLabel(new Date(Date.parse(b.start_utc) + 4 * 3600e3).toISOString())}</span>
             </div>
             <div className="t-11 ink-3">Utah's cleanest 4 h · <Num v={mean} unit="g/kWh" /></div>
-            <span className="t-11" style={{ color: clim ? C.ink2 : C.ink3 }}>{clim ? 'seasonal average only' : `forecast · ${pct(v(d.regions.PACE.skill_vs_climatology) ?? 0, 0)}% better than avg`}</span>
+            <span className="t-11" style={{ color: clim ? C.ink2 : C.ink3 }}>{cardStatus(d.regions.PACE)}</span>
+            {clim ? <Ev e="modeled">seasonal average</Ev> : <Ev e="forecast" />}
           </li>
         );
       })}
     </ol>
   );
+}
+
+/** The skill sentence, from the data: which regions' forecasts clear the 90% block-bootstrap rule. */
+function skillSummary(o: Json) {
+  const ds = ['1', '2', '3', '4', '5', '6', '7'];
+  const pass = (ba: Core) => ds.filter((d) => o.skill_by_horizon[ba][d].status === 'forecast');
+  const utah = pass('PACE');
+  const dest = (['BPAT', 'CISO', 'NEVP'] as Core[]);
+  const dSk = dest.flatMap((b) => pass(b).map((d) => v(o.skill_by_horizon[b][d].skill) ?? 0));
+  const allDest = dest.every((b) => pass(b).length === ds.length);
+  const destTxt = dSk.length
+    ? `the destinations' forecasts are ${pct(Math.min(...dSk), 0)}–${pct(Math.max(...dSk), 0)}% better${allDest ? ' on every day through D+7' : ' on the days marked'}`
+    : "neither are the destinations'";
+  if (!utah.length) {
+    return { utahNone: true, line: `Utah's forecast is not reliably better than its seasonal average (on every day the 90% interval includes zero), so Utah's days show the seasonal average; ${destTxt}.` };
+  }
+  const uSk = utah.map((d) => v(o.skill_by_horizon.PACE[d].skill) ?? 0);
+  return { utahNone: false, line: `Utah's forecast beats its seasonal average by ${pct(Math.min(...uSk), 0)}–${pct(Math.max(...uSk), 0)}% on D+${utah.join(', D+')}; its other days show the average. ${destTxt[0].toUpperCase()}${destTxt.slice(1)}.` };
+}
+
+/** A day card's Utah status: a "better than average" claim only where the interval clears zero. */
+function cardStatus(r: Json) {
+  const best = v(r.best_model_skill);
+  if (r.status === 'forecast') return `forecast · ${pct(v(r.skill_vs_climatology) ?? 0, 0)}% better than avg`;
+  return best != null && best > 0 ? `forecast ${pct(best, 0)}% better: not distinguishable` : 'no forecast skill';
 }
 
 const hatch = { backgroundImage: 'repeating-linear-gradient(135deg, rgba(74,58,48,.07) 0 2px, transparent 2px 7px)' } as const;
@@ -135,7 +161,11 @@ function RegionChart({ o, ba, big }: { o: Json; ba: Core; big: boolean }) {
   const option = useMemo(() => {
     const hours: string[] = o.hours_utc;
     const p10: number[] = r.p10.value, p50: number[] = r.p50.value, p90: number[] = r.p90.value;
-    const ymax = Math.ceil(Math.max(...SITES.flatMap((s) => o.regions[s].p90.value as number[])) / 300) * 300;
+    // two y scales (m10): Utah on its own, the three destinations on one shared scale
+    const group = ba === 'PACE' ? ['PACE'] : SITES.filter((x) => x !== 'PACE');
+    const top = Math.max(...group.flatMap((x) => o.regions[x].p90.value as number[]));
+    const step = top > 600 ? 300 : top > 300 ? 150 : 100;
+    const ymax = Math.ceil(top / step) * step;
     const dayIdx = hours.map((h) => o.days.findIndex((d: Json) => h >= d.first_hour_utc && (o.days[o.days.indexOf(d) + 1] ? h < o.days[o.days.indexOf(d) + 1].first_hour_utc : true)));
     const climAreas = o.days.map((d: Json, k: number) => ({ d, k })).filter(({ d }: Json) => d.regions[ba].status !== 'forecast')
       .map(({ k }: Json) => [{ xAxis: dayIdx.indexOf(k) }, { xAxis: Math.min(dayIdx.lastIndexOf(k) + 1, hours.length - 1) }]);
@@ -143,7 +173,7 @@ function RegionChart({ o, ba, big }: { o: Json; ba: Core; big: boolean }) {
     return {
       grid: { left: 152, right: 16, top: 10, bottom: big ? 24 : 8 },
       xAxis: { type: 'category', data: hours.map((_, i) => i), boundaryGap: false, axisLabel: { show: big, interval: (i: number) => hourOf(hours[i]) === 12, formatter: (i: string) => fmtDate(hours[Number(i)], { weekday: 'short', day: 'numeric' }) + ' noon' }, axisLine: { show: big }, splitLine: { show: false } },
-      yAxis: { type: 'value', min: 0, max: ymax, interval: big ? 300 : ymax / 2, axisLabel: { formatter: (x: number) => fmt(x) } },
+      yAxis: { type: 'value', min: 0, max: ymax, interval: big ? step : ymax / 2, axisLabel: { formatter: (x: number) => fmt(x) } },
       tooltip: {
         trigger: 'axis',
         formatter: (ps: { dataIndex: number }[]) => {
@@ -161,14 +191,13 @@ function RegionChart({ o, ba, big }: { o: Json; ba: Core; big: boolean }) {
       ],
     };
   }, [o, r, ba, big]);
-  const mean = (r.p50.value as number[]).reduce((a, b) => a + b, 0) / r.p50.value.length;
   return (
     <div className="relative" style={{ borderTop: big ? 0 : '1px solid var(--hair-2)' }}>
       <div className="absolute t-12" style={{ left: 8, top: 8, width: 104, lineHeight: 1.25 }}>
         <div className="fw-600">{REGION[ba].name}</div>
-        <div className="ink-3 t-11">{ba} · avg <Num v={mean} /></div>
+        <div className="ink-3 t-11">{ba}</div>
       </div>
-      <EChart option={option} testId={`outlook-chart-${ba}`} label={`${REGION[ba].name}: hourly consumed CO2 intensity forecast with p10 to p90 band, average ${fmt(mean)} g per kWh`} className="w-full" />
+      <EChart option={option} testId={`outlook-chart-${ba}`} label={`${REGION[ba].name}: hourly consumed CO2 intensity forecast with p10 to p90 band, g per kWh`} className="w-full" />
       <style>{`[data-testid="outlook-chart-${ba}"]{height:${big ? 168 : 104}px}`}</style>
     </div>
   );
@@ -181,7 +210,7 @@ function SkillTable({ o }: { o: Json }) {
     <div className="panel" data-testid="outlook-skill">
       <div className="t-15">How far ahead it is worth forecasting</div>
       <p className="t-12 ink-2" style={{ margin: '4px 0 12px' }}>
-        Skill over the seasonal average, 1 − MAE ÷ MAE(average), on {fmt(v(o.skill_by_horizon.PACE['1'].n_issues) ?? 0)} validation-year issues. A cell is a forecast only where its 90% interval stays above zero; otherwise the outlook shows the average.
+        Skill over the seasonal average, 1 − MAE ÷ MAE(average), on {fmt(v(o.skill_by_horizon.PACE['1'].n_issues) ?? 0)} validation-year issues. A cell is a forecast only where its 90% interval, from a block bootstrap over runs of 7 consecutive days (forecast errors are correlated day to day), stays above zero. Otherwise the outlook shows the average, and the cell shows the best model's point estimate in grey: not distinguishable from the average.
       </p>
       <table className="tbl">
         <caption className="sr-only">Forecast skill over the seasonal average by region and days ahead, validation year</caption>
@@ -192,11 +221,12 @@ function SkillTable({ o }: { o: Json }) {
               <th scope="row" className="t-12" style={{ textAlign: 'left', padding: '6px 0', fontWeight: ba === 'PACE' ? 600 : 500, color: 'var(--ink)', fontSize: 12 }}>{REGION[ba].name}</th>
               {ds.map((d) => {
                 const c = o.skill_by_horizon[ba][d];
-                const s = v(c.skill) ?? 0, ci = c.skill_ci90.value as number[];
+                const s = v(c.skill) ?? 0, ci = c.skill_ci90.value as number[], ci14 = c.skill_ci90_b14.value as number[];
                 const ok = c.status === 'forecast';
                 return (
-                  <td key={d} title={`${REGION[ba].name} D+${d}: skill ${pct(s, 1)}% (90% ${pct(ci[0], 1)} to ${pct(ci[1], 1)}%), best model ${c.best_model}`} style={ok ? undefined : { ...hatch, color: C.ink3 }}>
-                    {ok ? `${pct(s, 0)}%` : 'avg'}
+                  <td key={d} title={`${REGION[ba].name} D+${d}: skill ${pct(s, 1)}%; 90% interval ${pct(ci[0], 1)} to ${pct(ci[1], 1)}% (7-day blocks), ${pct(ci14[0], 1)} to ${pct(ci14[1], 1)}% (14-day blocks); best model ${c.best_model}${ok ? '' : '; not distinguishable from the seasonal average'}`}
+                    style={ok ? undefined : { ...hatch, color: C.ink3 }}>
+                    {ok ? `${pct(s, 0)}%` : <><span aria-hidden="true">({pct(s, 0)}%)</span><span className="sr-only">{pct(s, 0)}%, not distinguishable from the average</span></>}
                   </td>
                 );
               })}
@@ -222,7 +252,7 @@ function SkillTable({ o }: { o: Json }) {
       </ol>
       <div className="t-11 ink-3" style={{ marginTop: 6 }}>{o.router.note}. <Ev e="modeled" /></div>
       <p className="t-11 ink-3" style={{ margin: '12px 0 0' }}>
-        "avg": no skill shown, the seasonal average is used. The best model per cell is chosen on the same validation issues it is scored on (development evidence). Out-of-fold coverage of the p10–p90 band: {pct(Math.min(...SITES.flatMap((b) => ds.map((d) => v(o.skill_by_horizon[b][d].band_coverage_out_of_fold) ?? 1))), 0)}–{pct(Math.max(...SITES.flatMap((b) => ds.map((d) => v(o.skill_by_horizon[b][d].band_coverage_out_of_fold) ?? 0))), 0)}% (target 80%). <Ev e="measured" />
+        Grey, in brackets: not distinguishable from the seasonal average, which the outlook uses. The best model per cell is chosen on the same validation issues it is scored on (development evidence). Out-of-fold coverage of the p10–p90 band: {pct(Math.min(...SITES.flatMap((b) => ds.map((d) => v(o.skill_by_horizon[b][d].band_coverage_out_of_fold) ?? 1))), 0)}–{pct(Math.max(...SITES.flatMap((b) => ds.map((d) => v(o.skill_by_horizon[b][d].band_coverage_out_of_fold) ?? 0))), 0)}% (target 80%). <Ev e="measured" />
       </p>
     </div>
   );
@@ -244,19 +274,5 @@ function OutlookError({ msg }: { msg: string }) {
       <div className="t-15">The outlook did not load</div>
       <p className="t-13 ink-2" style={{ margin: '8px 0 0' }}>{msg}. The page reads <code>data/results/outlook.json</code>; run <code>make outlook</code>, then <code>make web</code>. No forecast is shown until it loads.</p>
     </div>
-  );
-}
-
-/** A compact card for another page (for example a future overview): tomorrow's pick and Utah's cleanest hours. */
-export function OutlookCard() {
-  const { o } = useOutlook();
-  if (!o) return null;
-  const d = o.days[0], b = d.home_cleanest_block;
-  return (
-    <a href="#outlook" className="panel block" data-testid="outlook-card" style={{ color: 'inherit', textDecoration: 'none' }}>
-      <div className="flex items-baseline justify-between"><span className="t-15">Tomorrow, {dayLabel(d.date_local)}</span><Ev e="forecast" /></div>
-      <div className="t-13" style={{ marginTop: 4 }}>Router S: move to <b style={{ color: C.route }}>{REGION[d.router_s_pick as Core].name}</b>. Utah is cleanest {timeLabel(b.start_utc)}–{timeLabel(new Date(Date.parse(b.start_utc) + 4 * 3600e3).toISOString())} MT.</div>
-      {o.demo && <div className="t-11 ink-3" style={{ marginTop: 4 }}>Demo: validation date</div>}
-    </a>
   );
 }

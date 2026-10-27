@@ -12,7 +12,8 @@ sets the days shown and the p10/p90 bands.
   forecast uses the validation-fit models on pre-seal rows published by the issue. An issue
   whose horizon reaches 2025-11-01 is refused.
 * **Live** (``--live``): refuses unless a completed test run exists (``results/test/
-  manifest.json``). The issue is the latest 10:00 America/Denver at or before now; models are
+  manifest.json``, a non-empty read log and the ``config-freeze`` tag; ``outlook.seal_opened``).
+  The issue is the latest 10:00 America/Denver at or before now; models are
   refitted at the test fit (2025-10-29, history from 2023-01-01; pre-seal rows); the newest
   weeks come from a fresh download of the four BA workbooks (``gridpilot.data.eia930``) into
   the run directory, each read through ``gridpilot.outlook.live_read`` with a logged purpose
@@ -44,7 +45,15 @@ from gridpilot.results import iso
 from gridpilot.splits import TEST_START
 
 log = logging.getLogger("outlook")
-DEMO_ISSUE = date(2025, 6, 15)
+# Before the first skill issue (2024-11-01), so the demo issue is not one of the issues that chose
+# the models and set the bands; its target days still overlap theirs (disclosed). Late October,
+# like the live run.
+DEMO_ISSUE = date(2024, 10, 31)
+DEMO_LIMIT = ("The demo issue precedes the validation issues that chose the models and set the "
+              "bands, but its target days (Nov 1-7, 2024) overlap theirs.")
+LIVE_LIMIT = ("The forecasts shown come from a refit at 2025-10-29 (history from 2023-01-01, "
+              "pre-seal rows); skill, model choice and bands were measured on the 2024-10-29 "
+              "fit and are assumed to carry over a year later.")
 RANK_NOTE = ("mean consumed CI per region over the training rows, ascending; S tries regions in "
              "this order (home PACE at its rank)")
 
@@ -139,6 +148,11 @@ def main(argv: list[str] | None = None) -> int:
         models = _fit_all(pre, fc.TEST_FIT_AT, fc.TEST_HISTORY_START)
         series, downloads = _live_series(issue, run_dir)
         try:
+            ol.check_fresh(series, issue)
+        except ol.StaleDataError as e:
+            print(f"refused: stale live data: {e}", file=sys.stderr)
+            return 2
+        try:
             fz = seal.load_freeze()
             ranking, means = fz.s_order, {b: fz.s_means[b] for b in fz.s_order}
             rank_note = RANK_NOTE + "; from the freeze record (config/freeze.json)"
@@ -164,7 +178,8 @@ def main(argv: list[str] | None = None) -> int:
             "downloads": downloads}
     art = ol.build_outlook(series, models, skill, issue, days=days, ranking=ranking,
                            ranking_means=means, ranking_note=rank_note, live=a.live,
-                           run_id=run_id, meta=meta)
+                           run_id=run_id, meta=meta,
+                           extra_limitations=[LIVE_LIMIT if a.live else DEMO_LIMIT])
     art["wallclock_generated_at"] = datetime.now(UTC).isoformat()
     (run_dir / "config.json").write_text(json.dumps(
         {"run_id": run_id, "live": a.live, "issue": iso(issue), "days": days, **meta}, indent=1))

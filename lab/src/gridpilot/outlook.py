@@ -20,8 +20,10 @@ about four days old and day ``d`` sits 14 + 24 d to 38 + 24 d hours past the iss
 [VALIDATION_START, SELECTION_END) whose seven target days end before TEST_START: MAE per
 (BA, day, model), the skill ``1 - MAE / MAE_K`` of the best model with a 90% issue-block
 bootstrap interval, and the p10/p90 residual quantiles of the best model (the forecast bands).
-A day is shown as a forecast only when the interval's lower end is above zero; otherwise the
-outlook shows climatology, flagged ``climatology_only``. Model choice and bands come from the
+The interval is a circular block bootstrap over consecutive issues (7-day blocks; 14-day
+blocks reported too), because day-to-day forecast errors are correlated. A (BA, day) is shown
+as a forecast only when the 7-day-block interval's lower end is above zero; otherwise the outlook
+shows climatology, flagged ``climatology_only``. Model choice and bands come from the
 same validation issues they are scored on (development evidence, like the validation run).
 
 **Leakage.** ``build_outlook`` reads nothing published after the issue: it cuts its input with
@@ -29,11 +31,12 @@ same validation issues they are scored on (development evidence, like the valida
 ``live=True`` an issue whose horizon reaches TEST_START is refused (``OutlookSealError``).
 
 **Live mode** (after the seal has opened, T13): the newest weeks come from a fresh EIA download
-read through ``live_read``, which refuses unless live mode is on and a completed test run exists
-(``results/test/manifest.json``). It delegates to ``gridpilot.seal.sealed_read`` when a test-mode
-session is active; otherwise it follows the same protocol (read the bytes once, sha256, append
-one fsynced JSONL line with the purpose to ``results/outlook_reads.jsonl``, parse the same bytes).
-The model fits only ever use pre-seal rows (``drop_sealed``).
+into the run directory (never ``data/raw``, so the frozen snapshot does not change), read through
+``live_read``, which refuses unless live mode is on, the seal has opened (``seal_opened``) and
+the path is such a download. It follows ``sealed_read``'s protocol (read the bytes once, sha256,
+append one fsynced JSONL line with the purpose to ``results/outlook_reads.jsonl``, parse the same
+bytes). A site whose newest row is more than 7 days old is refused (``check_fresh``). The model
+fits only ever use pre-seal rows (``drop_sealed``).
 """
 
 from __future__ import annotations
@@ -42,6 +45,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 from collections.abc import Callable, Sequence
@@ -56,8 +60,9 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 
 from gridpilot import forecast as fc
 from gridpilot import seal
+from gridpilot.eval.bootstrap import block_indices
 from gridpilot.paths import REPO_ROOT, RESULTS_DIR
-from gridpilot.results import env, iso, unenveloped_numbers, validate_artifact
+from gridpilot.results import env, iso, validate_artifact
 from gridpilot.splits import TEST_START, VALIDATION_START
 
 TARGET = "ci_consumed"
@@ -69,10 +74,13 @@ LH_LEAVES = (15, 31)
 MODELS = ("K", "W", *(f"Lh{m}" for m in LH_LEAVES))
 UNIT = "g/kWh"
 BLOCK_H = 4  # the time-shift view: the cleanest contiguous 4-hour block of each day
-N_BOOT = 1000
+N_BOOT = 2000
+BLOCK_DAYS = 7  # primary block (issues are daily); BLOCK_DAYS_ALT is reported alongside
+BLOCK_DAYS_ALT = 14
 SEED = 20261027
 LIVE_LOG_NAME = "outlook_reads.jsonl"
 H = timedelta(hours=1)
+_RUN_ID = re.compile(r"^\d{8}T\d{6}Z$")
 ISSUE_TZ = fc.ISSUE_TZ
 LIMITATIONS = (
     fc.LIMITATION,
@@ -203,12 +211,14 @@ def skill_issues() -> list[datetime]:
     return out
 
 
-def _boot_skill(err: pl.DataFrame, model: str, rng: np.random.Generator) -> tuple[float, float]:
-    """90% issue-block bootstrap interval of 1 - MAE_model / MAE_K (issues resampled whole)."""
-    per = err.group_by("issue_ts").agg(pl.col(model).sum().alias("m"), pl.col("K").sum().alias("k"),
-                                       pl.len().alias("n")).sort("issue_ts")
+def _boot_skill(err: pl.DataFrame, model: str, block: int) -> tuple[float, float]:
+    """90% circular block bootstrap interval of 1 - MAE_model / MAE_K over consecutive issues
+    (``gridpilot.eval.bootstrap.block_indices``: blocks of ``block`` issues, i.e. days, so the
+    day-to-day correlation of the errors is kept; fixed seed, N_BOOT replicates)."""
+    per = err.group_by("issue_ts").agg(pl.col(model).sum().alias("m"),
+                                       pl.col("K").sum().alias("k")).sort("issue_ts")
     m, k = per["m"].to_numpy(), per["k"].to_numpy()
-    idx = rng.integers(0, len(m), size=(N_BOOT, len(m)))
+    idx = block_indices(len(m), block, N_BOOT, SEED)
     s = 1.0 - m[idx].sum(axis=1) / k[idx].sum(axis=1)
     return float(np.quantile(s, 0.05)), float(np.quantile(s, 0.95))
 
@@ -220,9 +230,9 @@ def skill_by_horizon(series: pl.DataFrame, models: dict[str, Models],
     issues = list(issues if issues is not None else skill_issues())
     if not issues:
         raise ValueError("no skill issue")
+    issues = sorted(issues)
     if day_hours(issues[-1], MAX_DAYS)[-1] + H > TEST_START:
         raise OutlookSealError("a skill target reaches the sealed window")
-    rng = np.random.default_rng(SEED)
     out: dict = {}
     for ba, mod in models.items():
         s = fc._one_ba(series, ba, mod.history_start)
@@ -241,10 +251,11 @@ def skill_by_horizon(series: pl.DataFrame, models: dict[str, Models],
             e, r = err.filter(pl.col("day") == d), res.filter(pl.col("day") == d)
             mae = {m: float(e[m].mean()) for m in preds}
             best = min(preds, key=lambda m: (mae[m], MODELS.index(m)))
-            lo, hi = (_boot_skill(e, best, rng) if best != "K" else (0.0, 0.0))
+            lo, hi = (_boot_skill(e, best, BLOCK_DAYS) if best != "K" else (0.0, 0.0))
+            alt = (_boot_skill(e, best, BLOCK_DAYS_ALT) if best != "K" else (0.0, 0.0))
             out[ba][d] = {
                 "mae": mae, "best": best, "skill": 1.0 - mae[best] / mae["K"],
-                "skill_ci90": (lo, hi), "n_hours": e.height,
+                "skill_ci90": (lo, hi), "skill_ci90_b14": alt, "n_hours": e.height,
                 "n_issues": e["issue_ts"].n_unique(),
                 "status": "forecast" if best != "K" and lo > 0 else "climatology_only",
                 # bands of the model the outlook shows (K when the day is climatology only)
@@ -295,7 +306,8 @@ def _local(t: datetime, tz: str = "America/Denver") -> str:
 def build_outlook(series: pl.DataFrame, models: dict[str, Models], skill: dict,
                   issue: datetime, *, days: int, ranking: Sequence[str],
                   ranking_means: dict[str, float], ranking_note: str, live: bool = False,
-                  run_id: str, meta: dict | None = None) -> dict:
+                  run_id: str, meta: dict | None = None,
+                  extra_limitations: Sequence[str] = ()) -> dict:
     """The outlook artifact for ``issue``: per region and hour the forecast with p10/p90 bands,
     per day the router's view. ``series`` is cut at the issue (``as_of``); every input row
     published after the issue is ignored, and any that reaches a forecaster raises."""
@@ -354,6 +366,12 @@ def build_outlook(series: pl.DataFrame, models: dict[str, Models], skill: dict,
                 # the skill of the model shown (climatology shown: 0 by definition)
                 "skill_vs_climatology": env(sk["skill"] if used[d - 1] != "K" else 0.0,
                                             "fraction", "measured", f"{pid}:{ba}:d{d}:skill"),
+                # the best model's point estimate, shown only with "not distinguishable" when
+                # its interval includes zero
+                "best_model_skill": env(sk["skill"], "fraction", "measured",
+                                        f"{pid}:{ba}:d{d}:best_skill"),
+                "best_model_skill_ci90": env(list(sk["skill_ci90"]), "fraction", "measured",
+                                             f"{pid}:{ba}:d{d}:best_skill_ci90"),
             }
     ts_iso = [iso(t) for t in ts_all]
     day_rows = []
@@ -379,6 +397,8 @@ def build_outlook(series: pl.DataFrame, models: dict[str, Models], skill: dict,
         "skill": env(skill[ba][d]["skill"], "fraction", "measured", f"{pid}:{ba}:d{d}:skill"),
         "skill_ci90": env(list(skill[ba][d]["skill_ci90"]), "fraction", "measured",
                           f"{pid}:{ba}:d{d}:skill_ci90"),
+        "skill_ci90_b14": env(list(skill[ba][d]["skill_ci90_b14"]), "fraction", "measured",
+                              f"{pid}:{ba}:d{d}:skill_ci90_b14"),
         "mae": {m: env(v, UNIT, "measured", f"{pid}:{ba}:d{d}:mae:{m}")
                 for m, v in skill[ba][d]["mae"].items()},
         "band_coverage_out_of_fold": _coverage_env(skill[ba][d]["coverage_split"],
@@ -401,7 +421,8 @@ def build_outlook(series: pl.DataFrame, models: dict[str, Models], skill: dict,
         "days_with_skill_home": env(days_to_show(skill), "days", "measured",
                                     f"{pid}:days_with_skill"),
         "days_rule": ("a (region, day) is a forecast when its best validation model beats "
-                      "climatology with a 90% issue-bootstrap interval above zero; otherwise it "
+                      "climatology with a 90% block-bootstrap interval (7-day blocks) above zero; "
+                      "otherwise it "
                       "shows climatology, flagged climatology_only. days_with_skill_home is the "
                       "longest such run from day 1 for Utah (PACE)"),
         "sites": list(SITES), "home": HOME,
@@ -416,9 +437,16 @@ def build_outlook(series: pl.DataFrame, models: dict[str, Models], skill: dict,
             "note": ranking_note,
         },
         "skill_by_horizon": skill_rows,
+        "skill_interval": {"method": "circular block bootstrap over consecutive daily issues",
+                           "block_days": env(BLOCK_DAYS, "days", "assumed", f"{pid}:block"),
+                           "block_days_alt": env(BLOCK_DAYS_ALT, "days", "assumed",
+                                                 f"{pid}:block_alt"),
+                           "reps": env(N_BOOT, "replicates", "assumed", f"{pid}:reps"),
+                           "level": env(0.9, "fraction", "assumed", f"{pid}:level"),
+                           "seed": str(SEED)},
         "skill_issues_rule": ("validation issues from 2024-11-01 (before 2025-10-24) whose 7 "
                               "target days end before the seal"),
-        "limitations": list(LIMITATIONS),
+        "limitations": [*LIMITATIONS, *extra_limitations],
         "lineage": meta or {},
     }
 
@@ -426,9 +454,23 @@ def build_outlook(series: pl.DataFrame, models: dict[str, Models], skill: dict,
 # --------------------------------------------------------------------------- live reads
 
 
-def seal_opened(results_dir: Path = RESULTS_DIR) -> bool:
-    """True once a completed test run exists (T13): results/test/manifest.json."""
-    return (Path(results_dir) / "test" / seal.COMPLETED_MARKER).is_file()
+FRESH_DAYS = 7  # live rows older than this before the issue are refused (stale download)
+LIVE_ROOT = REPO_ROOT / "runs" / "outlook"
+
+
+def seal_opened(results_dir: Path = RESULTS_DIR, repo_root: Path = REPO_ROOT) -> bool:
+    """True once T13 has run: a completed test run (results/test/manifest.json), a non-empty
+    read log (results/test_reads.jsonl) and the annotated freeze tag ``config-freeze`` present
+    in the local repository."""
+    results_dir = Path(results_dir)
+    if not (results_dir / "test" / seal.COMPLETED_MARKER).is_file():
+        return False
+    log = results_dir / Path(seal.READ_LOG_REL).name
+    if not log.is_file() or not log.read_text().strip():
+        return False
+    tag = subprocess.run(["git", "rev-parse", "-q", "--verify", f"refs/tags/{seal.FREEZE_TAG}"],
+                         cwd=repo_root, capture_output=True, text=True, check=False)
+    return tag.returncode == 0 and bool(tag.stdout.strip())
 
 
 def _git_head() -> str:
@@ -441,30 +483,45 @@ def _caller() -> str:
     return f"{f.f_globals.get('__name__', '?')}:{f.f_code.co_name}:{f.f_lineno}"
 
 
+def _check_live_path(path: Path, live_root: Path) -> None:
+    """Only a fresh download inside an outlook run directory: <live_root>/<UTC run id>/raw/<file>."""
+    try:
+        rel = path.resolve().relative_to(Path(live_root).resolve())
+    except ValueError:
+        raise OutlookSealError(f"live_read reads only fresh downloads under {live_root}; "
+                               f"refused {path}") from None
+    parts = rel.parts
+    if len(parts) != 3 or parts[1] != "raw" or not _RUN_ID.match(parts[0]):
+        raise OutlookSealError(f"live_read reads only <run id>/raw/<file> under {live_root}; "
+                               f"refused {path}")
+
+
 def live_read(path: Path | str, *, purpose: str, columns: Sequence[str],
               time_range: tuple[datetime, datetime], live: bool,
               reader: Callable[[io.BytesIO], pl.DataFrame],
-              results_dir: Path = RESULTS_DIR, ts_col: str = "ts_utc") -> pl.DataFrame:
+              results_dir: Path = RESULTS_DIR, repo_root: Path = REPO_ROOT,
+              live_root: Path = LIVE_ROOT, ts_col: str = "ts_utc") -> pl.DataFrame:
     """The only outlook read that may return rows at or after TEST_START.
 
-    Refuses unless ``live`` is set and the seal has opened (a completed test run). Inside an
-    active test-mode session it is ``seal.sealed_read``. Otherwise it reads the bytes once,
-    hashes them, appends one fsynced JSONL line (purpose, path, sha256, columns, time range,
-    code commit, caller) to ``results/outlook_reads.jsonl`` and parses the same bytes."""
+    Refuses unless ``live`` is set, the seal has opened (``seal_opened``) and ``path`` is a fresh
+    download inside an outlook run directory (never a frozen input under the data dir). It reads
+    the bytes once, hashes them, appends one fsynced JSONL line (purpose, path, sha256, columns,
+    time range, code commit, caller) to ``results/outlook_reads.jsonl`` and parses the same
+    bytes. (``seal.sealed_read`` cannot serve this: it reads only freeze-hashed inputs inside the
+    test-mode session that ``run_slice --window test`` alone enters.)"""
     if not live:
         raise OutlookSealError("live_read needs --live")
     if not purpose or not purpose.strip():
         raise OutlookSealError("live_read needs a purpose")
-    if not seal_opened(results_dir):
-        raise OutlookSealError("the sealed window has not been opened (no completed test run at "
-                               "results/test/manifest.json): a live outlook waits for T13")
+    if not seal_opened(results_dir, repo_root):
+        raise OutlookSealError("the sealed window has not been opened (needs a completed test run "
+                               "at results/test/manifest.json, a non-empty results/test_reads.jsonl "
+                               "and the config-freeze tag): a live outlook waits for T13")
+    path = Path(path)
+    _check_live_path(path, live_root)
     start, end = (fc._aware(t, "time_range") for t in time_range)
     if not start < end:
         raise OutlookSealError(f"empty time range [{start}, {end})")
-    if seal.active() is not None:
-        return seal.sealed_read(path, purpose=purpose, columns=columns, time_range=(start, end),
-                                ts_col=ts_col, reader=reader)
-    path = Path(path)
     buf = path.read_bytes()
     sha = hashlib.sha256(buf).hexdigest()
     rec = {"event": "read", "utc": iso(datetime.now(UTC)), "purpose": purpose.strip(),
@@ -481,6 +538,26 @@ def live_read(path: Path | str, *, purpose: str, columns: Sequence[str],
     return frame.filter((pl.col(ts_col) >= start) & (pl.col(ts_col) < end)).select(list(columns))
 
 
+class StaleDataError(ValueError):
+    """A live series ends too long before the issue (EIA lag or a failed download)."""
+
+
+def check_fresh(series: pl.DataFrame, issue: datetime, sites: Sequence[str] = SITES) -> dict:
+    """Refuse a live series in which any site's latest non-null row is older than FRESH_DAYS
+    before the issue. Returns {site: latest hour start}."""
+    issue = fc._aware(issue, "issue")
+    out = {}
+    for ba in sites:
+        s = series.filter((pl.col("ba") == ba) & pl.col("value").is_not_null()
+                          & pl.col("value").is_not_nan())
+        last = s["ts_utc"].max() if s.height else None
+        if last is None or last < issue - timedelta(days=FRESH_DAYS):
+            raise StaleDataError(f"{ba}: latest published row {iso(last) if last else 'none'} is "
+                                 f"more than {FRESH_DAYS} days before the issue {iso(issue)}")
+        out[ba] = last
+    return out
+
+
 # --------------------------------------------------------------------------- writing
 
 
@@ -490,7 +567,7 @@ def write_outlook(path: Path, obj: dict, *, live: bool) -> str:
     if live:
         if obj.get("window") != "live":
             raise ValueError("a live outlook must declare window 'live'")
-        errs = [f"unenveloped number at {p}" for p in unenveloped_numbers(obj)]
+        errs = [e for e in validate_artifact(obj) if not e.startswith("sealed timestamp")]
     else:
         if obj.get("window") != "validation":
             raise ValueError("a demo outlook must declare window 'validation'")

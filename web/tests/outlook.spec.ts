@@ -19,6 +19,13 @@ test('the outlook page shows every day, the router pick and the skill table, off
   await expect(page.getByTestId('outlook-days').locator('li')).toHaveCount(outlook.days.length);
   await expect(page.getByTestId('outlook-days')).toContainText('Router S → Northwest hydro');
   await expect(page.getByTestId('outlook-ranking').locator('li')).toHaveCount(4);
+  // M1: no skill claim for Utah unless a cell clears the block-bootstrap rule
+  const utahPass = Object.values(outlook.skill_by_horizon.PACE).some((c: any) => c.status === 'forecast'); // eslint-disable-line @typescript-eslint/no-explicit-any
+  if (!utahPass) {
+    await expect(page.getByTestId('outlook-skill-line')).toContainText("Utah's forecast is not reliably better than its seasonal average");
+    await expect(page.getByTestId('outlook-days')).not.toContainText('better than avg');
+  }
+  await expect(page.getByRole('radiogroup', { name: 'Evaluation window' })).toHaveCount(0);
   await expect(page.getByTestId('outlook-skill').locator('tbody tr')).toHaveCount(4);
   for (const ba of ['PACE', 'BPAT', 'CISO', 'NEVP']) await expect(page.getByTestId(`outlook-chart-${ba}`).locator('svg')).toBeVisible();
   if (outlook.demo) await expect(page.getByTestId('outlook-demo')).toContainText('DEMO · validation date');

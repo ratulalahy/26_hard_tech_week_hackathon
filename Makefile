@@ -59,7 +59,7 @@ storage: need-run-dir
 	cd lab && uv run python scripts/export_storage.py --registered-run $(RUN_DIR) --ext-root $(EXT_ROOT)
 
 # The grid outlook (Stage 3 T19): results/outlook.json. Default: the validation-dated demo
-# (ISSUE=<validation date>, default 2025-06-15). LIVE=1: the live outlook from a fresh EIA download,
+# (ISSUE=<validation date>, default 2024-10-31). LIVE=1: the live outlook from a fresh EIA download,
 # refused until a completed test run exists (results/test/manifest.json, T13); every read of the
 # fresh files is logged in results/outlook_reads.jsonl.
 outlook:

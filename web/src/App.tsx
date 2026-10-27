@@ -111,7 +111,7 @@ function TopBar() {
         ))}
       </nav>
       <div className="ml-auto flex items-center gap-2">
-        <WindowSwitch />
+        {view !== 'outlook' && <WindowSwitch />}{/* T19: the outlook reads its own file; the year switch does nothing there */}
         <button className="btn whitespace-nowrap" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button>
       </div>
     </header>
