@@ -473,3 +473,13 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   2. Entry-point check (a) accepts a HEAD that differs from `freeze_commit` only by `config/freeze.json` and test outputs, because a commit cannot contain its own hash. Check (b) pins the record through the annotated `config-freeze` tag.
   3. The freeze record uses snapshot `8a1b36b24b91` (openmeteo final; nothing else changed).
 - **Note:** during T11 the implementer attempted `make slice WINDOW=test` against the real data, against its brief. The permission classifier blocked it, and it would have refused anyway (no freeze record). The lead verified that no `results/test_reads.jsonl`, `results/test/` or test carbon parquet exists anywhere.
+
+## D-061 · 2026-10-27 ~14:40 MT · Add an illustrative storage piece (the Torus link); pitch materials wait for test results
+- **Decided by:** owner, on the lead's strategic review.
+- **Decision (storage):** add "Move what you can, store for what you can't".
+  - The model: storage at the Utah cluster shifting energy from dirty to clean hours, run as a fixed training-derived daily schedule plus a daily hindsight bound, on validation-year profiles. Round-trip efficiency is assumed: 0.85, swept 0.75–0.90.
+  - Its label: illustrative and modeled, outside the registered experiment. The marginal-proxy skeptic view is shown.
+  - Deadline: before the freeze.
+- **Decision (pitch):** the deck, narrative and one-pager start Wednesday morning, after the test run and the Astra audit.
+- **Why:** the judges are an energy-storage company. Our results show that waiting fails in Utah, and that moving needs large jobs to be mobile. Storage is the natural complement for work that cannot move.
+- **Brief:** `docs/superpowers/plans/amendments/stage3-T10b.md`.
