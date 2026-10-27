@@ -80,11 +80,10 @@ from gridpilot.sim import HOME, SITES, TRANSFER_S, G, S, U, closed_intervals, si
 from gridpilot.splits import TEST_START
 from gridpilot.workload import CYCLE_DAYS, cycle_stats, replay
 
-try:  # Task 5 (K/W/L/H); absent until it is merged
-    from gridpilot.sim import CarbonSearch, tail_climatology  # type: ignore[attr-defined]
+try:  # Task 5 (K/W/L/H)
+    from gridpilot.sim import CarbonSearch, load_forecasts, tail_climatology
 except ImportError:  # pragma: no cover - depends on the merge state
-    CarbonSearch = None
-    tail_climatology = None
+    CarbonSearch = load_forecasts = tail_climatology = None
 
 log = logging.getLogger("run_slice")
 
@@ -207,11 +206,21 @@ def bound_gap(acc: pl.DataFrame, per: pl.DataFrame) -> dict:
             "n_job_gap_lt0": int((d < 0).sum()), "ok": gap >= -BOUND_TOL_KG}
 
 
-def build_policies(ranking, forecasts, filled, mask):
+def _tail(fc_dir):
+    """The frozen K tail; `run_dir` is passed explicitly when the API takes it."""
+    if "run_dir" in inspect.signature(tail_climatology).parameters:
+        return tail_climatology(list(SITES), run_dir=fc_dir)
+    return tail_climatology(list(SITES))
+
+
+def build_policies(ranking, fc_dir, filled, mask):
+    """Each policy is built once per run. K/W/L read the pinned forecast run `fc_dir`;
+    H reads the F14.6 filled truth; all get the mask the closure calendar came from."""
     pols = {"U": (U(), SITES), "G": (G(), SITES), "S": (S(ranking), SITES)}
     if CarbonSearch is None:
-        return pols, {}
-    tail = tail_climatology(list(SITES))
+        return pols, None
+    forecasts = load_forecasts(fc_dir)
+    tail = _tail(fc_dir)
     out = dict(pols)
     for sig in ("K", "W", "L"):
         out[sig] = (CarbonSearch(sig, forecasts, None, mask, tail=tail), SITES)
@@ -220,7 +229,21 @@ def build_policies(ranking, forecasts, filled, mask):
         p = CarbonSearch(sig, forecasts, None, mask, tail=tail)
         p.name = f"{sig}_time"
         out[f"{sig}_time"] = (p, TIME_ONLY_SITES)
-    return out, {}
+    coverage = CarbonSearch("L", forecasts, None, mask, tail=tail)  # coverage only (F4)
+    return out, coverage
+
+
+def in_coverage(cj, bookings, cov, sites=SITES) -> set[str]:
+    f = cj.select("job_uid", pl.col("arrival_ts").dt.epoch("us").alias("a"), "gpus",
+                  "mobile").join(bookings.select("job_uid", "deadline_us"), on="job_uid") \
+        .sort("a", "job_uid")
+    remote = sorted(s for s in sites if s != HOME)
+    out = set()
+    for uid, a, g, mob, dl in f.iter_rows():
+        legal = [HOME] + ([s for s in remote if sites[s] >= g] if mob else [])
+        if all(dl <= cov.coverage_end_us(a, s) for s in legal):
+            out.add(uid)
+    return out
 
 
 def run(args) -> int:
@@ -328,7 +351,7 @@ def _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F) -> int
 
     # 6. Policies.
     ranking, rank_means = s_ranking()
-    policies, _ = build_policies(ranking, forecasts, filled, mask)
+    policies, cov = build_policies(ranking, fc_dir, filled, mask)
     ledgers: dict[str, pl.DataFrame] = {}
     probe = None
     for name in POLICY_ORDER:
@@ -346,6 +369,8 @@ def _pipeline(args, timer, tmp, run_id, sha, status, init, eval_start, F) -> int
     # 7. Accounting.
     with timer("accounting"):
         acct = accounting(ledgers, policies, cj, bookings, warm, tt, eval_start, coh.A)
+        acct["stratum"] = (stratum_estimates(ledgers, cj, bookings, cov, tt, eval_start, coh.A)
+                           if cov is not None else None)
     # 8. Export.
     with timer("export"):
         art = build_artifacts(
@@ -388,6 +413,7 @@ def accounting(ledgers, policies, cj, bookings, warm, tt, eval_start, A) -> dict
     for name, led in ledgers.items():
         sites = policies[name][1]
         m = score(led, cj, tt, sites=sites, warm=warm)
+        m["mobile_remote_share"] = mobile_remote_share(led, cj)
         acc = job_accounting(led, cj, tt)
         gaps[name] = {"primary": bound_gap(acc, per)}
         if sites is TIME_ONLY_SITES:
@@ -413,6 +439,32 @@ def accounting(ledgers, policies, cj, bookings, warm, tt, eval_start, A) -> dict
     return {"scores": scores, "gaps": gaps, "bounds": bounds, "bound_all_ok": bound_all_ok,
             "weeks": weeks, "contrasts": contrasts, "h2": h2, "influence": inf,
             "common_support": cs, "n_weeks": n_weeks, "bound_per_job": per}
+
+
+def stratum_estimates(ledgers, cj, bookings, cov, tt, eval_start, A) -> dict:
+    """F4/F14.3: the coverage stratum is a pre-registered secondary estimate (no decision
+    rule): its share of decision-relevant energy and the W − L intervals on it."""
+    ids = in_coverage(cj, bookings, cov)
+    acc = job_accounting(ledgers["U"], cj, tt).join(cj.select("job_uid", "flexible"),
+                                                     on="job_uid")
+    flex = acc.filter(pl.col("flexible"))
+    e_flex = float(flex["execution_kwh"].sum())
+    e_in = float(flex.filter(pl.col("job_uid").is_in(list(ids)))["execution_kwh"].sum())
+    out = {"n_jobs": len(ids), "n_flexible": flex.height,
+           "share_flexible_energy_in_coverage": e_in / e_flex if e_flex else None,
+           "w_minus_l": None}
+    if "W" in ledgers and "L" in ledgers and ids:
+        sub = cj.filter(pl.col("job_uid").is_in(list(ids)))
+        wk = {p: weekly(ledgers[p].filter(pl.col("job_uid").is_in(list(ids))), sub, tt,
+                        window=(eval_start, A)) for p in ("W", "L")}
+        out["w_minus_l"] = {b: paired_block_bootstrap(wk["W"], wk["L"], block=b)
+                            for b in BLOCKS}
+    return out
+
+
+def mobile_remote_share(led, cj) -> float | None:
+    m = led.join(cj.select("job_uid", "mobile"), on="job_uid").filter(pl.col("mobile"))
+    return None if m.height == 0 else float((m["site"] != HOME).mean())
 
 
 # --------------------------------------------------------------------------- export
@@ -450,6 +502,11 @@ def _policy_record(name, m, gaps, run_id, n_weeks) -> dict:
                                     status="unavailable", reason="undefined (zero denominator)")
         else:
             rec["metrics"][k] = env(v, unit, EVIDENCE_POLICY, f"{pid}:{k}")
+    rec["metrics"]["mobile_remote_share"] = (
+        env(m["mobile_remote_share"], "fraction", EVIDENCE_POLICY, f"{pid}:mobile_remote")
+        if m.get("mobile_remote_share") is not None else
+        env(None, "fraction", EVIDENCE_POLICY, f"{pid}:mobile_remote", "unavailable",
+            "no mobile jobs"))
     rec["metrics"]["peak_gpus"] = {s: env(v, "GPUs", EVIDENCE_POLICY, f"{pid}:peak_gpus:{s}")
                                    for s, v in m["peak_gpus"].items()}
     rec["bound_check"] = {
@@ -525,6 +582,29 @@ def _h2_record(h2, run_id) -> dict:
                 "diff_kg_ci95": _interval(r["diff_kg_ci"], "kg_CO2", "simulated",
                                           f"{run_id}:h2:b{b}:ci")}
                 for b, r in h2["intervals"].items()}}
+
+
+def _stratum_record(st, run_id, n_weeks) -> dict:
+    pid = f"{run_id}:stratum"
+    base = {"definition": "jobs whose deadline lies inside issued forecast coverage (as of "
+                          "arrival) at every legal site (F4); secondary estimate, no decision "
+                          "rule (F14.3)"}
+    if st is None:
+        return base | {"status": "not_run", "reason": TASK5_REASON}
+    out = base | {
+        "status": "ok",
+        "n_jobs": env(st["n_jobs"], "jobs", "simulated", f"{pid}:n"),
+        "n_flexible_cohort": env(st["n_flexible"], "jobs", "assumed", f"{pid}:n_flex"),
+        "share_flexible_energy_in_coverage": env(
+            st["share_flexible_energy_in_coverage"], "fraction", "modeled", f"{pid}:share",
+            *(("unavailable", "no flexible energy")
+              if st["share_flexible_energy_in_coverage"] is None else ())),
+    }
+    if st["w_minus_l"] is None:
+        out["w_minus_l"] = {"status": "not_run", "reason": "W or L not run, or empty stratum"}
+    else:
+        out["w_minus_l"] = _contrast_record("L", "W", st["w_minus_l"], f"{pid}", n_weeks)
+    return out
 
 
 def _weekly_record(weeks, run_id) -> dict:
@@ -626,6 +706,15 @@ def build_artifacts(**k) -> dict:
             "reason": "the common-support sensitivity rerun is scheduled after 18:00 (Task 7 "
                       "amendment step 7)"},
         "weekly": _weekly_record(acct["weeks"], run_id),
+        "coverage_stratum": _stratum_record(acct.get("stratum"), run_id, n_weeks),
+        "framing": {
+            "placement_vs_timing": (
+                "Read mobile_remote_share with the time-only rows (W_time, L_time: destination "
+                "capacity 0). Where the carbon searches send nearly every mobile job remote, "
+                "placement dominates timing and the H2 (W vs L) and H3 contrasts are expected "
+                "to be small; that is the result, not a defect."),
+            "h_is_diagnostic": "H uses realized (filled) truth; it is never a contender",
+        },
     }
 
     # forecast-replay.json and job-replay.json
@@ -1009,6 +1098,21 @@ def print_table(acct, timer) -> None:
               f"{100 * (m['remote_energy_share'] or 0):8.2f} "
               f"{100 * (m['kwh_share_tier_ge2'] or 0):8.3f} {ok!s:>5s} "
               f"{timer.t.get(f'policy_{name}', 0):7.1f}")
+    st = acct.get("stratum")
+    if st:
+        wl = st["w_minus_l"][4] if st["w_minus_l"] else None
+        print(f"coverage stratum (secondary): {st['n_jobs']} jobs, flexible-energy share "
+              f"{st['share_flexible_energy_in_coverage']}; W-L b4 "
+              f"{wl and (wl['diff_kg'], wl['diff_kg_ci'])}")
+    if acct.get("h2"):
+        h = acct["h2"]
+        print(f"H2 (W-L, full cohort): {h['direction']} ({h['reason']}); "
+              + ", ".join(f"b{b} {r['diff_kg']:.0f} [{r['diff_kg_ci'][0]:.0f}, "
+                          f"{r['diff_kg_ci'][1]:.0f}]" for b, r in h["intervals"].items()))
+    for name, m in s.items():
+        print(f"  {name:7s} mobile_remote_share {m.get('mobile_remote_share')}, "
+              f"blocked {m['blocked_jobs']} jobs / {m['blocked_kwh']:.0f} kWh"
+              + ("" if DIAGNOSE and name in DIAGNOSED_POLICIES else " (not diagnosed)"))
     print(f"relaxed bound (modeled): primary {acct['bounds']['primary'] / 1000:.1f} t, "
           f"time-only {acct['bounds']['time_only'] / 1000:.1f} t")
     for name, g in acct["gaps"].items():
