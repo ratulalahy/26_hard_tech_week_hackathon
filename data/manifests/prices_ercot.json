@@ -1,0 +1,119 @@
+{
+  "source": "prices/ercot",
+  "title": "ERCOT historical settlement point prices for hubs and load zones: DAM hourly (NP4-180-ER, report 13060) and RTM 15-minute (NP6-785-ER, report 13061)",
+  "homepage": "https://www.ercot.com/mp/data-products/data-product-details?id=NP4-180-ER",
+  "license": "ERCOT public MIS market information, no registration; ERCOT Terms of Use: https://www.ercot.com/about/terms",
+  "notes": "One xlsx-in-zip per year. The current-year file is re-published as the year progresses. Delivery hours are hour-ending, Central Prevailing Time, with a DST flag.",
+  "files": [
+    {
+      "url": "https://www.ercot.com/misdownload/servlets/mirDownload?doclookupId=886627599",
+      "path": "raw/prices/ercot/dam/rpt.00013060.0000000000000000.20230101.081114733.DAMLZHBSPP_2022.zip",
+      "retrieved_at": "2026-10-27T05:07:15+00:00",
+      "bytes": 2106454,
+      "sha256": "c71656e45a865bdec7166defa1cde1ac875219655be20425a08265e34fd641b8",
+      "market": "dam",
+      "report_type_id": 13060,
+      "year": 2022,
+      "publish_date": "2023-01-01T08:11:13-05:00"
+    },
+    {
+      "url": "https://www.ercot.com/misdownload/servlets/mirDownload?doclookupId=969803138",
+      "path": "raw/prices/ercot/dam/rpt.00013060.0000000000000000.20240101.081011828.DAMLZHBSPP_2023.zip",
+      "retrieved_at": "2026-10-27T05:07:19+00:00",
+      "bytes": 2081453,
+      "sha256": "dd704eeeb794ba1d1ebfc52acdec55836a0409283ff8357e3561b555f0d94d79",
+      "market": "dam",
+      "report_type_id": 13060,
+      "year": 2023,
+      "publish_date": "2024-01-01T08:10:11-05:00"
+    },
+    {
+      "url": "https://www.ercot.com/misdownload/servlets/mirDownload?doclookupId=1065468714",
+      "path": "raw/prices/ercot/dam/rpt.00013060.0000000000000000.20250101.080733817.DAMLZHBSPP_2024.zip",
+      "retrieved_at": "2026-10-27T05:07:22+00:00",
+      "bytes": 2110124,
+      "sha256": "b9fd0b9aa9ec83376c6385c91416174857ca6ba556c6df08e942a2f98b89af65",
+      "market": "dam",
+      "report_type_id": 13060,
+      "year": 2024,
+      "publish_date": "2025-01-01T08:07:33-05:00"
+    },
+    {
+      "url": "https://www.ercot.com/misdownload/servlets/mirDownload?doclookupId=1177667469",
+      "path": "raw/prices/ercot/dam/rpt.00013060.0000000000000000.20260101.084409719.DAMLZHBSPP_2025.zip",
+      "retrieved_at": "2026-10-27T05:07:26+00:00",
+      "bytes": 2050483,
+      "sha256": "30df71ebb306bbe8c6cc075598d2e5bd47079b8ab9e0442979f3331353618320",
+      "market": "dam",
+      "report_type_id": 13060,
+      "year": 2025,
+      "publish_date": "2026-01-01T08:44:09-05:00"
+    },
+    {
+      "url": "https://www.ercot.com/misdownload/servlets/mirDownload?doclookupId=1290652637",
+      "path": "raw/prices/ercot/dam/rpt.00013060.0000000000000000.20261025.080142544.DAMLZHBSPP_2026.zip",
+      "retrieved_at": "2026-10-27T05:07:29+00:00",
+      "bytes": 1671393,
+      "sha256": "8ae4a1f7a53cf001aa31606c1172df15f4e897bae06b8a06628184c7d78f56e8",
+      "market": "dam",
+      "report_type_id": 13060,
+      "year": 2026,
+      "publish_date": "2026-10-25T08:01:42-05:00"
+    },
+    {
+      "url": "https://www.ercot.com/misdownload/servlets/mirDownload?doclookupId=886632075",
+      "path": "raw/prices/ercot/rtm/rpt.00013061.0000000000000000.20230101.083407763.RTMLZHBSPP_2022.zip",
+      "retrieved_at": "2026-10-27T05:07:33+00:00",
+      "bytes": 13773266,
+      "sha256": "9807875a28926cba482f935bece5cb865dfed8a3ebd70a3bf65c47e2dc8afb4f",
+      "market": "rtm",
+      "report_type_id": 13061,
+      "year": 2022,
+      "publish_date": "2023-01-01T08:34:04-05:00"
+    },
+    {
+      "url": "https://www.ercot.com/misdownload/servlets/mirDownload?doclookupId=969805139",
+      "path": "raw/prices/ercot/rtm/rpt.00013061.0000000000000000.20240101.081911295.RTMLZHBSPP_2023.zip",
+      "retrieved_at": "2026-10-27T05:07:37+00:00",
+      "bytes": 14000500,
+      "sha256": "e22179bf7efe1b7f6ac25f8757e97d8d11c27de3638523da4166727f5d5652cb",
+      "market": "rtm",
+      "report_type_id": 13061,
+      "year": 2023,
+      "publish_date": "2024-01-01T08:19:08-05:00"
+    },
+    {
+      "url": "https://www.ercot.com/misdownload/servlets/mirDownload?doclookupId=1065471230",
+      "path": "raw/prices/ercot/rtm/rpt.00013061.0000000000000000.20250101.081829672.RTMLZHBSPP_2024.zip",
+      "retrieved_at": "2026-10-27T05:07:42+00:00",
+      "bytes": 14288420,
+      "sha256": "cffa1d6011ca8272af9ba3ba0d0afa397d728ea4ce8d05abe96fe3fe6662adac",
+      "market": "rtm",
+      "report_type_id": 13061,
+      "year": 2024,
+      "publish_date": "2025-01-01T08:18:28-05:00"
+    },
+    {
+      "url": "https://www.ercot.com/misdownload/servlets/mirDownload?doclookupId=1177737535",
+      "path": "raw/prices/ercot/rtm/rpt.00013061.0000000000000000.20260101.132601474.RTMLZHBSPP_2025.zip",
+      "retrieved_at": "2026-10-27T05:07:49+00:00",
+      "bytes": 13969454,
+      "sha256": "522a26678575b93bbc7e2c040760eead52c4aae484e0f353c603d5b1a0378faa",
+      "market": "rtm",
+      "report_type_id": 13061,
+      "year": 2025,
+      "publish_date": "2026-01-01T13:25:58-05:00"
+    },
+    {
+      "url": "https://www.ercot.com/misdownload/servlets/mirDownload?doclookupId=1290655139",
+      "path": "raw/prices/ercot/rtm/rpt.00013061.0000000000000000.20261025.080808242.RTMLZHBSPP_2026.zip",
+      "retrieved_at": "2026-10-27T05:07:53+00:00",
+      "bytes": 11130914,
+      "sha256": "3ee58abf255b69e5f45bfd5c2b51bf303df556be3255410e2a4ca427341a4ae9",
+      "market": "rtm",
+      "report_type_id": 13061,
+      "year": 2026,
+      "publish_date": "2026-10-25T08:08:06-05:00"
+    }
+  ]
+}

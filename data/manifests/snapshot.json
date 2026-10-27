@@ -1,0 +1,60 @@
+{
+  "snapshot_id": "05efabe781cc",
+  "taken_at": "2026-10-27T06:16:08Z",
+  "sources": {
+    "eia930": {
+      "manifest_sha256": "08b852396a0a6d9a093959f2930c684b720199c2392824180f5720c4fd5886fc",
+      "files": 51,
+      "bytes": 3841579327,
+      "status": "frozen"
+    },
+    "geo_ba_boundaries": {
+      "manifest_sha256": "e045d726ea1661a6225c463ec73777aca79defeaac1f265b3d5d7c9cd4c94507",
+      "files": 2,
+      "bytes": 2603575,
+      "status": "frozen"
+    },
+    "geo_natural_earth": {
+      "manifest_sha256": "af60430e2f741e5b9e3e523fcba650e7afe0c58bd45fc50d020ef3860d2488a5",
+      "files": 13,
+      "bytes": 74780666,
+      "status": "frozen"
+    },
+    "openmeteo": {
+      "manifest_sha256": "aa1b514a8d3ad6e824696b6929c0919db49b281a2c14ebd657cba6adc7f2552d",
+      "files": 142,
+      "bytes": 64500404,
+      "status": "growing"
+    },
+    "prices_caiso": {
+      "manifest_sha256": "a10702aa90201ffea5076850a0a852c8a87ec952412d793d080f18ecd4a76cca",
+      "files": 164,
+      "bytes": 110504899,
+      "status": "frozen"
+    },
+    "prices_ercot": {
+      "manifest_sha256": "8bc13b6ab66a976a68216c4105733f08b8d982831ce24ab944092805ba7111c6",
+      "files": 10,
+      "bytes": 77182461,
+      "status": "frozen"
+    },
+    "traces_acme": {
+      "manifest_sha256": "636d81a7c3a75dc823933368175e1cc0badcac9e7164584268611072fa0ccd31",
+      "files": 14,
+      "bytes": 108473483,
+      "status": "frozen"
+    },
+    "traces_alibaba_spot2026": {
+      "manifest_sha256": "42d8e490f4aba2db4acdc0332562604c8902f0a4cc20bf060d872748e4caf56a",
+      "files": 4,
+      "bytes": 23153595,
+      "status": "frozen"
+    },
+    "traces_pai2020": {
+      "manifest_sha256": "1328d822040abf5b3aa0566f0932a4bc3bb84d295ef82ce60d583321c5f4ba8c",
+      "files": 12,
+      "bytes": 558834337,
+      "status": "frozen"
+    }
+  }
+}

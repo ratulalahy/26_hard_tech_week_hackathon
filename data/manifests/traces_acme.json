@@ -1,0 +1,123 @@
+{
+  "source": "traces/acme",
+  "title": "Acme traces (Shanghai AI Lab), clusters Seren and Kalos, Mar-Aug 2023",
+  "homepage": "https://github.com/InternLM/AcmeTrace",
+  "license": "CC-BY-4.0",
+  "license_url": "https://raw.githubusercontent.com/InternLM/AcmeTrace/master/LICENSE.txt",
+  "citation": "Hu et al., Characterization of Large Language Model Development in the Datacenter, NSDI '24",
+  "notes": "Job tables only. The DCGM/IPMI telemetry (~80 GB on HuggingFace Qinghao/AcmeTrace) is skipped; the small processed CDF pickles in util_pkl/ are kept.",
+  "files": [
+    {
+      "url": "https://raw.githubusercontent.com/InternLM/AcmeTrace/master/data/job_trace/trace_seren.csv",
+      "path": "raw/traces/acme/trace_seren.csv",
+      "retrieved_at": "2026-10-27T04:59:58+00:00",
+      "bytes": 99262320,
+      "sha256": "747854c73ce8b3263b764aa9ff8d866d89903705d31fcd0e0520c33dd14af9a1",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/InternLM/AcmeTrace/master/data/job_trace/trace_kalos.csv",
+      "path": "raw/traces/acme/trace_kalos.csv",
+      "retrieved_at": "2026-10-27T04:59:59+00:00",
+      "bytes": 8960159,
+      "sha256": "7c5a7845da1d66448fa668342e4ecb622fd9a005118080660ec3ad2788d4c9bf",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/InternLM/AcmeTrace/master/data/cluster_summary.csv",
+      "path": "raw/traces/acme/cluster_summary.csv",
+      "retrieved_at": "2026-10-27T04:59:59+00:00",
+      "bytes": 1269,
+      "sha256": "cde7a7d4ba1596ea165cf4583137d2095020abebbc26b3cd834284c16e8e6ecf",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/InternLM/AcmeTrace/master/data/utils.py",
+      "path": "raw/traces/acme/upstream/utils.py.txt",
+      "retrieved_at": "2026-10-27T04:59:59+00:00",
+      "bytes": 4614,
+      "sha256": "a08459b550957a7b0aac6e9b4fb2d1508628aa9080700b4f806fa56e94afb405",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/InternLM/AcmeTrace/master/data/generate_utilization_pkl.ipynb",
+      "path": "raw/traces/acme/upstream/generate_utilization_pkl.ipynb",
+      "retrieved_at": "2026-10-27T04:59:59+00:00",
+      "bytes": 10646,
+      "sha256": "e28223f6d06304b0a98cb86df96fb04208b455b6b4ac01ab7167670fc4811600",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/InternLM/AcmeTrace/master/README.md",
+      "path": "raw/traces/acme/upstream/README.md",
+      "retrieved_at": "2026-10-27T05:00:00+00:00",
+      "bytes": 18424,
+      "sha256": "b8b4369cbabc5f0bd884c4bf60c61571ef9e929bfa2da250920ea88f81080e33",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/InternLM/AcmeTrace/master/LICENSE.txt",
+      "path": "raw/traces/acme/LICENSE.txt",
+      "retrieved_at": "2026-10-27T05:00:00+00:00",
+      "bytes": 18653,
+      "sha256": "9bbc1ea9fe5c96df01b311a2ac864d5b18fc87b9948bfd14770e4b44db755ee9",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/InternLM/AcmeTrace/master/data/utilization/util_pkl/gpu_power_kalos.pkl",
+      "path": "raw/traces/acme/util_pkl/gpu_power_kalos.pkl",
+      "retrieved_at": "2026-10-27T05:00:00+00:00",
+      "bytes": 16189,
+      "sha256": "8d37bcbb9e35bb8425c826df33caa2da8dfc1334f1a656bb1a719deb4d341efe",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/InternLM/AcmeTrace/master/data/utilization/util_pkl/gpu_power_seren.pkl",
+      "path": "raw/traces/acme/util_pkl/gpu_power_seren.pkl",
+      "retrieved_at": "2026-10-27T05:00:00+00:00",
+      "bytes": 16189,
+      "sha256": "e12bc85ee521b0eb4141b4ab50e68f4965c123ac2c667eb182fe6382090d03aa",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/InternLM/AcmeTrace/master/data/utilization/util_pkl/server_power.pkl",
+      "path": "raw/traces/acme/util_pkl/server_power.pkl",
+      "retrieved_at": "2026-10-27T05:00:00+00:00",
+      "bytes": 32257,
+      "sha256": "d04af0ace53cc7ced6e134cbddd4abdc621c8c7386930a307254b059145ba671",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/InternLM/AcmeTrace/master/data/utilization/util_pkl/util_gpu_kalos.pkl",
+      "path": "raw/traces/acme/util_pkl/util_gpu_kalos.pkl",
+      "retrieved_at": "2026-10-27T05:00:01+00:00",
+      "bytes": 32257,
+      "sha256": "de05ff0592a107a602a40ee63a9f3e9f2f13120d2ae999d3aff6bef831918028",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/InternLM/AcmeTrace/master/data/utilization/util_pkl/util_gpu_seren.pkl",
+      "path": "raw/traces/acme/util_pkl/util_gpu_seren.pkl",
+      "retrieved_at": "2026-10-27T05:00:01+00:00",
+      "bytes": 80470,
+      "sha256": "1c32e7cc551397f814895c3f93a9e2765c0c0f1e38d251f5b563db33f558cbaf",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/InternLM/AcmeTrace/master/data/utilization/util_pkl/util_gpu_pai.pkl",
+      "path": "raw/traces/acme/util_pkl/util_gpu_pai.pkl",
+      "retrieved_at": "2026-10-27T05:00:01+00:00",
+      "bytes": 3847,
+      "sha256": "9e2ef459f15dbd272d5089195fe9a873b533bf5fb02039a07eb3226eedce7475",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/InternLM/AcmeTrace/master/data/utilization/util_pkl/util_gpu_philly.pkl",
+      "path": "raw/traces/acme/util_pkl/util_gpu_philly.pkl",
+      "retrieved_at": "2026-10-27T05:00:01+00:00",
+      "bytes": 16189,
+      "sha256": "c693dbb97c91b4c50d1ef702ad18721c3461caa5ba29240268d1f8d13ac81283",
+      "sha256_matches_published": null
+    }
+  ]
+}

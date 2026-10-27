@@ -61,7 +61,8 @@ Every command listed here must work. Add a command when its target lands.
 - **Raw data is immutable.**
   - Downloads go to `data/raw/<source>/` and are recorded in that source's manifest.
   - Cleaning writes to `data/interim/` or `data/processed/`.
-  - Derived outputs are written atomically (temp file, then rename) and versioned by run id or content hash. Each run writes only into its own run directory.
+  - Experiment outputs are written atomically (temp file, then rename) and versioned by run id or content hash. Each run writes only into its own run directory.
+  - Static reference assets (cleaned source tables, map layers) keep fixed paths. They are written atomically, and their sha256 is recorded in the source manifest.
   - Code finds the data directory through `gridpilot.paths`. The `GRIDPILOT_DATA_DIR` environment variable overrides it; worktrees point it at the main checkout's `data/`.
   - For Codex planning/review, that shared directory is read-only. No duplicate downloads, cleaning writes, or experiment outputs go there; use the planning checkout's own ignored run directory for any derived review artifacts.
   - A source manifest that is still changing is not a frozen snapshot. Record its hash and file inventory before analysis, and verify them again afterwards.
