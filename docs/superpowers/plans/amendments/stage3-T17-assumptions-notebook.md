@@ -52,3 +52,13 @@ Branch `s3/t17` from main. The notebook merges **before the freeze** if it is re
 
 ## Report
 Write `/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/s3-t17-report.md`.
+
+## Addendum (owner: every new component needs its visualization)
+- **Export.** Also export the register and the negative results as `results/assumptions.json`. Every number comes from the existing results files, with its evidence label kept. Add the file to the envelope and sealed-date tests and to `copy-data`.
+- **Dashboard.** Add a compact **"Assumptions & what didn't work"** section to the Method drawer with:
+  - the register, as one row per assumption: value, how reality differs, tested? and the result;
+  - the negative-results list;
+  - the weather point (H ≈ S).
+
+  Follow the tokens.md style, plain language, evidence chips, axe 0 and the offline test.
+- Because this touches `web/`, the dashboard part merges **after T13**. The notebook itself may merge before the freeze, if it is ready.
