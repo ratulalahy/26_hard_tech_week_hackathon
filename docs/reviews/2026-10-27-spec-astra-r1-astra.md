@@ -169,7 +169,7 @@ A later U insertion remains feasible because real home occupancy never exceeds s
 The most defensible judge-facing result is a conditional scheduling experiment with equal attempted GPU-work, baseline-relative deadlines, explicit reservation knowledge, and EIA-attributed emissions. The remaining fixes are needed to make that description match the executable rules.
 
 Verdict: not_ready
-## Dispositions (lead, 2026-10-27 ~02:45 MT)
+## Dispositions (lead, 2026-10-27 02:35 MT)
 
 Each finding was checked against the spec text before ruling. The fixes are in spec §15 F12.
 

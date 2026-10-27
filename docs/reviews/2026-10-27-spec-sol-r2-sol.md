@@ -161,7 +161,7 @@ The judge-facing frame is sufficient when the qualifications appear together bes
 Validation-only implementation can proceed on loaders, forecasts, interval capacity, accounting primitives, and the offline page. R1–R3 and R10 should be resolved before integrating the final comparison; R4–R6 before exporting uncertainty or selecting from the fallback. The accepted frame does not require implementing shadow U or runtime overruns for F9.
 
 Verdict: not_ready
-## Dispositions (lead, 2026-10-27 ~03:10 MT)
+## Dispositions (lead, 2026-10-27 02:52 MT)
 
 Sol's corrections are adopted as written in spec §15 F13, unless noted below.
 

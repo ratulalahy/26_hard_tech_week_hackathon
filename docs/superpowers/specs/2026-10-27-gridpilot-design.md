@@ -639,7 +639,7 @@ The Mac offline rehearsal moves to Wed morning.
 - **Arithmetic:** time in the engine and in capacity is integer microseconds, so bookings and tolerances are exact.
 - **F3 mask:** it is enforced inside the engine, for every policy and fallback. Bookings sit at PACE, which has no missing truth in validation.
 
-### F12. Astra gate r1 fixes (2026-10-27 ~02:45 MT; review: `docs/reviews/2026-10-27-spec-astra-r1-astra.md`)
+### F12. Astra gate r1 fixes (2026-10-27 02:35 MT; review: `docs/reviews/2026-10-27-spec-astra-r1-astra.md`)
 
 These override earlier sections where they differ. F11's motivating counts came from a **simulated** synthetic slice (`lab/scripts/bench_sim_core.py`, Poisson arrivals, PR #19); they are not validation grid or workload outcomes. F11 and F12 were written during Stage 2, after F1–F10. The motivating benchmark is `origin/s2/task-4` at 8f438aa, `lab/scripts/bench_sim_core.py` (synthetic Poisson slice, no bookings). When F11–F14 were written, the only validation outcomes that existed were forecast error metrics (Task 2) and workload-only U statistics; no policy CO₂ result had been computed.
 
@@ -694,7 +694,7 @@ These override earlier sections where they differ. F11's motivating counts came 
 
 **F12.9 R4a (A3),** if ever revived, needs independence from the validation period used for selection, and an audit of republished target sources.
 
-### F13. Sol re-check r2 fixes (2026-10-27 ~03:10 MT; review: `docs/reviews/2026-10-27-spec-sol-r2-sol.md`)
+### F13. Sol re-check r2 fixes (2026-10-27 02:52 MT; review: `docs/reviews/2026-10-27-spec-sol-r2-sol.md`)
 
 These override §1–§14 and F1–F12 where they differ. Within §15, a later F-item overrides an earlier one.
 
@@ -736,7 +736,7 @@ These override §1–§14 and F1–F12 where they differ. Within §15, a later F
 - For each job, compare its preferred action under the real view with its preferred action under a view without other jobs' pending (not-yet-arrived) U bookings. Earlier committed moves are kept in both views.
 - The job is blocked if these differ. Count it once, and sum its modeled execution energy once.
 
-### F14. Fresh Claude re-check fixes (2026-10-27 ~03:30 MT; the re-check returned `ready_with_minor_fixes`; review: `docs/reviews/2026-10-27-spec-claude-r3.md`)
+### F14. Fresh Claude re-check fixes (2026-10-27 03:05 MT; the re-check returned `ready_with_minor_fixes`; review: `docs/reviews/2026-10-27-spec-claude-r3.md`)
 
 These override §1–§14 and F1–F13 where they differ.
 
@@ -773,7 +773,7 @@ These override §1–§14 and F1–F13 where they differ.
 - The bound check uses a 1e-6 kg tolerance on the scored cohort, excluding warm-up.
 
 **F14.6 Scoring truth fill (N6; pre-registered, replaces the "accounting-support failure" outcome).**
-- **Why:** a completeness-only check (counts only, 2026-10-27 03:25 MT) found missing consumed-basis hours in the sealed window:
+- **Why:** a completeness-only check (counts only, 2026-10-27 ~03:02 MT) found missing consumed-basis hours in the sealed window:
   - PACE 51 (one 50 h gap and 1 h; 24 h also missing production basis and EIA-930 fuel mix);
   - CISO 138;
   - BPAT 51;
