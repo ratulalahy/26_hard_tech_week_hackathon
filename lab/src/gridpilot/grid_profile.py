@@ -75,8 +75,15 @@ def _local(frame: pl.DataFrame) -> pl.DataFrame:
         lt.dt.date().alias("date"), lt.dt.weekday().alias("dow"))
 
 
+DECIMALS = 4  # exported means are rounded so re-exports are byte-stable (parallel sums vary in the last bit)
+
+
+def _r(v):
+    return round(v, DECIMALS) if isinstance(v, float) else v
+
+
 def _grid(agg: pl.DataFrame, col: str, fill) -> list[list]:
-    look = {(r["month"], r["hour"]): r[col] for r in agg.iter_rows(named=True)}
+    look = {(r["month"], r["hour"]): _r(r[col]) for r in agg.iter_rows(named=True)}
     return [[look.get((m, h), fill) for h in range(24)] for m in MONTHS]
 
 
@@ -92,7 +99,7 @@ def day_profile(carbon: pl.DataFrame, ba: str) -> tuple[list, list]:
     c = _local(carbon.filter((pl.col("ba") == ba) & pl.col("ci_consumed_g_kwh").is_not_null()))
     agg = c.group_by("hour").agg(pl.col("ci_consumed_g_kwh").mean().alias("v"),
                                  pl.len().alias("n"))
-    look = {r["hour"]: (r["v"], r["n"]) for r in agg.iter_rows(named=True)}
+    look = {r["hour"]: (_r(r["v"]), r["n"]) for r in agg.iter_rows(named=True)}
     return [look.get(h, (None, 0))[0] for h in range(24)], [look.get(h, (None, 0))[1]
                                                              for h in range(24)]
 
@@ -112,7 +119,7 @@ def july_weekday_profile(balance: pl.DataFrame) -> dict:
         pl.col("gen_solar_adj_mw").fill_null(0).mean().alias("solar_mw"),
         pl.col("gen_wind_adj_mw").fill_null(0).mean().alias("wind_mw")).sort("hour")
     look = {r["hour"]: r for r in agg.iter_rows(named=True)}
-    out = {k: [float(look[h][k]) if h in look and look[h][k] is not None else None
+    out = {k: [_r(float(look[h][k])) if h in look and look[h][k] is not None else None
                for h in range(24)] for k in ("demand_mw", "net_load_mw", "solar_mw", "wind_mw")}
     out["n_days"] = b["date"].n_unique()
     return out
@@ -128,13 +135,13 @@ def top_k_net_load_counts(balance: pl.DataFrame, k: int = TOP_K) -> list[list[in
 def context_year_means(balance: pl.DataFrame) -> dict[str, float | None]:
     b = balance.filter(pl.col("ba").is_in(CONTEXT_BAS)).with_columns(fuel_mix_ci().alias("ci"))
     agg = b.group_by("ba").agg(pl.col("ci").mean().alias("v"))
-    return {r["ba"]: r["v"] for r in agg.sort("ba").iter_rows(named=True)}
+    return {r["ba"]: _r(r["v"]) for r in agg.sort("ba").iter_rows(named=True)}
 
 
 def _mean(vals, ns):
     tot = sum(v * n for v, n in zip(vals, ns, strict=True) if v is not None)
     n = sum(ns)
-    return tot / n if n else None
+    return _r(tot / n) if n else None
 
 
 def build_profile(carbon: pl.DataFrame, balance: pl.DataFrame) -> dict:
