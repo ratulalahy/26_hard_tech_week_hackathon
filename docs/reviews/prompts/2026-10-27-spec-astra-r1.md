@@ -15,5 +15,5 @@ Judge it as the skeptical energy-and-ML judge would, then as the engineer who mu
 5. **Carbon accounting and claim wording:** consumption vs production, the marginal proxy, and the headline templates.
 6. **The amendments R1–R6:** do they fit the base text, and do they create contradictions?
 7. **Buildability by Tue 18:00:** which requirements should be explicitly deferred so that the core is real and honest in time? Name them.
-8. **F11 (pinning rigid jobs at their U placement):** is it sound, does it leak foresight beyond F1, and does it bias any H1–H4 contrast? Give a better alternative if there is one.
+8. **F11 (baseline bookings as fallback):** is it sound? Is the disclosed advance-calendar assumption acceptable? Does it bias any H1–H4 contrast, or make savings trivially small? Give a better causal alternative if there is one.
 9. Anything else that would embarrass us in front of judges.
