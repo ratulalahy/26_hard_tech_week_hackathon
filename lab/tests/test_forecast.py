@@ -1,5 +1,6 @@
 """Forecasters K/W/L and the as-of guard (spec sections 5 and 6, F8, F9 item 2)."""
 
+import math
 from datetime import UTC, datetime, timedelta
 from itertools import pairwise
 from zoneinfo import ZoneInfo
@@ -12,12 +13,18 @@ from gridpilot.forecast import (
     ENVELOPE_H,
     WEEKLY_LAGS_H,
     LeakageError,
+    _mae_key,
     as_of,
+    climatology_table,
+    fit,
     fit_climatology,
     forecast,
+    issue_features,
     issue_times,
     l_features,
+    predict,
     predict_climatology,
+    prepare,
     score,
     target_hours,
 )
@@ -93,16 +100,21 @@ def test_weekly_median():
         idx = (t - start) // H
         assert v == pytest.approx(np.median([idx - k for k in WEEKLY_LAGS_H]))
 
-    # Drop the 336 h and 672 h lags of the first target: the median uses the two left.
+    # Null the 336 h and 672 h lags of the first target: the median uses the two left.
+    # (Demand is a dense hourly grid; a missing hour is a null value, not an absent row.)
+    def nulled(frame, hours):
+        return frame.with_columns(pl.when(pl.col("ts_utc").is_in(hours)).then(None)
+                                  .otherwise(pl.col("value")).alias("value"))
+
     t0 = targets[0]
-    holed = s.filter(~pl.col("ts_utc").is_in([t0 - 336 * H, t0 - 672 * H]))
+    holed = nulled(s, [t0 - 336 * H, t0 - 672 * H])
     out = forecast(holed, "PACE", "demand", "W", [issue], fit_at=issue, history_start=start)
     i0 = (t0 - start) // H
     first = out.filter(pl.col("target_ts") == t0)["value"].item()
     assert first == pytest.approx(np.median([i0 - 168, i0 - 504]))
 
     # No lag at all: fall back to climatology.
-    none = s.filter(~pl.col("ts_utc").is_in([t0 - k * H for k in WEEKLY_LAGS_H]))
+    none = nulled(s, [t0 - k * H for k in WEEKLY_LAGS_H])
     out = forecast(none, "PACE", "demand", "W", [issue], fit_at=issue, history_start=start)
     first = out.filter(pl.col("target_ts") == t0)["value"].item()
     clim_none = fit_climatology(as_of(none, issue, ENVELOPE_H["demand"]), "America/Denver")
@@ -274,4 +286,89 @@ def test_score_metrics():
                           "value": [11.0, 12.0, None]},
                          schema_overrides={"ts_utc": pl.Datetime("us", "UTC")})
     m = score(fc, truth, train_mean=4.0)
-    assert m == {"n": 2, "mae": 0.5, "bias": -0.5, "nmae": 0.125}
+    assert m == {"n": 2, "mae": 0.5, "bias": -0.5, "nmae": 0.125, "evidence": "measured"}
+
+
+def _fc(rows):
+    return pl.DataFrame(rows, schema={"ba": pl.Utf8, "target": pl.Utf8, "model": pl.Utf8,
+                                      "issue_ts": pl.Datetime("us", "UTC"),
+                                      "target_ts": pl.Datetime("us", "UTC"),
+                                      "value": pl.Float64, "evidence": pl.Utf8}, orient="row")
+
+
+def test_score_guards():
+    t0 = datetime(2024, 5, 1, tzinfo=UTC)
+    truth = pl.DataFrame({"ba": "PACE", "ts_utc": [t0, t0 + H], "value": [1.0, 2.0]},
+                         schema_overrides={"ts_utc": pl.Datetime("us", "UTC")})
+    i = t0 - 20 * H
+    mixed = _fc([("PACE", "demand", "K", i, t0, 1.0, "forecast"),
+                 ("PACE", "demand", "W", i, t0 + H, 1.0, "forecast")])
+    with pytest.raises(ValueError, match="single"):
+        score(mixed, truth, train_mean=1.0)
+    dup = _fc([("PACE", "demand", "K", i, t0, 1.0, "forecast"),
+               ("PACE", "demand", "K", i + 24 * H, t0, 1.0, "forecast")])
+    with pytest.raises(ValueError, match="unique"):
+        score(dup, truth, train_mean=1.0)
+    with pytest.raises(ValueError, match="truth"):
+        score(dup[:1], pl.concat([truth, truth]), train_mean=1.0)
+    empty = score(_fc([("PACE", "demand", "K", i, t0 + 5 * H, 1.0, "forecast")]), truth, 1.0)
+    assert empty["n"] == 0 and _mae_key(empty) == math.inf
+    assert _mae_key({"n": 3, "mae": 2.0}) == 2.0
+
+
+@pytest.mark.parametrize("target", ["demand", "ci_consumed"])
+def test_fit_ignores_labels_published_after_fit_at(target):
+    env = ENVELOPE_H[target]
+    start = datetime(2024, 1, 1, tzinfo=UTC)
+    s = _series(start, 24 * 60)
+    fit_at = start + timedelta(days=50)
+    late = pl.col("ts_utc") + pl.duration(hours=1 + env) > fit_at
+    bad = s.with_columns(pl.when(late).then(-1e6).otherwise(pl.col("value")).alias("value"))
+    assert bad.filter(pl.col("value") == -1e6).height > 0
+    clean_fit = fit(s, "PACE", target, fit_at, start, leaf_nodes=(15,))
+    bad_fit = fit(bad, "PACE", target, fit_at, start, leaf_nodes=(15,))
+    for attr in ("n_labels", "n_train_rows", "train_mean"):
+        assert getattr(bad_fit, attr) == getattr(clean_fit, attr), attr
+    feats = issue_features(s, target, issue_times(fit_at, fit_at + timedelta(days=5)),
+                           "America/Denver")
+    for model, m in (("K", None), ("L", 15)):
+        a, _ = predict(clean_fit, feats, model, m)
+        b, _ = predict(bad_fit, feats, model, m)
+        assert a["value"].to_list() == b["value"].to_list(), model
+
+
+def test_demand_must_be_dense_hourly():
+    start = datetime(2024, 1, 1, tzinfo=UTC)
+    s = _series(start, 48)
+    holed = s.filter(pl.col("ts_utc") != start + 10 * H)
+    with pytest.raises(ValueError, match="dense"):
+        prepare(holed, "demand")
+    assert prepare(holed, "wind").height == 47  # other targets need no density
+    assert prepare(s, "demand").height == 48
+
+
+def test_climatology_table_is_modeled():
+    start = datetime(2024, 1, 1, tzinfo=UTC)
+    tab = climatology_table(fit_climatology(_series(start, 24 * 10), "America/Denver"),
+                            "PACE", "demand")
+    assert tab["evidence"].unique().to_list() == ["modeled"]
+    assert sorted(tab["level"].unique().to_list()) == [0, 1, 2, 3]
+
+
+def test_load_series_seals_before_collect(tmp_path, monkeypatch):
+    import gridpilot.forecast as fcm
+
+    ts = [TEST_START - 2 * H, TEST_START - H, TEST_START, TEST_START + H]
+    bal = pl.DataFrame({"ba": ["PACE"] * 4, "ts_utc": ts, "demand_adj_mw": [1.0, 2.0, 3.0, 4.0],
+                        "gen_wind_adj_mw": 0.0, "gen_solar_adj_mw": 0.0},
+                       schema_overrides={"ts_utc": pl.Datetime("us", "UTC")})
+    car = pl.DataFrame({"ba": ["CISO"] * 4, "ts_utc": ts, "ci_consumed_g_kwh": [1.0, 2.0, 3.0, 4.0]},
+                       schema_overrides={"ts_utc": pl.Datetime("us", "UTC")})
+    bal.write_parquet(tmp_path / "balance.parquet")
+    car.write_parquet(tmp_path / "carbon.parquet")
+    monkeypatch.setattr(fcm, "BALANCE_PATH", tmp_path / "balance.parquet")
+    monkeypatch.setattr(fcm, "CARBON_PATH", tmp_path / "carbon.parquet")
+    for target in ("demand", "ci_consumed"):
+        out = fcm.load_series(target)
+        assert out["ts_utc"].to_list() == ts[:2]
+        assert out["value"].to_list() == [1.0, 2.0]

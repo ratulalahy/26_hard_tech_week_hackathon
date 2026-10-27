@@ -34,6 +34,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import math
 import os
 import shutil
 import subprocess
@@ -51,7 +52,7 @@ import yaml
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 from gridpilot.data.eia930 import add_demand_clean
-from gridpilot.data.eia_co2 import CARBON_PATH, CORE_BAS, load_carbon
+from gridpilot.data.eia_co2 import CARBON_PATH, CORE_BAS
 from gridpilot.paths import INTERIM_DIR, MANIFEST_DIR, REPO_ROOT
 from gridpilot.splits import TEST_START, VALIDATION_START, drop_sealed
 
@@ -83,6 +84,10 @@ RUN_SERIES = tuple((ba, "ci_consumed") for ba in CORE_BAS) + (
     ("PACE", "demand"), ("PACE", "wind"), ("PACE", "solar"))
 BALANCE_PATH = INTERIM_DIR / "eia930" / "balance.parquet"
 BALANCE_COLS = {"demand": "demand_adj_mw", "wind": "gen_wind_adj_mw", "solar": "gen_solar_adj_mw"}
+LIMITATION = (
+    "Publication-lagged replay of a revised historical snapshot (EIA regenerates files daily); "
+    "real-time vintages are not reconstructed. Envelopes are assumed availability rules "
+    "(spec §5); the adjusted-demand 2 h envelope is unverified against EIA's imputation timing.")
 
 H = timedelta(hours=1)
 TRAIL_H = 168
@@ -147,8 +152,17 @@ def as_of(series: pl.DataFrame, issue: datetime, envelope_h: int) -> pl.DataFram
 
 def prepare(history: pl.DataFrame, target: str | None) -> pl.DataFrame:
     """Target-specific cleaning of published rows; call it only on ``as_of`` output (or on
-    truth). Demand: the EIA-930 spike rule and non-positive hours are nulled."""
+    truth). Demand: the EIA-930 spike rule and non-positive hours are nulled.
+
+    The spike rule compares neighbouring rows, so demand must be a dense hourly grid per BA
+    (a missing hour is a row with a null value, never an absent row); a gap raises."""
     if target == "demand" and history.height:
+        gaps = (history.sort("ba", "ts_utc")
+                .with_columns(pl.col("ts_utc").diff().over("ba").alias("_step"))
+                .filter(pl.col("_step").is_not_null() & (pl.col("_step") != H)))
+        if gaps.height:
+            raise ValueError(f"demand series is not dense hourly per ba: {gaps.height} gap(s), "
+                             f"first gap ends at {gaps['ts_utc'].min()}")
         return add_demand_clean(history, col="value", by="ba", out="value").drop("d_spike")
     return history
 
@@ -230,7 +244,7 @@ def climatology_table(clim: Climatology, ba: str, target: str) -> pl.DataFrame:
     cols = ["level", "month", "hour", "weekend", "value"]
     out = pl.concat([p.select(cols).with_columns(pl.col("level").cast(pl.Int8)) for p in parts])
     return out.with_columns(pl.lit(ba).alias("ba"), pl.lit(target).alias("target"),
-                            pl.lit(clim.tz).alias("tz")).sort("level", "month", "hour", "weekend")
+                            pl.lit(clim.tz).alias("tz"), pl.lit("modeled").alias("evidence")).sort("level", "month", "hour", "weekend")
 
 
 # --------------------------------------------------------------------------------------------
@@ -469,7 +483,18 @@ def forecast(series: pl.DataFrame, ba: str, target: str, model: Model,
 
 def score(fc: pl.DataFrame, truth: pl.DataFrame, train_mean: float) -> dict:
     """MAE, signed bias (forecast - truth) and MAE / training mean over hours with non-null
-    truth. Refuses any target or truth hour at or after TEST_START."""
+    truth. Refuses any target or truth hour at or after TEST_START.
+
+    ``fc`` must hold one (model, target) with unique (ba, target_ts), so that no hour is
+    counted twice; ``truth`` must have unique (ba, ts_utc). The statistics are labelled
+    evidence "measured" (errors measured against observed truth)."""
+    if fc.select("model", "target").unique().height > 1:
+        raise ValueError("score expects a single (model, target); got "
+                         f"{fc.select('model', 'target').unique().rows()}")
+    if fc.select("ba", "target_ts").is_duplicated().any():
+        raise ValueError("score expects unique (ba, target_ts) in the forecasts")
+    if truth.select("ba", "ts_utc").is_duplicated().any():
+        raise ValueError("score expects unique (ba, ts_utc) in the truth")
     if fc.height and fc["target_ts"].max() >= TEST_START:
         raise ValueError("forecast targets reach the sealed window")
     if truth.height and truth["ts_utc"].max() >= TEST_START:
@@ -479,9 +504,15 @@ def score(fc: pl.DataFrame, truth: pl.DataFrame, train_mean: float) -> dict:
                 on=["ba", "target_ts"], how="inner").drop_nulls("truth")
     e = j["value"] - j["truth"]
     if j.height == 0:
-        return {"n": 0, "mae": None, "bias": None, "nmae": None}
+        return {"n": 0, "mae": None, "bias": None, "nmae": None, "evidence": "measured"}
     mae = float(e.abs().mean())
-    return {"n": j.height, "mae": mae, "bias": float(e.mean()), "nmae": mae / train_mean}
+    return {"n": j.height, "mae": mae, "bias": float(e.mean()), "nmae": mae / train_mean,
+            "evidence": "measured"}
+
+
+def _mae_key(s: dict) -> float:
+    """Selection key: MAE, with an empty score (n = 0) ranked last."""
+    return math.inf if not s["n"] else s["mae"]
 
 
 # --------------------------------------------------------------------------------------------
@@ -493,16 +524,18 @@ def load_series(target: str) -> pl.DataFrame:
     """Published pre-seal series ``ba, ts_utc, value``: consumed CO2 intensity for the core BAs,
     or PACE demand / wind / solar (EIA-930 adjusted columns). Nulls are kept (dropped when
     labels or truth are formed)."""
+    # The seal is applied in the lazy scan, so sealed rows never enter memory (F8).
     if target == "ci_consumed":
-        frame = load_carbon().filter(pl.col("ba").is_in(list(CORE_BAS))).select(
+        lazy = drop_sealed(pl.scan_parquet(CARBON_PATH)).filter(
+            pl.col("ba").is_in(list(CORE_BAS))).select(
             "ba", "ts_utc", pl.col("ci_consumed_g_kwh").alias("value"))
     else:
         col = BALANCE_COLS[target]
-        frame = drop_sealed(pl.read_parquet(BALANCE_PATH, columns=["ba", "ts_utc", col]))
-        frame = frame.filter(pl.col("ba").cast(pl.Utf8) == "PACE").select(
+        lazy = drop_sealed(pl.scan_parquet(BALANCE_PATH)).filter(
+            pl.col("ba").cast(pl.Utf8) == "PACE").select(
             "ba", "ts_utc", pl.col(col).alias("value"))
-    frame = frame.select(pl.col("ba").cast(pl.Utf8), pl.col("ts_utc"),
-                         pl.col("value").cast(pl.Float64)).sort("ba", "ts_utc")
+    frame = lazy.select(pl.col("ba").cast(pl.Utf8), pl.col("ts_utc"),
+                        pl.col("value").cast(pl.Float64)).collect().sort("ba", "ts_utc")
     if frame.height and frame["ts_utc"].max() >= TEST_START:
         raise ValueError(f"{target}: loaded a sealed-window row")
     return frame
@@ -556,10 +589,10 @@ def run_validation(out_root: Path | None = None) -> Path:
                 "all_issues": score(f, truth, fitted.train_mean),
             }
         # Bounded search: lower selection MAE wins; a tie keeps the smaller tree.
-        chosen = min(MAX_LEAF_NODES, key=lambda m: (scores[f"L{m}"]["selection"]["mae"], m))
+        chosen = min(MAX_LEAF_NODES, key=lambda m: (_mae_key(scores[f"L{m}"]["selection"]), m))
         clips["L"] = clips[f"L{chosen}"]
         scores["L"] = scores[f"L{chosen}"]
-        best = min(FAMILY_ORDER, key=lambda k: (scores[k]["selection"]["mae"],
+        best = min(FAMILY_ORDER, key=lambda k: (_mae_key(scores[k]["selection"]),
                                                 FAMILY_ORDER.index(k)))
         forecasts += [frames["K"], frames["W"], frames[f"L{chosen}"]]
         climatologies.append(climatology_table(fitted.clim, ba, target))
@@ -574,8 +607,7 @@ def run_validation(out_root: Path | None = None) -> Path:
             "L_configs": {str(m): scores[f"L{m}"] for m in MAX_LEAF_NODES},
         }
         log.info("%s/%s: L max_leaf_nodes=%d, MAE K %.2f W %.2f L %.2f", ba, target, chosen,
-                 scores["K"]["selection"]["mae"], scores["W"]["selection"]["mae"],
-                 scores["L"]["selection"]["mae"])
+                 *(_mae_key(scores[k]["selection"]) for k in ("K", "W", "L")))
     fc = pl.concat(forecasts)
     if fc["target_ts"].max() + H > TEST_START:
         raise ValueError("a target hour reaches the sealed window")
@@ -585,7 +617,7 @@ def run_validation(out_root: Path | None = None) -> Path:
               "manifests/eia930.json": MANIFEST_DIR / "eia930.json",
               "manifests/snapshot.json": MANIFEST_DIR / "snapshot.json"}
     config = {
-        "run_id": run_id, "evidence": "forecast",
+        "run_id": run_id, "evidence": "forecast", "limitation": LIMITATION,
         "issue": {"tz": "America/Denver", "hour_local": ISSUE_HOUR,
                   "target": "next Utah civil day (America/Denver), UTC hour starts"},
         "envelope_h": ENVELOPE_H,
@@ -617,7 +649,10 @@ def run_validation(out_root: Path | None = None) -> Path:
         (tmp / "git.txt").write_text(
             f"sha {_git('rev-parse', 'HEAD').strip()}\nstatus:\n{_git('status', '--porcelain')}")
         (tmp / "metrics.json").write_text(json.dumps(
-            {"run_id": run_id, "evidence": "forecast",
+            {"run_id": run_id,
+             "evidence": "measured",  # error statistics; the forecasts themselves are "forecast"
+             "forecast_evidence": "forecast",
+             "limitation": LIMITATION,
              "window_note": ("selection = issues in [2024-11-01, 2025-10-24); all_issues = "
                              "every run issue, descriptive only. Development evidence: the "
                              "validation year was already exposed by the profiles."),
