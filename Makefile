@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test notebooks profile slice
+.PHONY: test notebooks profile slice web
 
 test:
 	cd lab && uv run pytest
@@ -29,3 +29,8 @@ slice:
 profile:
 	cd lab && uv run python scripts/export_grid_profile.py
 	cd lab && uv run python scripts/export_workload_profile.py $(if $(RUN_DIR),--run-dir $(RUN_DIR),)
+
+# The dashboard: copy results/*.json and the map layers into web/public/data, then build web/dist.
+# Needs the web dependencies (cd web && npm ci). Without a data dir it keeps the committed map layers.
+web:
+	cd web && npm run data && npm run build

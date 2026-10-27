@@ -50,6 +50,7 @@ Key documents:
 - `make notebooks` re-executes the evidence notebooks in `notebooks/` in place and exports HTML copies to `docs/evidence/`. It reads the cached data through `GRIDPILOT_DATA_DIR` and takes about five minutes. Each notebook ends with the decisions it supports in `docs/decisions.md`.
 - `make slice` runs the registered phase-0 validation experiment (U, G, S, K, W, L, H and time-only W, L) and exports the evidence-enveloped `results/*.json` the dashboard reads. Run directories go to `runs/slice/<UTC>/`. It reads the cached data through `GRIDPILOT_DATA_DIR` and takes about 20 minutes. `make slice WINDOW=fallback` runs the 91-day fallback window, which never replaces the registered selection.
 - `make profile` writes `results/grid-profile.json`, the dashboard's validation-year grid context (typical-day carbon by month, Utah's July weekday load, the top-100 net-load hours) and `results/workload-profile.json` (how much energy and saving sits in the largest jobs, recomputed from the registered run's ledgers; `RUN_DIR=` points at that run). It reads the cached data through the seal and takes about a minute.
+- `make web` copies `results/*.json` and the map layers into `web/public/data/` (committed) and builds the offline dashboard into `web/dist`. Run `cd web && npm ci` once first. To serve it: `cd web && npm run preview`, then open http://127.0.0.1:4173/.
 
 Every command listed here must work. Add a command when its target lands.
 
