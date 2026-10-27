@@ -1,10 +1,10 @@
 {
  "schema_version": "gridpilot.results.v1",
- "run_id": "20261027T115946Z",
- "git_sha": "f1d6e9110b329512e4941014c8596f4bb8ff587d",
+ "run_id": "20261027T122317Z",
+ "git_sha": "9c05198adc6aa76aa5a4800efbfc0b41ecb9d07f",
  "git_clean": true,
  "snapshot_id": "05efabe781cc",
- "wallclock_generated_at": "2026-10-27T12:19:02.523077+00:00",
+ "wallclock_generated_at": "2026-10-27T12:42:36.445758+00:00",
  "reproduce": "make slice  # cd lab && uv run python scripts/run_slice.py --window validation",
  "evidence_scope": "validation (selection) results; the sealed test window [2025-11-01, 2026-11-01) is never read",
  "claim_frame": "simulated advance-reservation scheduling scenario; baseline-relative deadlines; exact declared runtimes; runtime uncertainty untested; EIA-attributed (consumption-basis) emissions; conditional temporal block-resampling intervals",
@@ -33,10 +33,10 @@
    "traces_pai2020.json": "1328d822040abf5b3aa0566f0932a4bc3bb84d295ef82ce60d583321c5f4ba8c"
   },
   "carbon_hourly_sha256": "c34a9f8a00caf22e1525bf7f6f92329eefcf2a9d7b474389ef636dd0ab7e1258",
-  "forecast_run": "runs/slice/20261027T115946Z/forecast/20261027T115946Z",
+  "forecast_run": "runs/slice/20261027T122317Z/forecast/20261027T122317Z",
   "forecast_run_forecasts_sha256": "9ab2c4401f6f85a429dab3565ff120481a6c131ce656577e44c696d94497f575",
   "forecast_run_pinned": "K/W/L forecasts and the K tail climatology are read from this one run directory",
-  "forecast_metrics_run_id": "20261027T115946Z"
+  "forecast_metrics_run_id": "20261027T122317Z"
  },
  "reproducibility": {
   "ledger_canonical_sha256": {
@@ -58,7 +58,7 @@
    "balance.parquet": "f63d0c2703c6e42a1bbdabc9ff746ab0405cbc72b1c5a9dad8c6251ef29d0e86",
    "carbon_hourly.parquet": "c34a9f8a00caf22e1525bf7f6f92329eefcf2a9d7b474389ef636dd0ab7e1258",
    "trace_seren.csv": "747854c73ce8b3263b764aa9ff8d866d89903705d31fcd0e0520c33dd14af9a1",
-   "cohort.json": "beba613efb85c16c49e6da4623ca72bd1002c0d0b011eb69b31526218ab3bacc",
+   "cohort.json": "33e8360085cc535abaf69435bf56d46f15117cacf2aed80fbec3e81fc092c95b",
    "bookings.parquet": "fd01f42e6145b9ae59b13a4deae93ffd8b7e4bfaaa2cab3d363c6cc3a57f1ce2",
    "truth_fill.parquet": "38307470923df3517d3e2ffec4301155ed2a5989128c7067567d23f7292c210b",
    "ledger_U.parquet": "f610531decb7e4924f3ef385a2e82d3a279bf58dd761d6d83af02694c3a30fee",
@@ -74,7 +74,7 @@
   },
   "snapshot_id": "05efabe781cc",
   "forecast_run": {
-   "path": "runs/slice/20261027T115946Z/forecast/20261027T115946Z",
+   "path": "runs/slice/20261027T122317Z/forecast/20261027T122317Z",
    "forecasts_sha256": "9ab2c4401f6f85a429dab3565ff120481a6c131ce656577e44c696d94497f575"
   },
   "metrics_canonical_sha256": "f45821c09dac004db11e58fe55fed23692ee273d9847f59c4413f0290ed8b8d6"
@@ -126,7 +126,7 @@
    "value": 919112,
    "unit": "jobs",
    "evidence": "simulated",
-   "provenance_id": "20261027T115946Z:n_stream",
+   "provenance_id": "20261027T122317Z:n_stream",
    "status": "ok",
    "reason": null
   },
@@ -134,7 +134,7 @@
    "value": 917909,
    "unit": "jobs",
    "evidence": "simulated",
-   "provenance_id": "20261027T115946Z:n_cohort",
+   "provenance_id": "20261027T122317Z:n_cohort",
    "status": "ok",
    "reason": null
   },
@@ -142,7 +142,7 @@
    "value": 1203,
    "unit": "jobs",
    "evidence": "simulated",
-   "provenance_id": "20261027T115946Z:n_excluded",
+   "provenance_id": "20261027T122317Z:n_excluded",
    "status": "ok",
    "reason": null
   },
@@ -150,7 +150,7 @@
    "value": 460606.2913888889,
    "unit": "GPU_h",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:excluded_gpu_h",
+   "provenance_id": "20261027T122317Z:excluded_gpu_h",
    "status": "ok",
    "reason": null
   },
@@ -170,7 +170,7 @@
     "value": 50112,
     "unit": "jobs",
     "evidence": "simulated",
-    "provenance_id": "20261027T115946Z:warmup:n",
+    "provenance_id": "20261027T122317Z:warmup:n",
     "status": "ok",
     "reason": null
    },
@@ -178,7 +178,7 @@
     "value": 427859.4861111111,
     "unit": "GPU_h",
     "evidence": "measured",
-    "provenance_id": "20261027T115946Z:warmup:gpu_h",
+    "provenance_id": "20261027T122317Z:warmup:gpu_h",
     "status": "ok",
     "reason": null
    },
@@ -246,7 +246,7 @@
      "value": 8928,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:BPAT:1",
+     "provenance_id": "20261027T122317Z:tier:BPAT:1",
      "status": "ok",
      "reason": null
     },
@@ -254,7 +254,7 @@
      "value": 0,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:BPAT:2",
+     "provenance_id": "20261027T122317Z:tier:BPAT:2",
      "status": "ok",
      "reason": null
     },
@@ -262,7 +262,7 @@
      "value": 0,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:BPAT:3",
+     "provenance_id": "20261027T122317Z:tier:BPAT:3",
      "status": "ok",
      "reason": null
     },
@@ -270,7 +270,7 @@
      "value": 0,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:BPAT:4",
+     "provenance_id": "20261027T122317Z:tier:BPAT:4",
      "status": "ok",
      "reason": null
     },
@@ -278,7 +278,7 @@
      "value": 0,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:BPAT:missing",
+     "provenance_id": "20261027T122317Z:tier:BPAT:missing",
      "status": "ok",
      "reason": null
     }
@@ -288,7 +288,7 @@
      "value": 8808,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:CISO:1",
+     "provenance_id": "20261027T122317Z:tier:CISO:1",
      "status": "ok",
      "reason": null
     },
@@ -296,7 +296,7 @@
      "value": 48,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:CISO:2",
+     "provenance_id": "20261027T122317Z:tier:CISO:2",
      "status": "ok",
      "reason": null
     },
@@ -304,7 +304,7 @@
      "value": 48,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:CISO:3",
+     "provenance_id": "20261027T122317Z:tier:CISO:3",
      "status": "ok",
      "reason": null
     },
@@ -312,7 +312,7 @@
      "value": 24,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:CISO:4",
+     "provenance_id": "20261027T122317Z:tier:CISO:4",
      "status": "ok",
      "reason": null
     },
@@ -320,7 +320,7 @@
      "value": 0,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:CISO:missing",
+     "provenance_id": "20261027T122317Z:tier:CISO:missing",
      "status": "ok",
      "reason": null
     }
@@ -330,7 +330,7 @@
      "value": 8924,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:NEVP:1",
+     "provenance_id": "20261027T122317Z:tier:NEVP:1",
      "status": "ok",
      "reason": null
     },
@@ -338,7 +338,7 @@
      "value": 0,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:NEVP:2",
+     "provenance_id": "20261027T122317Z:tier:NEVP:2",
      "status": "ok",
      "reason": null
     },
@@ -346,7 +346,7 @@
      "value": 0,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:NEVP:3",
+     "provenance_id": "20261027T122317Z:tier:NEVP:3",
      "status": "ok",
      "reason": null
     },
@@ -354,7 +354,7 @@
      "value": 4,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:NEVP:4",
+     "provenance_id": "20261027T122317Z:tier:NEVP:4",
      "status": "ok",
      "reason": null
     },
@@ -362,7 +362,7 @@
      "value": 0,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:NEVP:missing",
+     "provenance_id": "20261027T122317Z:tier:NEVP:missing",
      "status": "ok",
      "reason": null
     }
@@ -372,7 +372,7 @@
      "value": 8928,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:PACE:1",
+     "provenance_id": "20261027T122317Z:tier:PACE:1",
      "status": "ok",
      "reason": null
     },
@@ -380,7 +380,7 @@
      "value": 0,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:PACE:2",
+     "provenance_id": "20261027T122317Z:tier:PACE:2",
      "status": "ok",
      "reason": null
     },
@@ -388,7 +388,7 @@
      "value": 0,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:PACE:3",
+     "provenance_id": "20261027T122317Z:tier:PACE:3",
      "status": "ok",
      "reason": null
     },
@@ -396,7 +396,7 @@
      "value": 0,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:PACE:4",
+     "provenance_id": "20261027T122317Z:tier:PACE:4",
      "status": "ok",
      "reason": null
     },
@@ -404,7 +404,7 @@
      "value": 0,
      "unit": "hours",
      "evidence": "measured",
-     "provenance_id": "20261027T115946Z:tier:PACE:missing",
+     "provenance_id": "20261027T122317Z:tier:PACE:missing",
      "status": "ok",
      "reason": null
     }
@@ -424,7 +424,7 @@
     "value": 917909,
     "unit": "jobs",
     "evidence": "simulated",
-    "provenance_id": "20261027T115946Z:support:bookings:n_checked",
+    "provenance_id": "20261027T122317Z:support:bookings:n_checked",
     "status": "ok",
     "reason": null
    },
@@ -432,7 +432,7 @@
     "value": 0,
     "unit": "jobs",
     "evidence": "simulated",
-    "provenance_id": "20261027T115946Z:support:bookings:n_after_f",
+    "provenance_id": "20261027T122317Z:support:bookings:n_after_f",
     "status": "ok",
     "reason": null
    },
@@ -440,7 +440,7 @@
     "value": 0,
     "unit": "jobs",
     "evidence": "simulated",
-    "provenance_id": "20261027T115946Z:support:bookings:n_missing_truth",
+    "provenance_id": "20261027T122317Z:support:bookings:n_missing_truth",
     "status": "ok",
     "reason": null
    },
@@ -448,7 +448,7 @@
     "value": 0,
     "unit": "jobs",
     "evidence": "simulated",
-    "provenance_id": "20261027T115946Z:support:bookings:n_filled_truth",
+    "provenance_id": "20261027T122317Z:support:bookings:n_filled_truth",
     "status": "ok",
     "reason": null
    }
@@ -460,7 +460,7 @@
     "value": 50112,
     "unit": "jobs",
     "evidence": "simulated",
-    "provenance_id": "20261027T115946Z:support:warmup_ledger:n_checked",
+    "provenance_id": "20261027T122317Z:support:warmup_ledger:n_checked",
     "status": "ok",
     "reason": null
    },
@@ -468,7 +468,7 @@
     "value": 0,
     "unit": "jobs",
     "evidence": "simulated",
-    "provenance_id": "20261027T115946Z:support:warmup_ledger:n_after_f",
+    "provenance_id": "20261027T122317Z:support:warmup_ledger:n_after_f",
     "status": "ok",
     "reason": null
    },
@@ -476,7 +476,7 @@
     "value": 0,
     "unit": "jobs",
     "evidence": "simulated",
-    "provenance_id": "20261027T115946Z:support:warmup_ledger:n_missing_truth",
+    "provenance_id": "20261027T122317Z:support:warmup_ledger:n_missing_truth",
     "status": "ok",
     "reason": null
    },
@@ -484,7 +484,7 @@
     "value": 0,
     "unit": "jobs",
     "evidence": "simulated",
-    "provenance_id": "20261027T115946Z:support:warmup_ledger:n_filled_truth",
+    "provenance_id": "20261027T122317Z:support:warmup_ledger:n_filled_truth",
     "status": "ok",
     "reason": null
    }
@@ -502,23 +502,23 @@
     "value": 87.45797079416802,
     "unit": "g/kWh",
     "evidence": "modeled",
-    "provenance_id": "20261027T115946Z:rank:BPAT",
+    "provenance_id": "20261027T122317Z:rank:BPAT",
     "status": "ok",
     "reason": null
    },
    "CISO": {
-    "value": 202.52041616925254,
+    "value": 202.5204161692532,
     "unit": "g/kWh",
     "evidence": "modeled",
-    "provenance_id": "20261027T115946Z:rank:CISO",
+    "provenance_id": "20261027T122317Z:rank:CISO",
     "status": "ok",
     "reason": null
    },
    "NEVP": {
-    "value": 324.1402425935995,
+    "value": 324.1402425936012,
     "unit": "g/kWh",
     "evidence": "modeled",
-    "provenance_id": "20261027T115946Z:rank:NEVP",
+    "provenance_id": "20261027T122317Z:rank:NEVP",
     "status": "ok",
     "reason": null
    },
@@ -526,7 +526,7 @@
     "value": 582.468506436286,
     "unit": "g/kWh",
     "evidence": "modeled",
-    "provenance_id": "20261027T115946Z:rank:PACE",
+    "provenance_id": "20261027T122317Z:rank:PACE",
     "status": "ok",
     "reason": null
    }
@@ -686,7 +686,7 @@
    "value": 435833,
    "unit": "attempts",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:cycle:unique_attempts",
+   "provenance_id": "20261027T122317Z:cycle:unique_attempts",
    "status": "ok",
    "reason": null
   },
@@ -694,7 +694,7 @@
    "value": 435833,
    "unit": "jobs",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:cycle:instances",
+   "provenance_id": "20261027T122317Z:cycle:instances",
    "status": "ok",
    "reason": null
   },
@@ -702,7 +702,7 @@
    "value": 5396200.904722223,
    "unit": "GPU_h",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:cycle:gpu_hours",
+   "provenance_id": "20261027T122317Z:cycle:gpu_hours",
    "status": "ok",
    "reason": null
   },
@@ -710,7 +710,7 @@
    "value": 0.6340978109463568,
    "unit": "fraction",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:cycle:energy_share_gt_24h",
+   "provenance_id": "20261027T122317Z:cycle:energy_share_gt_24h",
    "status": "ok",
    "reason": null
   },
@@ -718,7 +718,7 @@
    "value": 0.3160240808711875,
    "unit": "fraction",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:cycle:energy_share_gt_512_gpus",
+   "provenance_id": "20261027T122317Z:cycle:energy_share_gt_512_gpus",
    "status": "ok",
    "reason": null
   },
@@ -726,7 +726,7 @@
    "value": 0.7469528809972482,
    "unit": "fraction",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:cycle:energy_share_either",
+   "provenance_id": "20261027T122317Z:cycle:energy_share_either",
    "status": "ok",
    "reason": null
   },
@@ -734,7 +734,7 @@
    "value": 0.0025445526153366083,
    "unit": "fraction",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:cycle:job_share_gt_24h",
+   "provenance_id": "20261027T122317Z:cycle:job_share_gt_24h",
    "status": "ok",
    "reason": null
   },
@@ -742,7 +742,7 @@
    "value": 0.0014133854022068085,
    "unit": "fraction",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:cycle:job_share_gt_512_gpus",
+   "provenance_id": "20261027T122317Z:cycle:job_share_gt_512_gpus",
    "status": "ok",
    "reason": null
   }
@@ -760,18 +760,18 @@
   "g_ledger_identical_without_diagnostic": true,
   "timing_s": {
    "G_diagnosed": {
-    "value": 91.6748979636468,
+    "value": 90.21426266105846,
     "unit": "s",
     "evidence": "measured",
-    "provenance_id": "20261027T115946Z:timing:G_diag",
+    "provenance_id": "20261027T122317Z:timing:G_diag",
     "status": "ok",
     "reason": null
    },
    "G_undiagnosed": {
-    "value": 38.003070584032685,
+    "value": 38.28816852066666,
     "unit": "s",
     "evidence": "measured",
-    "provenance_id": "20261027T115946Z:timing:G_plain",
+    "provenance_id": "20261027T122317Z:timing:G_plain",
     "status": "ok",
     "reason": null
    }
@@ -792,128 +792,128 @@
   "job-replay.json"
  ],
  "artifact_sha256": {
-  "metrics.json": "323f33eb5b7c4f3f662ac4450f300160283d5155d3bb8439a1c2b2d7c06ae967",
-  "forecast-replay.json": "814b8b01f2bdb059931d113793e8b3c2b097e4886e8fb0ff2a3706699132103e",
-  "job-replay.json": "5cfc09f6ea99951d2e0837199c8139cd86dc9d0e001e3856220b28f9ff12e76e"
+  "metrics.json": "be0e6ea5958fef7a95067a9e4bc88f55af4289d2dcbb28d3b6a80ddac1b53119",
+  "forecast-replay.json": "807a68fd014e6f66ce3cd357ddab76dd88e668f55bee6c56d57a02f495f28fb9",
+  "job-replay.json": "3c5329d807e8fd2568c682661e2459ec25e1a3ef31bc251d191ab434ad45fc1c"
  },
  "timing_s": {
   "forecast_construction": {
-   "value": 39.969639853574336,
+   "value": 52.579906260129064,
    "unit": "s",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:timing:forecast_construction",
+   "provenance_id": "20261027T122317Z:timing:forecast_construction",
    "status": "ok",
    "reason": null
   },
   "replay": {
-   "value": 0.823921955190599,
+   "value": 0.7500150832347572,
    "unit": "s",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:timing:replay",
+   "provenance_id": "20261027T122317Z:timing:replay",
    "status": "ok",
    "reason": null
   },
   "bookings": {
-   "value": 208.02712509408593,
+   "value": 207.58995941886678,
    "unit": "s",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:timing:bookings",
+   "provenance_id": "20261027T122317Z:timing:bookings",
    "status": "ok",
    "reason": null
   },
   "truth_fill": {
-   "value": 0.05365342879667878,
+   "value": 0.053818375803530216,
    "unit": "s",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:timing:truth_fill",
+   "provenance_id": "20261027T122317Z:timing:truth_fill",
    "status": "ok",
    "reason": null
   },
   "policy_U": {
-   "value": 41.36544321710244,
+   "value": 41.11276655877009,
    "unit": "s",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:timing:policy_U",
+   "provenance_id": "20261027T122317Z:timing:policy_U",
    "status": "ok",
    "reason": null
   },
   "policy_G": {
-   "value": 91.6748979636468,
+   "value": 90.21426266105846,
    "unit": "s",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:timing:policy_G",
+   "provenance_id": "20261027T122317Z:timing:policy_G",
    "status": "ok",
    "reason": null
   },
   "policy_S": {
-   "value": 82.9240667768754,
+   "value": 82.19528777804226,
    "unit": "s",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:timing:policy_S",
+   "provenance_id": "20261027T122317Z:timing:policy_S",
    "status": "ok",
    "reason": null
   },
   "policy_K": {
-   "value": 128.84550241893157,
+   "value": 128.91486988728866,
    "unit": "s",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:timing:policy_K",
+   "provenance_id": "20261027T122317Z:timing:policy_K",
    "status": "ok",
    "reason": null
   },
   "policy_W": {
-   "value": 129.64854792226106,
+   "value": 126.64858973771334,
    "unit": "s",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:timing:policy_W",
+   "provenance_id": "20261027T122317Z:timing:policy_W",
    "status": "ok",
    "reason": null
   },
   "policy_L": {
-   "value": 129.32008182583377,
+   "value": 127.83528386289254,
    "unit": "s",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:timing:policy_L",
+   "provenance_id": "20261027T122317Z:timing:policy_L",
    "status": "ok",
    "reason": null
   },
   "policy_H": {
-   "value": 132.37609635014087,
+   "value": 131.60177441174164,
    "unit": "s",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:timing:policy_H",
+   "provenance_id": "20261027T122317Z:timing:policy_H",
    "status": "ok",
    "reason": null
   },
   "policy_W_time": {
-   "value": 48.14905590703711,
+   "value": 47.433081537950784,
    "unit": "s",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:timing:policy_W_time",
+   "provenance_id": "20261027T122317Z:timing:policy_W_time",
    "status": "ok",
    "reason": null
   },
   "policy_L_time": {
-   "value": 48.49325021915138,
+   "value": 47.955770189873874,
    "unit": "s",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:timing:policy_L_time",
+   "provenance_id": "20261027T122317Z:timing:policy_L_time",
    "status": "ok",
    "reason": null
   },
   "policy_G_undiagnosed": {
-   "value": 38.003070584032685,
+   "value": 38.28816852066666,
    "unit": "s",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:timing:policy_G_undiagnosed",
+   "provenance_id": "20261027T122317Z:timing:policy_G_undiagnosed",
    "status": "ok",
    "reason": null
   },
   "accounting": {
-   "value": 28.716892511118203,
+   "value": 28.09641739213839,
    "unit": "s",
    "evidence": "measured",
-   "provenance_id": "20261027T115946Z:timing:accounting",
+   "provenance_id": "20261027T122317Z:timing:accounting",
    "status": "ok",
    "reason": null
   }
