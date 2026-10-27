@@ -19,7 +19,8 @@ MAX_BYTES = 5 * 1024 * 1024
 
 
 def decision_ids() -> list[str]:
-    return re.findall(r"^### (D-\d{3})\b", DECISIONS.read_text(), flags=re.MULTILINE)
+    # D-001..D-043 are `###` entries under the index; D-044 onward are `##` entries (T17).
+    return re.findall(r"^#{2,3} (D-\d{3})\b", DECISIONS.read_text(), flags=re.MULTILINE)
 
 
 def test_decision_ids_are_unique_and_sequential():
