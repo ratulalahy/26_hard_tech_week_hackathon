@@ -8,7 +8,7 @@
  "sources": {
   "manifest.json": {
    "from": "manifest.json",
-   "sha256": "60924367435d400fec17ac7e8c18a3bfbb12cfcd3ed02b0db80e0c5ec9d1b7d5"
+   "sha256": "53d88aaee3444d20149ad72173c45ea7b99e113f5596ee23ee5e8cc733e24ee5"
   },
   "metrics.json": {
    "from": "metrics.json",
@@ -31,18 +31,10 @@
    "sha256": "3dae16572f586a4f7baea6b8157c1725eac350307105361a07e95c7266743bdf"
   },
   "water.json": {
-   "from": "origin/s3/t14-water:results/water.json (PR #69, pending merge)",
+   "from": "results/water.json",
    "sha256": "5a7d54f2d05a39f9e485a405f2b3b53bfaf1076e0a2c7bab91b2d2a02fd4dc58"
   }
  },
- "pending": [
-  {
-   "item": "water illustration",
-   "status": "pending merge",
-   "pr": "PR #69",
-   "ref": "origin/s3/t14-water"
-  }
- ],
  "register": [
   {
    "id": "flexible_mobile",
@@ -853,7 +845,7 @@
   {
    "id": "water_hydro",
    "assumption": "Water: whether hydro reservoir evaporation counts",
-   "value_text": "generation water from NREL median factors × the EIA-930 fuel mix, without and with hydro evaporation (illustrative; pending merge)",
+   "value_text": "generation water from NREL median factors × the EIA-930 fuel mix, without and with hydro evaporation (illustrative)",
    "values": {
     "hydro_factor_span": {
      "value": 12.631578947368421,
@@ -1527,7 +1519,7 @@
   },
   {
    "id": "water_sign",
-   "title": "Water: an assumption decides the sign (illustrative; pending merge)",
+   "title": "Water: an assumption decides the sign (illustrative)",
    "statement": "Counting only power-plant cooling water, S changes generation water by −0.6 M gal (−20%) against U. Counting hydro reservoir evaporation, S, W and L use 2.4–2.5× as much as U (+5.2 to +5.5 M gal), and NREL's hydro factor spans 13×.",
    "values": {
     "ex_hydro_gal": {

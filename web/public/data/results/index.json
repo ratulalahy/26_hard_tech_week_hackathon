@@ -1,5 +1,6 @@
 {
  "files": [
+  "assumptions.json",
   "case-days.json",
   "extensions.json",
   "flexibility-budget.json",

@@ -64,14 +64,14 @@ export function MethodDrawer() {
               <ScrollX label="Every policy, table"><PolicyTable m={m} testId="policy-table" /></ScrollX>
             </Sec>
             <Sec title="A few large jobs carry the result">
-              <table className="tbl" data-testid="method-workload">
+              <ScrollX label="Largest jobs, table"><table className="tbl" data-testid="method-workload">
                 <thead><tr><th>Largest jobs</th><th>Share of GPU-hours</th><th>Share of energy</th><th>Share of {pname(data!.workload.policy)}'s saving</th></tr></thead>
                 <tbody>
                   {data!.workload.top.map((t: Json) => (
                     <tr key={t.fraction.value}><td>top {pct(t.fraction.value, t.fraction.value < 0.01 ? 1 : 0)}% ({fmt(t.n_jobs.value)} jobs)</td><td>{pct(t.gpu_h_share.value, 0)}%</td><td>{pct(t.energy_share.value, 0)}%</td><td>{t.saving_share.value == null ? '–' : `${pct(t.saving_share.value, 0)}%`}</td></tr>
                   ))}
                 </tbody>
-              </table>
+              </table></ScrollX>
               <div className="t-12 ink-3" style={{ marginTop: 4 }}>{pct(data!.workload.share_jobs_under_1_gpu_h.value, 0)}% of jobs use under 1 GPU-hour; the median job uses {fmt(data!.workload.median_gpu_h.value, 2)} GPU-hours. The saving column is in {pname(data!.workload.policy)}'s terms (workload-profile.json), not S's; the flexibility budget gives S's. <Ev e="measured">sizes</Ev> <Ev e="simulated">energy and saving</Ev></div>
             </Sec>
             <Sec title={copy.validationReadings ? 'Forecast choice barely matters here; placement dominates' : 'The pre-registered forecast test'}>
