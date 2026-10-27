@@ -9,7 +9,7 @@ description: Use when a spec, plan, risky branch, result set or dashboard screen
 
 ## Who
 
-- **Sol 6.1** (the `review` profile) is the default reviewer. Use it freely for:
+- **Sol 6.1** (the `review` profile) is the default reviewer, once the owner says yes. It is used for:
   - checking the implementation plan;
   - reviewing leakage- and metric-sensitive branches;
   - critiquing screenshots.

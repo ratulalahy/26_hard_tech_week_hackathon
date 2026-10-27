@@ -17,7 +17,7 @@ The bar: a judge who sees one screen understands its insight in five seconds and
 2. **Self-pass** through the rubric below. Write each finding as `view | rubric item | severity | evidence | fix`.
 3. **axe scan** (WCAG 2.2 AA) on the built page. The target is 0 violations.
 4. **Fix**, then re-shoot. Keep the before set.
-5. **Codex critic.** It gets a fresh context, with the images and the rubric only. Use the image-critique command in `.claude/skills/codex-gates/SKILL.md`, and ask for every violation with severity and confidence.
+5. **Codex critic, only with the owner's OK** (credits; otherwise a fresh-context Claude critic). It gets a fresh context, with the images and the rubric only. Use the image-critique command in `.claude/skills/codex-gates/SKILL.md`, and ask for every violation with severity and confidence.
 6. **Triage** every finding: fixed, rejected (with the reason) or deferred. Record them in `docs/reviews/`.
 
 ## Rubric
