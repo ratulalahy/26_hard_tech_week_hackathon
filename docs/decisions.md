@@ -509,3 +509,18 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 
   It carries Astra's caveats: consumption ≠ withdrawal; production-side weighting, not flow tracing; PACE is not the Great Salt Lake watershed; no "water returned to the lake" claim. It is labelled modeled and illustrative, is not part of the frozen experiment, and **merges after the test run**.
 - **Future-work appendix:** temperature-dependent PUE, curtailment coincidence, wholesale cost, and health.
+
+## D-064 · 2026-10-27 ~16:30 MT · Post-test extras: mobility/capacity toggle, flexibility budget, and water
+- **Decided by:** owner, after comparing the two Astra strategy reviews (the lead's run and the owner's own session).
+- **Decision:** build all three on branches tonight. Merge them **after the test-year run**, so the freeze and the entry point's clean-HEAD check are unaffected.
+  - **T15:** an interactive "large jobs must stay in Utah" / destination-capacity toggle over the already-computed validation scenarios, plus a flexibility-budget view (energy that can move, wait, must stay, or is capacity-blocked, sized by energy).
+  - **T14:** the water footprint (D-063 scope and caveats).
+- **Demo sequence,** adopted from both reviews:
+  1. one job;
+  2. stay, wait or move;
+  3. the aggregate (a simple policy does well);
+  4. lock large jobs to Utah;
+  5. storage and the site-power curve;
+  6. the evidence.
+- **Evidence:** `docs/reviews/2026-10-27-plan-astra-owner-session.md`, `docs/reviews/2026-10-27-plan-astra-r1-astra.md`.
+- **Codex credits:** 5 runs so far (Astra spec gate, Sol re-check, the lead's Astra strategy run, the owner's own Astra session, plus the original failed/no-credit attempt). The Wed results audit remains planned.
