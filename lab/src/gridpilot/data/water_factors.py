@@ -19,7 +19,8 @@ storage, and "other"/"unknown" left out of the shares (they take the hour's mix-
 Center Energy Usage Report*, LBNL, December 2024. Site WUE in litres per IT kWh, from the text
 of p. 48 (Figure 4.7): the U.S. average "stays just over 0.36 L/kWh through 2023", and "after 2023
 ... reaching between 0.45 and 0.48 L/kWh" (the 2028 scenario). We use 0.36–0.48 L/kWh as the range
-(an `assumed` choice of two published endpoints); the report's own figures are national averages
+(an `assumed` choice of two published endpoints; the 0.48 end is a published 2028 *scenario*,
+so it is labelled `assumed (published scenario)`, the 0.36 end `observed`); the report's own figures are national averages
 of simulated facilities, not a measurement of any site.
 """
 

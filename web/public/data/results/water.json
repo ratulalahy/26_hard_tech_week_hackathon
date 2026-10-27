@@ -3,7 +3,7 @@
  "artifact": "water",
  "kind": "illustrative",
  "run_id": "20261027T160656Z",
- "note": "illustrative; not part of the registered experiment; validation-year data; water factors are literature medians, not measurements of any plant or site",
+ "note": "illustrative; not part of the registered experiment; validation-window data (totals over the 351-day cohort window, not annualised); water factors are literature medians, not measurements of any plant or site",
  "caveats": [
   "Consumption, not withdrawal.",
   "Production-side fuel-mix weighting, not consumption-flow tracing.",
@@ -23,7 +23,15 @@
    "status": "ok",
    "reason": null
   },
-  "rule": "the registered cohort window: UTC hours from eval_start to the last hour any U, S, W or L cohort job runs; totals are over this window (the validation year), not annualised"
+  "n_days": {
+   "value": 351,
+   "unit": "days",
+   "evidence": "measured",
+   "provenance_id": "water:20261027T160656Z:window:days",
+   "status": "ok",
+   "reason": null
+  },
+  "rule": "the registered cohort window: UTC hours from eval_start to the last hour any U, S, W or L cohort job runs; totals are over this 351-day validation window, not annualised"
  },
  "sources": {
   "nrel": {
@@ -438,14 +446,15 @@
   "high": {
    "value": 0.48,
    "unit": "L/kWh (IT)",
-   "evidence": "observed",
+   "evidence": "assumed",
    "provenance_id": "water:20261027T160656Z:wue:hi",
    "status": "ok",
    "reason": null
   },
+  "high_basis": "assumed (published scenario): LBNL's 2028 scenario range, upper end",
   "low_source": "LBNL-2001637 p. 48: the overall average WUE, which stays just over 0.36 L/kWh through 2023 (Figure 4.7, annual average site WUE across all U.S. data centers)",
   "high_source": "LBNL-2001637 p. 48: After 2023, the average WUE rises slightly, reaching between 0.45 and 0.48 L/kWh (Figure 4.7; the 2028 scenario range, upper end)",
-  "rule": "assumed: the U.S.-average site WUE from 2023 (just over 0.36 L/kWh) to the 2028 scenario's upper end (0.48 L/kWh) brackets the validation year; one national range for every site, applied to IT energy (facility kWh ÷ PUE)",
+  "rule": "assumed: the U.S.-average site WUE from 2023 (just over 0.36 L/kWh) to the 2028 scenario's upper end (0.48 L/kWh) brackets the validation window; one national range for every site, applied to IT energy (facility kWh ÷ PUE)",
   "rule_evidence": "assumed"
  },
  "context": {

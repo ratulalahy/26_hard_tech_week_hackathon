@@ -1,5 +1,5 @@
 """Water footprint illustration (Stage 3 T14, owner D-063/D-064, with the Astra review's water
-caveats). **Illustrative and modeled.** Not part of the registered experiment; validation year
+caveats). **Illustrative and modeled.** Not part of the registered experiment; validation window
 only; every grid read goes through the pre-seal loader (`drop_sealed` on the scan).
 
 **Generation-associated water intensity, per BA-hour** (gal/MWh, `modeled`): the EIA-930 adjusted
@@ -62,8 +62,9 @@ CAVEATS = (
     "PACE is not the Great Salt Lake watershed; no claim of water returned to the lake.",
     "Hydro evaporation allocation is uncertain; shown separately.",
 )
-NOTE = ("illustrative; not part of the registered experiment; validation-year data; water "
-        "factors are literature medians, not measurements of any plant or site")
+NOTE = ("illustrative; not part of the registered experiment; validation-window data (totals "
+        "over the {days}-day cohort window, not annualised); water factors are literature "
+        "medians, not measurements of any plant or site")
 _EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 H_US = 3600 * 1_000_000
 
@@ -250,6 +251,7 @@ def build_artifact(*, run_id: str, window: tuple[datetime, datetime], arrivals_e
     hf = wf.NREL_FACTORS["hydro"]
     s, e = window
     n_hours = int((e - s) / timedelta(hours=1))
+    n_days = round(n_hours / 24)
     win = filled.filter((pl.col("ts_utc") >= s) & (pl.col("ts_utc") < e))
     gwin = gen.filter((pl.col("ts_utc") >= s) & (pl.col("ts_utc") < e))
     by_ba = {}
@@ -326,13 +328,14 @@ def build_artifact(*, run_id: str, window: tuple[datetime, datetime], arrivals_e
         "artifact": "water",
         "kind": "illustrative",
         "run_id": run_id,
-        "note": NOTE,
+        "note": NOTE.format(days=n_days),
         "caveats": list(CAVEATS),
         "window": {"start": iso(s), "end": iso(e), "arrivals_end": iso(arrivals_end),
                    "n_hours": env(n_hours, "hours", "measured", f"{pid}:window:n"),
+                   "n_days": env(n_days, "days", "measured", f"{pid}:window:days"),
                    "rule": "the registered cohort window: UTC hours from eval_start to the last "
-                           "hour any U, S, W or L cohort job runs; totals are over this window "
-                           "(the validation year), not annualised"},
+                           "hour any U, S, W or L cohort job runs; totals are over this "
+                           f"{n_days}-day validation window, not annualised"},
         "sources": sources,
         "factors": _factor_block(pid),
         "fuel_map": {f: {"role": m.role, "factor": m.factor, "reason": m.reason,
@@ -345,11 +348,12 @@ def build_artifact(*, run_id: str, window: tuple[datetime, datetime], arrivals_e
                       "missing hours are linearly interpolated in time (tier 2)"),
         "wue": {
             "low": env(lo.value, lo.unit, "observed", f"{pid}:wue:lo"),
-            "high": env(hi.value, hi.unit, "observed", f"{pid}:wue:hi"),
+            "high": env(hi.value, hi.unit, "assumed", f"{pid}:wue:hi"),
+            "high_basis": "assumed (published scenario): LBNL's 2028 scenario range, upper end",
             "low_source": f"LBNL-2001637 p. {lo.page}: {lo.quote}",
             "high_source": f"LBNL-2001637 p. {hi.page}: {hi.quote}",
             "rule": "assumed: the U.S.-average site WUE from 2023 (just over 0.36 L/kWh) to the "
-                    "2028 scenario's upper end (0.48 L/kWh) brackets the validation year; one "
+                    "2028 scenario's upper end (0.48 L/kWh) brackets the validation window; one "
                     "national range for every site, applied to IT energy (facility kWh ÷ PUE)",
             "rule_evidence": "assumed",
         },

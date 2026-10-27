@@ -171,3 +171,9 @@ def test_direct_cooling_is_it_kwh_times_wue_in_gallons():
 def test_change_vs_u():
     assert wa.change(120.0, 100.0) == (20.0, pytest.approx(0.2))
     assert wa.change(0.0, 0.0) == (0.0, None)
+
+
+def test_the_note_states_the_window_in_days_and_never_annualises():
+    note = wa.NOTE.format(days=351)
+    assert "351-day" in note and "not annualised" in note
+    assert "a year" not in note and "per year" not in note

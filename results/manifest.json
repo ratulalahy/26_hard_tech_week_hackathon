@@ -957,7 +957,7 @@
  "water": {
   "artifact": "water.json",
   "kind": "illustrative",
-  "sha256": "65895759cafea6d6dca82630b0207c28ec4e75816db6914d0230b7c327e10f7c",
-  "canonical_sha256": "a5ca4f5705324442470d1412fc18f331a0c58cceb5dd8ca527453a6d67a086c5"
+  "sha256": "5a7d54f2d05a39f9e485a405f2b3b53bfaf1076e0a2c7bab91b2d2a02fd4dc58",
+  "canonical_sha256": "ea56bb56f1710bd932fd0ea7cdbf68dffcc8a26fb9df3d37cfc84f752b5a4abc"
  }
 }

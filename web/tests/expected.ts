@@ -71,3 +71,5 @@ const mspan = (r: number[]) => (smg(r[0]) === smg(r[1]) ? smg(r[0]) : `${smg(r[0
 export const waterExSpan = mspan(water.headline.change_ex_hydro_gal.value);
 export const waterWithSpan = mspan(water.headline.change_with_hydro_gal.value);
 export const waterCaveats: string[] = water.caveats;
+/** the window in days, as the UI rounds it (not annualised) */
+export const waterDays = String(Math.round(water.window.n_hours.value / 24));
