@@ -15,7 +15,7 @@ The headline is Option 2, Compute Follows the Sun; the traffic report is its eng
 Key documents:
 - the brief: `docs/brief.md`;
 - the approved plan: `docs/plan/2026-10-26-hackathon-plan.md`;
-- the spec, once written: under `docs/superpowers/specs/`.
+- the independent design proposals: under `docs/superpowers/specs/`; only the owner-approved, reconciled spec authorizes implementation and test evaluation.
 
 ## Roles
 
@@ -27,7 +27,8 @@ Key documents:
   - rules: here;
   - decisions: `docs/brief.md`;
   - the plan: `docs/plan/`;
-  - the design: the spec.
+  - the design: the approved, reconciled spec. Independent proposal files are alternatives, not parallel sources of implementation requirements.
+  - do not create separate `CONTEXT.md` or `PLAN.md` copies; conversation decisions belong in the brief, execution changes in the plan, and status in the handoff.
 
 ## Layout
 
@@ -60,6 +61,8 @@ Every command listed here must work. Add a command when its target lands.
   - Cleaning writes to `data/interim/` or `data/processed/`.
   - Derived outputs are written atomically (temp file, then rename) and versioned by run id or content hash. Each run writes only into its own run directory.
   - Code finds the data directory through `gridpilot.paths`. The `GRIDPILOT_DATA_DIR` environment variable overrides it; worktrees point it at the main checkout's `data/`.
+  - For Codex planning/review, that shared directory is read-only. No duplicate downloads, cleaning writes, or experiment outputs go there; use the planning checkout's own ignored run directory for any derived review artifacts.
+  - A source manifest that is still changing is not a frozen snapshot. Record its hash and file inventory before analysis, and verify them again afterwards.
 - **Free and open data only.**
   - No keys in git: `.env` is ignored, and `.env.example` lists the variable names.
   - Every source's license is recorded in its manifest.

@@ -1,5 +1,7 @@
 # Hard Tech Week Hackathon: Torus bounty plan
 
+> Historical plan: later entries under **Amendments after approval** take precedence over earlier wording. A proposed owner decision stays pending until explicitly accepted. Current execution status is in `docs/HANDOFF.md`.
+
 ## Context
 
 - **Event:** Hard Tech Week Hackathon. The build window runs from Mon Oct 26 5 PM to judging on Wed Oct 28 5 PM MT, at Aernata (250 E 200 S #320, SLC). Judging is a demo plus judge Q&A, 8–25 min per team.
@@ -365,3 +367,13 @@
   - **Owner decisions pending:**
     - F02: PACE-first vertical slice with a thinner regional overview;
     - E09: which objective is primary.
+
+- **2026-10-26 23:13 MT, planning partner reconciliation (proposal; owner choices still pending).**
+  - Keep the approved headline: Compute Follows the Sun, powered by a day-ahead traffic report; no hardware experiment or live execution loop is required.
+  - Recommend a PACE forecast → causal router → offline replay as the first complete path, retaining about ten BAs in the overview. This does not cut or reclassify a Must without the owner's approval (F02).
+  - Recommend attributed operational emissions as the primary objective, with identical completed work and service constraints; report net-load stress exposure and wholesale energy-cost scenarios separately. This remains an owner decision (E09), not an approved objective.
+  - Use the shared, read-only data cache for planning. Claude owns ingestion; no duplicate downloads. Data profiles and manifest hashes, not the provisional library/model list, determine source-dependent design choices.
+  - Author the independent spec only after reading the grid, workload/price and geo profiles. Until then, any source-dependent design is a proposal and the test seal stays closed.
+  - The implementation contract must support an offline static laptop build: export frozen scenario results and a scenario-availability catalog; no backend, remote machine, API key, network font, or live inference is a core demo dependency.
+  - Reconcile proposals before the fresh Astra gate. A review disposition marked "spec" is an unresolved requirement until the spec actually implements it and the gate verifies it; it is not evidence that the experiment is sound already.
+  - Existing `make` targets, exact dependency pins and performance claims are acceptance work, not verified facts. Run the commands that exist; label proposed commands as planned until implemented.

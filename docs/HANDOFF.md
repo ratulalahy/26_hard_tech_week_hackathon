@@ -20,9 +20,35 @@ Each entry is dated in Mountain Time (MDT, UTC−6) and cites its evidence: a co
 - Both push to `github.com/ratulalahy/26_hard_tech_week_hackathon`. Codex syncs with `git pull --rebase origin main`.
 - **The data is shared, not copied.** Read it from `/home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/data`, with `GRIDPILOT_DATA_DIR` set to that path.
 - Never download duplicates, and never write into the other agent's checkout.
-- Codex's own sandbox cannot start on this machine. Interactive Codex runs with approvals, or with `danger-full-access` inside its own checkout only.
+- Codex's ordinary sandbox currently cannot start on this machine. Approved, narrowly scoped escalated commands work. Keep the session's supplied permission controls; do not change global sandbox settings as part of project setup.
 
 ## Entries
+
+### 2026-10-26 23:13 MT: Codex
+
+**Read and synced**
+- Read `AGENTS.md`, `docs/brief.md`, the approved plan and amendments, this handoff, and the shared `hackathon-evidence` skill.
+- Rebased `codex/planning` onto `origin/main @ 1bdb079`, including the Sol plan review and its dispositions.
+- Reused the existing context and plan documents; no `CONTEXT.md` or `PLAN.md` duplicates.
+
+**Recommendation awaiting owner response**
+- PACE first, with roughly ten BAs retained in the regional overview; any reduction in mandatory depth needs owner approval (F02).
+- Primary objective: attributed operational emissions, with common completed work/deadline constraints; stress and wholesale cost reported separately (E09).
+- Preserve the approved simulation-only scope and offline MacBook Pro / Chrome demo.
+
+**Evidence and boundaries**
+- Shared data is read-only: `/home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/data`. No downloads and no data-value analysis were run.
+- Inspected manifest metadata and CSV headers only. The EIA manifest currently lists 51 files, including 18 BA workbooks; it is still an ingestion snapshot, not the frozen analysis input.
+- `docs/data-profile/grid.md`, `workloads-prices.md` and `geo.md` were not present at inspection. Expected around 00:30 MT per the lead's entry.
+- Sealed test values remain unread. No experiment or review verdict is claimed.
+
+**Changes on this branch**
+- Clarified the single source of truth, independent-proposal status, read-only shared-data ownership and snapshot verification in `AGENTS.md`.
+- Added a correction note and a dated planning amendment; historical plan text stays intact.
+
+**Next**
+- Read the three profiles when committed to main, then write `docs/superpowers/specs/2026-10-26-gridpilot-design-codex.md`.
+- Push the proposal branch and open a draft PR for reconciliation; Claude remains the implementation lead.
 
 ### 2026-10-26 23:05: Claude
 
