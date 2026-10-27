@@ -26,3 +26,13 @@ export const timeOnlyRange = range(time);
 /** CO₂ of policy S in tonnes, as the method drawer's table prints it. */
 export const sTonnes = (metrics.policies.S.metrics.co2_kg.value / 1000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 export const uTonnes = (metrics.policies.U.metrics.co2_kg.value / 1000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+/** T10: results/extensions.json. S's production-basis saving vs U (b = 4) and its interval, as the
+ * extensions table prints it: "25.5% [20.8, 30.1]". */
+export const ext = JSON.parse(readFileSync(join(results, 'extensions.json'), 'utf8'));
+const cell = (b: { saving: Env; saving_ci95: Env }) => {
+  const [lo, hi] = b.saving_ci95.value as number[];
+  return `${pct(b.saving.value as number)}% [${pct(lo)}, ${pct(hi)}]`;
+};
+export const sProduction = cell(ext.repricing.by_policy.S.production.vs_U['4']);
+export const lCommonSupport = cell(ext.common_support.by_policy.L.vs_U['4']);

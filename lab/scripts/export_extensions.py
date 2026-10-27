@@ -245,9 +245,11 @@ def latest_run(root: Path) -> Path | None:
     return runs[-1] if runs else None
 
 
-def run_block(name: str, run: Path) -> dict:
+def run_block(name: str, run: Path, window: str = "validation") -> dict:
     s = json.loads((run / "summary.json").read_text())
     cfg = json.loads((run / "config.json").read_text())
+    if s["window"] != window:
+        raise AssertionError(f"{run}: a {s['window']} run, not {window}")
     if s["scenario"]["name"] != name:
         raise AssertionError(f"{run}: summary is for {s['scenario']['name']}, not {name}")
     if canonical_hash(s) != cfg["summary_canonical_sha256"]:
@@ -334,7 +336,7 @@ def build(reg_run: Path, ext_root: Path, repro: Path | None, missing_reason: str
             blocks[name] = not_run_block(EXTENSIONS[name].note, missing_reason, EXTENSIONS[name])
             missing.append(name)
         else:
-            blocks[name] = run_block(name, run)
+            blocks[name] = run_block(name, run, w.name)
     out = {
         "schema_version": SCHEMA_VERSION,
         "kind": "validation extensions (D-058): robustness and sensitivity evidence",

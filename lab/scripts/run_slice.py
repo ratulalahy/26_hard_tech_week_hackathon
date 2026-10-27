@@ -842,13 +842,15 @@ def _flex_shares(cj, run_id) -> dict:
     return out
 
 
-# D-058 cut items, each with its reason. Stage 3 T10 moves the items that actually run out of
-# this list; until then everything here is a cut by the owner.
+# D-058 cut items, each with its reason. The D-058 extensions that run (production basis,
+# common support, phases 49 and 98, the five sensitivities) are in results/extensions.json;
+# scripts/export_extensions.py adds any of them that missed the 21:00 hard stop (F9).
 NOT_RUN_REASON = "cut by owner (D-058)"
 NOT_RUN = [{"item": item, "reason": NOT_RUN_REASON} for item in (
     "shadow-U (no advance booking) sensitivity",
     "PUE, power, transfer-energy, idle-power and flexibility-share sensitivities",
     "1.25x home-capacity runs",
+    "batch delay 0 h and transfer time 0 min sensitivities",
     "missingness-blind scheduling sensitivity")]
 
 GREEDY_NOTE = ("Per-job greedy search, including hindsight H, is not a cohort optimum; holding "

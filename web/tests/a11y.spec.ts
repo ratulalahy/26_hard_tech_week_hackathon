@@ -8,6 +8,7 @@ const STATES = [
   { name: 'cockpit', hash: '#cockpit' },
   { name: 'ribbon', hash: '#ribbon' },
   { name: 'story', hash: '#story' },
+  { name: 'story-6', hash: '#story-6' }, // T10: the extensions table
   { name: 'method', hash: '#control', drawer: true },
 ];
 

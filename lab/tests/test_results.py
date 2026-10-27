@@ -26,7 +26,7 @@ from gridpilot.results import (
 )
 
 ARTIFACTS = ("manifest.json", "metrics.json", "forecast-replay.json", "job-replay.json",
-             "grid-profile.json", "workload-profile.json")
+             "grid-profile.json", "workload-profile.json", "extensions.json")
 
 
 # --------------------------------------------------------------------------- env()
@@ -176,6 +176,47 @@ def test_no_sealed_dates():
     for p in _committed():
         bad = sealed_timestamps(json.loads(p.read_text()))
         assert bad == [], f"{p.name}: timestamps at or after TEST_START at {bad[:10]}"
+
+
+def _envs(x, path="$"):
+    if isinstance(x, dict):
+        if "value" in x and "evidence" in x:
+            yield path, x
+            return
+        for k, v in x.items():
+            yield from _envs(v, f"{path}.{k}")
+    elif isinstance(x, list):
+        for i, v in enumerate(x):
+            yield from _envs(v, f"{path}[{i}]")
+
+
+def test_extensions_evidence_classes():
+    """T10: repricing, common support and policy outcomes are simulated; scenario knobs are
+    assumed; the D-058 cuts are not_run with the owner's reason; the seal holds."""
+    _committed()
+    ext = json.loads((RESULTS_DIR / "extensions.json").read_text())
+    for path, e in _envs(ext):
+        leaf = path.rsplit(".", 1)[-1]
+        if ".scenario.knobs." in path:
+            assert e["evidence"] == "assumed", path
+        elif leaf in ("saving", "saving_ci95", "diff_kg", "diff_kg_ci95", "co2_kg"):
+            assert e["evidence"] == "simulated", path
+    for k, v in ext["not_run"].items():
+        assert v["status"] == "not_run" and v["reason"] == "cut by owner (D-058)", k
+    blocks = {**ext["phases"], **ext["sensitivities"]}
+    assert set(blocks) == {"phase_49", "phase_98", "dest_slots_0", "dest_slots_1024",
+                           "transfer_120min", "batch_delay_24h", "mobility_le_8gpus"}
+    for name, b in blocks.items():
+        if b["status"] == "ok":
+            assert b["all_on_time"], name  # late count stays 0 under bookings
+            assert b["run_id"] and b["canonical_hashes"]["summary_canonical_sha256"], name
+        else:
+            assert b["status"] == "not_run" and b["reason"], name
+    for b in (ext["repricing"], ext["common_support"]):
+        assert b["canonical_hashes"]["run_id"] == ext["registered_run_id"]
+        assert b["scenario"]["name"] == "primary"
+    man = json.loads((RESULTS_DIR / "manifest.json").read_text())
+    assert man["extensions"]["missing_runs"] == ext["missing_runs"]
 
 
 def test_manifest_carries_claim_frame():

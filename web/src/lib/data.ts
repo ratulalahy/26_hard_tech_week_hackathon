@@ -20,6 +20,8 @@ export interface Results {
   jobs: Json;
   grid: Json;
   workload: Json;
+  /** results/extensions.json (Stage 3 T10, D-058); null if the file is absent. */
+  ext: Json | null;
 }
 
 const base = import.meta.env?.BASE_URL ?? './'; // './' (relative deployment base)
@@ -30,10 +32,11 @@ async function get(name: string): Promise<Json> {
   return r.json();
 }
 export async function loadResults(): Promise<Results> {
-  const [metrics, manifest, forecast, jobs, grid, workload] = await Promise.all([
+  const [metrics, manifest, forecast, jobs, grid, workload, ext] = await Promise.all([
     get('metrics.json'), get('manifest.json'), get('forecast-replay.json'), get('job-replay.json'), get('grid-profile.json'), get('workload-profile.json'),
+    get('extensions.json').catch(() => null),
   ]);
-  return { metrics, manifest, forecast, jobs, grid, workload };
+  return { metrics, manifest, forecast, jobs, grid, workload, ext };
 }
 
 export const CORE = ['PACE', 'BPAT', 'CISO', 'NEVP'] as const;
@@ -102,6 +105,7 @@ const PLAIN: [RegExp, string][] = [
   [/effect on realized savings is not signed/i, 'We have not measured whether those reservations raise or lower the savings.'],
   [/shadow-U sensitivity/i, 'What is possible without advance reservations has not been tested yet.'],
   [/^Validation results are development evidence/i, VALIDATION_LINE],
+  [/phases 49 and 98 are workload-alignment sensitivities/i, 'The headline uses one workload starting offset. Two other offsets were run as checks and are reported beside it, never pooled with it.'],
   [/workload phase 0/i, 'The workload was replayed from one starting offset; two other offsets are still to run.'],
 ];
 export const stripCodes = (s: string) => s.replace(/\s*\((?:F\d[\d.]*|§\s*\d[\d.]*)(?:[,;][^)]*)?\)/g, '').replace(/§\s*\d[\d.]*/g, '').replace(/\bF\d+(?:\.\d+)?\b/g, '').replace(/\s{2,}/g, ' ').trim();

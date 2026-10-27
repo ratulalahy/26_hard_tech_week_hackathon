@@ -1,5 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { PolicyTable } from '../components/charts';
+import { ExtensionsTable, extRows, placementSpan } from '../components/extensions';
 import { Ev, Icon, SEALED } from '../components/ui';
 import { DEADLINE_RULE, VALIDATION_LINE, asNum, headline, plainLimitations, pname, stripCodes } from '../lib/data';
 import { fmt, fmtDate, pct, pctRange, signed } from '../lib/format';
@@ -16,6 +17,7 @@ export function MethodDrawer() {
   const h2 = m.h2;
   const h2b4 = h2.intervals['4'];
   const rb = m.relaxed_bound;
+  const mob = data!.ext ? placementSpan(extRows(m, data!.ext), ['mobility_le_8gpus']) : null;
   return (
     <Dialog.Root open={drawer} onOpenChange={(o) => set({ drawer: o })}>
       <Dialog.Portal>
@@ -56,6 +58,15 @@ export function MethodDrawer() {
                 Waiting in Utah alone saves {pctRange(hd.timing.lo, hd.timing.hi)}%; nearly all of the saving comes from moving work, mostly to the Northwest. A per-job search, even with hindsight, is not a best plan for the whole year: holding scarce Northwest slots for cleaner hours can push later jobs to dirtier sites.
               </p>
             </Sec>
+            {data!.ext ? <Sec title="Robustness and sensitivity checks">
+              <p className="t-12 ink-2" style={{ margin: '0 0 8px' }}>
+                Each row changes one choice and re-scores or re-runs the validation year; none replaces the registered result, and the two workload shifts are never pooled with it.
+                Production basis prices the same schedules on where electricity is generated rather than where it is used, which flatters hydro-heavy {'Northwest'} destinations.
+                The published-values row drops, from every policy, the {fmt(data!.ext.common_support.cohort.n_dropped.value)} jobs that touch a filled hour under any policy.
+                {mob ? <> Letting only jobs of 8 GPUs or fewer move leaves {pctRange(mob[0], mob[1])}%: most of the energy, and most of the saving, sits in large multi-node jobs, so the result depends on those jobs' data being ready at the destination.</> : null}
+              </p>
+              <ExtensionsTable m={m} ext={data!.ext} testId="method-extensions" />
+            </Sec> : null}
             <Sec title="A bound, not a target">
               <p className="t-13" style={{ margin: 0 }}>
                 A relaxed hindsight bound that ignores competition between jobs for capacity (each job's own limits still apply): {fmt(rb.primary.value / 1000, 0)} t when work may move, {fmt(rb.time_only.value / 1000, 0)} t when it may only wait. Every feasible policy sits above it{rb.all_feasible_policies_ok ? ' (checked)' : ''}. <Ev e="modeled" />

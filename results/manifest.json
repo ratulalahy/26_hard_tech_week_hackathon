@@ -14,11 +14,11 @@
   "Zero deadline misses hold by construction under baseline bookings; they are not evidence of production reliability.",
   "The bookings' effect on realized savings is not signed.",
   "The shadow-U sensitivity ('possible without advance reservations') is pending.",
-  "Only workload phase 0 is run; phases 49 and 98 are pending.",
   "Validation results are development evidence: the validation year was profiled before the design, and the same period selected the learned model's settings. The sealed test year is the confirmatory evaluation.",
   "EIA's 2025-26 emission factors may be a provisional vintage (F7).",
   "Baseline bookings are an assumed advance-reservation calendar synthesized from the whole U replay (F11, F12.7); the result is not a historical online-router claim.",
-  "Missing truth hours are filled by the pre-registered F14.6 tiers; the closure calendar is an assumed advance-known calendar (F12.1)."
+  "Missing truth hours are filled by the pre-registered F14.6 tiers; the closure calendar is an assumed advance-known calendar (F12.1).",
+  "Workload phase 0 is the registered result; phases 49 and 98 are workload-alignment sensitivities (results/extensions.json), never pooled with it (§9)."
  ],
  "inputs": {
   "data_manifests_sha256": {
@@ -792,6 +792,10 @@
    "reason": "cut by owner (D-058)"
   },
   {
+   "item": "batch delay 0 h and transfer time 0 min sensitivities",
+   "reason": "cut by owner (D-058)"
+  },
+  {
    "item": "missingness-blind scheduling sensitivity",
    "reason": "cut by owner (D-058)"
   }
@@ -928,5 +932,11 @@
    "status": "ok",
    "reason": null
   }
+ },
+ "extensions": {
+  "artifact": "extensions.json",
+  "sha256": "5230dbd81da820a244f749ef140f752df266ac0d4ae161eeab27d0e80b442bca",
+  "canonical_sha256": "e36a3ef3caa35ac2f0ea1626ae360e994af7c31a81090744944c70e528a1192b",
+  "missing_runs": []
  }
 }
