@@ -1,5 +1,7 @@
 # Hard Tech Week Hackathon: Torus bounty plan
 
+> **Superseded** on 2026-10-27 00:20 MT by [`2026-10-27-plan-v2.md`](2026-10-27-plan-v2.md). This file is kept as history, with its amendments.
+
 > Historical plan: later entries under **Amendments after approval** take precedence over earlier wording. A proposed owner decision stays pending until explicitly accepted. Current execution status is in `docs/HANDOFF.md`.
 
 ## Context
