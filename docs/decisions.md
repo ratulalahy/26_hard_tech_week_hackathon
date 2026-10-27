@@ -525,7 +525,7 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 - **Evidence:** `docs/reviews/2026-10-27-plan-astra-owner-session.md`, `docs/reviews/2026-10-27-plan-astra-r1-astra.md`.
 - **Codex credits:** 5 runs so far (Astra spec gate, Sol re-check, the lead's Astra strategy run, the owner's own Astra session, plus the original failed/no-credit attempt). The Wed results audit remains planned.
 
-## D-065 · 2026-10-27 14:55 MT · Master plan and task list; plan times come from the system clock
+## D-065 · 2026-10-27 14:50 MT · Master plan and task list; plan times come from the system clock
 - **Decided by:** owner request; set up by the lead.
 - **Decision:**
   - `docs/plan/tasks.csv` is the single task list: status, owner, dependencies, start, ETA, done.
