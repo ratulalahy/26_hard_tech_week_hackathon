@@ -5,7 +5,7 @@
 // here are read from those envelopes.
 import type { Evidence, Json } from '../lib/data';
 import { pname, stripCodes } from '../lib/data';
-import { Ev } from './ui';
+import { Ev, ScrollX } from './ui';
 
 const ORDER: Evidence[] = ['observed', 'measured', 'forecast', 'modeled', 'assumed', 'simulated'];
 
@@ -37,7 +37,7 @@ export function AssumptionsSection({ a }: { a: Json }) {
         What the result rests on, how the real world differs, and what we checked. Built only from the committed results (evidence notebook 40); no new simulation.
         A tested row gives the check's result, an untested one says why not. Savings are against {pname('U')}, with 95% intervals in brackets.
       </p>
-      <div style={{ overflowX: 'auto' }}>
+      <ScrollX label="Assumptions register, table">
         <table className="tbl tbl-text" data-testid="assumptions-register">
           <thead>
             <tr><th style={{ width: '30%' }}>Assumption · our value</th><th style={{ width: '28%' }}>How reality differs</th><th>Tested? · result</th></tr>
@@ -45,13 +45,13 @@ export function AssumptionsSection({ a }: { a: Json }) {
           <tbody>
             {reg.map((r) => (
               <tr key={r.id}>
-                <td>
+                <td data-label="Assumption · our value">
                   <div className="fw-500">{r.assumption}</div>
                   <div className="ink-2">{plain(r.value_text)}</div>
                   <div style={{ marginTop: 2 }}><Ev e={r.evidence} /></div>
                 </td>
-                <td className="ink-2">{r.reality}</td>
-                <td>
+                <td className="ink-2" data-label="How reality differs">{r.reality}</td>
+                <td data-label="Tested? · result">
                   <span className={r.tested ? 'chip-neutral fw-600' : 'chip-neutral'}>{r.tested ? 'tested' : 'not tested'}</span>{' '}
                   {plain(r.result_text)}
                   <div className="flex flex-wrap gap-2" style={{ marginTop: 2 }}><Chips x={r.results} /></div>
@@ -60,7 +60,7 @@ export function AssumptionsSection({ a }: { a: Json }) {
             ))}
           </tbody>
         </table>
-      </div>
+      </ScrollX>
       <div>
         <h4 className="t-13 fw-600" style={{ margin: '0 0 4px' }}>What didn't work, stated plainly</h4>
         <ul className="t-13" style={{ margin: 0, paddingLeft: 16 }} data-testid="assumptions-negative">
@@ -70,7 +70,7 @@ export function AssumptionsSection({ a }: { a: Json }) {
             </li>
           ))}
         </ul>
-        {pending.length ? <p className="t-12 ink-3" style={{ margin: '4px 0 0' }}>{pending.map((p) => `The ${p.item} is ${p.status}${p.pr ? ` (${p.pr})` : ''}`).join('; ')}: its numbers are illustrative and may change.</p> : null}
+        {pending.length ? <p className="t-12 ink-3" style={{ margin: '4px 0 0' }}>{pending.map((p) => `The ${p.item} is ${p.status}`).join('; ')}: its numbers are illustrative and may change.</p> : null}
       </div>
       {w ? <div className="well" style={{ padding: 12 }}>
         <h4 className="t-13 fw-600" style={{ margin: '0 0 4px' }}>Would weather-aware forecasts help?</h4>

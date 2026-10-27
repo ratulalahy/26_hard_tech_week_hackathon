@@ -3,7 +3,7 @@ import { AssumptionsSection } from '../components/assumptions';
 import { PolicyTable } from '../components/charts';
 import { CONSUMPTION_CHECKS, ExtensionsTable, PHRASE, extRows, listJoin, placementSpan } from '../components/extensions';
 import { ReliefTable, RushSensitivity, hourSpans, storageFacts } from '../components/storage';
-import { Ev, Icon, SEALED } from '../components/ui';
+import { Ev, Icon, ScrollX, SEALED } from '../components/ui';
 import { DEADLINE_RULE, VALIDATION_LINE, asNum, headline, plainLimitations, pname, stripCodes } from '../lib/data';
 import { fmt, fmtDate, pct, pctRange, sig2, signed } from '../lib/format';
 import { useApp } from '../lib/store';
@@ -58,7 +58,7 @@ export function MethodDrawer() {
                 Arrivals {iso(m.covered.arrivals[0])} to {iso(m.covered.arrivals[1])}; jobs then finish by {iso(m.covered.drain[1])}. U − policy is the U total minus the policy's, so positive means the policy emits less.
                 Intervals: 95%, resampling 4-week blocks of the {fmt(m.cohort.n_weeks.value)} weeks. Hover a name for its rule. <Ev e="simulated" />
               </div>
-              <div style={{ overflowX: 'auto' }}><PolicyTable m={m} testId="policy-table" /></div>
+              <ScrollX label="Every policy, table"><PolicyTable m={m} testId="policy-table" /></ScrollX>
             </Sec>
             <Sec title="Forecast choice barely matters here; placement dominates">
               <p className="t-13" style={{ margin: 0 }}>
@@ -133,9 +133,9 @@ export function MethodDrawer() {
               </ul>
               <h4 className="t-13 fw-600" style={{ margin: '12px 0 4px' }}>Router peak relief in Utah's rush hours</h4>
               <p className="t-12 ink-2" style={{ margin: '0 0 6px' }} data-testid="method-rush">Rush hours: validation hours with Utah net load at or above the 2022–24 top 1% ({fmt(sf.rushThr)} MW): {fmt(sf.rushN)} hours on {fmt(sf.rushDays)} days. Each site's cluster load in those hours and at the year's peak net-load hour, from the registered ledgers; MW = MWh per hour. One 2,288-GPU cluster against a Utah peak net load of about {fmt(Math.round(sf.peakNet / 100) * 100)} MW. <Ev e="observed">net load</Ev> <Ev e="simulated">cluster load</Ev></p>
-              <div style={{ overflowX: 'auto' }}><ReliefTable s={sto} /></div>
+              <ScrollX label="Router peak relief, table"><ReliefTable s={sto} /></ScrollX>
               <p className="t-12 ink-2" style={{ margin: '8px 0 6px' }}>The same relief at lower thresholds:</p>
-              <div style={{ overflowX: 'auto' }}><RushSensitivity s={sto} /></div>
+              <ScrollX label="Peak relief at lower thresholds, table"><RushSensitivity s={sto} /></ScrollX>
             </Sec></div> : null}
             <Sec title="Evidence labels">
               <div className="flex flex-wrap gap-4"><Ev e="observed" /><Ev e="measured" /><Ev e="forecast" /><Ev e="modeled" /><Ev e="assumed" /><Ev e="simulated" /></div>
