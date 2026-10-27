@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { Dest, Results } from './data';
+import type { EvalWindow } from './copy';
+import type { Dest, Results, ResultsIndex } from './data';
 
 export type View = 'control' | 'cockpit' | 'ribbon' | 'story';
 export type Mode = 'now' | 'wait' | 'move';
@@ -13,6 +14,10 @@ export const VIEWS: { id: View; label: string }[] = [
 interface State {
   data: Results | null;
   error: string | null;
+  /** which results the views show: the validation year, or the sealed test year once it is run (T11) */
+  evalWindow: EvalWindow;
+  /** results/test as copy-data found it; the test option is enabled only when its manifest exists */
+  testIndex: ResultsIndex['test'] | null;
   view: View;
   hour: number;
   month: string;
@@ -35,6 +40,8 @@ const parseView = (): View => {
 export const useApp = create<State>((set) => ({
   data: null,
   error: null,
+  evalWindow: 'validation',
+  testIndex: null,
   view: parseView(),
   hour: 19,
   month: '2025-07',

@@ -33,11 +33,16 @@ def test_window_is_frozen():
         Window.validation().F = TEST_START
 
 
-def test_window_test_is_t11s_job():
-    with pytest.raises(NotImplementedError, match="T11"):
+def test_window_test_needs_the_test_mode_context():
+    # T11: the test window exists only inside gridpilot.seal.test_mode (see test_seal.py).
+    from gridpilot.seal import SealError
+
+    with pytest.raises(SealError, match="test-mode context"):
         Window.test()
-    with pytest.raises(NotImplementedError, match="T11"):
+    with pytest.raises(SealError, match="test-mode context"):
         Window.named("test")
+    assert Window.validation().read_end == Window.fallback().read_end == TEST_START
+    assert not Window.validation().is_test
 
 
 def test_window_refuses_the_seal_and_other_names():

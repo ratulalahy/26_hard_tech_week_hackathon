@@ -54,6 +54,7 @@ from gridpilot.results import (
 )
 from gridpilot.scenario import EXTENSIONS, Scenario, Window
 from gridpilot.sim import SITES
+from gridpilot.splits import drop_sealed
 from gridpilot.workload import replay
 
 log = logging.getLogger("export_extensions")
@@ -141,7 +142,7 @@ def load_registered(run: Path) -> dict:
             raise AssertionError(f"ledger {p} differs from its registered canonical hash")
         ledgers[p] = led
     filled = fill_truth(window.init, window.F, list(SITES))
-    stored = pl.read_parquet(run / "truth_fill.parquet")
+    stored = drop_sealed(pl.read_parquet(run / "truth_fill.parquet"))  # a validation run (F8 guard)
     if not filled.equals(stored):
         raise AssertionError("the consumption truth fill differs from the registered one")
     return {"cfg": cfg, "window": window, "A": A, "cj": cj, "ledgers": ledgers,

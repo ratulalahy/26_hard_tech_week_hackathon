@@ -1,0 +1,43 @@
+{
+  "schema": "gridpilot.freeze.v1",
+  "freeze_commit": "0000000000000000000000000000000000000000",
+  "frozen_at": "2026-10-27T12:00:00Z",
+  "deployed_policy": {
+    "name": "W",
+    "rule_trace": [
+      {"rule": "FIXTURE: hard feasibility (zero late jobs, no capacity violation, bound check ok)", "result": "U, G, S, K, W, L pass"},
+      {"rule": "FIXTURE: minimum aggregate attributed CO2 on validation", "result": "W"},
+      {"rule": "FIXTURE: tie-break on lower mean wait, then U, G, S, K, W, L order", "result": "not needed"}
+    ]
+  },
+  "L_max_leaf_nodes": {
+    "PACE/ci_consumed": 15, "CISO/ci_consumed": 31, "BPAT/ci_consumed": 15, "NEVP/ci_consumed": 15,
+    "PACE/demand": 31, "PACE/wind": 15, "PACE/solar": 31
+  },
+  "test_F": "2026-10-25T00:00:00Z",
+  "test_fit_at": "2025-10-29T00:00:00Z",
+  "test_history_start": "2023-01-01T00:00:00Z",
+  "s_ranking": {
+    "order": ["BPAT", "CISO", "NEVP", "PACE"],
+    "window": ["2023-01-01T00:00:00Z", "2025-10-29T00:00:00Z"],
+    "fit_at": "2025-10-29T00:00:00Z",
+    "mean_consumed_ci_g_kwh": {"BPAT": 85.0, "CISO": 200.0, "NEVP": 320.0, "PACE": 580.0},
+    "source": "FIXTURE: means of EIA's consumption-basis CI over the window, rows published by fit_at (96 h envelope)"
+  },
+  "scenario_catalog": {
+    "primary": {"name": "primary", "dest_slots": 512, "transfer_s": 1800.0, "batch_delay_s": 21600,
+                "mobility_max_gpus": null, "phase_days": 0, "note": "registered primary scenario",
+                "sites": {"PACE": 2288, "CISO": 512, "BPAT": 512, "NEVP": 512},
+                "time_only_sites": {"PACE": 2288, "CISO": 0, "BPAT": 0, "NEVP": 0},
+                "policies": ["U", "G", "S", "K", "W", "L", "H", "W_time", "L_time"],
+                "changes_deadlines": false, "own_cohort": false}
+  },
+  "snapshot_id": "000000000000",
+  "input_sha256": {
+    "raw/eia930/ba_workbooks/PACE.xlsx": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "validation_run": {
+    "run_id": "20261027T160656Z",
+    "metrics_canonical_sha256": "793834d200513a697a6293fd55877409e3e0fa36ab3bcdab87e6a484747d7a86"
+  }
+}

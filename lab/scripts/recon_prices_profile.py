@@ -188,12 +188,12 @@ def spike_stats(df: pl.DataFrame) -> dict:
 
 
 def demand_frame(ba: str) -> pl.DataFrame:
-    bal = pl.scan_parquet(INTERIM_DIR / "eia930" / "balance.parquet").filter(
+    # The seal is applied in the scan (T11 F8 guard); the same rows as filtering afterwards.
+    return drop_sealed(pl.scan_parquet(INTERIM_DIR / "eia930" / "balance.parquet")).filter(
         pl.col("ba").cast(pl.Utf8) == ba).select(
         "ts_utc", pl.col("demand_adj_mw").alias("demand"),
         (pl.col("demand_adj_mw") - pl.col("gen_solar_adj_mw").fill_null(0)
          - pl.col("gen_wind_adj_mw").fill_null(0)).alias("net_load")).collect()
-    return drop_sealed(bal)
 
 
 def alignment_stats(df: pl.DataFrame, ba: str) -> dict:

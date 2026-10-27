@@ -26,8 +26,10 @@ use per-site prefix sums, so each is O(1).
 
 **Ties** within 1e-9 kg go to the earlier completion, then PACE, then BA code, then start.
 
-**Seal.** The signal grid ends at or before TEST_START; inputs reaching the seal raise,
-and a candidate outside the grid raises rather than inventing values.
+**Seal.** The signal grid ends at or before the window's read bound (`window`, default
+validation: TEST_START; the test window, only in test mode: F_test, with the grid starting at
+the test fit 2025-10-29); inputs reaching the bound raise, and a candidate outside the grid
+raises rather than inventing values.
 """
 
 from __future__ import annotations
@@ -54,6 +56,7 @@ from gridpilot.sim.engine import (
 )
 from gridpilot.sim.power import GPU_KW, PUE, TRANSFER_FRACTION
 from gridpilot.splits import TEST_START
+from gridpilot.window import Window, resolve
 
 if TYPE_CHECKING:
     from gridpilot.forecast import Climatology
@@ -208,7 +211,10 @@ class CarbonSearch:
       `closed` is); it is checked once per run to equal the engine's calendar on the
       mask's window, so the policy and the engine cannot disagree silently.
     - `tail` (K/W/L): {ba: Climatology} — Task 2's frozen K climatology (`tail_climatology`).
-    - `grid`: the UTC hour range the signal covers; it must end at or before TEST_START.
+    - `grid`: the UTC hour range the signal covers; it must end at or before the window's
+      read bound. Default: [GRID_START, GRID_END) for validation, [TEST_FIT_AT, F_test) for
+      the test window.
+    - `window` (default validation): the evaluation window; a test window needs test mode.
     """
 
     def __init__(
@@ -220,22 +226,30 @@ class CarbonSearch:
         *,
         tail: Mapping[str, Climatology] | None = None,
         sites: Sequence[str] | None = None,
-        grid: tuple[datetime, datetime] = (GRID_START, GRID_END),
+        grid: tuple[datetime, datetime] | None = None,
         truth_col: str = TRUTH_COL,
+        window: Window | None = None,
     ):
         if signal not in SIGNALS:
             raise ValueError(f"signal must be one of {SIGNALS}, got {signal!r}")
         self.name = self.signal = signal
+        w = self.window = resolve(window, "CarbonSearch")
+        self._bound = w.read_end
+        if grid is None:
+            from gridpilot.seal import TEST_FIT_AT
+
+            grid = (TEST_FIT_AT, w.F) if w.is_test else (GRID_START, GRID_END)
         g0, g1 = _us(grid[0]), _us(grid[1])
         if g0 % HOUR_US or g1 % HOUR_US or g1 <= g0:
             raise ValueError("grid must be whole UTC hours with start < end")
-        if g1 > _SEAL_US:
-            raise ValueError(f"grid ends after the seal (TEST_START {TEST_START})")
+        if g1 > _us(self._bound):
+            raise ValueError(f"grid ends after the seal (read bound {self._bound}; TEST_START "
+                             f"outside test mode)")
         n = (g1 - g0) // HOUR_US
         if signal == "H":
             if truth is None:
                 raise ValueError("H needs a truth frame")
-            self._sig = self._truth_signal(truth, truth_col, sites, g0, n)
+            self._sig = self._truth_signal(truth, truth_col, sites, g0, n, self._bound)
         else:
             if tail is None:
                 raise ValueError(f"{signal} needs the climatology tail (K), see tail_climatology")
@@ -255,8 +269,8 @@ class CarbonSearch:
         if missing := [s for s in sites if s not in tail]:
             raise ValueError(f"no climatology tail for {missing}")
         for c in ("issue_ts", "target_ts"):
-            if fc.height and fc[c].max() >= TEST_START:
-                raise ValueError(f"forecast {c} reaches the seal (TEST_START)")
+            if fc.height and fc[c].max() >= self._bound:
+                raise ValueError(f"forecast {c} reaches the seal (read bound {self._bound})")
         if "target" in fc.columns:
             fc = fc.filter(pl.col("target") == TARGET)
         if "model" in fc.columns:
@@ -285,9 +299,9 @@ class CarbonSearch:
                                             f["v"].to_numpy()))
 
     @staticmethod
-    def _truth_signal(truth, col, sites, g0, n) -> _Signal:
-        if truth.height and truth["ts_utc"].max() >= TEST_START:
-            raise ValueError("truth frame reaches the seal (TEST_START)")
+    def _truth_signal(truth, col, sites, g0, n, bound=TEST_START) -> _Signal:
+        if truth.height and truth["ts_utc"].max() >= bound:
+            raise ValueError(f"truth frame reaches the seal (read bound {bound})")
         sites = tuple(sites) if sites is not None else tuple(sorted(truth["ba"].unique()))
         t = (truth.filter(pl.col("ba").is_in(list(sites)))
              .select("ba", pl.col("ts_utc").dt.epoch("us").alias("t"),
@@ -462,16 +476,19 @@ def latest_forecast_run(root: Path | None = None) -> Path:
     return runs[-1].parent
 
 
-def load_forecasts(run_dir: Path) -> pl.DataFrame:
-    """The ci_consumed rows of the Task 2 validation run in `run_dir` (explicit, pinned)."""
+def load_forecasts(run_dir: Path, *, window: Window | None = None) -> pl.DataFrame:
+    """The ci_consumed rows of the Task 2 validation run in `run_dir` (explicit, pinned). With
+    the test window (test mode only): the test forecast run, bounded by F_test."""
+    bound = resolve(window, "load_forecasts").read_end
     f = pl.read_parquet(Path(run_dir) / "forecasts.parquet").filter(pl.col("target") == TARGET)
-    if f.height and (f["target_ts"].max() >= TEST_START or f["issue_ts"].max() >= TEST_START):
-        raise ValueError(f"{run_dir}: forecasts reach the seal")
+    if f.height and (f["target_ts"].max() >= bound or f["issue_ts"].max() >= bound):
+        raise ValueError(f"{run_dir}: forecasts reach the seal (read bound {bound})")
     return f
 
 
 def tail_climatology(run_dir: Path, bas: Sequence[str] | None = None,
-                     atol: float = 1e-9) -> dict[str, Climatology]:
+                     atol: float = 1e-9, *, window: Window | None = None
+                     ) -> dict[str, Climatology]:
     """The frozen K climatology per BA, loaded from `run_dir/climatology.parquet` (no
     refit): the modeled tail for hours beyond issued coverage.
 
@@ -484,7 +501,7 @@ def tail_climatology(run_dir: Path, bas: Sequence[str] | None = None,
 
     run_dir = Path(run_dir)
     table = pl.read_parquet(run_dir / "climatology.parquet").filter(pl.col("target") == TARGET)
-    k_rows = load_forecasts(run_dir).filter(pl.col("model") == "K")
+    k_rows = load_forecasts(run_dir, window=window).filter(pl.col("model") == "K")
     out: dict[str, Clim] = {}
     for ba in (bas or sorted(table["ba"].unique())):
         t = table.filter(pl.col("ba") == ba)

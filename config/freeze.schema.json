@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gridpilot.freeze.v1",
+  "title": "GridPilot configuration freeze record (config/freeze.json)",
+  "description": "Written once by Stage 3 T12 at the configuration freeze, committed, and pinned by the annotated tag `config-freeze` (its message carries `config/freeze.json sha256: <hex>`). `gridpilot.seal.load_freeze` validates it; `run_slice --window test` refuses to open the sealed window without it. Times are UTC ISO-8601 with a Z suffix.",
+  "type": "object",
+  "required": [
+    "schema",
+    "freeze_commit",
+    "frozen_at",
+    "deployed_policy",
+    "L_max_leaf_nodes",
+    "test_F",
+    "test_fit_at",
+    "test_history_start",
+    "s_ranking",
+    "scenario_catalog",
+    "snapshot_id",
+    "input_sha256",
+    "validation_run"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "utc": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "site": {
+      "enum": [
+        "PACE",
+        "BPAT",
+        "CISO",
+        "NEVP"
+      ]
+    },
+    "leaf": {
+      "type": "integer",
+      "enum": [
+        15,
+        31
+      ]
+    }
+  },
+  "properties": {
+    "schema": {
+      "const": "gridpilot.freeze.v1"
+    },
+    "freeze_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "The code commit frozen for the test run. HEAD must equal it, or differ from it only in config/freeze.json and the test outputs (results/test/, results/test_reads.jsonl)."
+    },
+    "frozen_at": {
+      "$ref": "#/$defs/utc"
+    },
+    "deployed_policy": {
+      "type": "object",
+      "required": [
+        "name",
+        "rule_trace"
+      ],
+      "additionalProperties": false,
+      "description": "The deployed product policy chosen on validation by the spec §8 rule, and the trace of that rule.",
+      "properties": {
+        "name": {
+          "enum": [
+            "U",
+            "G",
+            "S",
+            "K",
+            "W",
+            "L"
+          ]
+        },
+        "rule_trace": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "rule",
+              "result"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "rule": {
+                "type": "string",
+                "minLength": 1
+              },
+              "result": {
+                "type": "string",
+                "minLength": 1
+              },
+              "values": {
+                "type": "object",
+                "description": "each policy's values at this step (T12)"
+              }
+            }
+          }
+        }
+      }
+    },
+    "L_max_leaf_nodes": {
+      "type": "object",
+      "description": "The frozen L configuration per forecast series (no reselection on test). JSON integers: load_freeze refuses 15.0.",
+      "required": [
+        "PACE/ci_consumed",
+        "CISO/ci_consumed",
+        "BPAT/ci_consumed",
+        "NEVP/ci_consumed",
+        "PACE/demand",
+        "PACE/wind",
+        "PACE/solar"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "PACE/ci_consumed": {
+          "$ref": "#/$defs/leaf"
+        },
+        "CISO/ci_consumed": {
+          "$ref": "#/$defs/leaf"
+        },
+        "BPAT/ci_consumed": {
+          "$ref": "#/$defs/leaf"
+        },
+        "NEVP/ci_consumed": {
+          "$ref": "#/$defs/leaf"
+        },
+        "PACE/demand": {
+          "$ref": "#/$defs/leaf"
+        },
+        "PACE/wind": {
+          "$ref": "#/$defs/leaf"
+        },
+        "PACE/solar": {
+          "$ref": "#/$defs/leaf"
+        }
+      }
+    },
+    "test_F": {
+      "$ref": "#/$defs/utc",
+      "description": "The test cutoff F: a UTC midnight in (2025-11-01, 2026-11-01], chosen from completeness metadata (spec §5)."
+    },
+    "test_fit_at": {
+      "const": "2025-10-29T00:00:00Z"
+    },
+    "test_history_start": {
+      "const": "2023-01-01T00:00:00Z"
+    },
+    "s_ranking": {
+      "type": "object",
+      "required": [
+        "order",
+        "window",
+        "fit_at",
+        "mean_consumed_ci_g_kwh"
+      ],
+      "description": "S's site ranking, read by the test run and never recomputed there: means over the pre-seal window of rows published by the test fit time (96 h envelope), and the resulting order.",
+      "properties": {
+        "order": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/site"
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true
+        },
+        "window": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/utc"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "mean_consumed_ci_g_kwh": {
+          "type": "object",
+          "minProperties": 4,
+          "maxProperties": 4,
+          "propertyNames": {
+            "$ref": "#/$defs/site"
+          },
+          "additionalProperties": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "description": "Each site's mean consumed-basis CI over the window, using only rows published by fit_at (96 h envelope); `order` sorts the sites by it, then by BA code."
+        },
+        "source": {
+          "type": "string"
+        },
+        "fit_at": {
+          "const": "2025-10-29T00:00:00Z",
+          "description": "the test fit time; rows count only when ts_utc + 1 h + 96 h <= fit_at"
+        }
+      },
+      "additionalProperties": false
+    },
+    "scenario_catalog": {
+      "type": "object",
+      "required": [
+        "primary"
+      ],
+      "description": "Scenario.config() of every frozen scenario by name; the test run uses `primary`, which must equal the code's.",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{12}$",
+      "description": "data/manifests/snapshot.json snapshot_id, read from git at HEAD."
+    },
+    "input_sha256": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "sha256 of every input file the test run reads, keyed by its path relative to the data directory.",
+      "additionalProperties": {
+        "$ref": "#/$defs/sha256"
+      },
+      "propertyNames": {
+        "pattern": "^(?!/)(?!.*(^|/)\\.{1,2}(/|$))(?!.*//)[^\\\\]+$"
+      }
+    },
+    "validation_run": {
+      "type": "object",
+      "required": [
+        "run_id",
+        "metrics_canonical_sha256"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "pattern": "^\\d{8}T\\d{6}Z$"
+        },
+        "metrics_canonical_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "description": "seal.validation_reference(repo) at the freeze commit: results/manifest.json run_id and the canonical hash of the serialized results/metrics.json."
+    }
+  }
+}

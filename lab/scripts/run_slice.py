@@ -4,6 +4,7 @@ the same pipeline for the D-058 extension scenarios.
     cd lab && uv run python scripts/run_slice.py [--window validation|fallback]
                                                  [--scenario primary|<extension>]
                                                  [--forecast-run runs/forecast/<id>]
+    cd lab && uv run python scripts/run_slice.py --window test [--rerun-reason "<text>"]
 
 `run_pipeline(window, scenario, out_dir, export=...)` is the pure entry point (T10 Part A);
 the CLI only builds its arguments. The primary scenario reproduces the registered run.
@@ -28,7 +29,20 @@ Pipeline (Task 7 amendment; spec §15 F11–F14):
 The fallback window labels every b = 8 interval low-n and makes no H2 decision statement
 (F14.4).
 
-All numbers are **validation** results. The sealed window is never read.
+Outside `--window test`, all numbers are **validation** results and the sealed window is
+never read.
+
+**`--window test` (Stage 3 T11)** is the only way to open the sealed test window. It runs
+`gridpilot.seal.authorize` (refusing, with a non-zero exit and the reason, unless (a) HEAD is
+the freeze commit and the tree is clean, (b) config/freeze.json matches the annotated tag
+`config-freeze`, (c) every input hash matches the freeze record, (d) results/test/ holds no
+completed run unless `--rerun-reason` is given; B7: manifests are read from git), then runs
+the primary scenario inside `gridpilot.seal.test_mode`: every grid read goes through
+`sealed_read` and is logged in results/test_reads.jsonl. The test truth is built into
+carbon_hourly_test.parquet inside the test run directory; forecasts are fitted at 2025-10-29 with the frozen
+L configuration; S's ranking comes from the freeze record. Outputs: `runs/test/<UTC>/` and
+results/test/*.json (the same schema plus `window: "test"`, and the test grid and workload
+profiles).
 """
 
 from __future__ import annotations
@@ -50,8 +64,11 @@ import numpy as np
 import polars as pl
 
 from gridpilot import forecast as fcmod
+from gridpilot import grid_profile as gpmod
+from gridpilot import seal
+from gridpilot import workload_profile as wpmod
 from gridpilot.cohort import SCENARIO_NOTES, SCENARIOS, ledger_hash, prefix_cohort
-from gridpilot.data.eia_co2 import CARBON_PATH
+from gridpilot.data.eia_co2 import CARBON_PATH, build_carbon, s_ranking_at
 from gridpilot.data.traces import TRACE_DIR
 from gridpilot.data.truth_fill import (
     BALANCE_PATH,
@@ -77,13 +94,14 @@ from gridpilot.eval import (
     support_check,
     weekly,
 )
-from gridpilot.paths import MANIFEST_DIR, REPO_ROOT, RESULTS_DIR
+from gridpilot.paths import DATA_DIR, MANIFEST_DIR, REPO_ROOT, RESULTS_DIR
 from gridpilot.results import (
     CLAIM_FRAME,
     IMPORT_CONVENTION,
     LIMIT_BOOKINGS_UNSIGNED,
     LIMIT_PHASES,
     LIMIT_SHADOW_U,
+    LIMIT_TEST,
     LIMIT_VALIDATION_DEV,
     LIMIT_ZERO_MISSES,
     SCHEMA_VERSION,
@@ -109,7 +127,6 @@ from gridpilot.sim import (
     tail_climatology,
 )
 from gridpilot.sim.power import GPU_KW, PUE, TRANSFER_FRACTION
-from gridpilot.splits import TEST_START, drop_sealed
 from gridpilot.workload import CYCLE_DAYS, cycle_stats, replay
 from gridpilot.workload_profile import top_share as _top_share
 
@@ -124,16 +141,25 @@ TRACE_PATH = TRACE_DIR / "acme" / "trace_seren.csv"
 SNAPSHOT_PATH = MANIFEST_DIR / "snapshot.json"
 
 H1 = timedelta(hours=1)
-WINDOW_NAMES = ("validation", "fallback")
+WINDOW_NAMES = ("validation", "fallback", "test")
+REFUSED_RC = 4  # `--window test` refused by the seal (the reason is on stderr)
 RANK_TRAIN = (datetime(2022, 1, 1, tzinfo=UTC), datetime(2024, 10, 29, tzinfo=UTC))
+RANK_FIT_AT = RANK_TRAIN[1]  # = forecast.VAL_FIT_AT: S's ranking is fixed at the fit time
 PHASE_DAYS = 0  # the registered primary phase (Scenario.primary().phase_days)
 POLICY_ORDER = PRIMARY_POLICIES
 EXT_NOT_DIAGNOSED_REASON = "extension runs do not run the F14.7 blocked diagnostic"
 REFERENCES = ("U", "S", "W")
 BLOCKS = (2, 4, 8)
-SNAPSHOT_ID = "05efabe781cc"
+SNAPSHOT_ID = "05efabe781cc"  # the registered validation run's snapshot
+# Snapshots a validation run may cite: the registered one, and its T11 refresh (B7), which
+# changes only openmeteo (now final). The test run cites the freeze record's, read from git.
+ACCEPTED_SNAPSHOT_IDS = {
+    SNAPSHOT_ID: "registered validation snapshot (openmeteo still growing)",
+    "8a1b36b24b91": "T11 refresh: openmeteo final; every other manifest byte-identical",
+}
 EIA_CI_PROVENANCE = "EIA's estimated consumption-basis hourly CO₂ intensity"
-S_RANK_PROVENANCE = f"means of {EIA_CI_PROVENANCE}, 2022-01-01 to 2024-10-29"
+S_RANK_PROVENANCE = (f"means of {EIA_CI_PROVENANCE}, 2022-01-01 to 2024-10-29, rows "
+                     f"published by fit_at (96 h envelope)")
 TIME_ONLY_SITES = Scenario.primary().time_only_sites()
 POLICY_NOTES = {
     "U": "earliest feasible execution at PACE (FIFO); local operational reference",
@@ -215,21 +241,21 @@ def _dt_us(t: datetime) -> int:
 # --------------------------------------------------------------------------- pipeline
 
 
-def s_ranking() -> tuple[list[str], dict[str, float]]:
+def s_rank_published(fit_at: datetime) -> pl.Expr:
+    """Astra F05: S's ranking at `fit_at` uses only rows published by then, under the same
+    assumed envelope as the forecasts (`forecast.as_of`): ts_utc + 1 h + 96 h <= fit_at."""
+    env_h = fcmod.ENVELOPE_H["ci_consumed"]
+    return pl.col("ts_utc") + pl.duration(hours=1 + env_h) <= fit_at
+
+
+def s_ranking(window: Window | None = None) -> tuple[list[str], dict[str, float]]:
     """S's ranking: mean consumed CI over the training rows, ascending (PACE included).
-    A lazy scan with the seal and the training filter, so no other row is loaded."""
-    rows = (drop_sealed(pl.scan_parquet(CARBON_PATH))
-            .filter((pl.col("ts_utc") >= RANK_TRAIN[0]) & (pl.col("ts_utc") < RANK_TRAIN[1])
-                    & pl.col("ba").is_in(list(SITES)))
-            .select("ba", "ts_utc", "ci_consumed_g_kwh").collect()
-            .drop_nulls("ci_consumed_g_kwh").sort("ba", "ts_utc"))
-    # Means as math.fsum / n, not a parallel group_by mean (T10 fix r1 M-4).
-    means = {}
-    for (ba,), g in rows.partition_by("ba", as_dict=True, maintain_order=True).items():
-        v = g["ci_consumed_g_kwh"].to_list()
-        means[ba] = math.fsum(v) / len(v)
-    order = sorted(means, key=lambda b: (means[b], b))
-    return order, {b: means[b] for b in order}
+    A lazy scan with the seal and the training filter, so no other row is loaded. With the
+    test window: read from the freeze record (T11 B2), never recomputed in the test run."""
+    if window is not None and window.is_test:
+        fz = seal.require_active("s_ranking(test)").freeze
+        return fz.s_order, {b: fz.s_means[b] for b in fz.s_order}
+    return s_ranking_at(RANK_TRAIN[0], RANK_FIT_AT, sites=tuple(SITES), path=CARBON_PATH)
 
 
 def bound_gap(acc: pl.DataFrame, per: pl.DataFrame) -> dict:
@@ -247,23 +273,24 @@ def bound_gap(acc: pl.DataFrame, per: pl.DataFrame) -> dict:
             "n_job_gap_lt0": int((d < 0).sum()), "ok": gap >= -BOUND_TOL_KG}
 
 
-def _tail(fc_dir):
+def _tail(fc_dir, window: Window | None = None):
     """The frozen K tail from the pinned run's climatology.parquet (checked by Task 5
     against that run's K rows)."""
-    return tail_climatology(fc_dir, list(SITES))
+    return tail_climatology(fc_dir, list(SITES), window=window)
 
 
-def build_policies(ranking, fc_dir, filled, mask, scenario: Scenario | None = None):
+def build_policies(ranking, fc_dir, filled, mask, scenario: Scenario | None = None,
+                   window: Window | None = None):
     """Each policy in `scenario.policies()` is built once per run, with the scenario's
     sites (time-only variants: PACE only). K/W/L read the pinned forecast run `fc_dir`;
     H reads the F14.6 filled truth; all get the mask the closure calendar came from."""
     scenario = scenario or Scenario.primary()
     sites, t_sites = scenario.sites(), scenario.time_only_sites()
-    forecasts = load_forecasts(fc_dir)
-    tail = _tail(fc_dir)
+    forecasts = load_forecasts(fc_dir, window=window)
+    tail = _tail(fc_dir, window)
 
     def search(sig, time_only=False):
-        p = CarbonSearch(sig, forecasts, None, mask, tail=tail)
+        p = CarbonSearch(sig, forecasts, None, mask, tail=tail, window=window)
         if time_only:
             p.name = f"{sig}_time"
         return p, (t_sites if time_only else sites)
@@ -271,11 +298,13 @@ def build_policies(ranking, fc_dir, filled, mask, scenario: Scenario | None = No
     make = {
         "U": lambda: (U(), sites), "G": lambda: (G(), sites), "S": lambda: (S(ranking), sites),
         "K": lambda: search("K"), "W": lambda: search("W"), "L": lambda: search("L"),
-        "H": lambda: (CarbonSearch("H", None, filled, mask, truth_col="ci_g_kwh"), sites),
+        "H": lambda: (CarbonSearch("H", None, filled, mask, truth_col="ci_g_kwh",
+                                   window=window), sites),
         "W_time": lambda: search("W", True), "L_time": lambda: search("L", True),
     }
     out = {n: make[n]() for n in scenario.policies()}
-    coverage = CarbonSearch("L", forecasts, None, mask, tail=tail)  # coverage only (F4)
+    coverage = CarbonSearch("L", forecasts, None, mask, tail=tail,
+                            window=window)  # coverage only (F4)
     return out, coverage
 
 
@@ -292,7 +321,9 @@ def in_coverage(cj, bookings, cov, sites=SITES) -> set[str]:
     return out
 
 
-def default_root(scenario: Scenario) -> Path:
+def default_root(scenario: Scenario, window: Window | None = None) -> Path:
+    if window is not None and window.is_test:
+        return REPO_ROOT / seal.TEST_RUNS_REL
     if scenario.is_primary:
         return REPO_ROOT / "runs" / "slice"
     return REPO_ROOT / "runs" / "ext" / scenario.name
@@ -309,16 +340,36 @@ def run_pipeline(window: Window, scenario: Scenario, out_dir: Path | str | None 
     if export and not scenario.is_primary:
         raise ValueError(f"scenario {scenario.name!r} is a sensitivity: it never exports "
                          f"into results/ (only the registered primary does)")
+    if window.is_test:
+        ses = seal.require_active("run_pipeline(test)")
+        if not scenario.is_primary:
+            raise ValueError("the test window runs the registered primary scenario only")
+        if forecast_run is not None:
+            raise ValueError("the test run builds its own forecasts (frozen configuration); "
+                             "--forecast-run cannot be pinned on test")
     timer = Timer()
     run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    root = Path(out_dir) if out_dir else default_root(scenario)
+    if window.is_test:
+        ses.run_id = run_id
+        seal.log_event("run_start", run_id=run_id, scenario=scenario.name)
+    root = (Path(out_dir) if out_dir else ses.auth.runs_root if window.is_test
+            else default_root(scenario, window))
     root.mkdir(parents=True, exist_ok=True)
     tmp = root / f".tmp-{run_id}-{os.getpid()}"
     final = root / run_id
     tmp.mkdir()
-    sha = _git("rev-parse", "HEAD")
-    status = _git("status", "--porcelain")
-    (tmp / "git.txt").write_text(f"sha {sha}\nstatus:\n{status}\n")
+    if window.is_test:
+        ses.work_dir = tmp  # the test carbon table lives here, never in the shared data dir (I6)
+    if window.is_test:
+        # Check (a) verified HEAD and a clean tree at authorization; the read log has been
+        # appended to since, so the live status is not the code's.
+        sha, status = ses.auth.code_commit, ""
+        (tmp / "git.txt").write_text(f"sha {sha}\nstatus: clean at authorization (seal check "
+                                     f"(a)); freeze commit {ses.freeze.freeze_commit}\n")
+    else:
+        sha = _git("rev-parse", "HEAD")
+        status = _git("status", "--porcelain")
+        (tmp / "git.txt").write_text(f"sha {sha}\nstatus:\n{status}\n")
     fc = Path(forecast_run) if forecast_run else None
     try:
         rc, info = _pipeline(window, scenario, fc, timer, tmp, run_id, sha, status)
@@ -327,11 +378,27 @@ def run_pipeline(window: Window, scenario: Scenario, out_dir: Path | str | None 
         failed = root / f"failed-{run_id}"
         os.rename(tmp, failed)
         log.error("run failed; partial outputs in %s", failed)
+        if window.is_test:
+            ses.run_dirs.append(failed)
+            ses.work_dir = None
         raise
     print(f"run directory: {final}")
     exported = False
+    if window.is_test:
+        ses.run_dirs.append(final)
+        ses.work_dir = None
+        ses.rc = rc
     if rc == 0 and export:
-        export_results(final / "results", RESULTS_DIR)
+        if window.is_test:
+            dst = ses.auth.test_results_dir
+            archived = archive_test_results(dst)
+            export_results(final / "results", dst, ARTIFACTS_TEST)
+            seal.log_event("export", run_id=run_id, results=str(dst),
+                           artifacts=list(ARTIFACTS_TEST), archived=archived,
+                           artifacts_sha256={a: _sha256(dst / a) for a in ARTIFACTS_TEST})
+            ses.exported = True
+        else:
+            export_results(final / "results", RESULTS_DIR)
         exported = True
     return RunResult(run_id=run_id, run_dir=final, rc=rc, window=window, scenario=scenario,
                      exported=exported, **info)
@@ -340,16 +407,38 @@ def run_pipeline(window: Window, scenario: Scenario, out_dir: Path | str | None 
 ARTIFACTS = ("manifest.json", "metrics.json", "forecast-replay.json", "job-replay.json")
 
 
-def export_results(src: Path, dst: Path) -> None:
-    """Stage all four artifacts next to `dst`, then rename them into place, so a failure
+def archive_test_results(dst: Path) -> str | None:
+    """M9: before a rerun export, move the earlier test artifacts to
+    results/test/history/<their run_id>/; returns that path (None on a first export)."""
+    man = dst / "manifest.json"
+    if not man.exists():
+        return None
+    old = json.loads(man.read_text()).get("run_id") or "unknown"
+    hist = dst / seal.TEST_HISTORY_DIR / old
+    if hist.exists():
+        raise FileExistsError(f"{hist} already exists")
+    hist.mkdir(parents=True)
+    for p in sorted(dst.glob("*.json")):
+        shutil.copyfile(p, hist / p.name)
+    for p in sorted(dst.glob("*.json")):
+        p.unlink()
+    return str(hist)
+# The test run also writes its own grid and workload profiles; manifest.json goes last, as the
+# completion marker check (d) looks for.
+ARTIFACTS_TEST = ("metrics.json", "forecast-replay.json", "job-replay.json", "grid-profile.json",
+                  "workload-profile.json", "manifest.json")
+
+
+def export_results(src: Path, dst: Path, artifacts: tuple[str, ...] = ARTIFACTS) -> None:
+    """Stage all artifacts next to `dst`, then rename them into place, so a failure
     while copying never leaves a mix of old and new files."""
-    missing = [a for a in ARTIFACTS if not (src / a).exists()]
+    missing = [a for a in artifacts if not (src / a).exists()]
     if missing:
         raise FileNotFoundError(f"run results are missing {missing}")
     dst.mkdir(parents=True, exist_ok=True)
     staged = []
     try:
-        for a in ARTIFACTS:
+        for a in artifacts:
             tmp = dst / f".{a}.{os.getpid()}.staged"
             shutil.copyfile(src / a, tmp)
             staged.append((tmp, dst / a))
@@ -358,7 +447,7 @@ def export_results(src: Path, dst: Path) -> None:
     finally:
         for tmp, _ in staged:
             tmp.unlink(missing_ok=True)
-    print(f"exported {len(ARTIFACTS)} artifacts to {dst}")
+    print(f"exported {len(artifacts)} artifacts to {dst}")
 
 
 def _write_parquet_hashed(frame: pl.DataFrame, path: Path, hashes: dict) -> None:
@@ -411,28 +500,48 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
     primary = scenario.is_primary
     sites, t_sites = scenario.sites(), scenario.time_only_sites()
     file_sha: dict[str, str] = {}
-    snapshot_id = json.loads(SNAPSHOT_PATH.read_text())["snapshot_id"]
-    if snapshot_id != SNAPSHOT_ID:
-        raise AssertionError(f"data snapshot {snapshot_id} != registered {SNAPSHOT_ID}")
+    test = window.is_test
+    if test:
+        ses = seal.require_active("the test pipeline")
+        if ses.data_dir.resolve() != DATA_DIR.resolve():
+            raise AssertionError(f"the authorized data dir {ses.data_dir} is not "
+                                 f"GRIDPILOT_DATA_DIR {DATA_DIR}: every input must come from it")
+        snapshot_id = ses.freeze.snapshot_id  # checked against git at HEAD by authorize (B7)
+    else:
+        snapshot_id = json.loads(SNAPSHOT_PATH.read_text())["snapshot_id"]
+        if snapshot_id not in ACCEPTED_SNAPSHOT_IDS:
+            raise AssertionError(f"data snapshot {snapshot_id} is not an accepted snapshot "
+                                 f"{sorted(ACCEPTED_SNAPSHOT_IDS)}")
 
-    # 0. Forecasts (Task 2): constructed fresh unless a run is given; pinned either way.
+    # 0. Forecasts (Task 2): constructed fresh unless a run is given; pinned either way. The
+    # test run first builds the test truth table (B2), then fits at 2025-10-29 with the frozen
+    # L configuration.
     with timer("forecast_construction"):
-        if forecast_run:
+        if test:
+            carbon_test = build_carbon(window=window)
+            fc_dir = fcmod.run_test(window, out_root=tmp / "forecast")
+        elif forecast_run:
             fc_dir = Path(forecast_run)
         else:
             fc_dir = fcmod.run_validation(out_root=tmp / "forecast")
         forecasts = pl.read_parquet(fc_dir / "forecasts.parquet")
         fc_metrics = json.loads((fc_dir / "metrics.json").read_text())
     for c in ("issue_ts", "target_ts"):
-        if forecasts[c].max() >= TEST_START:
-            raise AssertionError("forecasts reach the seal")
-    run_root = "runs/slice" if primary else f"runs/ext/{scenario.name}"
+        if forecasts[c].max() >= window.read_end:
+            raise AssertionError("forecasts reach the seal (the window's read bound)")
+    run_root = ("runs/test" if test else "runs/slice" if primary
+                else f"runs/ext/{scenario.name}")
     fc_path = (str(fc_dir) if forecast_run
                else f"{run_root}/{run_id}/forecast/{fc_dir.name}")
     file_sha["forecasts.parquet"] = _sha256(fc_dir / "forecasts.parquet")
     file_sha["climatology.parquet"] = _sha256(fc_dir / "climatology.parquet")
     file_sha["balance.parquet"] = _sha256(BALANCE_PATH)
-    file_sha["carbon_hourly.parquet"] = _sha256(CARBON_PATH)
+    if test:
+        file_sha[carbon_test.name] = _sha256(carbon_test)
+        for rel, h in ses.auth.input_sha256.items():
+            file_sha[f"input:{rel}"] = h
+    else:
+        file_sha["carbon_hourly.parquet"] = _sha256(CARBON_PATH)
     file_sha[TRACE_PATH.name] = _sha256(TRACE_PATH)
 
     # 1. Jobs.
@@ -473,10 +582,10 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
 
     # 4. Scoring truth fill (F14.6).
     with timer("truth_fill"):
-        filled = fill_truth(init, F, list(SITES))
+        filled = fill_truth(init, F, list(SITES), window=window)
         mask = fill_mask(filled)
         closed = closed_intervals(mask)
-        tt = TruthTable(filled, mask)
+        tt = TruthTable(filled, mask, window=window)
     if any(closed.values()):
         # Bookings were built before the fill with no closures (F13.3 pre-check uses filled
         # truth); a non-empty calendar would require u_bookings(closed=...) first.
@@ -486,8 +595,8 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
     _write_parquet_hashed(filled, tmp / "truth_fill.parquet", file_sha)
 
     # 5. Support pre-check (hard gate).
-    sc_b = support_check(bookings, tt, F)
-    sc_w = support_check(wl, tt, F)
+    sc_b = support_check(bookings, tt, F, window=window)
+    sc_w = support_check(wl, tt, F, window=window)
     support = {"bookings": {k: v for k, v in sc_b.items() if k != "failures"},
                "warmup_ledger": {k: v for k, v in sc_w.items() if k != "failures"}}
     if not (sc_b["ok"] and sc_w["ok"]):
@@ -497,8 +606,8 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
         return 2, {}
 
     # 6. Policies.
-    ranking, rank_means = s_ranking()
-    policies, cov = build_policies(ranking, fc_dir, filled, mask, scenario)
+    ranking, rank_means = s_ranking(window)
+    policies, cov = build_policies(ranking, fc_dir, filled, mask, scenario, window)
     ledgers: dict[str, pl.DataFrame] = {}
     probe = None
     for name in scenario.policies():
@@ -545,7 +654,7 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
     with timer("export"):
         if primary:
             art = build_artifacts(
-                window=window.name, run_id=run_id, sha=sha, status=status, init=init,
+                window=window.name, win=window, run_id=run_id, sha=sha, status=status, init=init,
                 eval_start=eval_start, F=F, coh=coh, cohort_record=cohort_record, tiers=tiers,
                 still_missing=still_missing, support=support, ranking=ranking,
                 rank_means=rank_means, ledgers=ledgers, acct=acct, cj=cj, bookings=bookings,
@@ -553,17 +662,26 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
                 fc_dir=fc_dir, fc_path=fc_path, probe=probe, cands=cands, warm=warm,
                 timer=timer, repro=repro)
             out = tmp / "results"
-            for name in ("metrics.json", "forecast-replay.json", "job-replay.json"):
-                text = write_json_atomic(out / name, art[name])
-                hashes[name] = hashlib.sha256(text.encode()).hexdigest()
-            metrics_canonical = canonical_hash(art["metrics.json"])
+            wj = {"window": window} if test else {}
+            names = ["metrics.json", "forecast-replay.json", "job-replay.json"]
+            if test:
+                art["grid-profile.json"] = gpmod.build_profile(*gpmod.load_inputs(window),
+                                                               window=window)
+                art["workload-profile.json"] = workload_profile_for_test(ledgers, tt, run_id)
+                names += ["grid-profile.json", "workload-profile.json"]
+            texts = {}
+            for name in names:
+                texts[name] = write_json_atomic(out / name, art[name], **wj)
+                hashes[name] = hashlib.sha256(texts[name].encode()).hexdigest()
+            # M15: the canonical hash of the serialized artifact, as written
+            metrics_canonical = canonical_hash(json.loads(texts["metrics.json"]))
             man = art["manifest.json"]
             man["artifact_sha256"] = hashes
             man["reproducibility"]["metrics_canonical_sha256"] = metrics_canonical
             man["timing_s"] = {k: env(v, "s", "measured", f"{run_id}:timing:{k}")
                                for k, v in timer.t.items()}
-            check_claim_frame(man)
-            write_json_atomic(out / "manifest.json", man)
+            check_claim_frame(man, window=window)
+            write_json_atomic(out / "manifest.json", man, **wj)
             info["metrics_canonical_sha256"] = metrics_canonical
         else:
             summary = ext_summary(run_id=run_id, sha=sha, status=status, window=window,
@@ -571,7 +689,7 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
                                   repro=repro, tiers=tiers)
             text = write_json_atomic(tmp / "summary.json", summary)
             hashes["summary.json"] = hashlib.sha256(text.encode()).hexdigest()
-            summary_canonical = canonical_hash(summary)
+            summary_canonical = canonical_hash(json.loads(text))  # serialized (M15)
             info["summary_canonical_sha256"] = summary_canonical
     config = {
         "run_id": run_id, "window": window.name, "git_sha": sha, "git_clean": status == "",
@@ -583,14 +701,18 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
         "diagnosed_policies": list(DIAGNOSED_POLICIES) if primary else [],
         "s_ranking": ranking,
         "s_ranking_training_rows": [iso(RANK_TRAIN[0]), iso(RANK_TRAIN[1])],
+        "s_ranking_fit_at": iso(RANK_FIT_AT),
         "scenarios_for_A": list(SCENARIOS), "reproducibility": repro,
         "metrics_canonical_sha256": metrics_canonical, "artifact_sha256": hashes,
         "scenario": scenario.config(),
     }
+    if test:
+        config["s_ranking_training_rows"] = [iso(t) for t in ses.freeze.s_window]
+        config["freeze"] = _freeze_record(ses)
     if not primary:
         config["summary_canonical_sha256"] = summary_canonical
     (tmp / "config.json").write_text(json.dumps(config, indent=1) + "\n")
-    print_table(acct, timer, scenario)
+    print_table(acct, timer, scenario, window)
     # Written last, after export, so it includes the export time (fix round 1 #12).
     (tmp / "timing.json").write_text(json.dumps(
         {"run_id": run_id, "unit": "s", "evidence": "measured", "timing_s": timer.t},
@@ -874,9 +996,9 @@ def _ts(kg: float) -> str:
     return "0.0 t" if abs(t) < 0.05 else f"{t:+,.1f} t"
 
 
-def framing_text(acct) -> str:
-    """The validation reading of H3 and placement vs timing, every number from this run
-    (fix round 1 #5). Each clause is chosen by the intervals, so it stays true."""
+def framing_text(acct, window: str = "validation") -> str:
+    """The validation (or test) reading of H3 and placement vs timing, every number from this
+    run (fix round 1 #5). Each clause is chosen by the intervals, so it stays true."""
     c = acct["contrasts"]
     s = acct["scores"]
 
@@ -913,7 +1035,8 @@ def framing_text(acct) -> str:
     top = max(remote, key=remote.get)
     share = remote[top] / sum(remote.values()) if sum(remote.values()) else 0.0
     l_save = b4("L", "U")[2]
-    return (f"Validation: {'; '.join(parts)}. Waiting in Utah alone saves about "
+    lead = "Test year" if window == "test" else "Validation"
+    return (f"{lead}: {'; '.join(parts)}. Waiting in Utah alone saves about "
             f"{100 * sum(t_save) / 2:.1f}% (W_time {100 * t_save[0]:.2f}%, L_time "
             f"{100 * t_save[1]:.2f}% vs U); the saving comes from moving work (L "
             f"{100 * l_save:.2f}% vs U), mostly to {top} ({100 * share:.0f}% of L's remote "
@@ -951,12 +1074,41 @@ def headline_wording(m) -> str:
             "baseline-relative deadlines, exact declared runtimes; runtime uncertainty untested")
 
 
+def _freeze_record(ses) -> dict:
+    """What the test artifacts carry about the freeze and the logged entry point."""
+    fz = ses.freeze
+    return {"freeze_commit": fz.freeze_commit, "freeze_sha256": fz.sha256,
+            "tag": seal.FREEZE_TAG, "wallclock_frozen_at": fz.raw["frozen_at"],
+            "deployed_policy": fz.deployed_policy, "test_F": iso(fz.test_F),
+            "validation_run": fz.raw["validation_run"], "rerun_reason": ses.auth.rerun_reason,
+            "read_log": seal.READ_LOG_REL, "session": ses.session_id,
+            "code_commit": ses.auth.code_commit}
+
+
+def workload_profile_for_test(ledgers, tt, run_id, policy: str = "W") -> dict:
+    """results/test/workload-profile.json from the in-memory ledgers and test truth (the test
+    run never re-reads its own truth_fill.parquet outside the context)."""
+    from gridpilot.eval import job_accounting as ja
+
+    u = ledgers["U"]
+    jobs = u.select("job_uid", pl.col("job_uid").str.split("#").list.first().alias("source_id"),
+                    "arrival_ts", "gpus", "duration_s")
+    art = wpmod.build_artifact(ja(u, jobs, tt), ja(ledgers[policy], jobs, tt), policy=policy,
+                               run_id=run_id)
+    return {**art, "window": "test"}
+
+
+
+
 def build_artifacts(**k) -> dict:
     run_id, coh, acct = k["run_id"], k["coh"], k["acct"]
     scores, gaps = acct["scores"], acct["gaps"]
     cj = k["cj"]
     n_weeks = acct["n_weeks"]
     window = k["window"]
+    win: Window = k.get("win") or Window.named(window)
+    test = win.is_test
+    ses = seal.require_active("test artifacts") if test else None
 
     # metrics.json
     policies = {name: _policy_record(name, scores[name], gaps[name], run_id)
@@ -978,8 +1130,10 @@ def build_artifacts(**k) -> dict:
             for kk, d in inf["by_k"].items()}}
     metrics = {
         "schema_version": SCHEMA_VERSION, "run_id": run_id, "window": window,
-        "evidence_note": "validation results; policy outcomes (CO₂, execution and transfer "
-                         "energy) simulated; bound modeled",
+        "evidence_note": ("test-year results (sealed window, opened once after the freeze); "
+                          if test else "validation results; ")
+                         + "policy outcomes (CO₂, execution and transfer energy) simulated; "
+                           "bound modeled",
         "covered": {"arrivals": [iso(k["eval_start"]), iso(coh.A)],
                     "drain": [iso(coh.A), iso(k["F"])]},
         "cohort": {
@@ -1010,12 +1164,14 @@ def build_artifacts(**k) -> dict:
             "n_dropped_jobs": env(len(acct["common_support"]), "jobs", "simulated",
                                   f"{run_id}:common_support"),
             "status_rerun": "not_run",
-            "reason": "the common-support sensitivity rerun is scheduled after 18:00 (Task 7 "
-                      "amendment step 7)"},
+            "reason": ("the test window runs the registered primary scenario only; the "
+                       "common-support rerun is not part of the test run" if test else
+                       "the common-support sensitivity rerun is scheduled after 18:00 (Task 7 "
+                       "amendment step 7)")},
         "weekly": _weekly_record(acct["weeks"], run_id),
         "coverage_stratum": _stratum_record(acct["stratum"], run_id, n_weeks, window),
         "framing": {
-            "placement_vs_timing": framing_text(acct),
+            "placement_vs_timing": framing_text(acct, window),
             "greedy_search": GREEDY_NOTE,
             "h_is_diagnostic": "H uses realized (filled) truth; it is never a contender",
         },
@@ -1024,9 +1180,12 @@ def build_artifacts(**k) -> dict:
     # forecast-replay.json and job-replay.json
     frep = forecast_replay(k)
     jrep = job_replay(k)
+    if test:
+        frep["window"] = jrep["window"] = "test"
 
-    # manifest.json
-    m_inputs = {p.name: _sha256(p) for p in sorted(MANIFEST_DIR.glob("*.json"))}
+    # manifest.json: the test run reads the manifest hashes from git at HEAD (B7)
+    m_inputs = (dict(ses.auth.manifests_sha256) if test else
+                {p.name: _sha256(p) for p in sorted(MANIFEST_DIR.glob("*.json"))})
     tiers = k["tiers"]
     repro = k["repro"]
     t = k["timer"].t
@@ -1034,14 +1193,19 @@ def build_artifacts(**k) -> dict:
         "schema_version": SCHEMA_VERSION, "run_id": run_id, "git_sha": k["sha"],
         "git_clean": k["status"] == "", "snapshot_id": repro["snapshot_id"],
         "wallclock_generated_at": datetime.now(UTC).isoformat(),
-        "reproduce": f"make slice  # cd lab && uv run python scripts/run_slice.py --window "
-                     f"{window}",
-        "evidence_scope": "validation (selection) results; the sealed test window "
-                          "[2025-11-01, 2026-11-01) is never read",
+        "reproduce": ("cd lab && uv run python scripts/run_slice.py --window test  # once, "
+                      "after the freeze; refuses otherwise" if test else
+                      f"make slice  # cd lab && uv run python scripts/run_slice.py --window "
+                      f"{window}"),
+        "evidence_scope": ("sealed test-window results [2025-11-01, F_test), opened once "
+                           "through the logged entry point after the configuration freeze; "
+                           "every read is in results/test_reads.jsonl" if test else
+                           "validation (selection) results; the sealed test window "
+                           "[2025-11-01, 2026-11-01) is never read"),
         "claim_frame": CLAIM_FRAME,
         "limitations": [
             fcmod.LIMITATION, IMPORT_CONVENTION, LIMIT_ZERO_MISSES, LIMIT_BOOKINGS_UNSIGNED,
-            LIMIT_SHADOW_U, LIMIT_PHASES, LIMIT_VALIDATION_DEV,
+            LIMIT_SHADOW_U, LIMIT_PHASES, LIMIT_TEST if test else LIMIT_VALIDATION_DEV,
             "EIA's 2025-26 emission factors may be a provisional vintage (F7).",
             ("Baseline bookings are an assumed advance-reservation calendar synthesized from "
              "the whole U replay (F11, F12.7); the result is not a historical online-router "
@@ -1050,7 +1214,8 @@ def build_artifacts(**k) -> dict:
              "calendar is an assumed advance-known calendar (F12.1)."),
         ],
         "inputs": {"data_manifests_sha256": m_inputs,
-                   "carbon_hourly_sha256": repro["file_sha256"]["carbon_hourly.parquet"],
+                   "carbon_hourly_sha256": repro["file_sha256"][
+                       "carbon_hourly_test.parquet" if test else "carbon_hourly.parquet"],
                    "forecast_run": k["fc_path"],
                    "forecast_run_forecasts_sha256": repro["forecast_run"]["forecasts_sha256"],
                    "forecast_run_pinned": "K/W/L forecasts and the K tail climatology are "
@@ -1059,11 +1224,15 @@ def build_artifacts(**k) -> dict:
         "reproducibility": dict(repro),
         "split": {"window": window, "init": iso(k["init"]),
                   "eval_start": iso(k["eval_start"]), "A": iso(coh.A), "F": iso(k["F"]),
-                  "sealed_window": "test window [TEST_START = 2025-11-01T00:00Z, "
-                                   "2026-11-01T00:00Z): never read by this run",
+                  "sealed_window": ("test window [TEST_START = 2025-11-01T00:00Z, "
+                                    "2026-11-01T00:00Z): opened by this run through "
+                                    "gridpilot.seal.sealed_read, up to F_test" if test else
+                                    "test window [TEST_START = 2025-11-01T00:00Z, "
+                                    "2026-11-01T00:00Z): never read by this run"),
                   "phase_days": env(PHASE_DAYS, "days", "assumed", "spec§7:phase"),
-                  "s_ranking_training_rows": [iso(RANK_TRAIN[0]), iso(RANK_TRAIN[1])],
-                  "forecast_fit_at": iso(fcmod.VAL_FIT_AT)},
+                  "s_ranking_training_rows": ([iso(t) for t in ses.freeze.s_window] if test
+                                              else [iso(RANK_TRAIN[0]), iso(RANK_TRAIN[1])]),
+                  "forecast_fit_at": iso(fcmod.TEST_FIT_AT if test else fcmod.VAL_FIT_AT)},
         "cohort_record": _cohort_record_env(k["cohort_record"], run_id),
         "scenarios_for_A": {n: {"note": SCENARIO_NOTES[n],
                                 "first_failure": iso(coh.first_failure[n]),
@@ -1084,7 +1253,12 @@ def build_artifacts(**k) -> dict:
                       "mean_consumed_ci": {b: env(v, "g/kWh", "modeled",
                                                   f"{run_id}:rank:{b}")
                                            for b, v in k["rank_means"].items()},
-                      "provenance": S_RANK_PROVENANCE,
+                      "fit_at": iso(seal.TEST_FIT_AT if test else RANK_FIT_AT),
+                      "window": ([iso(t) for t in ses.freeze.s_window] if test
+                                 else [iso(RANK_TRAIN[0]), iso(RANK_TRAIN[1])]),
+                      "provenance": ("frozen in config/freeze.json; means over the window, "
+                                     "rows published by fit_at (96 h envelope)"
+                                     if test else S_RANK_PROVENANCE),
                       "note": "unweighted hourly mean over training rows; never shown as an "
                               "attributed factor (F7)"},
         "assumptions": {
@@ -1122,8 +1296,11 @@ def build_artifacts(**k) -> dict:
                 "G_undiagnosed": env(t["policy_G_undiagnosed"], "s", "measured",
                                      f"{run_id}:timing:G_plain")}},
         "not_run": NOT_RUN,
-        "artifacts": list(ARTIFACTS),
+        "artifacts": list(ARTIFACTS_TEST if test else ARTIFACTS),
     }
+    if test:
+        manifest = {"schema_version": manifest.pop("schema_version"), "window": "test",
+                    **manifest, "freeze": _freeze_record(ses)}
     return {"manifest.json": manifest, "metrics.json": metrics,
             "forecast-replay.json": frep, "job-replay.json": jrep}
 
@@ -1300,8 +1477,9 @@ def forecast_replay(k) -> dict:
                          "n_hours": env(int(ok.sum()), "hours", "measured",
                                         f"{run_id}:fr:{model}:n")}
     sel = k["fc_metrics"]["series"].get(f"{HOME}/ci_consumed", {})
-    sel_mae = {m: env(sel["models"][m]["selection"]["mae"], "g/kWh", "measured",
-                      f"{k['fc_metrics']['run_id']}:{HOME}/ci_consumed:{m}:selection_mae")
+    period = "test" if k.get("win") is not None and k["win"].is_test else "selection"
+    sel_mae = {m: env(sel["models"][m][period]["mae"], "g/kWh", "measured",
+                      f"{k['fc_metrics']['run_id']}:{HOME}/ci_consumed:{m}:{period}_mae")
                for m in ("K", "W", "L")} if sel else {}
 
     def nulls_reason(xs):
@@ -1335,7 +1513,7 @@ def forecast_replay(k) -> dict:
             "truth": hist_env,
             "cutoff_hour_start": iso(cut)},
         "week_errors": errors,
-        "selection_mae": sel_mae,
+        f"{period}_mae": sel_mae,
         "limitation": fcmod.LIMITATION,
         "forecast_note": "K/W/L forecasts are issued values; forecast values beyond issued "
                          "coverage are never shown here",
@@ -1363,6 +1541,8 @@ TRUTH_NULL = "null = hour without a tier-1 (EIA consumption-basis) value"
 RULE_LITERAL = ("§11: among validation flexible jobs with a feasible remote action in the "
                 "primary (U, bookings-held) replay, the job nearest the median GPU-hours of "
                 "that set; ties by stable ID")
+RULE_LITERAL_TEST = RULE_LITERAL.replace("among validation flexible jobs",
+                                         "among the test cohort's flexible jobs")
 RULE_V2 = ("illustration criterion v2 (D-054): over the same eligible set, sort by (declared "
            "GPU-h, job_uid) and take the first job whose cumulative declared GPU-h reaches 50% "
            "of the set's total (the GPU-hour-weighted median)")
@@ -1490,7 +1670,8 @@ def job_replay(k) -> dict:
     }
     illustrative = _illustrative_record(
         v2_uid, RULE_V2, k, {"criterion": "v2", "disclosure": disclosure, **common})
-    literal = _illustrative_record(lit_uid, RULE_LITERAL, k, {"criterion": "literal", **common})
+    rule = RULE_LITERAL_TEST if k.get("win") is not None and k["win"].is_test else RULE_LITERAL
+    literal = _illustrative_record(lit_uid, rule, k, {"criterion": "literal", **common})
     # One week of placements, with arcs (the forecast-replay week).
     w0, w1 = _replay_week(k["eval_start"])
     wk = {}
@@ -1537,11 +1718,16 @@ def job_replay(k) -> dict:
 # --------------------------------------------------------------------------- table
 
 
-def print_table(acct, timer, scenario: Scenario | None = None) -> None:
+def print_table(acct, timer, scenario: Scenario | None = None,
+                window: Window | None = None) -> None:
     scenario = scenario or Scenario.primary()
     s = acct["scores"]
-    print(f"\nValidation results (scenario {scenario.name}, phase {scenario.phase_days}; "
-          f"simulated outcomes; bound modeled). Not test results.")
+    if window is not None and window.is_test:
+        print(f"\nTest-year results (sealed window to {iso(window.F)}; scenario "
+              f"{scenario.name}; simulated outcomes; bound modeled).")
+    else:
+        print(f"\nValidation results (scenario {scenario.name}, phase {scenario.phase_days}; "
+              f"simulated outcomes; bound modeled). Not test results.")
     hdr = (f"{'policy':8s} {'status':8s} {'feas':5s} {'late':>4s} {'tCO2':>10s} {'vs U %':>7s} "
            f"{'U-P b4 CI kg':>24s} {'moved%':>7s} {'remote%E':>8s} {'tier>=2%':>8s} "
            f"{'bound':>5s} {'sim s':>7s}")
@@ -1580,13 +1766,51 @@ def print_table(acct, timer, scenario: Scenario | None = None) -> None:
             print(f"  bound check {name:7s} {basis:9s} gap {x['gap_kg']:.6f} kg "
                   f"min job gap {x['min_job_gap_kg']:.3e} kg ok={x['ok']}")
     if scenario.is_primary:
-        print("framing: " + framing_text(acct))
+        print("framing: " + framing_text(acct, window.name if window else "validation"))
     print("timing (s): " + ", ".join(f"{k} {v:.1f}" for k, v in timer.t.items()))
+
+
+def run_test(*, rerun_reason: str | None = None, remote_tag_override: str | None = None,
+             repo_root: Path | None = None, data_dir: Path | None = None,
+             results_dir: Path | None = None, out_dir: Path | None = None, pipeline=None,
+             synthetic: bool = False) -> int:
+    """The test-evaluation entry point: authorize (every refusal check), then run the primary
+    scenario on `Window.test()` inside the logged test-mode context and export to
+    results/test/. Returns the exit code: REFUSED_RC with the reason on stderr when refused.
+
+    Real use takes no roots (I4). `repo_root`, `data_dir`, `results_dir`, `out_dir` and
+    `pipeline(window)` (a stand-in for the run) are for synthetic tests only and need
+    `synthetic=True`, which `seal.authorize` accepts only with a marked synthetic data dir."""
+    try:
+        if not synthetic and (pipeline is not None or out_dir is not None):
+            raise seal.SealError("(I4) pipeline= and out_dir= are for synthetic tests only")
+        auth = seal.authorize(repo_root=repo_root, data_dir=data_dir, results_dir=results_dir,
+                              rerun_reason=rerun_reason, remote_tag_override=remote_tag_override,
+                              synthetic=synthetic)
+    except seal.SealError as e:
+        print(f"run_slice --window test refused: {e}", file=sys.stderr)
+        return REFUSED_RC
+    with seal.test_mode(auth) as ses:
+        window = Window.test()
+        if pipeline is not None:
+            ses.rc = int(pipeline(window))
+            return ses.rc
+        res = run_pipeline(window, Scenario.primary(), out_dir, export=True)
+    return res.rc
+
+
 
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("--window", choices=WINDOW_NAMES, default="validation")
+    p.add_argument("--window", choices=WINDOW_NAMES, default="validation",
+                   help="validation (registered), fallback, or test: the sealed test window, "
+                        "once, after the freeze (refuses otherwise)")
+    p.add_argument("--rerun-reason", default=None,
+                   help="--window test only: rerun over a completed test run; logged")
+    p.add_argument("--remote-tag-override", default=None,
+                   help="--window test only: why the config-freeze tag on origin cannot be "
+                        "checked (an unreachable remote); logged")
     p.add_argument("--scenario", choices=["primary", *EXTENSIONS], default="primary",
                    help="primary (registered) or a D-058 extension (gridpilot.scenario)")
     p.add_argument("--forecast-run", default=None,
@@ -1596,6 +1820,15 @@ def main(argv=None) -> int:
                    help="do not copy into results/ (extensions never export)")
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(message)s")
+    if args.window == "test":
+        if args.scenario != "primary" or args.forecast_run or args.no_export or args.out:
+            p.error("--window test runs the primary scenario, builds its own forecasts, writes "
+                    "runs/test/ and always exports to results/test/ (no --scenario, "
+                    "--forecast-run, --no-export or --out)")
+        return run_test(rerun_reason=args.rerun_reason,
+                        remote_tag_override=args.remote_tag_override)
+    if args.rerun_reason is not None or args.remote_tag_override is not None:
+        p.error("--rerun-reason and --remote-tag-override apply to --window test only")
     scenario = Scenario.named(args.scenario)
     res = run_pipeline(Window.named(args.window), scenario, args.out,
                        export=scenario.is_primary and not args.no_export,

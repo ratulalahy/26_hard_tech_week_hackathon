@@ -1,7 +1,8 @@
 """Evaluation windows and scenario knobs for `run_pipeline` (Stage 3 T10, Part A).
 
-`Window` is one evaluation window (F14.4). Only `validation` and `fallback` can be built
-here; the sealed test window is T11's job, so `Window.test()` raises.
+`Window` is one evaluation window (F14.4), defined in `gridpilot.window` and re-exported
+here. `validation` and `fallback` can always be built; the sealed test window only inside the
+logged test-mode context (`gridpilot.seal`, Stage 3 T11).
 
 `Scenario` is one point in the §7 assumption registry. Every knob is **assumed**. The
 defaults are the registered primary scenario; `EXTENSIONS` holds the one-axis endpoint
@@ -18,70 +19,13 @@ run directory and is never exported into the primary `results/` artifacts.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import polars as pl
 
 from gridpilot.cohort import _batch_delay
 from gridpilot.sim import HOME, SITES, TRANSFER_S
-from gridpilot.splits import TEST_START
-
-WARMUP_MIN = timedelta(days=15)  # F2
-CONSTRUCTIBLE_WINDOWS = ("validation", "fallback")
-_WINDOWS = {
-    "validation": (datetime(2024, 10, 17, tzinfo=UTC), datetime(2024, 11, 1, tzinfo=UTC),
-                   datetime(2025, 10, 24, tzinfo=UTC)),
-    "fallback": (datetime(2025, 7, 10, tzinfo=UTC), datetime(2025, 7, 25, tzinfo=UTC),
-                 datetime(2025, 10, 24, tzinfo=UTC)),
-}
-
-
-@dataclass(frozen=True)
-class Window:
-    """[init, eval_start) is the U warm-up; arrivals in [eval_start, A) are scored; F ends
-    the drain (F2, F14.4)."""
-
-    name: str
-    init: datetime
-    eval_start: datetime
-    F: datetime
-
-    def __post_init__(self):
-        if self.name not in CONSTRUCTIBLE_WINDOWS:
-            raise ValueError(f"window {self.name!r}: only {CONSTRUCTIBLE_WINDOWS} are "
-                             f"constructible before the freeze (the test window is T11's)")
-        for k in ("init", "eval_start", "F"):
-            t = getattr(self, k)
-            if not isinstance(t, datetime) or t.tzinfo is None:
-                raise ValueError(f"window {k} must be timezone-aware, got {t!r}")
-        if not self.init < self.eval_start < self.F:
-            raise ValueError("window needs init < eval_start < F")
-        if self.eval_start - self.init < WARMUP_MIN:
-            raise ValueError("warm-up shorter than 15 days (F2)")
-        if self.F > TEST_START:
-            raise ValueError("F reaches the seal (TEST_START)")
-
-    @classmethod
-    def validation(cls) -> Window:
-        return cls("validation", *_WINDOWS["validation"])
-
-    @classmethod
-    def fallback(cls) -> Window:
-        return cls("fallback", *_WINDOWS["fallback"])
-
-    @classmethod
-    def test(cls, *args, **kwargs) -> Window:
-        raise NotImplementedError("T11: the sealed test window opens only after the freeze")
-
-    @classmethod
-    def named(cls, name: str) -> Window:
-        if name == "test":
-            return cls.test()
-        if name not in _WINDOWS:
-            raise ValueError(f"unknown window {name!r}")
-        return cls(name, *_WINDOWS[name])
-
+from gridpilot.window import CONSTRUCTIBLE_WINDOWS, WARMUP_MIN, Window  # noqa: F401 (re-export)
 
 # --------------------------------------------------------------------------- Scenario
 

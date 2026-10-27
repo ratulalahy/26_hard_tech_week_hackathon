@@ -3,6 +3,7 @@ import { EChart } from '../components/EChart';
 import { Panel, Strip, useWidth } from '../components/charts';
 import { Ev, EvCI, Icon } from '../components/ui';
 import { C, CI_MAX, ci2c } from '../lib/color';
+import { useCopy } from '../lib/useCopy';
 import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, headline, type Core, type Dest } from '../lib/data';
 import { fmt, fmtHour, fmtSpan, monthLabel, pct, pctRange, sig2 } from '../lib/format';
 import { makePlan } from '../lib/plan';
@@ -51,6 +52,7 @@ export function Cockpit() {
   const { data, mode, dest, month } = s;
   const p = useMemo(() => makePlan(data!, { month, hour: s.hour, hours: s.hours, gpus: s.gpus, maxWait: s.maxWait }), [data, month, s.hour, s.hours, s.gpus, s.maxWait]);
   const h = headline(data!.metrics);
+  const copy = useCopy();
   const best = ([['now', p.now], ['wait', p.wait.v], ['move', p.moves[dest]]] as [Mode, number][]).sort((a, b) => a[1] - b[1])[0][0];
   const V = mode === 'move' ? p.moves[dest] : mode === 'wait' ? p.wait.v : p.now;
   const verdict = mode === 'move' ? `Move it to ${REGION[dest].name}` : mode === 'wait' ? (p.wait.d ? `Hold it until ${fmtHour(p.wait.s)}` : `Waiting up to ${s.maxWait} h does not help`) : 'Run it now in Utah';
@@ -100,7 +102,7 @@ export function Cockpit() {
 
         <Panel style={{ padding: '12px 16px' }}>
           <div data-testid="cockpit-registered" className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-            <span className="t-15">Registered result, the whole validation year: moving cuts {pctRange(h.placement.lo, h.placement.hi)}%, waiting only {pctRange(h.timing.lo, h.timing.hi)}%</span>
+            <span className="t-15">{copy.resultLead}: moving cuts {pctRange(h.placement.lo, h.placement.hi)}%, waiting only {pctRange(h.timing.lo, h.timing.hi)}%</span>
             <span className="t-12 ink-3">95% intervals {pct(h.placement.ciLo)}–{pct(h.placement.ciHi)}% and {pct(h.timing.ciLo)}–{pct(h.timing.ciHi)}%; {fmt(data!.metrics.cohort.n_jobs.value)} jobs, same work, {DEADLINES_MET}. <Ev e="simulated" /></span>
           </div>
           <div className="t-12 ink-3" style={{ marginTop: 4 }} data-testid="cockpit-frame">{FRAME_LINE}</div>

@@ -1,6 +1,6 @@
 {
-  "snapshot_id": "05efabe781cc",
-  "taken_at": "2026-10-27T06:16:08Z",
+  "snapshot_id": "8a1b36b24b91",
+  "taken_at": "2026-10-27T17:49:49Z",
   "sources": {
     "eia930": {
       "manifest_sha256": "08b852396a0a6d9a093959f2930c684b720199c2392824180f5720c4fd5886fc",
@@ -21,10 +21,10 @@
       "status": "frozen"
     },
     "openmeteo": {
-      "manifest_sha256": "aa1b514a8d3ad6e824696b6929c0919db49b281a2c14ebd657cba6adc7f2552d",
-      "files": 142,
-      "bytes": 64500404,
-      "status": "growing"
+      "manifest_sha256": "814fd11ebb354784d3bef7a03df5c8fb3f889dda2b899560b8667c824cff789c",
+      "files": 199,
+      "bytes": 94435078,
+      "status": "frozen"
     },
     "prices_caiso": {
       "manifest_sha256": "a10702aa90201ffea5076850a0a852c8a87ec952412d793d080f18ecd4a76cca",

@@ -337,9 +337,12 @@ def test_truth_request_at_or_after_seal_raises():
     assert score(led, jobs, truth)["co2_kg"] == pytest.approx(2 * 0.72 * HIGH / 1000)
 
 
-def test_truth_table_drops_sealed_rows():
+def test_truth_table_refuses_sealed_rows():
+    # T11 fix r1 I6: a frame reaching the seal is refused outside test mode, not trimmed
     truth = flat_truth(4, start=TEST_START - timedelta(hours=2))
-    tt = TruthTable(truth)
+    with pytest.raises(ValueError, match="sealed values are read only inside the test-mode"):
+        TruthTable(truth)
+    tt = TruthTable(truth.filter(pl.col("ts_utc") < TEST_START))
     assert tt.end_us == int(TEST_START.timestamp()) * US
 
 

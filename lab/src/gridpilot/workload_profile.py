@@ -9,12 +9,14 @@ the registered validation slice.
 
 from __future__ import annotations
 
+import json
 import math
 from pathlib import Path
 
 import polars as pl
 
 from gridpilot.results import SCHEMA_VERSION, env
+from gridpilot.splits import drop_sealed
 
 QS = (0.001, 0.01, 0.1)
 
@@ -91,10 +93,14 @@ def from_run(run_dir: Path, policy: str = "W") -> dict:
     """Per-job accounting for U and `policy` from a slice run directory's ledgers and truth."""
     from gridpilot.eval.accounting import TruthTable, job_accounting
 
+    cfg = run_dir / "config.json"
+    if cfg.exists() and json.loads(cfg.read_text()).get("window") == "test":
+        raise ValueError(f"{run_dir} is a test run: its workload profile is written by the "
+                         f"test entry point (results/test/workload-profile.json)")
     u = pl.read_parquet(run_dir / "ledger_U.parquet")
     p = pl.read_parquet(run_dir / f"ledger_{policy}.parquet")
     jobs = u.select("job_uid", pl.col("job_uid").str.split("#").list.first().alias("source_id"),
                     "arrival_ts", "gpus", "duration_s")
-    tt = TruthTable(pl.read_parquet(run_dir / "truth_fill.parquet"))
+    tt = TruthTable(drop_sealed(pl.read_parquet(run_dir / "truth_fill.parquet")))
     return build_artifact(job_accounting(u, jobs, tt), job_accounting(p, jobs, tt),
                           policy=policy, run_id=run_dir.name)

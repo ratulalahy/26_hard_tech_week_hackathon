@@ -2,8 +2,9 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { PolicyTable } from '../components/charts';
 import { CONSUMPTION_CHECKS, ExtensionsTable, PHRASE, extRows, listJoin, placementSpan } from '../components/extensions';
 import { ReliefTable, RushSensitivity, hourSpans, storageFacts } from '../components/storage';
-import { Ev, Icon, SEALED } from '../components/ui';
-import { DEADLINE_RULE, VALIDATION_LINE, asNum, headline, plainLimitations, pname, stripCodes } from '../lib/data';
+import { Ev, Icon } from '../components/ui';
+import { useCopy } from '../lib/useCopy';
+import { DEADLINE_RULE, asNum, headline, plainLimitations, pname, stripCodes } from '../lib/data';
 import { fmt, fmtDate, pct, pctRange, sig2, signed } from '../lib/format';
 import { useApp } from '../lib/store';
 
@@ -14,6 +15,7 @@ export function MethodDrawer() {
   const { data, drawer, set } = useApp();
   const m = data!.metrics, man = data!.manifest, fr = data!.forecast, g = data!.grid;
   const hd = headline(m);
+  const copy = useCopy();
   const a = man.assumptions;
   const h2 = m.h2;
   const h2b4 = h2.intervals['4'];
@@ -37,7 +39,7 @@ export function MethodDrawer() {
             <div>
               <Dialog.Title className="t-20" style={{ margin: 0 }}>Method and evidence</Dialog.Title>
               <Dialog.Description id="method-desc" className="t-12 ink-2" style={{ margin: '4px 0 0' }}>
-                {SEALED}. Run {man.run_id}, commit {String(man.git_sha).slice(0, 7)}{man.git_clean ? ' (clean)' : ' (dirty tree)'}, snapshot {man.snapshot_id}.
+                {copy.chip}. Run {man.run_id}, commit {String(man.git_sha).slice(0, 7)}{man.git_clean ? ' (clean)' : ' (dirty tree)'}, snapshot {man.snapshot_id}.
               </Dialog.Description>
             </div>
             <Dialog.Close className="iconbtn" aria-label="Close method and evidence"><Icon name="close" /></Dialog.Close>
@@ -50,22 +52,22 @@ export function MethodDrawer() {
                 up to {fmt((asNum(a.allowed_delay_s.SFT) ?? 0) / 3600)} h ({fmt((asNum(a.allowed_delay_s.Eval) ?? 0) / 3600)} h for eval jobs) <Ev e="assumed" />.
                 Emissions are EIA's consumption-basis carbon intensity times energy. Differences between policies are attributed emissions, not a measured change in what the grid emitted.
               </p>
-              <p className="t-13" style={{ margin: '8px 0 0' }} data-testid="validation-line"><b className="fw-600">{VALIDATION_LINE}</b></p>
+              <p className="t-13" style={{ margin: '8px 0 0' }} data-testid={copy.lineTestId}><b className="fw-600">{copy.line}</b></p>
             </Sec>
-            <Sec title="Every policy, the validation cohort">
+            <Sec title={copy.cohortTitle}>
               <div className="t-12 ink-2" style={{ marginBottom: 8 }}>
                 Arrivals {iso(m.covered.arrivals[0])} to {iso(m.covered.arrivals[1])}; jobs then finish by {iso(m.covered.drain[1])}. U − policy is the U total minus the policy's, so positive means the policy emits less.
                 Intervals: 95%, resampling 4-week blocks of the {fmt(m.cohort.n_weeks.value)} weeks. Hover a name for its rule. <Ev e="simulated" />
               </div>
               <div style={{ overflowX: 'auto' }}><PolicyTable m={m} testId="policy-table" /></div>
             </Sec>
-            <Sec title="Forecast choice barely matters here; placement dominates">
+            <Sec title={copy.validationReadings ? 'Forecast choice barely matters here; placement dominates' : 'The pre-registered forecast test'}>
               <p className="t-13" style={{ margin: 0 }}>
                 The pre-registered forecast test, whether {pname('L')} beats {pname('W')}, is <b className="fw-600">{h2.direction === 'inconclusive' || h2.decided === false || h2.direction == null ? 'inconclusive' : h2.direction}</b>:
                 W − L = {signed(h2b4.diff_kg.value / 1000, 1)} t CO₂, 95% interval [{signed(h2b4.diff_kg_ci95.value[0] / 1000, 1)}, {signed(h2b4.diff_kg_ci95.value[1] / 1000, 1)}] t; {stripCodes(h2.reason ?? '')}. <Ev e="simulated" />
               </p>
               <p className="t-13 ink-2" style={{ margin: '8px 0 0' }}>
-                Waiting in Utah alone saves {pctRange(hd.timing.lo, hd.timing.hi)}%; nearly all of the saving comes from moving work, mostly to the Northwest. A per-job search, even with hindsight, is not a best plan for the whole year: holding scarce Northwest slots for cleaner hours can push later jobs to dirtier sites.
+                Waiting in Utah alone saves {pctRange(hd.timing.lo, hd.timing.hi)}%{copy.validationReadings ? '; nearly all of the saving comes from moving work, mostly to the Northwest' : ''}. A per-job search, even with hindsight, is not a best plan for {copy.wholeYear}: holding scarce Northwest slots for cleaner hours can push later jobs to dirtier sites.
               </p>
             </Sec>
             {data!.ext ? <Sec title="Robustness and sensitivity checks">
@@ -85,7 +87,7 @@ export function MethodDrawer() {
             </Sec>
             <Sec title="Forecasts in the replay week">
               <p className="t-13" style={{ margin: 0 }}>
-                Forecasts are issued daily at 10 AM Denver time for the next day, from data at least four days old. Mean absolute error in the replay week: {(['K', 'W', 'L'] as const).map((k, i) => <span key={k}>{i ? '; ' : ''}{pname(k)} {fmt(fr.week_errors[k].mae.value)} g/kWh</span>)}. Over the selection period: {(['K', 'W', 'L'] as const).map((k, i) => <span key={k}>{i ? '; ' : ''}{pname(k)} {fmt(fr.selection_mae[k].value)}</span>)}. <Ev e="measured" />
+                Forecasts are issued daily at 10 AM Denver time for the next day, from data at least four days old. Mean absolute error in the replay week: {(['K', 'W', 'L'] as const).map((k, i) => <span key={k}>{i ? '; ' : ''}{pname(k)} {fmt(fr.week_errors[k].mae.value)} g/kWh</span>)}. {copy.periodMae}: {(['K', 'W', 'L'] as const).map((k, i) => <span key={k}>{i ? '; ' : ''}{pname(k)} {fmt((fr.test_mae ?? fr.selection_mae)[k].value)}</span>)}. <Ev e="measured" />
               </p>
             </Sec>
             <Sec title="Assumptions">
@@ -141,8 +143,8 @@ export function MethodDrawer() {
             </Sec>
             <Sec title="Reproduce">
               <code className="t-12 block" style={{ padding: 8, borderRadius: 8, background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--hair-2)' }}>{man.reproduce}</code>
-              <code className="t-12 block" style={{ padding: 8, borderRadius: 8, background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--hair-2)', marginTop: 4 }}>make profile  # results/grid-profile.json and workload-profile.json</code>
-              <code className="t-12 block" style={{ padding: 8, borderRadius: 8, background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--hair-2)', marginTop: 4 }}>make storage RUN_DIR=…  # results/storage.json (illustrative)</code>
+              {copy.validationReadings ? <code className="t-12 block" style={{ padding: 8, borderRadius: 8, background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--hair-2)', marginTop: 4 }}>make profile  # results/grid-profile.json and workload-profile.json</code> : null}
+              {copy.validationReadings ? <code className="t-12 block" style={{ padding: 8, borderRadius: 8, background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--hair-2)', marginTop: 4 }}>make storage RUN_DIR=…  # results/storage.json (illustrative)</code> : null}
             </Sec>
           </div>
         </Dialog.Content>

@@ -4,6 +4,7 @@ import { test, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { openTestYear, serveTestFixture } from './fixture-route';
 
 const out = process.env.SHOTS_DIR ?? join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'docs', 'design', 'shots-build');
 mkdirSync(out, { recursive: true });
@@ -18,6 +19,9 @@ const STATES: { name: string; hash: string; prep?: (p: Page) => Promise<void> }[
   ...[1, 2, 3, 4, 5, 6].map((n) => ({ name: `story-${n}`, hash: `#story-${n}`, prep: async (p: Page) => { await p.waitForTimeout(900); } })),
   { name: 'method', hash: '#control', prep: async (p) => { await p.getByRole('button', { name: 'Method & evidence' }).click(); await p.waitForTimeout(300); } },
   { name: 'method-checks', hash: '#control', prep: async (p) => { await p.getByRole('button', { name: 'Method & evidence' }).click(); await p.waitForTimeout(300); await p.getByTestId('method-extensions').scrollIntoViewIfNeeded(); await p.waitForTimeout(300); } },
+  // T11: the test-year state on the SYNTHETIC fixture (never real test results)
+  { name: 'fixture-test-control', hash: '#control', prep: async (p) => { await openTestYear(p); await p.waitForTimeout(1200); } },
+  { name: 'fixture-test-method', hash: '#control', prep: async (p) => { await openTestYear(p); await p.waitForTimeout(800); await p.getByRole('button', { name: 'Method & evidence' }).click(); await p.waitForTimeout(300); } },
 ];
 
 for (const s of SIZES) {
@@ -25,6 +29,7 @@ for (const s of SIZES) {
     if (only && !only.some((o) => st.name.startsWith(o))) continue;
     test(`${st.name} ${s.w}`, async ({ page }) => {
       await page.setViewportSize({ width: s.w, height: s.h });
+      if (st.name.startsWith('fixture-test')) await serveTestFixture(page);
       await page.goto('./' + st.hash);
       await page.locator('.mk-region').first().waitFor({ state: 'attached', timeout: 20_000 });
       await page.waitForTimeout(1200);

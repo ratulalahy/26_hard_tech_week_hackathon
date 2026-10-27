@@ -3,7 +3,9 @@ import { IntervalChart, Panel, PolicyTable } from '../components/charts';
 import { extRows, placementSpan } from '../components/extensions';
 import { ImportChart, StorageCurve, hourSpans, storageFacts } from '../components/storage';
 import { Ev, EvCI, Icon } from '../components/ui';
-import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, VALIDATION_LINE, asNum, dayCurve, headline, loadMonth, pname, type Core, type Json } from '../lib/data';
+import { cap } from '../lib/copy';
+import { useCopy } from '../lib/useCopy';
+import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, headline, loadMonth, pname, type Core, type Json } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
 import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange, sig2 } from '../lib/format';
 import { useViewport } from '../lib/useViewport';
@@ -19,6 +21,7 @@ export function Story() {
   const { data, step, month, set } = useApp();
   const m = data!.metrics, g = data!.grid, wl = data!.workload;
   const h = headline(m);
+  const copy = useCopy();
   const curve = dayCurve(g, 'PACE', month);
   const rush = rushHours(g), clean = cleanest(curve);
   const jul = g.pace_july_weekday, lm = loadMonth(g);
@@ -58,12 +61,12 @@ export function Story() {
   const steps: { t: string; body: React.ReactNode; ev: React.ReactNode }[] = [
     {
       t: "Utah's grid has a rush hour, and it comes after sunset",
-      body: <>On a {lm.short} weekday demand peaks at {fmtHour(argmax(jul.demand_mw.value))}. Then the sun sets and solar drops away, so net load, the load the rest of the fleet must carry, keeps climbing to {fmtHour(argmax(net))} ({fmt(net[argmax(net)])} MW). All year, the {fmt(k)} highest net-load hours fall on {monthSpan} evenings, mostly {spanLabel(rush)}. The cleanest hours are {spanLabel(clean)}, while the sun is up.</>,
+      body: <>On a {lm.short} weekday demand peaks at {fmtHour(argmax(jul.demand_mw.value))}. Then the sun sets and solar drops away, so net load, the load the rest of the fleet must carry, keeps climbing to {fmtHour(argmax(net))} ({fmt(net[argmax(net)])} MW). {cap(copy.allYear)}, the {fmt(k)} highest net-load hours fall on {monthSpan} evenings, mostly {spanLabel(rush)}. The cleanest hours are {spanLabel(clean)}, while the sun is up.</>,
       ev: <><Ev e="observed">load: EIA-930</Ev><EvCI /></>,
     },
     {
       t: "Tomorrow's report: forecasts catch the daily swing",
-      body: <>Each day at 10 AM, three forecasts predict tomorrow's carbon in Utah from data that is at least four days old: {pname('K')}, {pname('W')} and {pname('L')}. All three follow the swing between night and midday; none is clearly better than the others.</>,
+      body: <>Each day at 10 AM, three forecasts predict tomorrow's carbon in Utah from data that is at least four days old: {pname('K')}, {pname('W')} and {pname('L')}. {copy.validationReadings ? 'All three follow the swing between night and midday; none is clearly better than the others.' : 'Their errors over the test year are in the method drawer.'}</>,
       ev: <><Ev e="forecast" /><Ev e="measured">errors</Ev></>,
     },
     {
@@ -72,18 +75,18 @@ export function Story() {
       ev: <><Ev e="measured">job size</Ev><Ev e="modeled">option CO₂</Ev><Ev e="simulated">placements</Ev></>,
     },
     {
-      t: `Place the work: over the year, ${pct(topDest[1] / remoteTot, 0)}% of the moved energy went to ${REGION[topDest[0]].name === 'Northwest hydro' ? 'the Northwest' : REGION[topDest[0]].name}`,
-      body: <>Over the year, {pname('W')} ran {remote.map(([d, v]) => `${pct(v / remoteTot, 0)}% of its moved energy in ${REGION[d].name}`).join(', ')}. {weekTop && weekTop.to !== topDest[0] ? <>The replay week shown on the map is different: {REGION[weekTop.to as Core].name} took more GPU-hours that week. </> : null}In that week it sent {DESTS.map((d) => { const a = w.arcs.find((x: Json) => x.to === d); return a ? `${fmt(a.gpu_h.value)} GPU-h to ${REGION[d].name}` : null; }).filter(Boolean).join(', ')}. Over the year it moved {pct(wyear.moved_share_jobs.value)}% of jobs and ran {pct(wyear.remote_energy_share.value)}% of the energy outside Utah, with {fmt(wyear.late_jobs.value)} late jobs.</>,
-      ev: <Ev e="simulated">energy by site, all year; arcs, one week</Ev>,
+      t: `Place the work: ${copy.overYear}, ${pct(topDest[1] / remoteTot, 0)}% of the moved energy went to ${REGION[topDest[0]].name === 'Northwest hydro' ? 'the Northwest' : REGION[topDest[0]].name}`,
+      body: <>{cap(copy.overYear)}, {pname('W')} ran {remote.map(([d, v]) => `${pct(v / remoteTot, 0)}% of its moved energy in ${REGION[d].name}`).join(', ')}. {weekTop && weekTop.to !== topDest[0] ? <>The replay week shown on the map is different: {REGION[weekTop.to as Core].name} took more GPU-hours that week. </> : null}In that week it sent {DESTS.map((d) => { const a = w.arcs.find((x: Json) => x.to === d); return a ? `${fmt(a.gpu_h.value)} GPU-h to ${REGION[d].name}` : null; }).filter(Boolean).join(', ')}. {cap(copy.overYear)} it moved {pct(wyear.moved_share_jobs.value)}% of jobs and ran {pct(wyear.remote_energy_share.value)}% of the energy outside Utah, with {fmt(wyear.late_jobs.value)} late jobs.</>,
+      ev: <Ev e="simulated">{`energy by site, ${copy.allYear}; arcs, one week`}</Ev>,
     },
     {
       t: 'The count: moving beats waiting',
-      body: <span data-testid="story-result">Over the validation year, the four placement policies cut attributed CO₂ by <b className="fw-600">{pctRange(h.placement.lo, h.placement.hi)}%</b> against U local (stay in Utah), with {DEADLINES_MET} and the same work done. Waiting in Utah alone cut <b className="fw-600">{pctRange(h.timing.lo, h.timing.hi)}%</b>. Forecast choice barely matters; placement dominates. Most jobs are tiny, but most of the energy, and most of the saving, sits in a few large jobs: the largest {pct(top1.fraction.value, 0)}% of jobs use {pct(top1.energy_share.value, 0)}% of the energy and carry {pct(top1.saving_share.value, 0)}% of the saving.<span className="block t-12 ink-3" style={{ marginTop: 8 }} data-testid="story-frame">{FRAME_LINE}</span></span>,
+      body: <span data-testid="story-result">{copy.over}, the four placement policies cut attributed CO₂ by <b className="fw-600">{pctRange(h.placement.lo, h.placement.hi)}%</b> against U local (stay in Utah), with {DEADLINES_MET} and the same work done. Waiting in Utah alone cut <b className="fw-600">{pctRange(h.timing.lo, h.timing.hi)}%</b>.{copy.validationReadings ? ' Forecast choice barely matters; placement dominates.' : ''} Most jobs are tiny, but most of the energy, and most of the saving, sits in a few large jobs: the largest {pct(top1.fraction.value, 0)}% of jobs use {pct(top1.energy_share.value, 0)}% of the energy and carry {pct(top1.saving_share.value, 0)}% of the saving.<span className="block t-12 ink-3" style={{ marginTop: 8 }} data-testid="story-frame">{FRAME_LINE}</span></span>,
       ev: <><Ev e="simulated">{fmt(m.cohort.n_jobs.value)} jobs, 95% intervals</Ev><Ev e="measured">job sizes</Ev></>,
     },
     {
       t: "Move what you can, store for what you can't",
-      body: sf ? <span data-testid="story-storage">Moving cuts {pctRange(h.placement.lo, h.placement.hi)}%, but only if large multi-node jobs can move; {spanMob ? <>if only jobs of 8 GPUs or fewer may, it falls to {pctRange(spanMob[0], spanMob[1])}%</> : 'the small-jobs-only check did not run'}. For work that stays, a battery can shift its energy instead. <b className="fw-600" data-testid="storage-headline">{/^(8|11|18)/.test(String(sf.E)) ? 'An' : 'A'} {fmt(sf.E)} MWh, {fmt(sf.P)} MW battery cuts the Utah cluster's CO₂ by {pct(sf.cutA, 1)}%</b> on a fixed daily schedule; charging is limited to the roughly {fmt(sf.headroomLo, 1)}–{fmt(sf.headroomMid, 1)} MW the site connection leaves free. <span data-testid="storage-combined">Moving the small jobs and storing for the big ones cuts <b className="fw-600">{pct(sf.moveStoreA, 1)}%</b> against {pname('U')}.</span> <b className="fw-600 block" style={{ marginTop: 8 }} data-testid="storage-skeptic">On a flat marginal basis it may add about {sig2(sf.flatAddT)} t: storage only helps if charging carbon ÷ η &lt; displaced carbon.</b></span> : <>{VALIDATION_LINE}</>,
+      body: sf ? <span data-testid="story-storage">Moving cuts {pctRange(h.placement.lo, h.placement.hi)}%, but only if large multi-node jobs can move; {spanMob ? <>if only jobs of 8 GPUs or fewer may, it falls to {pctRange(spanMob[0], spanMob[1])}%</> : 'the small-jobs-only check did not run'}. For work that stays, a battery can shift its energy instead. <b className="fw-600" data-testid="storage-headline">{/^(8|11|18)/.test(String(sf.E)) ? 'An' : 'A'} {fmt(sf.E)} MWh, {fmt(sf.P)} MW battery cuts the Utah cluster's CO₂ by {pct(sf.cutA, 1)}%</b> on a fixed daily schedule; charging is limited to the roughly {fmt(sf.headroomLo, 1)}–{fmt(sf.headroomMid, 1)} MW the site connection leaves free. <span data-testid="storage-combined">Moving the small jobs and storing for the big ones cuts <b className="fw-600">{pct(sf.moveStoreA, 1)}%</b> against {pname('U')}.</span> <b className="fw-600 block" style={{ marginTop: 8 }} data-testid="storage-skeptic">On a flat marginal basis it may add about {sig2(sf.flatAddT)} t: storage only helps if charging carbon ÷ η &lt; displaced carbon.</b></span> : <>{copy.line}</>,
       ev: <><span className="chip-neutral">illustrative · not the registered result</span><EvCI /><Ev e="simulated">dispatch</Ev><Ev e="assumed">battery, schedule</Ev><button className="btn" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button></>,
     },
   ];

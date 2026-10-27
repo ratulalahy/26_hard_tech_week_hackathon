@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from 'react';
 import { setMid } from './lib/color';
-import { Icon, SEALED } from './components/ui';
+import { Icon } from './components/ui';
+import { testOptionLabel, windowCopy, type EvalWindow } from './lib/copy';
 import { DESTS, asNum, dayCurve, type Core } from './lib/data';
-import { loadResults } from './lib/data';
+import { loadIndex, loadResults } from './lib/data';
 import { fmtHour, monthLabel } from './lib/format';
 import { VIEWS, useApp } from './lib/store';
 import { WestMap, type ArcSpec } from './map/WestMap';
@@ -14,14 +15,27 @@ import { Story } from './views/Story';
 import { useViewport } from './lib/useViewport';
 
 export function App() {
-  const { data, error, view, set } = useApp();
+  const { data, error, view, evalWindow, set } = useApp();
   useEffect(() => {
-    // the allowed wait starts at the registered flexible-job delay (manifest, assumed)
-    loadResults().then((d) => {
-      setMid(asNum(d.grid.reference?.us_avg_ci)); // the diverging midpoint: EIA's 2024 US average
-      set({ data: d, maxWait: Math.round((asNum(d.manifest.assumptions.allowed_delay_s.SFT) ?? 21600) / 3600) });
-    }).catch((e) => set({ error: String(e) }));
+    loadIndex().then((idx) => set({ testIndex: idx.test ?? null }));
   }, [set]);
+  useEffect(() => {
+    // One window's results at a time (T11 B6): validation, or the sealed test year once it is run.
+    let live = true;
+    set({ data: null, error: null });
+    // the allowed wait starts at the registered flexible-job delay (manifest, assumed)
+    loadResults(evalWindow).then((d) => {
+      if (!live) return;
+      setMid(asNum(d.grid.reference?.us_avg_ci)); // the diverging midpoint: EIA's 2024 US average
+      const month = useApp.getState().month;
+      set({
+        data: d, maxWait: Math.round((asNum(d.manifest.assumptions.allowed_delay_s.SFT) ?? 21600) / 3600),
+        // keep the month when this window has it; otherwise its weekday-load month
+        month: d.grid.months.includes(month) ? month : (d.grid.pace_july_weekday?.month ?? d.grid.months[0]),
+      });
+    }).catch((e) => { if (live) set({ error: String(e) }); });
+    return () => { live = false; };
+  }, [evalWindow, set]);
 
   return (
     <>
@@ -95,13 +109,34 @@ function TopBar() {
         ))}
       </nav>
       <div className="ml-auto flex items-center gap-2">
-        <span className="t-11 ink-2 fw-500 inline-flex items-center gap-2 whitespace-nowrap" style={{ padding: '0 8px', height: 24, borderRadius: 8, boxShadow: 'inset 0 0 0 1px var(--hair)' }}>
-          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" /><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" /></svg>
-          {SEALED}
-        </span>
+        <WindowSwitch />
         <button className="btn whitespace-nowrap" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button>
       </div>
     </header>
+  );
+}
+
+const Lock = () => (
+  <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5" /><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" /></svg>
+);
+
+/** The evaluation-window switch (T11 B6): the validation year, or the sealed test year. The test option is
+ * enabled only when copy-data found results/test/manifest.json. The status line of the window shown is its
+ * accessible description. */
+function WindowSwitch() {
+  const { evalWindow, testIndex, data, set } = useApp();
+  const testOn = !!testIndex?.available;
+  const pick = (w: EvalWindow) => () => { if (w !== evalWindow) set({ evalWindow: w, drawer: false }); };
+  const status = data ? windowCopy(evalWindow, data.manifest).chip : '';
+  return (
+    <div className="seg" role="radiogroup" aria-label="Evaluation window" aria-describedby="window-status" data-testid="window-switch">
+      <span id="window-status" hidden>{status}</span>
+      <button role="radio" aria-checked={evalWindow === 'validation'} onClick={pick('validation')}>Validation year</button>
+      <button role="radio" aria-checked={evalWindow === 'test'} disabled={!testOn} onClick={pick('test')}
+        title={testOn ? 'The sealed test year, evaluated once after the configuration freeze' : 'Sealed: the test year is evaluated once, after the configuration freeze, through the logged entry point'}>
+        <Lock />{testOptionLabel(testIndex?.frozen_at)}
+      </button>
+    </div>
   );
 }
 
@@ -118,10 +153,12 @@ function Mark() {
 }
 
 function Footer() {
+  const { data, evalWindow } = useApp();
+  const c = windowCopy(data ? evalWindow : 'validation', data?.manifest);
   return (
     <footer className="fixed z-20 flex gap-4 t-11 ink-3 whitespace-nowrap overflow-hidden" style={{ left: 24, right: 24, bottom: 4, height: 16 }}>
-      <span className="min-[1600px]:hidden">Hours in America/Denver time. Validation year data.</span>
-      <span className="hidden min-[1600px]:inline"><b className="fw-500 ink-2">Data:</b> EIA-930 hourly balance and EIA consumption-basis CO₂, validation year (Nov 2024 – Oct 2025). Jobs: simulated replay of a measured trace. Hours are America/Denver.</span>
+      <span className="min-[1600px]:hidden">{c.footShort}</span>
+      <span className="hidden min-[1600px]:inline"><b className="fw-500 ink-2">Data:</b> {c.footLong} Jobs: simulated replay of a measured trace. Hours are America/Denver.</span>
       <span className="ml-auto">BA boundaries © Electricity Maps contributors (AGPL-3.0). BA codes: U.S. EIA Form EIA-930. Basemap: Natural Earth.</span>
     </footer>
   );

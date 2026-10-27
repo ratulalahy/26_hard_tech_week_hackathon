@@ -20,9 +20,11 @@ notebooks:
 # The registered validation run (phase 0) and the results export (Task 7): writes
 # runs/slice/<UTC>/ and copies the evidence-enveloped artifacts into results/.
 # WINDOW=fallback runs the 91-day fallback window (never the registered selection).
+# WINDOW=test opens the sealed test window once, after the freeze (Stage 3 T11/T13); it refuses
+# otherwise. ARGS='--rerun-reason "<text>"' reruns over a completed test run (logged).
 WINDOW ?= validation
 slice:
-	cd lab && uv run python scripts/run_slice.py --window $(WINDOW)
+	cd lab && uv run python scripts/run_slice.py --window $(WINDOW) $(ARGS)
 
 # The D-058 extensions (Stage 3 T10, validation only). `ext-runs` runs the seven extension
 # scenarios, one process each in parallel, into runs/ext/<name>/<UTC>/ with the registered run's

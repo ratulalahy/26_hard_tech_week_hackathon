@@ -8,6 +8,7 @@ dependencies = [
     "geopandas",
     "gridstatus",
     "httpx",
+    "jsonschema>=4.26.0",
     "matplotlib",
     "numpy",
     "pandas",
