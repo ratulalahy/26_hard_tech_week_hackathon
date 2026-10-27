@@ -20,11 +20,11 @@ T12r,Review,Review rebuild + freeze record,Claude reviewer,queued,T12,Tue 20:30,
 FZ,Freeze,Write freeze.json on main + tag config-freeze,Claude lead,queued,T12r,Tue 21:15,Tue 21:30,,tag config-freeze,Go/no-go check
 T13,Test,Sealed test year: one logged run + export,Claude lead,queued,FZ,Tue 21:30,Tue 22:15,,results/test + test_reads.jsonl,Opened exactly once (D-059)
 AP,Audit,"Audit packet: final candidate, run IDs, hashes, read log, known deferrals",Claude lead,queued,T13,Tue 22:15,Tue 22:45,,docs/reviews/audit-packet.md,Astra F28
-T14,Post-test,Water footprint (illustrative),Claude agent,in progress,T10b,Tue 15:21,Tue 20:00,,PR (merge after T13),NREL factors x fuel mix; heavy caveats
+T14,Post-test,Water footprint (illustrative),Claude agent,done,T10b,Tue 15:21,Tue 20:00,Tue 15:41,PR #69 (merge after T13),"Water sign depends on hydro evaporation: -20% without, about +145% with; no water-saving claim"
 T14r,Review,Review T14 (water),Claude reviewer,queued,T14,,Tue 21:00,,,Merge after T13
 T16,Post-test,Utah's toughest grid days case study (pre-registered top-3 net-load days),Claude agent,queued,T11,Tue ~17:30,Tue 20:30,,PR (merge after T13),D-066; cut after water if time is short
 T16r,Review,Review T16 (toughest days),Claude reviewer,queued,T16,,Tue 22:30,,,Merge after T13; cut second if short
-T17,Evidence,Assumptions vs reality: notebook + results/assumptions.json + drawer section,Claude agent,queued,,next free slot,Tue 20:30,,notebooks/40_assumptions_and_reality.ipynb,D-068; notebook may merge pre-freeze; UI part after T13
+T17,Evidence,Assumptions vs reality: notebook + results/assumptions.json + drawer section,Claude agent,in progress,,Tue 15:41,Tue 18:00 (notebook) / 19:30 (UI),,notebooks/40_assumptions_and_reality.ipynb,D-068; notebook may merge pre-freeze; UI part after T13
 T17r,Review,Review T17 (assumptions notebook),Claude reviewer,queued,T17,,Tue 21:00,,,Before freeze if ready
 MG,Post-test,Merge T15 + T14 + T16 after review; rebuild dashboard with test view,Claude lead,queued,T13;T15;T14;T16,Tue 22:15,Wed 00:30,,dashboard + artifact link,
 AU,Audit,Astra results audit (Codex),Codex,queued,AP,Tue 23:00,Wed 01:00,,docs/reviews/*results-audit*,Runs overnight; pre-approved
