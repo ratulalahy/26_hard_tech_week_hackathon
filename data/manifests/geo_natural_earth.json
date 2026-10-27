@@ -1,0 +1,279 @@
+{
+  "source": "Natural Earth 1:10m and 1:50m vectors, 1:50m shaded relief",
+  "base_url": "https://naciscdn.org/naturalearth",
+  "license": "Public domain. Natural Earth terms of use: 'All versions of Natural Earth raster + vector map data found on this website are in the public domain. You may use the maps in any manner ... No permission is needed to use Natural Earth. Crediting the authors is unnecessary.' https://www.naturalearthdata.com/about/terms-of-use/",
+  "attribution": "Made with Natural Earth. Free vector and raster map data @ naturalearthdata.com.",
+  "files": [
+    {
+      "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_land.zip",
+      "path": "raw/geo/natural_earth/ne_10m_land/ne_10m_land.zip",
+      "retrieved_at": "2026-10-27T05:07:44Z",
+      "bytes": 3269070,
+      "sha256": "e547d749445eaa0964aba76738090ec88f5e63c4585122170f98c67a7ea922dc",
+      "license": "Public domain. Natural Earth terms of use: 'All versions of Natural Earth raster + vector map data found on this website are in the public domain. You may use the maps in any manner ... No permission is needed to use Natural Earth. Crediting the authors is unnecessary.' https://www.naturalearthdata.com/about/terms-of-use/",
+      "file": "ne_10m_land.zip"
+    },
+    {
+      "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_coastline.zip",
+      "path": "raw/geo/natural_earth/ne_10m_coastline/ne_10m_coastline.zip",
+      "retrieved_at": "2026-10-27T05:07:45Z",
+      "bytes": 3069451,
+      "sha256": "bfa04cdbcbef07ef90dfca1dabb48062eca29900a113df0f389303e255484017",
+      "license": "Public domain. Natural Earth terms of use: 'All versions of Natural Earth raster + vector map data found on this website are in the public domain. You may use the maps in any manner ... No permission is needed to use Natural Earth. Crediting the authors is unnecessary.' https://www.naturalearthdata.com/about/terms-of-use/",
+      "file": "ne_10m_coastline.zip"
+    },
+    {
+      "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_lakes.zip",
+      "path": "raw/geo/natural_earth/ne_10m_lakes/ne_10m_lakes.zip",
+      "retrieved_at": "2026-10-27T05:07:47Z",
+      "bytes": 2349685,
+      "sha256": "0803a06f9c3cb4671d89b68c48b142aad9366ba40f665245e12a913fbc61722a",
+      "license": "Public domain. Natural Earth terms of use: 'All versions of Natural Earth raster + vector map data found on this website are in the public domain. You may use the maps in any manner ... No permission is needed to use Natural Earth. Crediting the authors is unnecessary.' https://www.naturalearthdata.com/about/terms-of-use/",
+      "file": "ne_10m_lakes.zip"
+    },
+    {
+      "url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_rivers_lake_centerlines.zip",
+      "path": "raw/geo/natural_earth/ne_10m_rivers_lake_centerlines/ne_10m_rivers_lake_centerlines.zip",
+      "retrieved_at": "2026-10-27T05:07:48Z",
+      "bytes": 2079507,
+      "sha256": "ded71b01870855ccfe19b51f2ec14c9bb48fae23c0e9f3c11974d426433b5c38",
+      "license": "Public domain. Natural Earth terms of use: 'All versions of Natural Earth raster + vector map data found on this website are in the public domain. You may use the maps in any manner ... No permission is needed to use Natural Earth. Crediting the authors is unnecessary.' https://www.naturalearthdata.com/about/terms-of-use/",
+      "file": "ne_10m_rivers_lake_centerlines.zip"
+    },
+    {
+      "url": "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_urban_areas.zip",
+      "path": "raw/geo/natural_earth/ne_10m_urban_areas/ne_10m_urban_areas.zip",
+      "retrieved_at": "2026-10-27T05:07:51Z",
+      "bytes": 13097698,
+      "sha256": "2c593114e954ce1adb297ddee5465f05d9e81fa0a26deb13f8500d58a00d7051",
+      "license": "Public domain. Natural Earth terms of use: 'All versions of Natural Earth raster + vector map data found on this website are in the public domain. You may use the maps in any manner ... No permission is needed to use Natural Earth. Crediting the authors is unnecessary.' https://www.naturalearthdata.com/about/terms-of-use/",
+      "file": "ne_10m_urban_areas.zip"
+    },
+    {
+      "url": "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_populated_places.zip",
+      "path": "raw/geo/natural_earth/ne_10m_populated_places/ne_10m_populated_places.zip",
+      "retrieved_at": "2026-10-27T05:07:52Z",
+      "bytes": 2811199,
+      "sha256": "cd149186f03d2603e0410da399b980a4357d0ac32d3a2305a49ed3dffcc41d7b",
+      "license": "Public domain. Natural Earth terms of use: 'All versions of Natural Earth raster + vector map data found on this website are in the public domain. You may use the maps in any manner ... No permission is needed to use Natural Earth. Crediting the authors is unnecessary.' https://www.naturalearthdata.com/about/terms-of-use/",
+      "file": "ne_10m_populated_places.zip"
+    },
+    {
+      "url": "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_roads.zip",
+      "path": "raw/geo/natural_earth/ne_10m_roads/ne_10m_roads.zip",
+      "retrieved_at": "2026-10-27T05:07:54Z",
+      "bytes": 9075919,
+      "sha256": "880b235383a1e1ccf33f4ea6f82b6755a2ffbce07e3974e412b43e88fe954ae9",
+      "license": "Public domain. Natural Earth terms of use: 'All versions of Natural Earth raster + vector map data found on this website are in the public domain. You may use the maps in any manner ... No permission is needed to use Natural Earth. Crediting the authors is unnecessary.' https://www.naturalearthdata.com/about/terms-of-use/",
+      "file": "ne_10m_roads.zip"
+    },
+    {
+      "url": "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_1_states_provinces_lakes.zip",
+      "path": "raw/geo/natural_earth/ne_10m_admin_1_states_provinces_lakes/ne_10m_admin_1_states_provinces_lakes.zip",
+      "retrieved_at": "2026-10-27T05:07:57Z",
+      "bytes": 15057498,
+      "sha256": "7c41f8aa2827c6cfbd458faff584119bb3a628047f0c4b45cff5fa071cc8a11b",
+      "license": "Public domain. Natural Earth terms of use: 'All versions of Natural Earth raster + vector map data found on this website are in the public domain. You may use the maps in any manner ... No permission is needed to use Natural Earth. Crediting the authors is unnecessary.' https://www.naturalearthdata.com/about/terms-of-use/",
+      "file": "ne_10m_admin_1_states_provinces_lakes.zip"
+    },
+    {
+      "url": "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_1_states_provinces_lines.zip",
+      "path": "raw/geo/natural_earth/ne_10m_admin_1_states_provinces_lines/ne_10m_admin_1_states_provinces_lines.zip",
+      "retrieved_at": "2026-10-27T05:07:58Z",
+      "bytes": 5993148,
+      "sha256": "86acd56ce6c0e47f5fa79725591533b5766f26d6ed1437b086f2b8d4028fe456",
+      "license": "Public domain. Natural Earth terms of use: 'All versions of Natural Earth raster + vector map data found on this website are in the public domain. You may use the maps in any manner ... No permission is needed to use Natural Earth. Crediting the authors is unnecessary.' https://www.naturalearthdata.com/about/terms-of-use/",
+      "file": "ne_10m_admin_1_states_provinces_lines.zip"
+    },
+    {
+      "url": "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_countries_lakes.zip",
+      "path": "raw/geo/natural_earth/ne_10m_admin_0_countries_lakes/ne_10m_admin_0_countries_lakes.zip",
+      "retrieved_at": "2026-10-27T05:08:00Z",
+      "bytes": 5103737,
+      "sha256": "3f1596b05b4a19bd97f3a54731497cffbb4dbed4cda494084e73dd6dd3d37264",
+      "license": "Public domain. Natural Earth terms of use: 'All versions of Natural Earth raster + vector map data found on this website are in the public domain. You may use the maps in any manner ... No permission is needed to use Natural Earth. Crediting the authors is unnecessary.' https://www.naturalearthdata.com/about/terms-of-use/",
+      "file": "ne_10m_admin_0_countries_lakes.zip"
+    },
+    {
+      "url": "https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_0_boundary_lines_land.zip",
+      "path": "raw/geo/natural_earth/ne_10m_admin_0_boundary_lines_land/ne_10m_admin_0_boundary_lines_land.zip",
+      "retrieved_at": "2026-10-27T05:08:00Z",
+      "bytes": 1036202,
+      "sha256": "16ead035f539c8b6c23650c5845d86ad3556553e7456bdf9b4730210f26aacbe",
+      "license": "Public domain. Natural Earth terms of use: 'All versions of Natural Earth raster + vector map data found on this website are in the public domain. You may use the maps in any manner ... No permission is needed to use Natural Earth. Crediting the authors is unnecessary.' https://www.naturalearthdata.com/about/terms-of-use/",
+      "file": "ne_10m_admin_0_boundary_lines_land.zip"
+    },
+    {
+      "url": "https://naciscdn.org/naturalearth/50m/physical/ne_50m_land.zip",
+      "path": "raw/geo/natural_earth/ne_50m_land/ne_50m_land.zip",
+      "retrieved_at": "2026-10-27T05:08:01Z",
+      "bytes": 457183,
+      "sha256": "0b8e670cf80dce9cbebe2a193bc44ba5602758c22e1fa603980553646d7ff162",
+      "license": "Public domain. Natural Earth terms of use: 'All versions of Natural Earth raster + vector map data found on this website are in the public domain. You may use the maps in any manner ... No permission is needed to use Natural Earth. Crediting the authors is unnecessary.' https://www.naturalearthdata.com/about/terms-of-use/",
+      "file": "ne_50m_land.zip"
+    },
+    {
+      "url": "https://naciscdn.org/naturalearth/50m/raster/SR_50M.zip",
+      "path": "raw/geo/natural_earth/SR_50M/SR_50M.zip",
+      "retrieved_at": "2026-10-27T05:08:03Z",
+      "bytes": 11380369,
+      "sha256": "ff810f5f2747463fd8ffa612b23e5f5e5d593a345218976872b6749610976ab7",
+      "license": "Public domain. Natural Earth terms of use: 'All versions of Natural Earth raster + vector map data found on this website are in the public domain. You may use the maps in any manner ... No permission is needed to use Natural Earth. Crediting the authors is unnecessary.' https://www.naturalearthdata.com/about/terms-of-use/",
+      "file": "SR_50M.zip"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "processed/geo/basemap/land.geojson",
+      "bytes": 617382,
+      "sha256": "9822238b317718c1fbf0a395fc5b1b2d3691c0d75eb9d260661e0d4a89b3e9f1",
+      "layer": "land",
+      "source": "ne_10m_land",
+      "features": 9,
+      "vertices": 32034,
+      "note": "1:10m land, clipped to the basemap frame"
+    },
+    {
+      "path": "processed/geo/basemap/land_context.geojson",
+      "bytes": 241003,
+      "sha256": "908383654526dcb1d01db22b933a2d1d7f3f08c478d738d5d0180866d9707f76",
+      "layer": "land_context",
+      "source": "ne_50m_land",
+      "features": 385,
+      "vertices": 11747,
+      "note": "1:50m land for a wider frame; draw under `land` so a pitched camera never sees an edge"
+    },
+    {
+      "path": "processed/geo/basemap/coastline.geojson",
+      "bytes": 633679,
+      "sha256": "6e3cf0135b5e8ec9b798cfe91686ac6f5e8bfabe8e944874c4348e1770b74cd3",
+      "layer": "coastline",
+      "source": "ne_10m_coastline",
+      "features": 617,
+      "vertices": 29976,
+      "note": "1:10m coastline lines (ocean = map background)"
+    },
+    {
+      "path": "processed/geo/basemap/lakes.geojson",
+      "bytes": 497778,
+      "sha256": "b4074c4b78e79a0a6ecbea5f2985d37ce19fd3b559a780c1332a9bc9ca0a7206",
+      "layer": "lakes",
+      "source": "ne_10m_lakes",
+      "features": 385,
+      "vertices": 22876,
+      "note": "1:10m lakes and reservoirs with min_zoom <= 7"
+    },
+    {
+      "path": "processed/geo/basemap/rivers.geojson",
+      "bytes": 299474,
+      "sha256": "9b3454b73cf249fc25cae99fb41a03e1097620d35df4761448f970f0cfa2d081",
+      "layer": "rivers",
+      "source": "ne_10m_rivers_lake_centerlines",
+      "features": 183,
+      "vertices": 14017,
+      "note": "1:10m major rivers (min_zoom <= 6)"
+    },
+    {
+      "path": "processed/geo/basemap/urban_areas.geojson",
+      "bytes": 343006,
+      "sha256": "3dd545c6bd1ca48732c301f064c0b6a805796c8a8cf4c0fe6bd9f32e9b06a0f4",
+      "layer": "urban_areas",
+      "source": "ne_10m_urban_areas",
+      "features": 663,
+      "vertices": 13765,
+      "note": "1:10m urban footprints with min_zoom <= 7"
+    },
+    {
+      "path": "processed/geo/basemap/cities.geojson",
+      "bytes": 61444,
+      "sha256": "bb2509169a1d68979a4a3c60bd254ffb5655f93e5509c20179abc952510e1a87",
+      "layer": "cities",
+      "source": "ne_10m_populated_places",
+      "features": 258,
+      "vertices": 258,
+      "note": "US places with pop_max >= 150k or state/national capitals >= 50k; Canada and Mexico >= 500k or national capital"
+    },
+    {
+      "path": "processed/geo/basemap/roads.geojson",
+      "bytes": 543115,
+      "sha256": "4b68da6099a52039df6505cf66f148858f14e22559e0d8bc06a4e020eab49fb8",
+      "layer": "roads",
+      "source": "ne_10m_roads",
+      "features": 1610,
+      "vertices": 11942,
+      "note": "US Interstates; Canada/Mexico major highways with min_zoom <= 6"
+    },
+    {
+      "path": "processed/geo/basemap/states.geojson",
+      "bytes": 276085,
+      "sha256": "0e1def7bec40f8c76e5414d00868f2339708cd050364e2df72cd1f7b2767f888",
+      "layer": "states",
+      "source": "ne_10m_admin_1_states_provinces_lakes",
+      "features": 49,
+      "vertices": 13970,
+      "note": "Lower-48 states + DC polygons (large lakes cut out), with NE label points"
+    },
+    {
+      "path": "processed/geo/basemap/state_lines.geojson",
+      "bytes": 130721,
+      "sha256": "6fd49a0ae12c1c00e31ce8c353de8d12fe0211bcaab1e1092ccb96c949555b66",
+      "layer": "state_lines",
+      "source": "ne_10m_admin_1_states_provinces_lines",
+      "features": 184,
+      "vertices": 5296,
+      "note": "admin-1 boundary lines for USA, Canada, Mexico"
+    },
+    {
+      "path": "processed/geo/basemap/countries.geojson",
+      "bytes": 679932,
+      "sha256": "ffc6513c1335294417db789c43b44992b32677b67866c1d289f565e7dd87f7d6",
+      "layer": "countries",
+      "source": "ne_10m_admin_0_countries_lakes",
+      "features": 36,
+      "vertices": 35193,
+      "note": "country polygons in the frame (USA, Canada, Mexico, Caribbean, Central America)"
+    },
+    {
+      "path": "processed/geo/basemap/country_borders.geojson",
+      "bytes": 33442,
+      "sha256": "1afc28f516989f8d5fa2716ac412ca13e1bfb8f8256714573fdc862e385089ed",
+      "layer": "country_borders",
+      "source": "ne_10m_admin_0_boundary_lines_land",
+      "features": 21,
+      "vertices": 1505,
+      "note": "international land borders in the frame"
+    },
+    {
+      "path": "processed/geo/basemap/relief.png",
+      "bytes": 916764,
+      "sha256": "437d2b1683fa696a6045b0797c0077434bad452536f19a7802bf8f57d80c8286",
+      "layer": "relief",
+      "source": "SR_50M",
+      "width": 2048,
+      "height": 1489
+    },
+    {
+      "path": "processed/geo/basemap/relief.json",
+      "bytes": 826,
+      "sha256": "c8daaf0bedab16edbb12a337c6cef3642aa7c78f830ab200464b755b5240c29d",
+      "layer": "relief_bounds"
+    }
+  ],
+  "build": {
+    "command": "cd lab && uv run python -I scripts/recon_geo.py",
+    "built_at": "2026-10-27T05:21:51Z",
+    "basemap_bbox": [
+      -140.0,
+      14.0,
+      -50.0,
+      62.0
+    ],
+    "context_bbox": [
+      -180.0,
+      0.0,
+      -20.0,
+      84.0
+    ],
+    "simplify": "shapely.simplify(preserve_topology=True) 0.005 deg (land_context 0.02 deg); coordinates rounded to 4 decimals (land_context 3)"
+  }
+}

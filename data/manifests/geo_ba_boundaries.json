@@ -1,0 +1,1089 @@
+{
+  "source": "Electricity Maps zone geometries (electricitymaps-contrib geo/world.geojson), mapped to EIA-930 BA codes and fitted to Natural Earth 1:10m lower-48 land",
+  "base_url": "https://github.com/electricitymaps/electricitymaps-contrib/tree/501e61d61c5f460ae4d811db3169ec47d34c7aac/geo",
+  "license": "AGPL-3.0 (GNU Affero General Public License v3.0; electricitymaps-contrib repository license since v1.5.0, contributions before commit cb9664f were MIT). Copyleft: redistribution and derived geometry must stay under AGPL-3.0 with attribution.",
+  "attribution": "BA boundaries: Electricity Maps contributors, electricitymaps-contrib zone geometries (commit 501e61d), AGPL-3.0, simplified. BA codes and names: U.S. Energy Information Administration, Form EIA-930. Made with Natural Earth. Free vector and raster map data @ naturalearthdata.com.",
+  "files": [
+    {
+      "url": "https://raw.githubusercontent.com/electricitymaps/electricitymaps-contrib/501e61d61c5f460ae4d811db3169ec47d34c7aac/geo/world.geojson",
+      "path": "raw/geo/electricitymaps/501e61d61c5f/world.geojson",
+      "retrieved_at": "2026-10-27T05:07:43Z",
+      "bytes": 2569052,
+      "sha256": "0e3ec6b826e2ca8b370be2b4054286efc7e1db19aee6c101c41137884617ad0a",
+      "license": "AGPL-3.0 (GNU Affero General Public License v3.0; electricitymaps-contrib repository license since v1.5.0, contributions before commit cb9664f were MIT). Copyleft: redistribution and derived geometry must stay under AGPL-3.0 with attribution.",
+      "file": "world.geojson",
+      "commit": "501e61d61c5f460ae4d811db3169ec47d34c7aac"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/electricitymaps/electricitymaps-contrib/501e61d61c5f460ae4d811db3169ec47d34c7aac/LICENSE.md",
+      "path": "raw/geo/electricitymaps/501e61d61c5f/LICENSE.md",
+      "retrieved_at": "2026-10-27T05:07:43Z",
+      "bytes": 34523,
+      "sha256": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
+      "license": "AGPL-3.0 (GNU Affero General Public License v3.0; electricitymaps-contrib repository license since v1.5.0, contributions before commit cb9664f were MIT). Copyleft: redistribution and derived geometry must stay under AGPL-3.0 with attribution.",
+      "file": "LICENSE.md",
+      "commit": "501e61d61c5f460ae4d811db3169ec47d34c7aac"
+    }
+  ],
+  "inputs": [
+    {
+      "file": "EIA930_Reference_Tables.xlsx",
+      "path": "raw/eia930/EIA930_Reference_Tables.xlsx",
+      "url": "https://www.eia.gov/electricity/930-content/EIA930_Reference_Tables.xlsx",
+      "retrieved_at": "2026-10-27T05:03:35Z",
+      "bytes": 45264,
+      "sha256": "411896f442a23f2eea8446e3073e84034ad29502b565300f58f91d417c10ec9d",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php",
+      "recorded_in": "eia930.json",
+      "sha256_matches_eia930_manifest": true
+    }
+  ],
+  "rejected_sources": [
+    {
+      "name": "HIFLD Open 'Control Areas' (public domain)",
+      "url": "https://services1.arcgis.com/Hp6G80Pky0om7QvQ/arcgis/rest/services/Control_Areas/FeatureServer/0",
+      "status": "retired: the HIFLD Open services answer 'Invalid URL' (checked 2026-10-27); ORNL Open Energy Hub's 'control-areas' entry is a tombstone dated 2026-03-16"
+    },
+    {
+      "name": "EIA U.S. Energy Atlas 'Balancing_Authorities' feature service",
+      "url": "https://services7.arcgis.com/FGr1D95XCGALKXqM/arcgis/rest/services/Balancing_Authorities/FeatureServer",
+      "status": "not public: 'Token Required' (checked 2026-10-27); none of EIA's 79 public ArcGIS feature services carries BA or control-area polygons"
+    },
+    {
+      "name": "NASA NCCS mirror of HIFLD Open (hifld_open/energy/FeatureServer/23)",
+      "url": "https://maps.nccs.nasa.gov/mapping/rest/services/hifld_open/energy/FeatureServer/23",
+      "status": "unreachable from this machine (connection refused)"
+    },
+    {
+      "name": "Third-party ArcGIS Online copies of HIFLD/EIA BA layers",
+      "url": "https://services5.arcgis.com/bsqU0jSPAuI04L89/arcgis/rest/services/Balancing_Authorities/FeatureServer",
+      "status": "reachable but personal re-uploads with no license or provenance metadata; HIFLD-style control areas also overlap each other"
+    },
+    {
+      "name": "EIA Hourly Electric Grid Monitor bundle",
+      "url": "https://www.eia.gov/electricity/gridmonitor/",
+      "status": "embeds only the 13 EIA regions and state outlines, no BA polygons"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "processed/geo/ba_boundaries.geojson",
+      "bytes": 380916,
+      "sha256": "6658beaa3b1ac7bd960eb7a3710618824feaf9c7c36a8ff2ee53b10db4cebaca",
+      "features": 54,
+      "vertices": 18192
+    },
+    {
+      "path": "processed/geo/ba_points.geojson",
+      "bytes": 19831,
+      "sha256": "d9bbcf40a64c000234c4252c442966ec3dffd3fd49be1fb9d2748f3714270ef7",
+      "features": 54
+    }
+  ],
+  "build": {
+    "command": "cd lab && uv run python -I scripts/recon_geo.py",
+    "built_at": "2026-10-27T05:21:51Z",
+    "electricitymaps_commit": "501e61d61c5f460ae4d811db3169ec47d34c7aac",
+    "steps": [
+      "keep Electricity Maps zones 'US-*' whose last key part is an EIA-930 BA code (drops US-AK, US-AK-SEAPA, US-HI)",
+      "clip each zone to Natural Earth 1:10m admin-0 USA (large lakes cut out), window [-126.0, 24.0, -66.0, 50.0]",
+      "give every uncovered land sliver to the nearest zone (ordered Voronoi of zone boundaries densified to 0.02 deg), then shapely.coverage_clean",
+      "shapely.coverage_simplify tolerance 0.005 deg; round to 4 decimals",
+      "SWPW (SPP West, active 2026-04-01) = coverage union of WACM + WAUW (approximate)"
+    ],
+    "checks": {
+      "electricitymaps_raw": {
+        "n": 53,
+        "all_valid": true,
+        "coverage_valid": false,
+        "polygons_with_invalid_edges": 3,
+        "overlap_km2": 0.053,
+        "area_km2": 7800535.0,
+        "vertices": 4476
+      },
+      "conflated_full": {
+        "n": 53,
+        "all_valid": true,
+        "coverage_valid": true,
+        "polygons_with_invalid_edges": 0,
+        "overlap_km2": 0.0,
+        "area_km2": 7786694.1,
+        "vertices": 24134
+      },
+      "simplified_web": {
+        "n": 53,
+        "all_valid": true,
+        "coverage_valid": true,
+        "polygons_with_invalid_edges": 0,
+        "overlap_km2": 0.0,
+        "area_km2": 7788784.1,
+        "vertices": 18192
+      },
+      "simplified_web_active_set": {
+        "n": 52,
+        "all_valid": true,
+        "coverage_valid": true,
+        "polygons_with_invalid_edges": 0,
+        "overlap_km2": 0.0,
+        "area_km2": 7788784.1,
+        "vertices": 18185
+      },
+      "simplified_web_pre_2026_04_set": {
+        "n": 53,
+        "all_valid": true,
+        "coverage_valid": true,
+        "polygons_with_invalid_edges": 0,
+        "overlap_km2": 0.0,
+        "area_km2": 7788784.1,
+        "vertices": 18192
+      }
+    },
+    "unmapped_electricitymaps_zones": [
+      "US-AK",
+      "US-AK-SEAPA",
+      "US-HI"
+    ]
+  },
+  "mapping": [
+    {
+      "code": "AECI",
+      "em_zone": "US-MIDW-AECI",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 218489
+    },
+    {
+      "code": "AVA",
+      "em_zone": "US-NW-AVA",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 107879
+    },
+    {
+      "code": "AZPS",
+      "em_zone": "US-SW-AZPS",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 97414
+    },
+    {
+      "code": "BANC",
+      "em_zone": "US-CAL-BANC",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 10297
+    },
+    {
+      "code": "BPAT",
+      "em_zone": "US-NW-BPAT",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 89201
+    },
+    {
+      "code": "CHPD",
+      "em_zone": "US-NW-CHPD",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 7547
+    },
+    {
+      "code": "CISO",
+      "em_zone": "US-CAL-CISO",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 317899
+    },
+    {
+      "code": "CPLE",
+      "em_zone": "US-CAR-CPLE",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 52417
+    },
+    {
+      "code": "CPLW",
+      "em_zone": "US-CAR-CPLW",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 13187
+    },
+    {
+      "code": "DOPD",
+      "em_zone": "US-NW-DOPD",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 12699
+    },
+    {
+      "code": "DUK",
+      "em_zone": "US-CAR-DUK",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 67931
+    },
+    {
+      "code": "EPE",
+      "em_zone": "US-SW-EPE",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 60181
+    },
+    {
+      "code": "ERCO",
+      "em_zone": "US-TEX-ERCO",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 564768
+    },
+    {
+      "code": "FMPP",
+      "em_zone": "US-FLA-FMPP",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 13882
+    },
+    {
+      "code": "FPC",
+      "em_zone": "US-FLA-FPC",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 14909
+    },
+    {
+      "code": "FPL",
+      "em_zone": "US-FLA-FPL",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 34386
+    },
+    {
+      "code": "GCPD",
+      "em_zone": "US-NW-GCPD",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 7342
+    },
+    {
+      "code": "GVL",
+      "em_zone": "US-FLA-GVL",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 3004
+    },
+    {
+      "code": "HST",
+      "em_zone": "US-FLA-HST",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 5407
+    },
+    {
+      "code": "IID",
+      "em_zone": "US-CAL-IID",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 17673
+    },
+    {
+      "code": "IPCO",
+      "em_zone": "US-NW-IPCO",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 198062
+    },
+    {
+      "code": "ISNE",
+      "em_zone": "US-NE-ISNE",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 170056
+    },
+    {
+      "code": "JEA",
+      "em_zone": "US-FLA-JEA",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 10466
+    },
+    {
+      "code": "LDWP",
+      "em_zone": "US-CAL-LDWP",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 5448
+    },
+    {
+      "code": "LGEE",
+      "em_zone": "US-MIDW-LGEE",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 8354
+    },
+    {
+      "code": "MISO",
+      "em_zone": "US-MIDW-MISO",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 1125806
+    },
+    {
+      "code": "NEVP",
+      "em_zone": "US-NW-NEVP",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 314833
+    },
+    {
+      "code": "NWMT",
+      "em_zone": "US-NW-NWMT",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 257716
+    },
+    {
+      "code": "NYIS",
+      "em_zone": "US-NY-NYIS",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 127567
+    },
+    {
+      "code": "PACE",
+      "em_zone": "US-NW-PACE",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 452704
+    },
+    {
+      "code": "PACW",
+      "em_zone": "US-NW-PACW",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 237905
+    },
+    {
+      "code": "PGE",
+      "em_zone": "US-NW-PGE",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 10456
+    },
+    {
+      "code": "PJM",
+      "em_zone": "US-MIDA-PJM",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 580538
+    },
+    {
+      "code": "PNM",
+      "em_zone": "US-SW-PNM",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 215029
+    },
+    {
+      "code": "PSCO",
+      "em_zone": "US-NW-PSCO",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 99701
+    },
+    {
+      "code": "PSEI",
+      "em_zone": "US-NW-PSEI",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 19561
+    },
+    {
+      "code": "SC",
+      "em_zone": "US-CAR-SC",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 27100
+    },
+    {
+      "code": "SCEG",
+      "em_zone": "US-CAR-SCEG",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 34936
+    },
+    {
+      "code": "SCL",
+      "em_zone": "US-NW-SCL",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 336
+    },
+    {
+      "code": "SEC",
+      "em_zone": "US-FLA-SEC",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 45307
+    },
+    {
+      "code": "SOCO",
+      "em_zone": "US-SE-SOCO",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 303279
+    },
+    {
+      "code": "SPA",
+      "em_zone": "US-CENT-SPA",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 1187
+    },
+    {
+      "code": "SRP",
+      "em_zone": "US-SW-SRP",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 26883
+    },
+    {
+      "code": "SWPP",
+      "em_zone": "US-CENT-SWPP",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 919507
+    },
+    {
+      "code": "SWPW",
+      "em_zone": null,
+      "geometry_source": "union:WACM+WAUW",
+      "approximate": true,
+      "active": true,
+      "area_km2": 542608
+    },
+    {
+      "code": "TAL",
+      "em_zone": "US-FLA-TAL",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 123
+    },
+    {
+      "code": "TEC",
+      "em_zone": "US-FLA-TEC",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 4342
+    },
+    {
+      "code": "TEPC",
+      "em_zone": "US-SW-TEPC",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 22623
+    },
+    {
+      "code": "TIDC",
+      "em_zone": "US-CAL-TIDC",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 1949
+    },
+    {
+      "code": "TPWR",
+      "em_zone": "US-NW-TPWR",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 18629
+    },
+    {
+      "code": "TVA",
+      "em_zone": "US-TEN-TVA",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 199752
+    },
+    {
+      "code": "WACM",
+      "em_zone": "US-NW-WACM",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": false,
+      "area_km2": 409270
+    },
+    {
+      "code": "WALC",
+      "em_zone": "US-SW-WALC",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": true,
+      "area_km2": 89506
+    },
+    {
+      "code": "WAUW",
+      "em_zone": "US-NW-WAUW",
+      "geometry_source": "electricitymaps",
+      "approximate": false,
+      "active": false,
+      "area_km2": 133338
+    }
+  ],
+  "points": [
+    {
+      "code": "AECI",
+      "method": "pole_of_inaccessibility",
+      "city": null,
+      "snap_km": null
+    },
+    {
+      "code": "AVA",
+      "method": "load_center",
+      "city": "Spokane, Washington",
+      "snap_km": null
+    },
+    {
+      "code": "AZPS",
+      "method": "load_center_snapped",
+      "city": "Phoenix, Arizona",
+      "snap_km": 30.6
+    },
+    {
+      "code": "BANC",
+      "method": "load_center",
+      "city": "Sacramento, California",
+      "snap_km": null
+    },
+    {
+      "code": "BPAT",
+      "method": "load_center",
+      "city": "Vancouver, Washington",
+      "snap_km": null
+    },
+    {
+      "code": "CHPD",
+      "method": "load_center",
+      "city": "Wenatchee, Washington",
+      "snap_km": null
+    },
+    {
+      "code": "CISO",
+      "method": "load_center",
+      "city": "Los Angeles, California",
+      "snap_km": null
+    },
+    {
+      "code": "CPLE",
+      "method": "load_center_snapped",
+      "city": "Raleigh, North Carolina",
+      "snap_km": 16.6
+    },
+    {
+      "code": "CPLW",
+      "method": "load_center",
+      "city": "Asheville, North Carolina",
+      "snap_km": null
+    },
+    {
+      "code": "DOPD",
+      "method": "pole_of_inaccessibility",
+      "city": null,
+      "snap_km": null
+    },
+    {
+      "code": "DUK",
+      "method": "load_center",
+      "city": "Charlotte, North Carolina",
+      "snap_km": null
+    },
+    {
+      "code": "EPE",
+      "method": "load_center",
+      "city": "El Paso, Texas",
+      "snap_km": null
+    },
+    {
+      "code": "ERCO",
+      "method": "load_center",
+      "city": "Dallas, Texas",
+      "snap_km": null
+    },
+    {
+      "code": "FMPP",
+      "method": "load_center",
+      "city": "Orlando, Florida",
+      "snap_km": null
+    },
+    {
+      "code": "FPC",
+      "method": "load_center",
+      "city": "St. Petersburg, Florida",
+      "snap_km": null
+    },
+    {
+      "code": "FPL",
+      "method": "load_center_snapped",
+      "city": "Miami, Florida",
+      "snap_km": 20.3
+    },
+    {
+      "code": "GCPD",
+      "method": "pole_of_inaccessibility",
+      "city": null,
+      "snap_km": null
+    },
+    {
+      "code": "GVL",
+      "method": "load_center",
+      "city": "Gainesville, Florida",
+      "snap_km": null
+    },
+    {
+      "code": "HST",
+      "method": "load_center",
+      "city": "Homestead, Florida",
+      "snap_km": null
+    },
+    {
+      "code": "IID",
+      "method": "load_center",
+      "city": "El Centro, California",
+      "snap_km": null
+    },
+    {
+      "code": "IPCO",
+      "method": "load_center",
+      "city": "Boise, Idaho",
+      "snap_km": null
+    },
+    {
+      "code": "ISNE",
+      "method": "load_center",
+      "city": "Boston, Massachusetts",
+      "snap_km": null
+    },
+    {
+      "code": "JEA",
+      "method": "load_center",
+      "city": "Jacksonville, Florida",
+      "snap_km": null
+    },
+    {
+      "code": "LDWP",
+      "method": "load_center_snapped",
+      "city": "Los Angeles, California",
+      "snap_km": 3.0
+    },
+    {
+      "code": "LGEE",
+      "method": "load_center",
+      "city": "Louisville, Kentucky",
+      "snap_km": null
+    },
+    {
+      "code": "MISO",
+      "method": "load_center_snapped",
+      "city": "Detroit, Michigan",
+      "snap_km": 0.1
+    },
+    {
+      "code": "NEVP",
+      "method": "load_center",
+      "city": "Las Vegas, Nevada",
+      "snap_km": null
+    },
+    {
+      "code": "NWMT",
+      "method": "load_center_snapped",
+      "city": "Billings, Montana",
+      "snap_km": 31.9
+    },
+    {
+      "code": "NYIS",
+      "method": "load_center",
+      "city": "New York, New York",
+      "snap_km": null
+    },
+    {
+      "code": "PACE",
+      "method": "load_center",
+      "city": "Salt Lake City, Utah",
+      "snap_km": null
+    },
+    {
+      "code": "PACW",
+      "method": "pole_of_inaccessibility",
+      "city": null,
+      "snap_km": null
+    },
+    {
+      "code": "PGE",
+      "method": "load_center",
+      "city": "Portland, Oregon",
+      "snap_km": null
+    },
+    {
+      "code": "PJM",
+      "method": "load_center",
+      "city": "Chicago, Illinois",
+      "snap_km": null
+    },
+    {
+      "code": "PNM",
+      "method": "load_center",
+      "city": "Albuquerque, New Mexico",
+      "snap_km": null
+    },
+    {
+      "code": "PSCO",
+      "method": "load_center",
+      "city": "Denver, Colorado",
+      "snap_km": null
+    },
+    {
+      "code": "PSEI",
+      "method": "load_center",
+      "city": "Olympia, Washington",
+      "snap_km": null
+    },
+    {
+      "code": "SC",
+      "method": "load_center",
+      "city": "Myrtle Beach, South Carolina",
+      "snap_km": null
+    },
+    {
+      "code": "SCEG",
+      "method": "load_center",
+      "city": "Columbia, South Carolina",
+      "snap_km": null
+    },
+    {
+      "code": "SCL",
+      "method": "load_center",
+      "city": "Seattle, Washington",
+      "snap_km": null
+    },
+    {
+      "code": "SEC",
+      "method": "pole_of_inaccessibility",
+      "city": null,
+      "snap_km": null
+    },
+    {
+      "code": "SOCO",
+      "method": "load_center",
+      "city": "Atlanta, Georgia",
+      "snap_km": null
+    },
+    {
+      "code": "SPA",
+      "method": "pole_of_inaccessibility",
+      "city": null,
+      "snap_km": null
+    },
+    {
+      "code": "SRP",
+      "method": "load_center",
+      "city": "Phoenix, Arizona",
+      "snap_km": null
+    },
+    {
+      "code": "SWPP",
+      "method": "load_center",
+      "city": "Kansas City, Missouri",
+      "snap_km": null
+    },
+    {
+      "code": "SWPW",
+      "method": "load_center",
+      "city": "Colorado Springs, Colorado",
+      "snap_km": null
+    },
+    {
+      "code": "TAL",
+      "method": "load_center",
+      "city": "Tallahassee, Florida",
+      "snap_km": null
+    },
+    {
+      "code": "TEC",
+      "method": "load_center",
+      "city": "Tampa, Florida",
+      "snap_km": null
+    },
+    {
+      "code": "TEPC",
+      "method": "load_center",
+      "city": "Tucson, Arizona",
+      "snap_km": null
+    },
+    {
+      "code": "TIDC",
+      "method": "pole_of_inaccessibility",
+      "city": null,
+      "snap_km": null
+    },
+    {
+      "code": "TPWR",
+      "method": "load_center",
+      "city": "Tacoma, Washington",
+      "snap_km": null
+    },
+    {
+      "code": "TVA",
+      "method": "load_center",
+      "city": "Nashville, Tennessee",
+      "snap_km": null
+    },
+    {
+      "code": "WACM",
+      "method": "load_center",
+      "city": "Colorado Springs, Colorado",
+      "snap_km": null
+    },
+    {
+      "code": "WALC",
+      "method": "pole_of_inaccessibility",
+      "city": null,
+      "snap_km": null
+    },
+    {
+      "code": "WAUW",
+      "method": "pole_of_inaccessibility",
+      "city": null,
+      "snap_km": null
+    }
+  ],
+  "missing_eia930_codes": [
+    {
+      "code": "AEC",
+      "name": "PowerSouth Energy Cooperative",
+      "region": "SE",
+      "active": false,
+      "generation_only": false,
+      "activation_date": null,
+      "retirement_date": "2021-09-01",
+      "reason": "retired BA; Electricity Maps has no polygon for it"
+    },
+    {
+      "code": "AVRN",
+      "name": "Avangrid Renewables, LLC",
+      "region": "NW",
+      "active": true,
+      "generation_only": true,
+      "activation_date": "2018-07-31",
+      "retirement_date": null,
+      "reason": "generation-only BA: no load service territory, so no polygon in any source"
+    },
+    {
+      "code": "BHBA",
+      "name": "Black Hills Energy",
+      "region": "NW",
+      "active": true,
+      "generation_only": false,
+      "activation_date": "2026-04-01",
+      "retirement_date": null,
+      "reason": "active BA with no polygon in Electricity Maps; started 2026-04-01 inside the old WACM area, covered by the SWPW approximation"
+    },
+    {
+      "code": "DEAA",
+      "name": "Arlington Valley, LLC",
+      "region": "SW",
+      "active": true,
+      "generation_only": true,
+      "activation_date": null,
+      "retirement_date": null,
+      "reason": "generation-only BA: no load service territory, so no polygon in any source"
+    },
+    {
+      "code": "EEI",
+      "name": "Electric Energy, Inc.",
+      "region": "MIDW",
+      "active": false,
+      "generation_only": true,
+      "activation_date": null,
+      "retirement_date": "2020-02-29",
+      "reason": "generation-only BA: no load service territory, so no polygon in any source"
+    },
+    {
+      "code": "GLHB",
+      "name": "GridLiance",
+      "region": "MIDW",
+      "active": false,
+      "generation_only": true,
+      "activation_date": "2020-02-29",
+      "retirement_date": "2022-09-01",
+      "reason": "generation-only BA: no load service territory, so no polygon in any source"
+    },
+    {
+      "code": "GRID",
+      "name": "Gridforce Energy Management, LLC",
+      "region": "NW",
+      "active": true,
+      "generation_only": true,
+      "activation_date": null,
+      "retirement_date": null,
+      "reason": "generation-only BA: no load service territory, so no polygon in any source"
+    },
+    {
+      "code": "GRIF",
+      "name": "Griffith Energy, LLC",
+      "region": "SW",
+      "active": false,
+      "generation_only": true,
+      "activation_date": null,
+      "retirement_date": "2023-11-01",
+      "reason": "generation-only BA: no load service territory, so no polygon in any source"
+    },
+    {
+      "code": "GRMA",
+      "name": "Gila River Power, LLC",
+      "region": "SW",
+      "active": false,
+      "generation_only": true,
+      "activation_date": null,
+      "retirement_date": "2018-05-03",
+      "reason": "generation-only BA: no load service territory, so no polygon in any source"
+    },
+    {
+      "code": "GWA",
+      "name": "NaturEner Power Watch, LLC",
+      "region": "NW",
+      "active": true,
+      "generation_only": true,
+      "activation_date": null,
+      "retirement_date": null,
+      "reason": "generation-only BA: no load service territory, so no polygon in any source"
+    },
+    {
+      "code": "HGMA",
+      "name": "New Harquahala Generating Company, LLC",
+      "region": "SW",
+      "active": false,
+      "generation_only": true,
+      "activation_date": null,
+      "retirement_date": "2025-06-01",
+      "reason": "generation-only BA: no load service territory, so no polygon in any source"
+    },
+    {
+      "code": "NSB",
+      "name": "Utilities Commission of New Smyrna Beach",
+      "region": "FLA",
+      "active": false,
+      "generation_only": false,
+      "activation_date": null,
+      "retirement_date": "2020-01-08",
+      "reason": "retired BA; Electricity Maps has no polygon for it"
+    },
+    {
+      "code": "OVEC",
+      "name": "Ohio Valley Electric Corporation",
+      "region": "MIDA",
+      "active": false,
+      "generation_only": false,
+      "activation_date": null,
+      "retirement_date": "2018-12-01",
+      "reason": "retired BA; Electricity Maps has no polygon for it"
+    },
+    {
+      "code": "SEPA",
+      "name": "Southeastern Power Administration",
+      "region": "SE",
+      "active": true,
+      "generation_only": true,
+      "activation_date": null,
+      "retirement_date": null,
+      "reason": "generation-only BA: no load service territory, so no polygon in any source"
+    },
+    {
+      "code": "SIKE",
+      "name": "Sikeston Board Of Municipal Utilities",
+      "region": "MIDW",
+      "active": true,
+      "generation_only": true,
+      "activation_date": "2025-06-01",
+      "retirement_date": null,
+      "reason": "generation-only BA: no load service territory, so no polygon in any source"
+    },
+    {
+      "code": "WAUE",
+      "name": "Western Area Power Administration - Upper Great Plains East",
+      "region": "NW",
+      "active": false,
+      "generation_only": false,
+      "activation_date": null,
+      "retirement_date": "2015-10-01",
+      "reason": "retired BA; Electricity Maps has no polygon for it"
+    },
+    {
+      "code": "WWA",
+      "name": "NaturEner Wind Watch, LLC",
+      "region": "NW",
+      "active": false,
+      "generation_only": true,
+      "activation_date": null,
+      "retirement_date": "2025-10-01",
+      "reason": "generation-only BA: no load service territory, so no polygon in any source"
+    },
+    {
+      "code": "YAD",
+      "name": "Alcoa Power Generating, Inc. - Yadkin Division",
+      "region": "CAR",
+      "active": true,
+      "generation_only": true,
+      "activation_date": null,
+      "retirement_date": null,
+      "reason": "generation-only BA: no load service territory, so no polygon in any source"
+    }
+  ]
+}

@@ -1,0 +1,472 @@
+{
+  "source": "EIA Form EIA-930 Hourly Electric Grid Monitor, six-month bulk files",
+  "base_url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles",
+  "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php",
+  "files": [
+    {
+      "file": "EIA930_BALANCE_2019_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2019_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:57:41Z",
+      "bytes": 43369791,
+      "sha256": "02548d6bc49f3cffba1e66eb83a42e1d40194b1301f0f872baf2945e615af1b0",
+      "server_last_modified": "Mon, 26 Oct 2026 14:43:19 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_BALANCE_2019_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2019_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:57:41Z",
+      "bytes": 44134576,
+      "sha256": "5ec5c85be997c6c56bdcf42be3443a4bb6eb0851d704065c11c02eac0d3c48d1",
+      "server_last_modified": "Mon, 26 Oct 2026 14:43:25 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_BALANCE_2020_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2020_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:57:41Z",
+      "bytes": 42970027,
+      "sha256": "fff83ed20365e69933bdd6ebde06afaa8083930c613363c438844b0fd52034cf",
+      "server_last_modified": "Mon, 26 Oct 2026 14:43:31 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_BALANCE_2020_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2020_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:57:41Z",
+      "bytes": 43635740,
+      "sha256": "47788a718c26eae5a2453e3471c2b9e7d1a11062a0de70e2dca803163de5a754",
+      "server_last_modified": "Mon, 26 Oct 2026 14:43:36 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_BALANCE_2021_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2021_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:57:41Z",
+      "bytes": 43073764,
+      "sha256": "40b183f333e0f3edc1b9a2ed48b792eff00fd477915dae79ce5784e862380f7f",
+      "server_last_modified": "Mon, 26 Oct 2026 14:43:42 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_BALANCE_2021_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2021_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:57:41Z",
+      "bytes": 43438192,
+      "sha256": "66afadcab6865f74cebd6db82e363a66976846241c040cba66baf240afcd669b",
+      "server_last_modified": "Mon, 26 Oct 2026 14:43:48 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_BALANCE_2022_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2022_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:57:46Z",
+      "bytes": 42567904,
+      "sha256": "d3d315a0c29d9527a1c64cf6ddcdcc5c0b7281fddd99199bd70f06d242e503d5",
+      "server_last_modified": "Mon, 26 Oct 2026 14:43:54 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_BALANCE_2022_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2022_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:57:47Z",
+      "bytes": 42909865,
+      "sha256": "267575c29ef40f386bcf3bc3993013b9ce13a3a154b89b702559a75dd742976d",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:00 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_BALANCE_2023_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2023_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:57:48Z",
+      "bytes": 41981693,
+      "sha256": "a0e14e9c07ab4cc1de3e384c7be890b0c61d9de3fe04ad3ae5ec739f1f35ec1b",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:06 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_BALANCE_2023_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2023_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:57:48Z",
+      "bytes": 42574041,
+      "sha256": "c719fc1b513eec8982ce209b6e3173fc64b2d0d243f83d3bf0d8d1adf6222de2",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:11 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_BALANCE_2024_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2024_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:57:49Z",
+      "bytes": 41742812,
+      "sha256": "26768c495c3ba987e29d79df2e40d4e741f9dbcff086f53c12ff774465756a10",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:17 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_BALANCE_2024_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2024_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:57:49Z",
+      "bytes": 47928993,
+      "sha256": "a602a8e577cfdd2fa3083413eaa4dd8ba7f0d2b26a2986f8f6d22917465ea49f",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:23 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_BALANCE_2025_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2025_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:57:50Z",
+      "bytes": 47565054,
+      "sha256": "fac4bb991dfa1dab3b4b35300ccab54ac99be13a40ce91954db8ddafb2816242",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:30 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_BALANCE_2025_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2025_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:57:52Z",
+      "bytes": 48256021,
+      "sha256": "1146158b972439db7c7f4cc7d0491e07644ddbf244d03b8ecb44cb2c833d10f1",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:36 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_BALANCE_2026_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2026_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:57:53Z",
+      "bytes": 47107225,
+      "sha256": "1b3eaf7b0af08393f4d1593125b0c0f502f93e036d961b7dd6d50fc8e618582f",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:42 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_BALANCE_2026_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_BALANCE_2026_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:57:53Z",
+      "bytes": 30843352,
+      "sha256": "b5f2247b9ad4fc9d0bec3c1d182903c74b57567086e28928d603391d4dbce0dd",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:48 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2019_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2019_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:57:54Z",
+      "bytes": 105264288,
+      "sha256": "f9969abbcb15496d43bda0e7839aaad24418ebee8d82032316f87d83bd7a6cf5",
+      "server_last_modified": "Mon, 26 Oct 2026 14:43:19 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2019_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2019_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:57:55Z",
+      "bytes": 107429950,
+      "sha256": "e54d2b5762549976e7fae13accb16d72817505bb9322f71b60c4ec06cffc5e40",
+      "server_last_modified": "Mon, 26 Oct 2026 14:43:25 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2020_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2020_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:57:56Z",
+      "bytes": 104361259,
+      "sha256": "66c0bbab57b68cee869c78a7d296a0ec82879b6d3efdf254e0fd7be4948994aa",
+      "server_last_modified": "Mon, 26 Oct 2026 14:43:31 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2020_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2020_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:57:58Z",
+      "bytes": 105370810,
+      "sha256": "c00c991110ec6cabe13d59ca77da701bc246eee147179265ea22ab213c641039",
+      "server_last_modified": "Mon, 26 Oct 2026 14:43:37 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2021_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2021_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:57:59Z",
+      "bytes": 104312638,
+      "sha256": "61304dc83f4e95c9cc88253f6543cbc619c986b3ec89a4fb78cd6e5173d77986",
+      "server_last_modified": "Mon, 26 Oct 2026 14:43:43 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2021_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2021_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:57:59Z",
+      "bytes": 105219251,
+      "sha256": "f0a91b320d47d91b57e309e113ecadfcf66aea0abd47a8ddea577c1bb8a66860",
+      "server_last_modified": "Mon, 26 Oct 2026 14:43:49 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2022_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2022_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:58:01Z",
+      "bytes": 103016694,
+      "sha256": "66ea248ffb49e1c42a77bbcc8e60388559097a912a43b3f8bc605f0fe79609df",
+      "server_last_modified": "Mon, 26 Oct 2026 14:43:55 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2022_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2022_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:58:02Z",
+      "bytes": 103161178,
+      "sha256": "4b649520e33eebab5bb429f1b36d1e575200031d476a4e741e094f256d06b1c3",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:01 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2023_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2023_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:58:02Z",
+      "bytes": 100880103,
+      "sha256": "d8f2a6ea03ff65dfc2ad934df1624f6d9a1bc22efd7270a73f082ee924f3f13a",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:06 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2023_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2023_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:58:02Z",
+      "bytes": 102587377,
+      "sha256": "4beb11c24094b6b4faad2f8fc4704e7a02ad7a333172a5b39a460556a53a1ded",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:12 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2024_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2024_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:58:04Z",
+      "bytes": 101399174,
+      "sha256": "990b1994234922a06eb1f9ce55503db402ab916af8455e2dfbb020155f12681d",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:18 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2024_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2024_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:58:04Z",
+      "bytes": 102557967,
+      "sha256": "bb6570c3297103701d23b7907f2beee30755c41c08a1c27842c75c963df29548",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:24 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2025_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2025_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:58:08Z",
+      "bytes": 101202449,
+      "sha256": "26346191ea9b738a166f75eeb3291b16d2863c74c51986c7779e71f194a2c32d",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:30 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2025_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2025_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:58:08Z",
+      "bytes": 104382552,
+      "sha256": "6e9a627d9266975a65cf6a14f39a532332288d06c0ec1c228200585beecf13be",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:37 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2026_Jan_Jun.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2026_Jan_Jun.csv",
+      "retrieved_at": "2026-10-27T04:58:08Z",
+      "bytes": 102230680,
+      "sha256": "c0337a3b4c94060e9a3ee6b4b428aa72464816c3a61c57b8e1b4d40d9b5b99fd",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:43 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_INTERCHANGE_2026_Jul_Dec.csv",
+      "url": "https://www.eia.gov/electricity/gridmonitor/sixMonthFiles/EIA930_INTERCHANGE_2026_Jul_Dec.csv",
+      "retrieved_at": "2026-10-27T04:58:10Z",
+      "bytes": 65634614,
+      "sha256": "c669c05de2fdeea5dec93098a1b6c3739b7e351097e517a7117717be1569287c",
+      "server_last_modified": "Mon, 26 Oct 2026 14:44:48 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "EIA930_Reference_Tables.xlsx",
+      "url": "https://www.eia.gov/electricity/930-content/EIA930_Reference_Tables.xlsx",
+      "retrieved_at": "2026-10-27T05:03:35Z",
+      "bytes": 45264,
+      "sha256": "411896f442a23f2eea8446e3073e84034ad29502b565300f58f91d417c10ec9d",
+      "server_last_modified": "Mon, 26 Oct 2026 16:32:55 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/AZPS.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/AZPS.xlsx",
+      "retrieved_at": "2026-10-27T05:05:10Z",
+      "bytes": 84385253,
+      "sha256": "1b2bffdf6b3234e9502a8e297c68d8f4bc16f0b7fe70af78f9f1923e474292e5",
+      "server_last_modified": "Mon, 26 Oct 2026 16:10:28 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/BPAT.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/BPAT.xlsx",
+      "retrieved_at": "2026-10-27T05:03:35Z",
+      "bytes": 104896099,
+      "sha256": "89081601c5c944d17a4457a9c569d2d1904c76e27c2f725199a026bfebd9c523",
+      "server_last_modified": "Mon, 26 Oct 2026 16:11:24 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/CISO.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/CISO.xlsx",
+      "retrieved_at": "2026-10-27T05:03:35Z",
+      "bytes": 97848936,
+      "sha256": "4fa4cda65ce4c49e3ecc15064e7e4112d550c7e88d84a428fcadc574fcb9e099",
+      "server_last_modified": "Mon, 26 Oct 2026 16:12:16 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/DUK.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/DUK.xlsx",
+      "retrieved_at": "2026-10-27T05:05:10Z",
+      "bytes": 80652688,
+      "sha256": "4b3a638f3bd8f2582d70286edbe1a3596e1e20ebb9021ccadb6ed00639c3efe2",
+      "server_last_modified": "Mon, 26 Oct 2026 16:13:58 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/ERCO.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/ERCO.xlsx",
+      "retrieved_at": "2026-10-27T05:03:35Z",
+      "bytes": 74985025,
+      "sha256": "d8c3be2dc8b563a8cf36f3b5cef70c172a60efc744a6c769f29b48e08ad3817c",
+      "server_last_modified": "Mon, 26 Oct 2026 16:14:50 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/FPL.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/FPL.xlsx",
+      "retrieved_at": "2026-10-27T05:04:56Z",
+      "bytes": 76172024,
+      "sha256": "7399e59f53cad02c0bda4e249997d0cbc90ecd9fddbb882eb4a51c073f236ec4",
+      "server_last_modified": "Mon, 26 Oct 2026 16:16:01 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/IPCO.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/IPCO.xlsx",
+      "retrieved_at": "2026-10-27T05:05:43Z",
+      "bytes": 69226175,
+      "sha256": "a9bb9dbff54fdf62a7010a7b31d33a968b446eac77f92f1115dd07c21356e5f9",
+      "server_last_modified": "Mon, 26 Oct 2026 16:18:52 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/ISNE.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/ISNE.xlsx",
+      "retrieved_at": "2026-10-27T05:04:29Z",
+      "bytes": 78335826,
+      "sha256": "783951fc6d2d11ff30476b098e325f414b00cb98a6d57a8d589c7a333cb475ca",
+      "server_last_modified": "Mon, 26 Oct 2026 16:19:17 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/MISO.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/MISO.xlsx",
+      "retrieved_at": "2026-10-27T05:04:06Z",
+      "bytes": 100781119,
+      "sha256": "cee0302ce636685f769a2d946620cb0f713f30070cbbdfa968a1ea472aec7609",
+      "server_last_modified": "Mon, 26 Oct 2026 16:20:54 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/NEVP.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/NEVP.xlsx",
+      "retrieved_at": "2026-10-27T05:05:19Z",
+      "bytes": 73870468,
+      "sha256": "ca0383cfdad59b95f5e10be50e150c5df2fe292260496c49bb36766358988fa7",
+      "server_last_modified": "Mon, 26 Oct 2026 16:21:19 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/NYIS.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/NYIS.xlsx",
+      "retrieved_at": "2026-10-27T05:04:19Z",
+      "bytes": 85358252,
+      "sha256": "b51ead7188d681c2283c88899cf908782297f2d89ea8eb11448f1a52624f342c",
+      "server_last_modified": "Mon, 26 Oct 2026 16:22:19 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/PACE.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/PACE.xlsx",
+      "retrieved_at": "2026-10-27T05:03:35Z",
+      "bytes": 75344783,
+      "sha256": "35a9955d674254360db5abb550e641f172023eb027ebb8c7bbb839fc47ab58b4",
+      "server_last_modified": "Mon, 26 Oct 2026 16:22:51 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/PACW.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/PACW.xlsx",
+      "retrieved_at": "2026-10-27T05:05:47Z",
+      "bytes": 71345741,
+      "sha256": "d6b4c14151ad1b176d2433bef449fc5fa60efde6b1afaf34c7605f332f53318b",
+      "server_last_modified": "Mon, 26 Oct 2026 16:23:15 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/PJM.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/PJM.xlsx",
+      "retrieved_at": "2026-10-27T05:04:02Z",
+      "bytes": 114347009,
+      "sha256": "40086ab24a80b26d816515d7202e6f405ac4bc916396cad9fbb7b64ac3c042fc",
+      "server_last_modified": "Mon, 26 Oct 2026 16:24:09 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/PSCO.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/PSCO.xlsx",
+      "retrieved_at": "2026-10-27T05:05:29Z",
+      "bytes": 64036853,
+      "sha256": "25286f6cfa217747efe6311943f9dad2b1053f0ddb829469ba46ebd8bc7e1956",
+      "server_last_modified": "Mon, 26 Oct 2026 16:25:00 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/SOCO.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/SOCO.xlsx",
+      "retrieved_at": "2026-10-27T05:04:34Z",
+      "bytes": 86740228,
+      "sha256": "fa6a09dd0005542131fe7a7b6a93de5474eef2a5642a9829865de73922697f6a",
+      "server_last_modified": "Mon, 26 Oct 2026 16:27:39 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/SWPP.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/SWPP.xlsx",
+      "retrieved_at": "2026-10-27T05:04:17Z",
+      "bytes": 107995624,
+      "sha256": "dbc138280c47e7a5bbc24a0665db22f55a3a1c6b6f9f4441315556a914318a01",
+      "server_last_modified": "Mon, 26 Oct 2026 16:28:58 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    },
+    {
+      "file": "ba_workbooks/TVA.xlsx",
+      "url": "https://www.eia.gov/electricity/gridmonitor/knownissues/xls/TVA.xlsx",
+      "retrieved_at": "2026-10-27T05:05:01Z",
+      "bytes": 82101926,
+      "sha256": "c7237121cc5b3bb183fc48398dd156e5ac39d51b5935590f47c587a9df81363a",
+      "server_last_modified": "Mon, 26 Oct 2026 16:31:08 GMT",
+      "license": "U.S. Government work (EIA), public domain; no copyright restrictions. EIA asks users to acknowledge the source, e.g. 'Source: U.S. Energy Information Administration, Form EIA-930 Hourly Electric Grid Monitor (retrieved <date>)'. See https://www.eia.gov/about/copyrights_reuse.php"
+    }
+  ],
+  "notes": {
+    "hourly_co2_answer": "Yes. EIA publishes estimated hourly CO2 emissions per BA (total, by fuel, imported/exported, and the CO2 intensity of generated and of consumed electricity, lb/kWh) beginning 2018-07-01, but NOT in the six-month BALANCE/INTERCHANGE CSVs. They are in the keyless per-BA workbooks https://www.eia.gov/electricity/gridmonitor/knownissues/xls/{BA}.xlsx (sheet 'Published Hourly Data', columns 'CO2 Factor: COL/NG/OIL', 'CO2 Emissions: COL/NG/OIL/Other', 'CO2 Emissions Generated/Imported/Exported/Consumed', 'Positive Generation', 'Consumed Electricity', 'CO2 Emissions Intensity for Generated/Consumed Electricity'). Method (EIA About page): BA-specific average CO2 factors from EIA-923 plant data and EPA factors, CHP excluded; consumption intensity via a multiregional input-output model over BA transfers. Published for yesterday by about 4 p.m. ET today. Downloaded here for 18 candidate BAs under ba_workbooks/.",
+    "timestamp_convention": "EIA labels each hour by its END ('UTC Time at End of Hour'; workbook Notes: 'Hour 1 corresponds to the time period 12:00 AM - 1:00 AM'). The tidy table data/interim/eia930/balance.parquet uses ts_utc = hour START (UTC end minus 1 h).",
+    "publication_lags": "EIA About page: demand ~1 h after the operating hour; net generation, generation by source and total interchange for yesterday by ~11:00 a.m. ET today; interchange with each neighbour for the day before yesterday by ~11:00 a.m. ET; the BA day-ahead demand forecast for each hour of TODAY by ~11:00 a.m. ET today (EIA-930 instructions: the daily file due 7:00 a.m. ET carries 'yesterday's hourly day-ahead demand forecast for today'); CO2 for yesterday by ~4:00 p.m. ET. Files are regenerated daily (server Last-Modified = retrieval day), so values can be revised; sha256 pins this snapshot.",
+    "files_not_in_six_month_set": "EIA930_Reference_Tables.xlsx (BA codes, names, time zones, generation-only flags, retirement dates) from https://www.eia.gov/electricity/930-content/EIA930_Reference_Tables.xlsx; ba_workbooks/*.xlsx as above."
+  }
+}

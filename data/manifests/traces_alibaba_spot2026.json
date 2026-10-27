@@ -1,0 +1,43 @@
+{
+  "source": "traces/alibaba_spot2026",
+  "title": "Alibaba cluster-trace-v2026-spot-gpu (HP vs Spot AI jobs), supplementary",
+  "homepage": "https://github.com/alibaba/clusterdata/tree/master/cluster-trace-v2026-spot-gpu",
+  "license": "Alibaba Cluster Trace Program terms: free use for research or study (top-level README); no per-trace license file",
+  "license_url": "https://raw.githubusercontent.com/alibaba/clusterdata/master/README.md",
+  "citation": "Duan et al., GFS: A Preemptive Scheduling Framework for GPU Clusters with Predictive Spot Management, ASPLOS '26",
+  "notes": "Supplementary: used only for the HP vs Spot (interruptible) share. Times are seconds from the first submitted job; no calendar date or time zone.",
+  "files": [
+    {
+      "url": "https://raw.githubusercontent.com/alibaba/clusterdata/master/cluster-trace-v2026-spot-gpu/job_info_df.csv",
+      "path": "raw/traces/alibaba_spot2026/job_info_df.csv",
+      "retrieved_at": "2026-10-27T05:00:04+00:00",
+      "bytes": 23055929,
+      "sha256": "113ccee4c28f5c3bbaaca974cd164b9280b7d4c39e53b745443b28eea05e03dd",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/alibaba/clusterdata/master/cluster-trace-v2026-spot-gpu/node_info_df.csv",
+      "path": "raw/traces/alibaba_spot2026/node_info_df.csv",
+      "retrieved_at": "2026-10-27T05:00:04+00:00",
+      "bytes": 78330,
+      "sha256": "1aba161961a5a4a1a61aa581383c5e5abe3400b59f8597ba8c4eef7597bc9d18",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/alibaba/clusterdata/master/cluster-trace-v2026-spot-gpu/README.md",
+      "path": "raw/traces/alibaba_spot2026/upstream/README.md",
+      "retrieved_at": "2026-10-27T05:00:04+00:00",
+      "bytes": 5608,
+      "sha256": "11eb33818d3b40ba430c1bc1e0fd42786af214db334152141e29bccb3d26db2b",
+      "sha256_matches_published": null
+    },
+    {
+      "url": "https://raw.githubusercontent.com/alibaba/clusterdata/master/README.md",
+      "path": "raw/traces/alibaba_spot2026/upstream/clusterdata_README.md",
+      "retrieved_at": "2026-10-27T05:00:04+00:00",
+      "bytes": 13728,
+      "sha256": "4a4843de730fc2bfb725fb37c6bbe46257c54087161ea7b9329a2663c97a6a90",
+      "sha256_matches_published": null
+    }
+  ]
+}
