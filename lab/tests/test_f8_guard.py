@@ -45,7 +45,7 @@ GRID_PATTERN = re.compile(
 DATA_EXT = re.compile(r"\.(parquet|xlsx|xls|csv|feather|arrow|ipc)\b|CARBON|BALANCE|WORKBOOK")
 # Modules whose readers take a path argument that is always a grid source.
 GRID_FILES = {"src/gridpilot/data/eia930.py", "src/gridpilot/data/eia_co2.py",
-              "src/gridpilot/data/truth_fill.py"}
+              "src/gridpilot/data/truth_fill.py", "src/gridpilot/completeness.py"}
 # (file, enclosing function, reader) -> reason. Counts-only reads and the raw-source parsers.
 ALLOWLIST = {
     ("scripts/recon_grid.py", "main", "read_parquet"):
@@ -66,6 +66,13 @@ ALLOWLIST = {
     ("src/gridpilot/data/eia930.py", "parse_interchange_csv", "read_csv"):
         "raw-source parser (raw/ -> interim/ cleaning, nothing summarised); interchange is not "
         "read by any analysis",
+    ("src/gridpilot/completeness.py", "_workbook_presence", "read_excel"):
+        "counts only (T12, B4): the time column and whether the consumed-CI cell is empty, "
+        "reduced to row/null/complete-day counts and timestamps by test_cutoff; no value is "
+        "returned or logged",
+    ("src/gridpilot/completeness.py", "_balance_presence", "scan_parquet"):
+        "counts only (T12, B4): PACE's ts_utc and the null flag of demand_adj_mw (the value is "
+        "never materialized), reduced to counts and timestamps by test_cutoff",
     ("src/gridpilot/data/eia_co2.py", "parse_ba_workbook", "read_excel"):
         "the BA-workbook parser; its calls are checked (build_carbon wraps it in drop_sealed, "
         "the test build passes it to sealed_read as the reader)",
@@ -233,7 +240,7 @@ def test_the_notebooks_are_scanned():
 
 
 def test_the_allowlist_is_small_has_reasons_and_no_stale_entries():
-    assert len(ALLOWLIST) <= 7
+    assert len(ALLOWLIST) <= 9  # T12: +2 counts-only completeness reads (B4)
     assert all(len(r) > 30 for r in ALLOWLIST.values())
     used = set()
     for rel, src in _sources():

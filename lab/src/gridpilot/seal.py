@@ -102,7 +102,7 @@ GITHUB_ORIGIN = "https://github.com/ratulalahy/26_hard_tech_week_hackathon.git" 
 RERUN_MUTABLE = frozenset({"freeze_commit", "frozen_at", "validation_run"})
 # ... and must keep these identical.
 DECISION_FIELDS = ("deployed_policy", "L_max_leaf_nodes", "s_ranking", "test_F",
-                   "scenario_catalog", "input_sha256", "snapshot_id")
+                   "test_F_basis", "scenario_catalog", "input_sha256", "snapshot_id")
 COMPLETED_MARKER = "manifest.json"  # results/test/manifest.json = a completed test run
 # Paths that later commits may add or modify (never rename or delete) without reopening (a).
 POST_FREEZE_PATHS = (FREEZE_REL, f"{TEST_RESULTS_REL}/", READ_LOG_REL)
@@ -141,6 +141,9 @@ _UTC = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 _KEYS = ("schema", "freeze_commit", "frozen_at", "deployed_policy", "L_max_leaf_nodes", "test_F",
          "test_fit_at", "test_history_start", "s_ranking", "scenario_catalog", "snapshot_id",
          "input_sha256", "validation_run")
+# Optional keys (T12): how test_F was derived from the completeness counts (final review B4).
+_OPTIONAL_KEYS = ("test_F_basis",)
+_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 class SealError(PermissionError):
@@ -252,7 +255,7 @@ def freeze_errors(d: Any) -> list[str]:
         return ["the record is not a JSON object"]
     errs = _schema_errors(d)
     errs += [f"missing key {k!r}" for k in _KEYS if k not in d]
-    errs += [f"unknown key {k!r}" for k in d if k not in _KEYS]
+    errs += [f"unknown key {k!r}" for k in d if k not in _KEYS + _OPTIONAL_KEYS]
     if any(k not in d for k in _KEYS):
         return errs
 
@@ -289,6 +292,16 @@ def freeze_errors(d: Any) -> list[str]:
             errs.append(f"test_F {d['test_F']} must lie in ({iso(TEST_START)}, {iso(TEST_END)}]")
         if F.hour or F.minute or F.second:
             errs.append("test_F must be a UTC midnight (the last complete day ends there)")
+        basis = d.get("test_F_basis")
+        if basis is not None:
+            D = basis.get("D") if isinstance(basis, dict) else None
+            if not isinstance(D, str) or not _DATE.match(D):
+                errs.append("test_F_basis.D must be a UTC day 'YYYY-MM-DD'")
+            else:
+                Dt = datetime.strptime(D, "%Y-%m-%d").replace(tzinfo=UTC)
+                if F != min(Dt + timedelta(days=1), TEST_END):
+                    errs.append(f"test_F {d['test_F']} must be min(D + 1 day, TEST_END) for "
+                                f"test_F_basis.D {D}")
     fit = t("test_fit_at")
     if fit is not None and fit != TEST_FIT_AT:
         errs.append(f"test_fit_at must be {iso(TEST_FIT_AT)} (spec §5)")

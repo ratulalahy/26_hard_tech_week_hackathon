@@ -5,10 +5,17 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test notebooks profile slice need-run-dir ext-runs extensions storage web
+.PHONY: test data notebooks profile slice need-run-dir ext-runs extensions storage web freeze
 
 test:
 	cd lab && uv run pytest
+
+# Rebuild the pipeline's derived tables from data/raw into $(GRIDPILOT_DATA_DIR) (Stage 3 T12, A2):
+# interim/eia930/balance.parquet, then processed/carbon/carbon_hourly.parquet (+ lineage). The
+# freeze record pins these by hash, so it refuses to replace an existing table: point
+# GRIDPILOT_DATA_DIR at a fresh data dir (raw/ and manifests/ in it). ARGS=--overwrite replaces.
+data:
+	cd lab && uv run python scripts/build_data.py $(ARGS)
 
 # Re-execute every evidence notebook in place (outputs are committed), then export HTML copies.
 # Timing metadata is off so that a re-run on the same data changes nothing.
@@ -68,3 +75,10 @@ profile:
 # Needs the web dependencies (cd web && npm ci). Without a data dir it keeps the committed map layers.
 web:
 	cd web && { [ -d node_modules ] || npm ci; } && npm run data && npm run build
+
+# The configuration freeze record (Stage 3 T12): config/freeze.json from HEAD, validated with the
+# seal, plus the lead's commit/tag/push commands. ARGS=--dry-run prints it instead; ARGS may add
+# --registered-run <abs dir> (default runs/slice/<run_id>). Refuses on a dirty tree, a lab/ tree
+# that the rebuild evidence did not rebuild, or any prior opening of the sealed window.
+freeze:
+	cd lab && uv run python scripts/write_freeze.py $(ARGS)
