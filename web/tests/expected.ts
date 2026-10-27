@@ -63,3 +63,11 @@ export const storageRushDays = String(storage.rush.n_days.value);
 const flat = -storage.cases.U.strategies.A['0.85'].flat_marginal_cut_t.value[iE];
 const p10 = Math.pow(10, Math.floor(Math.log10(Math.abs(flat))) - 1);
 export const storageFlatT = (Math.round(flat / p10) * p10).toLocaleString('en-US');
+
+/** T14: results/water.json. The story's water line, as printed: signed million gallons, two decimals. */
+export const water = JSON.parse(readFileSync(join(results, 'water.json'), 'utf8'));
+const smg = (g: number) => (g > 0 ? '+' : g < 0 ? '−' : '') + (Math.abs(g) / 1e6).toFixed(2);
+const mspan = (r: number[]) => (smg(r[0]) === smg(r[1]) ? smg(r[0]) : `${smg(r[0])} to ${smg(r[1])}`);
+export const waterExSpan = mspan(water.headline.change_ex_hydro_gal.value);
+export const waterWithSpan = mspan(water.headline.change_with_hydro_gal.value);
+export const waterCaveats: string[] = water.caveats;

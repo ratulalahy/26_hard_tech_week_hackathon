@@ -1,0 +1,1796 @@
+{
+ "schema_version": "gridpilot.results.v1",
+ "artifact": "water",
+ "kind": "illustrative",
+ "run_id": "20261027T160656Z",
+ "note": "illustrative; not part of the registered experiment; validation-year data; water factors are literature medians, not measurements of any plant or site",
+ "caveats": [
+  "Consumption, not withdrawal.",
+  "Production-side fuel-mix weighting, not consumption-flow tracing.",
+  "Technology medians; plant-level cooling not modelled.",
+  "PACE is not the Great Salt Lake watershed; no claim of water returned to the lake.",
+  "Hydro evaporation allocation is uncertain; shown separately."
+ ],
+ "window": {
+  "start": "2024-11-01T00:00:00Z",
+  "end": "2025-10-17T18:00:00Z",
+  "arrivals_end": "2025-10-16T07:49:42Z",
+  "n_hours": {
+   "value": 8418,
+   "unit": "hours",
+   "evidence": "measured",
+   "provenance_id": "water:20261027T160656Z:window:n",
+   "status": "ok",
+   "reason": null
+  },
+  "rule": "the registered cohort window: UTC hours from eval_start to the last hour any U, S, W or L cohort job runs; totals are over this window (the validation year), not annualised"
+ },
+ "sources": {
+  "nrel": {
+   "citation": "Macknick, J., Newmark, R., Heath, G., Hallett, K.C. (2011). A Review of Operational Water Consumption and Withdrawal Factors for Electricity Generating Technologies. NREL/TP-6A20-50900.",
+   "url": "https://docs.nlr.gov/docs/fy11osti/50900.pdf",
+   "path": "raw/water/NREL-TP-6A20-50900.pdf",
+   "sha256": "dd1492c5a6b811d037ece63af4c74058aaaec69b04fcb1b4bcb70263ff95b3ca",
+   "manifest": "data/manifests/water.json",
+   "license": "NREL technical report, prepared under DOE contract DE-AC36-08GO28308; publicly available from NREL at no cost. U.S. Government work; cited with attribution (no redistribution of the PDF in git).",
+   "raw_verified": true
+  },
+  "lbnl": {
+   "citation": "Shehabi, A., Smith, S.J., Hubbard, A., Newkirk, A., Lei, N., Siddik, M.A.B., Holecek, B., Koomey, J., Masanet, E., Sartor, D. (2024). 2024 United States Data Center Energy Usage Report. LBNL-2001637. doi:10.71468/P1WC7Q",
+   "url": "https://eta-publications.lbl.gov/sites/default/files/2024-12/lbnl-2024-united-states-data-center-energy-usage-report_1.pdf",
+   "path": "raw/water/LBNL-2001637.pdf",
+   "sha256": "3a2257cdf4c350356062ffd8f75e886f099b13781b0a37af5605d65d5e46c2eb",
+   "manifest": "data/manifests/water.json",
+   "license": "LBNL report under DOE contract DE-AC02-05CH11231; the U.S. Government retains a non-exclusive, paid-up, irrevocable, worldwide license to publish or reproduce it (the report's copyright notice). Publicly available; cited with attribution (no redistribution of the PDF in git).",
+   "raw_verified": true
+  }
+ },
+ "factors": {
+  "coal_tower_generic": {
+   "source": "NREL/TP-6A20-50900 Table 2 (printed p. 13): Coal, Tower, Generic",
+   "median": {
+    "value": 687,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:coal_tower_generic",
+    "status": "ok",
+    "reason": null
+   },
+   "min": {
+    "value": 480,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:coal_tower_generic:min",
+    "status": "ok",
+    "reason": null
+   },
+   "max": {
+    "value": 1100,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:coal_tower_generic:max",
+    "status": "ok",
+    "reason": null
+   },
+   "n_studies": {
+    "value": 5,
+    "unit": "studies",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:coal_tower_generic:n",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  "gas_tower_cc": {
+   "source": "NREL/TP-6A20-50900 Table 2 (printed p. 13): Natural Gas, Tower, Combined Cycle",
+   "median": {
+    "value": 198,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:gas_tower_cc",
+    "status": "ok",
+    "reason": null
+   },
+   "min": {
+    "value": 130,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:gas_tower_cc:min",
+    "status": "ok",
+    "reason": null
+   },
+   "max": {
+    "value": 300,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:gas_tower_cc:max",
+    "status": "ok",
+    "reason": null
+   },
+   "n_studies": {
+    "value": 5,
+    "unit": "studies",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:gas_tower_cc:n",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  "gas_tower_steam": {
+   "source": "NREL/TP-6A20-50900 Table 2 (printed p. 13): Natural Gas, Tower, Steam",
+   "median": {
+    "value": 826,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:gas_tower_steam",
+    "status": "ok",
+    "reason": null
+   },
+   "min": {
+    "value": 662,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:gas_tower_steam:min",
+    "status": "ok",
+    "reason": null
+   },
+   "max": {
+    "value": 1170,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:gas_tower_steam:max",
+    "status": "ok",
+    "reason": null
+   },
+   "n_studies": {
+    "value": 4,
+    "unit": "studies",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:gas_tower_steam:n",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  "nuclear_tower": {
+   "source": "NREL/TP-6A20-50900 Table 2 (printed p. 13): Nuclear, Tower, Generic",
+   "median": {
+    "value": 672,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:nuclear_tower",
+    "status": "ok",
+    "reason": null
+   },
+   "min": {
+    "value": 581,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:nuclear_tower:min",
+    "status": "ok",
+    "reason": null
+   },
+   "max": {
+    "value": 845,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:nuclear_tower:max",
+    "status": "ok",
+    "reason": null
+   },
+   "n_studies": {
+    "value": 6,
+    "unit": "studies",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:nuclear_tower:n",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  "hydro": {
+   "source": "NREL/TP-6A20-50900 Table 1 (printed p. 12): Hydropower, N/A, Aggregated in-stream and reservoir",
+   "median": {
+    "value": 4491,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:hydro",
+    "status": "ok",
+    "reason": null
+   },
+   "min": {
+    "value": 1425,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:hydro:min",
+    "status": "ok",
+    "reason": null
+   },
+   "max": {
+    "value": 18000,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:hydro:max",
+    "status": "ok",
+    "reason": null
+   },
+   "n_studies": {
+    "value": 3,
+    "unit": "studies",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:hydro:n",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  "pv": {
+   "source": "NREL/TP-6A20-50900 Table 1 (printed p. 12): PV, N/A, Utility Scale PV",
+   "median": {
+    "value": 26,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:pv",
+    "status": "ok",
+    "reason": null
+   },
+   "min": {
+    "value": 0,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:pv:min",
+    "status": "ok",
+    "reason": null
+   },
+   "max": {
+    "value": 33,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:pv:max",
+    "status": "ok",
+    "reason": null
+   },
+   "n_studies": {
+    "value": 3,
+    "unit": "studies",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:pv:n",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  "wind": {
+   "source": "NREL/TP-6A20-50900 Table 1 (printed p. 12): Wind, N/A, Wind Turbine",
+   "median": {
+    "value": 0,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:wind",
+    "status": "ok",
+    "reason": null
+   },
+   "min": {
+    "value": 0,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:wind:min",
+    "status": "ok",
+    "reason": null
+   },
+   "max": {
+    "value": 1,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:wind:max",
+    "status": "ok",
+    "reason": null
+   },
+   "n_studies": {
+    "value": 2,
+    "unit": "studies",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:wind:n",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  "geo_dry_binary": {
+   "source": "NREL/TP-6A20-50900 Table 1 (printed p. 12): Geothermal, Dry, Binary",
+   "median": {
+    "value": 135,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:geo_dry_binary",
+    "status": "ok",
+    "reason": null
+   },
+   "min": {
+    "value": 0,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:geo_dry_binary:min",
+    "status": "ok",
+    "reason": null
+   },
+   "max": {
+    "value": 270,
+    "unit": "gal/MWh",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:geo_dry_binary:max",
+    "status": "ok",
+    "reason": null
+   },
+   "n_studies": {
+    "value": 2,
+    "unit": "studies",
+    "evidence": "observed",
+    "provenance_id": "water:20261027T160656Z:factor:geo_dry_binary:n",
+    "status": "ok",
+    "reason": null
+   }
+  }
+ },
+ "fuel_map": {
+  "coal": {
+   "role": "factor",
+   "factor": "coal_tower_generic",
+   "reason": "recirculating (cooling tower) steam; NREL coal tower, generic",
+   "evidence": "assumed"
+  },
+  "gas": {
+   "role": "factor",
+   "factor": "gas_tower_cc",
+   "reason": "combined cycle with a cooling tower (recirculating); peakers and steam units are not separated in EIA-930",
+   "evidence": "assumed"
+  },
+  "oil": {
+   "role": "factor",
+   "factor": "gas_tower_steam",
+   "reason": "no oil row in NREL; proxied by a recirculating steam unit (gas, tower, steam)",
+   "evidence": "assumed"
+  },
+  "nuclear": {
+   "role": "factor",
+   "factor": "nuclear_tower",
+   "reason": "recirculating (cooling tower), generic",
+   "evidence": "assumed"
+  },
+  "hydro_conv": {
+   "role": "hydro",
+   "factor": "hydro",
+   "reason": "aggregated in-stream and reservoir evaporation, all allocated to power; reported separately because the allocation is uncertain",
+   "evidence": "assumed"
+  },
+  "pumped_storage": {
+   "role": "zero",
+   "factor": null,
+   "reason": "storage: time-shifted energy, its charging generation is already counted where it was generated",
+   "evidence": "assumed"
+  },
+  "solar": {
+   "role": "factor",
+   "factor": "pv",
+   "reason": "utility-scale PV (panel washing); CSP not separated",
+   "evidence": "assumed"
+  },
+  "solar_batt": {
+   "role": "factor",
+   "factor": "pv",
+   "reason": "PV with integrated storage, as utility-scale PV",
+   "evidence": "assumed"
+  },
+  "wind": {
+   "role": "factor",
+   "factor": "wind",
+   "reason": "wind turbine, about zero",
+   "evidence": "assumed"
+  },
+  "wind_batt": {
+   "role": "factor",
+   "factor": "wind",
+   "reason": "wind with integrated storage, as wind",
+   "evidence": "assumed"
+  },
+  "geothermal": {
+   "role": "factor",
+   "factor": "geo_dry_binary",
+   "reason": "dry-cooled binary, the common western type; geothermal fluid use is not freshwater (none reported separately in the four core BAs)",
+   "evidence": "assumed"
+  },
+  "battery": {
+   "role": "zero",
+   "factor": null,
+   "reason": "storage discharge: no operational water of its own",
+   "evidence": "assumed"
+  },
+  "other_storage": {
+   "role": "zero",
+   "factor": null,
+   "reason": "storage discharge: no operational water of its own",
+   "evidence": "assumed"
+  },
+  "unknown_storage": {
+   "role": "zero",
+   "factor": null,
+   "reason": "storage discharge: no operational water of its own",
+   "evidence": "assumed"
+  },
+  "other": {
+   "role": "mix_average",
+   "factor": null,
+   "reason": "mixed category (biomass, geothermal, storage, ...): left out of the shares, so it takes the hour's average intensity of the known fuels",
+   "evidence": "assumed"
+  },
+  "unknown": {
+   "role": "mix_average",
+   "factor": null,
+   "reason": "unknown fuel: left out of the shares (the hour's average intensity)",
+   "evidence": "assumed"
+  }
+ },
+ "fuel_rule": "EIA-930 adjusted generation by fuel, negatives clipped to 0; shares over the fuels with a factor or zero water ('other' and 'unknown' take the hour's average); hydro = conventional hydro (pumped storage: zero). A BA-hour is missing when nothing is reported, the shares' generation is 0, or a fuel reported in ≥ 90% of the loaded hours is null; missing hours are linearly interpolated in time (tier 2)",
+ "wue": {
+  "low": {
+   "value": 0.36,
+   "unit": "L/kWh (IT)",
+   "evidence": "observed",
+   "provenance_id": "water:20261027T160656Z:wue:lo",
+   "status": "ok",
+   "reason": null
+  },
+  "high": {
+   "value": 0.48,
+   "unit": "L/kWh (IT)",
+   "evidence": "observed",
+   "provenance_id": "water:20261027T160656Z:wue:hi",
+   "status": "ok",
+   "reason": null
+  },
+  "low_source": "LBNL-2001637 p. 48: the overall average WUE, which stays just over 0.36 L/kWh through 2023 (Figure 4.7, annual average site WUE across all U.S. data centers)",
+  "high_source": "LBNL-2001637 p. 48: After 2023, the average WUE rises slightly, reaching between 0.45 and 0.48 L/kWh (Figure 4.7; the 2028 scenario range, upper end)",
+  "rule": "assumed: the U.S.-average site WUE from 2023 (just over 0.36 L/kWh) to the 2028 scenario's upper end (0.48 L/kWh) brackets the validation year; one national range for every site, applied to IT energy (facility kWh ÷ PUE)",
+  "rule_evidence": "assumed"
+ },
+ "context": {
+  "lbnl_us_grid_l_per_kwh": {
+   "value": 4.35,
+   "unit": "L/kWh",
+   "evidence": "observed",
+   "provenance_id": "water:20261027T160656Z:ctx:us",
+   "status": "ok",
+   "reason": null
+  },
+  "lbnl_us_grid_gal_per_mwh": {
+   "value": 1149.1484277579457,
+   "unit": "gal/MWh",
+   "evidence": "observed",
+   "provenance_id": "water:20261027T160656Z:ctx:us:gal",
+   "status": "ok",
+   "reason": null
+  },
+  "source": "LBNL-2001637 p. 57: the average water intensity factor for electricity use in the U.S. overall is 4.35 L/kWh (consumption-flow method of Siddik et al. 2024; not comparable one-to-one)",
+  "gal_per_acre_foot": {
+   "value": 325851.429,
+   "unit": "gal/acre-ft",
+   "evidence": "observed",
+   "provenance_id": "water:20261027T160656Z:ctx:af",
+   "status": "ok",
+   "reason": null
+  }
+ },
+ "intensity": {
+  "by_ba": {
+   "PACE": {
+    "mean_ex_hydro_gal_mwh": {
+     "value": 360.33515209539723,
+     "unit": "gal/MWh",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:PACE:ex",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_hydro_evap_gal_mwh": {
+     "value": 97.74220365554497,
+     "unit": "gal/MWh",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:PACE:hydro",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_with_hydro_gal_mwh": {
+     "value": 458.0773557509423,
+     "unit": "gal/MWh",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:PACE:with",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_hydro_share": {
+     "value": 0.021764017736705627,
+     "unit": "fraction",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:PACE:hshare",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_generation_mw": {
+     "value": 6767.138037538608,
+     "unit": "MW",
+     "evidence": "observed",
+     "provenance_id": "water:20261027T160656Z:int:PACE:gen",
+     "status": "ok",
+     "reason": null
+    },
+    "n_hours": {
+     "value": 8418,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "water:20261027T160656Z:int:PACE:n",
+     "status": "ok",
+     "reason": null
+    },
+    "n_filled": {
+     "value": 0,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "water:20261027T160656Z:int:PACE:filled",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "CISO": {
+    "mean_ex_hydro_gal_mwh": {
+     "value": 164.83493295121986,
+     "unit": "gal/MWh",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:CISO:ex",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_hydro_evap_gal_mwh": {
+     "value": 582.7103441530534,
+     "unit": "gal/MWh",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:CISO:hydro",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_with_hydro_gal_mwh": {
+     "value": 747.5452771042733,
+     "unit": "gal/MWh",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:CISO:with",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_hydro_share": {
+     "value": 0.12975068896750241,
+     "unit": "fraction",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:CISO:hshare",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_generation_mw": {
+     "value": 21686.61701116655,
+     "unit": "MW",
+     "evidence": "observed",
+     "provenance_id": "water:20261027T160656Z:int:CISO:gen",
+     "status": "ok",
+     "reason": null
+    },
+    "n_hours": {
+     "value": 8418,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "water:20261027T160656Z:int:CISO:n",
+     "status": "ok",
+     "reason": null
+    },
+    "n_filled": {
+     "value": 25,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "water:20261027T160656Z:int:CISO:filled",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "BPAT": {
+    "mean_ex_hydro_gal_mwh": {
+     "value": 80.76090314072512,
+     "unit": "gal/MWh",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:BPAT:ex",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_hydro_evap_gal_mwh": {
+     "value": 3323.2361965450923,
+     "unit": "gal/MWh",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:BPAT:hydro",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_with_hydro_gal_mwh": {
+     "value": 3403.9970996858174,
+     "unit": "gal/MWh",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:BPAT:with",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_hydro_share": {
+     "value": 0.7399768863382525,
+     "unit": "fraction",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:BPAT:hshare",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_generation_mw": {
+     "value": 9112.713471133286,
+     "unit": "MW",
+     "evidence": "observed",
+     "provenance_id": "water:20261027T160656Z:int:BPAT:gen",
+     "status": "ok",
+     "reason": null
+    },
+    "n_hours": {
+     "value": 8418,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "water:20261027T160656Z:int:BPAT:n",
+     "status": "ok",
+     "reason": null
+    },
+    "n_filled": {
+     "value": 1,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "water:20261027T160656Z:int:BPAT:filled",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "NEVP": {
+    "mean_ex_hydro_gal_mwh": {
+     "value": 191.028168216455,
+     "unit": "gal/MWh",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:NEVP:ex",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_hydro_evap_gal_mwh": {
+     "value": 45.35476290203641,
+     "unit": "gal/MWh",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:NEVP:hydro",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_with_hydro_gal_mwh": {
+     "value": 236.3829311184914,
+     "unit": "gal/MWh",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:NEVP:with",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_hydro_share": {
+     "value": 0.010099034268990517,
+     "unit": "fraction",
+     "evidence": "modeled",
+     "provenance_id": "water:20261027T160656Z:int:NEVP:hshare",
+     "status": "ok",
+     "reason": null
+    },
+    "mean_generation_mw": {
+     "value": 3767.8741981468283,
+     "unit": "MW",
+     "evidence": "observed",
+     "provenance_id": "water:20261027T160656Z:int:NEVP:gen",
+     "status": "ok",
+     "reason": null
+    },
+    "n_hours": {
+     "value": 8418,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "water:20261027T160656Z:int:NEVP:n",
+     "status": "ok",
+     "reason": null
+    },
+    "n_filled": {
+     "value": 51,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "water:20261027T160656Z:int:NEVP:filled",
+     "status": "ok",
+     "reason": null
+    }
+   }
+  },
+  "rule": "time mean of the hourly intensity over the window (filled hours included)"
+ },
+ "policies": {
+  "U": {
+   "energy_kwh": {
+    "value": 8233642.1426,
+    "unit": "kWh",
+    "evidence": "simulated",
+    "provenance_id": "water:20261027T160656Z:U:energy",
+    "status": "ok",
+    "reason": null
+   },
+   "it_kwh": {
+    "value": 6861368.452166667,
+    "unit": "kWh",
+    "evidence": "simulated",
+    "provenance_id": "water:20261027T160656Z:U:it",
+    "status": "ok",
+    "reason": null
+   },
+   "kwh_share_filled": {
+    "value": 0.0,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "water:20261027T160656Z:U:filled",
+    "status": "ok",
+    "reason": null
+   },
+   "generation_gal": {
+    "ex_hydro": {
+     "value": 2971798.4980001757,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:U:gen:ex",
+     "status": "ok",
+     "reason": null
+    },
+    "hydro_evap": {
+     "value": 814659.3267133954,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:U:gen:hydro",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro": {
+     "value": 3786457.824713571,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:U:gen:with",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_at_hydro_min": {
+     "value": 3230290.9363360894,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:U:gen:hmin",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_at_hydro_max": {
+     "value": 6236966.140138034,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:U:gen:hmax",
+     "status": "ok",
+     "reason": null
+    },
+    "by_site": {
+     "PACE": {
+      "ex_hydro": {
+       "value": 2971798.4980001757,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:U:site:PACE:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 814659.3267133954,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:U:site:PACE:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 3786457.824713571,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:U:site:PACE:with",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "CISO": {
+      "ex_hydro": {
+       "value": 0.0,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:U:site:CISO:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 0.0,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:U:site:CISO:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 0.0,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:U:site:CISO:with",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "BPAT": {
+      "ex_hydro": {
+       "value": 0.0,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:U:site:BPAT:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 0.0,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:U:site:BPAT:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 0.0,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:U:site:BPAT:with",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "NEVP": {
+      "ex_hydro": {
+       "value": 0.0,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:U:site:NEVP:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 0.0,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:U:site:NEVP:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 0.0,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:U:site:NEVP:with",
+       "status": "ok",
+       "reason": null
+      }
+     }
+    }
+   },
+   "change_vs_U": {
+    "ex_hydro_gal": {
+     "value": 0.0,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:U:d:ex",
+     "status": "ok",
+     "reason": null
+    },
+    "ex_hydro_frac": {
+     "value": 0.0,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:U:d:ex:f",
+     "status": "ok",
+     "reason": null
+    },
+    "hydro_evap_gal": {
+     "value": 0.0,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:U:d:hydro",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_gal": {
+     "value": 0.0,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:U:d:with",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_frac": {
+     "value": 0.0,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:U:d:with:f",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "direct_cooling_gal": {
+    "low": {
+     "value": 652529.4429579553,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:U:direct:lo",
+     "status": "ok",
+     "reason": null
+    },
+    "high": {
+     "value": 870039.2572772739,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:U:direct:hi",
+     "status": "ok",
+     "reason": null
+    },
+    "change_vs_U_low": {
+     "value": 0.0,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:U:direct:d:lo",
+     "status": "ok",
+     "reason": null
+    },
+    "change_vs_U_high": {
+     "value": 0.0,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:U:direct:d:hi",
+     "status": "ok",
+     "reason": null
+    }
+   }
+  },
+  "S": {
+   "energy_kwh": {
+    "value": 8360918.30465,
+    "unit": "kWh",
+    "evidence": "simulated",
+    "provenance_id": "water:20261027T160656Z:S:energy",
+    "status": "ok",
+    "reason": null
+   },
+   "it_kwh": {
+    "value": 6967431.920541667,
+    "unit": "kWh",
+    "evidence": "simulated",
+    "provenance_id": "water:20261027T160656Z:S:it",
+    "status": "ok",
+    "reason": null
+   },
+   "kwh_share_filled": {
+    "value": 0.00012690466122721152,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "water:20261027T160656Z:S:filled",
+    "status": "ok",
+    "reason": null
+   },
+   "generation_gal": {
+    "ex_hydro": {
+     "value": 2363489.2745916327,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:S:gen:ex",
+     "status": "ok",
+     "reason": null
+    },
+    "hydro_evap": {
+     "value": 6927394.398666178,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:S:gen:hydro",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro": {
+     "value": 9290883.673257811,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:S:gen:with",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_at_hydro_min": {
+     "value": 4561560.309572551,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:S:gen:hmin",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_at_hydro_max": {
+     "value": 30128597.084876914,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:S:gen:hmax",
+     "status": "ok",
+     "reason": null
+    },
+    "by_site": {
+     "PACE": {
+      "ex_hydro": {
+       "value": 2079609.088365321,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:S:site:PACE:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 567315.4279821508,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:S:site:PACE:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 2646924.5163474716,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:S:site:PACE:with",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "CISO": {
+      "ex_hydro": {
+       "value": 113722.63033412989,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:S:site:CISO:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 408494.1983957161,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:S:site:CISO:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 522216.828729846,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:S:site:CISO:with",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "BPAT": {
+      "ex_hydro": {
+       "value": 149573.40465795193,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:S:site:BPAT:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 5946288.039644146,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:S:site:BPAT:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 6095861.444302098,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:S:site:BPAT:with",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "NEVP": {
+      "ex_hydro": {
+       "value": 20584.151234229575,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:S:site:NEVP:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 5296.732644163614,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:S:site:NEVP:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 25880.88387839319,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:S:site:NEVP:with",
+       "status": "ok",
+       "reason": null
+      }
+     }
+    }
+   },
+   "change_vs_U": {
+    "ex_hydro_gal": {
+     "value": -608309.223408543,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:S:d:ex",
+     "status": "ok",
+     "reason": null
+    },
+    "ex_hydro_frac": {
+     "value": -0.20469396690855554,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:S:d:ex:f",
+     "status": "ok",
+     "reason": null
+    },
+    "hydro_evap_gal": {
+     "value": 6112735.071952783,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:S:d:hydro",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_gal": {
+     "value": 5504425.84854424,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:S:d:with",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_frac": {
+     "value": 1.4537137618746951,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:S:d:with:f",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "direct_cooling_gal": {
+    "low": {
+     "value": 662616.2844414605,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:S:direct:lo",
+     "status": "ok",
+     "reason": null
+    },
+    "high": {
+     "value": 883488.3792552806,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:S:direct:hi",
+     "status": "ok",
+     "reason": null
+    },
+    "change_vs_U_low": {
+     "value": 10086.841483505052,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:S:direct:d:lo",
+     "status": "ok",
+     "reason": null
+    },
+    "change_vs_U_high": {
+     "value": 13449.121978006735,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:S:direct:d:hi",
+     "status": "ok",
+     "reason": null
+    }
+   }
+  },
+  "W": {
+   "energy_kwh": {
+    "value": 8360694.24577,
+    "unit": "kWh",
+    "evidence": "simulated",
+    "provenance_id": "water:20261027T160656Z:W:energy",
+    "status": "ok",
+    "reason": null
+   },
+   "it_kwh": {
+    "value": 6967245.204808334,
+    "unit": "kWh",
+    "evidence": "simulated",
+    "provenance_id": "water:20261027T160656Z:W:it",
+    "status": "ok",
+    "reason": null
+   },
+   "kwh_share_filled": {
+    "value": 0.00028897292963707595,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "water:20261027T160656Z:W:filled",
+    "status": "ok",
+    "reason": null
+   },
+   "generation_gal": {
+    "ex_hydro": {
+     "value": 2367057.87845766,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:W:gen:ex",
+     "status": "ok",
+     "reason": null
+    },
+    "hydro_evap": {
+     "value": 6672366.358188914,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:W:gen:hydro",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro": {
+     "value": 9039424.236646574,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:W:gen:with",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_at_hydro_min": {
+     "value": 4484208.192512259,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:W:gen:hmin",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_at_hydro_max": {
+     "value": 29110009.213884167,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:W:gen:hmax",
+     "status": "ok",
+     "reason": null
+    },
+    "by_site": {
+     "PACE": {
+      "ex_hydro": {
+       "value": 2078106.7365425301,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:W:site:PACE:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 567849.4695844984,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:W:site:PACE:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 2645956.2061270284,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:W:site:PACE:with",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "CISO": {
+      "ex_hydro": {
+       "value": 117676.52749325497,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:W:site:CISO:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 414145.9139206742,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:W:site:CISO:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 531822.4414139291,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:W:site:CISO:with",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "BPAT": {
+      "ex_hydro": {
+       "value": 142492.13869423204,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:W:site:BPAT:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 5678210.139734313,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:W:site:BPAT:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 5820702.278428545,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:W:site:BPAT:with",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "NEVP": {
+      "ex_hydro": {
+       "value": 28782.47572764243,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:W:site:NEVP:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 12160.834949429314,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:W:site:NEVP:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 40943.31067707174,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:W:site:NEVP:with",
+       "status": "ok",
+       "reason": null
+      }
+     }
+    }
+   },
+   "change_vs_U": {
+    "ex_hydro_gal": {
+     "value": -604740.6195425158,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:W:d:ex",
+     "status": "ok",
+     "reason": null
+    },
+    "ex_hydro_frac": {
+     "value": -0.2034931439495196,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:W:d:ex:f",
+     "status": "ok",
+     "reason": null
+    },
+    "hydro_evap_gal": {
+     "value": 5857707.031475519,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:W:d:hydro",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_gal": {
+     "value": 5252966.411933003,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:W:d:with",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_frac": {
+     "value": 1.387303557865554,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:W:d:with:f",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "direct_cooling_gal": {
+    "low": {
+     "value": 662598.5274132069,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:W:direct:lo",
+     "status": "ok",
+     "reason": null
+    },
+    "high": {
+     "value": 883464.7032176092,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:W:direct:hi",
+     "status": "ok",
+     "reason": null
+    },
+    "change_vs_U_low": {
+     "value": 10069.084455251435,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:W:direct:d:lo",
+     "status": "ok",
+     "reason": null
+    },
+    "change_vs_U_high": {
+     "value": 13425.445940335247,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:W:direct:d:hi",
+     "status": "ok",
+     "reason": null
+    }
+   }
+  },
+  "L": {
+   "energy_kwh": {
+    "value": 8360735.51218,
+    "unit": "kWh",
+    "evidence": "simulated",
+    "provenance_id": "water:20261027T160656Z:L:energy",
+    "status": "ok",
+    "reason": null
+   },
+   "it_kwh": {
+    "value": 6967279.5934833335,
+    "unit": "kWh",
+    "evidence": "simulated",
+    "provenance_id": "water:20261027T160656Z:L:it",
+    "status": "ok",
+    "reason": null
+   },
+   "kwh_share_filled": {
+    "value": 0.0002158629127031695,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "water:20261027T160656Z:L:filled",
+    "status": "ok",
+    "reason": null
+   },
+   "generation_gal": {
+    "ex_hydro": {
+     "value": 2366608.9461399214,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:L:gen:ex",
+     "status": "ok",
+     "reason": null
+    },
+    "hydro_evap": {
+     "value": 6654277.271126256,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:L:gen:hydro",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro": {
+     "value": 9020886.217266178,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:L:gen:with",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_at_hydro_min": {
+     "value": 4478019.569910778,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:L:gen:hmin",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_at_hydro_max": {
+     "value": 29037058.930613894,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:L:gen:hmax",
+     "status": "ok",
+     "reason": null
+    },
+    "by_site": {
+     "PACE": {
+      "ex_hydro": {
+       "value": 2077890.3865945602,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:L:site:PACE:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 567337.4176343388,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:L:site:PACE:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 2645227.804228899,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:L:site:PACE:with",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "CISO": {
+      "ex_hydro": {
+       "value": 118949.12322642129,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:L:site:CISO:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 428500.9904281273,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:L:site:CISO:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 547450.1136545485,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:L:site:CISO:with",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "BPAT": {
+      "ex_hydro": {
+       "value": 141361.3975510371,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:L:site:BPAT:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 5646650.8907996,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:L:site:BPAT:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 5788012.288350637,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:L:site:BPAT:with",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "NEVP": {
+      "ex_hydro": {
+       "value": 28408.038767902704,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:L:site:NEVP:ex",
+       "status": "ok",
+       "reason": null
+      },
+      "hydro_evap": {
+       "value": 11787.972264189973,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:L:site:NEVP:hydro",
+       "status": "ok",
+       "reason": null
+      },
+      "with_hydro": {
+       "value": 40196.011032092676,
+       "unit": "gal",
+       "evidence": "simulated",
+       "provenance_id": "water:20261027T160656Z:L:site:NEVP:with",
+       "status": "ok",
+       "reason": null
+      }
+     }
+    }
+   },
+   "change_vs_U": {
+    "ex_hydro_gal": {
+     "value": -605189.5518602543,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:L:d:ex",
+     "status": "ok",
+     "reason": null
+    },
+    "ex_hydro_frac": {
+     "value": -0.2036442081344031,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:L:d:ex:f",
+     "status": "ok",
+     "reason": null
+    },
+    "hydro_evap_gal": {
+     "value": 5839617.944412861,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:L:d:hydro",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_gal": {
+     "value": 5234428.392552607,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:L:d:with",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_frac": {
+     "value": 1.3824076841390853,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:L:d:with:f",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "direct_cooling_gal": {
+    "low": {
+     "value": 662601.7978428737,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:L:direct:lo",
+     "status": "ok",
+     "reason": null
+    },
+    "high": {
+     "value": 883469.0637904983,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:L:direct:hi",
+     "status": "ok",
+     "reason": null
+    },
+    "change_vs_U_low": {
+     "value": 10072.354884918343,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:L:direct:d:lo",
+     "status": "ok",
+     "reason": null
+    },
+    "change_vs_U_high": {
+     "value": 13429.806513224457,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water:20261027T160656Z:L:direct:d:hi",
+     "status": "ok",
+     "reason": null
+    }
+   }
+  }
+ },
+ "headline": {
+  "policies": [
+   "S",
+   "W",
+   "L"
+  ],
+  "rule": "change vs U local (stay in Utah) over the window, generation-associated water, without and with hydro evaporation; S, W and L",
+  "change_ex_hydro_gal": {
+   "value": [
+    -608309.223408543,
+    -604740.6195425158
+   ],
+   "unit": "gal",
+   "evidence": "simulated",
+   "provenance_id": "water:20261027T160656Z:head:ex",
+   "status": "ok",
+   "reason": null
+  },
+  "change_with_hydro_gal": {
+   "value": [
+    5234428.392552607,
+    5504425.84854424
+   ],
+   "unit": "gal",
+   "evidence": "simulated",
+   "provenance_id": "water:20261027T160656Z:head:with",
+   "status": "ok",
+   "reason": null
+  }
+ },
+ "crosscheck": {
+  "rule": "the carbon accounting re-run on the same ledgers, jobs and filled carbon truth reproduces the registered co2_kg and energy_kwh (rel 1e-9), so the water uses the registered hourly energy",
+  "policies": {
+   "U": {
+    "co2_kg_reaccounted": {
+     "value": 4669686.12331724,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "water:cc:U:co2",
+     "status": "ok",
+     "reason": null
+    },
+    "matches_registered": true
+   },
+   "S": {
+    "co2_kg_reaccounted": {
+     "value": 3613423.1667785123,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "water:cc:S:co2",
+     "status": "ok",
+     "reason": null
+    },
+    "matches_registered": true
+   },
+   "W": {
+    "co2_kg_reaccounted": {
+     "value": 3618363.0647760523,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "water:cc:W:co2",
+     "status": "ok",
+     "reason": null
+    },
+    "matches_registered": true
+   },
+   "L": {
+    "co2_kg_reaccounted": {
+     "value": 3618527.0340053807,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "water:cc:L:co2",
+     "status": "ok",
+     "reason": null
+    },
+    "matches_registered": true
+   }
+  }
+ }
+}

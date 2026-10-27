@@ -3,6 +3,7 @@ import { PolicyTable } from '../components/charts';
 import { CONSUMPTION_CHECKS, ExtensionsTable, PHRASE, extRows, listJoin, placementSpan } from '../components/extensions';
 import { ReliefTable, RushSensitivity, hourSpans, storageFacts } from '../components/storage';
 import { Ev, Icon, SEALED } from '../components/ui';
+import { WaterPanel } from '../components/water';
 import { DEADLINE_RULE, VALIDATION_LINE, asNum, headline, plainLimitations, pname, stripCodes } from '../lib/data';
 import { fmt, fmtDate, pct, pctRange, sig2, signed } from '../lib/format';
 import { useApp } from '../lib/store';
@@ -135,6 +136,9 @@ export function MethodDrawer() {
               <p className="t-12 ink-2" style={{ margin: '8px 0 6px' }}>The same relief at lower thresholds:</p>
               <div style={{ overflowX: 'auto' }}><RushSensitivity s={sto} /></div>
             </Sec></div> : null}
+            {data!.water ? <div className="well" style={{ padding: 12 }}><Sec title="Water footprint illustration (not the registered result)">
+              <WaterPanel w={data!.water} />
+            </Sec></div> : null}
             <Sec title="Evidence labels">
               <div className="flex flex-wrap gap-4"><Ev e="observed" /><Ev e="measured" /><Ev e="forecast" /><Ev e="modeled" /><Ev e="assumed" /><Ev e="simulated" /></div>
               <p className="t-12 ink-2" style={{ margin: '8px 0 0' }}>Observed: EIA-930 load and the EIA US average. Measured: job sizes from the trace, forecast errors. Modeled: EIA's hourly carbon-intensity estimates, and bounds computed from them. Assumed: parameters we chose. Simulated: schedule outcomes and their energy.</p>
@@ -143,6 +147,7 @@ export function MethodDrawer() {
               <code className="t-12 block" style={{ padding: 8, borderRadius: 8, background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--hair-2)' }}>{man.reproduce}</code>
               <code className="t-12 block" style={{ padding: 8, borderRadius: 8, background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--hair-2)', marginTop: 4 }}>make profile  # results/grid-profile.json and workload-profile.json</code>
               <code className="t-12 block" style={{ padding: 8, borderRadius: 8, background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--hair-2)', marginTop: 4 }}>make storage RUN_DIR=…  # results/storage.json (illustrative)</code>
+              <code className="t-12 block" style={{ padding: 8, borderRadius: 8, background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--hair-2)', marginTop: 4 }}>make water RUN_DIR=…  # results/water.json (illustrative)</code>
             </Sec>
           </div>
         </Dialog.Content>

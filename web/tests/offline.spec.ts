@@ -1,7 +1,7 @@
 // Offline acceptance (Task 8 Step 1): the built dist/, served on localhost, makes no request to any other
 // host, and every view renders a value that comes from results/metrics.json.
 import { expect, test, type Page } from '@playwright/test';
-import { consumptionSpan, lCommonSupport, mobilityAbout, placementRange, sProduction, sTonnes, storageCombined, storageFlatT, storageHeadline, storageRushDays, storageRushN, timeOnlyRange, uTonnes } from './expected';
+import { consumptionSpan, lCommonSupport, mobilityAbout, placementRange, sProduction, sTonnes, storageCombined, storageFlatT, storageHeadline, storageRushDays, storageRushN, timeOnlyRange, uTonnes, waterCaveats, waterExSpan, waterWithSpan } from './expected';
 
 const LOCAL = new Set(['127.0.0.1', 'localhost', '[::1]']);
 
@@ -64,6 +64,8 @@ test('every view renders registered values with zero non-localhost requests', as
   await expect(page.getByTestId('storage-curve')).toBeVisible();
   await expect(page.getByTestId('storage-import')).toBeVisible();
   await expect(page.getByText('illustrative · not the registered result')).toBeVisible();
+  // T14: one water line in story 6, from results/water.json
+  await expect(page.getByTestId('story-water')).toContainText(`Moving work also shifts its water footprint: ${waterExSpan} million gallons a year on the fuel mix alone, but ${waterWithSpan} million if hydro reservoir evaporation is counted (illustrative).`);
 
   await page.getByRole('banner').getByRole('button', { name: 'Method & evidence' }).click();
   const drawer = page.getByRole('dialog');
@@ -83,6 +85,11 @@ test('every view renders registered values with zero non-localhost requests', as
   await expect(drawer.getByTestId('method-rush')).toContainText(`${storageRushN} hours on ${storageRushDays} days`);
   await expect(drawer.getByTestId('method-breakeven')).toContainText('On our rough reference the charging hours are no cleaner on the margin');
   await expect(drawer.getByTestId('storage-rush-sens')).toBeVisible();
+  // T14: the water panel, with Astra's caveats verbatim
+  await expect(drawer.getByTestId('method-water')).toContainText(`${waterExSpan} million gallons`);
+  await expect(drawer.getByTestId('water-table')).toContainText('W weekly profile');
+  await expect(drawer.getByTestId('water-sites')).toContainText('Northwest hydro');
+  for (const c of waterCaveats) await expect(drawer.getByTestId('water-caveats')).toContainText(c);
 
   await page.waitForLoadState('networkidle');
   expect(errors, 'page errors').toEqual([]);
