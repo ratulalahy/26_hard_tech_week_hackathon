@@ -42,7 +42,7 @@ const v = (e: Env | undefined) => (e && e.status === 'ok' ? (e.value as number) 
 export function Outlook() {
   const { o, err } = useOutlook();
   return (
-    <section aria-label="Grid outlook" data-testid="outlook" className="fixed z-10 overflow-y-auto" style={{ top: 72, left: 16, right: 16, bottom: 32 }}>
+    <section aria-label="Grid outlook" data-testid="outlook" tabIndex={0} className="fixed z-10 overflow-y-auto" style={{ top: 72, left: 16, right: 16, bottom: 32 }}>
       {err ? <OutlookError msg={err} /> : !o ? <OutlookSkeleton /> : <OutlookBody o={o} />}
     </section>
   );
@@ -71,7 +71,7 @@ function OutlookBody({ o }: { o: Json }) {
       <header className="flex items-end justify-between gap-6 flex-wrap">
         <div>
           <h1 className="t-20" style={{ margin: 0 }} data-testid="outlook-title">
-            {agree ? `Next ${days.length} days: ${REGION[pick].name} stays the cleanest place to run; in Utah, the cleanest hours are ${sk.utahNone ? 'typically ' : ''}${span}${count(mode) * 2 >= days.length ? ' on most days' : ''}`
+            {agree ? `Next ${days.length} days: ${REGION[pick].name} stays the cleanest place to run; in Utah, the cleanest hours are ${span}${count(mode) * 2 >= days.length ? ' on most days' : ''}`
               : `Next ${days.length} days: the forecast and the router's fixed ranking disagree on some days`}
           </h1>
           <p className="t-13 fw-500" style={{ margin: '6px 0 0', maxWidth: '100ch' }} data-testid="outlook-skill-line">{sk.line}</p>
@@ -86,7 +86,7 @@ function OutlookBody({ o }: { o: Json }) {
       <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 2.2fr) minmax(320px, 1fr)', gap: 16 }}>
         <div className="panel" style={{ padding: '12px 8px 8px' }}>
           <div className="flex items-baseline justify-between" style={{ padding: '0 8px' }}>
-            <span className="t-15">Hourly forecast by region, g CO₂/kWh</span>
+            <span className="t-15 whitespace-nowrap">Hourly CO₂ by region, g/kWh</span>
             <span className="t-11 ink-3">Hours are America/Denver · line: median · band: p10–p90 from validation errors · shaded days: seasonal average only · Utah has its own y scale; the destinations share one</span>
           </div>
           {SITES.map((ba) => <RegionChart key={ba} o={o} ba={ba} big={ba === 'PACE'} />)}
@@ -150,7 +150,7 @@ function skillSummary(o: Json) {
 function cardStatus(r: Json) {
   const best = v(r.best_model_skill);
   if (r.status === 'forecast') return `forecast · ${pct(v(r.skill_vs_climatology) ?? 0, 0)}% better than avg`;
-  return best != null && best > 0 ? `forecast ${pct(best, 0)}% better: not distinguishable` : 'no forecast skill';
+  return best != null && best > 0 ? `forecast +${pct(best, 0)}% vs avg, not distinguishable` : 'no forecast skill';
 }
 
 const hatch = { backgroundImage: 'repeating-linear-gradient(135deg, rgba(74,58,48,.07) 0 2px, transparent 2px 7px)' } as const;
