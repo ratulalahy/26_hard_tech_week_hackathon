@@ -46,6 +46,15 @@ TIER_SOURCE = {
     3: "EIA-930 fuel-mix CI, same hour (adjusted generation x EIA direct factors)",
     4: "mean of tier-1 values at the same UTC hour over the 7 preceding days",
 }
+BASES = ("consumption", "production")
+# Production-basis repricing (T10): the same tiers with production as tier 1.
+TIER_SOURCE_PRODUCTION = {
+    1: "EIA production-basis CO2 intensity (BA workbook)",
+    2: "EIA's estimated consumption-basis hourly CO₂ intensity, same hour (BA workbook)",
+    3: "EIA-930 fuel-mix CI, same hour (adjusted generation x EIA direct factors)",
+    4: "mean of tier-1 (production-basis) values at the same UTC hour over the 7 preceding "
+       "days",
+}
 SAME_HOUR_DAYS = 7
 H = timedelta(hours=1)
 SCHEMA = {"ba": pl.Utf8, "ts_utc": pl.Datetime("us", "UTC"), "ci_g_kwh": pl.Float64,
@@ -103,13 +112,20 @@ def fill_truth(
     *,
     carbon: pl.DataFrame | None = None,
     fuel_ci: pl.DataFrame | None = None,
+    basis: str = "consumption",
 ) -> pl.DataFrame:
     """The F14.6 scoring truth over [start, end) (see the module docstring).
 
     `carbon` (ba, ts_utc, ci_consumed_g_kwh, ci_generated_g_kwh) and `fuel_ci` (ba, ts_utc,
     ci_g_kwh) default to the frozen snapshot. Tier 4 reads tier-1 values up to 7 days
     before `start`, so pass inputs from start − 7 d.
+
+    `basis="production"` (Stage 3 T10 repricing; spec §10 check 6) applies the same tiers
+    with production as tier 1: 1 production basis, 2 consumption basis (same hour), 3 our
+    fuel-mix CI, 4 the 7-day same-hour mean of tier-1 (production) values.
     """
+    if basis not in BASES:
+        raise ValueError(f"basis must be one of {BASES}, got {basis!r}")
     _window(start, end)
     lo = start - SAME_HOUR_DAYS * 24 * H
     if carbon is None:
@@ -118,9 +134,11 @@ def fill_truth(
         fuel_ci = load_fuel_mix_ci(start, end, bas)
     _no_sealed(carbon, "carbon")
     _no_sealed(fuel_ci, "fuel_ci")
+    first, second = (("ci_consumed_g_kwh", "ci_generated_g_kwh") if basis == "consumption"
+                     else ("ci_generated_g_kwh", "ci_consumed_g_kwh"))
     c = carbon.select(pl.col("ba").cast(pl.Utf8), "ts_utc",
-                      pl.col("ci_consumed_g_kwh").cast(pl.Float64).alias("t1"),
-                      pl.col("ci_generated_g_kwh").cast(pl.Float64).alias("t2"))
+                      pl.col(first).cast(pl.Float64).alias("t1"),
+                      pl.col(second).cast(pl.Float64).alias("t2"))
     f = fuel_ci.select(pl.col("ba").cast(pl.Utf8), "ts_utc",
                        pl.col("ci_g_kwh").cast(pl.Float64).alias("t3"))
     for name, frame in (("carbon", c), ("fuel_ci", f)):

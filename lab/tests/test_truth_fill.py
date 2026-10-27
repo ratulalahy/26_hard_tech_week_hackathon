@@ -220,3 +220,48 @@ def test_fuel_mix_ci_formula():
     assert EF_G_KWH["coal"] == pytest.approx(2.31 * 453.592)
     none = pl.DataFrame({c: [None] for c in cols}, schema={c: pl.Float64 for c in cols})
     assert none.select(fuel_mix_ci().alias("ci"))["ci"][0] is None
+
+
+# --------------------------------------------------------------------------- production basis
+# Stage 3 T10 (D-058, §10 check 6): the same F14.6 tiers with production as tier 1.
+
+
+def test_production_basis_swaps_tiers_1_and_2():
+    start, cons, gen = _history()
+    gen = [500.0 + k for k in range(len(gen))]
+    i = (T0 + 5 * H - start) // H
+    gen[i] = None  # no production value: the consumption value fills (tier 2)
+    out = fill_truth(T0, T0 + 24 * H, ["PACE"], carbon=_carbon("PACE", start, cons, gen),
+                     fuel_ci=_fuel("PACE", start, [9.0] * len(cons)), basis="production")
+    r = _at(out, "PACE", T0 + 3 * H)
+    assert (r["tier"], r["ci_g_kwh"]) == (1, gen[(T0 + 3 * H - start) // H])
+    r = _at(out, "PACE", T0 + 5 * H)
+    assert (r["tier"], r["ci_g_kwh"]) == (2, cons[i])
+
+
+def test_production_basis_tier3_and_tier4_use_production_history():
+    start, cons, gen = _history(days=10)
+    gen = [500.0 + (k // 24) for k in range(len(gen))]
+    h = T0 + 7 * H
+    i = (h - start) // H
+    cons[i] = gen[i] = None
+    fuel = [9.0] * len(cons)
+    out = fill_truth(T0, T0 + 24 * H, ["PACE"], carbon=_carbon("PACE", start, cons, gen),
+                     fuel_ci=_fuel("PACE", start, fuel), basis="production")
+    assert (_at(out, "PACE", h)["tier"], _at(out, "PACE", h)["ci_g_kwh"]) == (3, 9.0)
+    fuel[i] = None
+    out = fill_truth(T0, T0 + 24 * H, ["PACE"], carbon=_carbon("PACE", start, cons, gen),
+                     fuel_ci=_fuel("PACE", start, fuel), basis="production")
+    r = _at(out, "PACE", h)
+    assert r["tier"] == 4  # the mean of the production (tier-1) values, not consumption
+    assert r["ci_g_kwh"] == pytest.approx(np.mean([gen[i - 24 * k] for k in range(1, 8)]))
+
+
+def test_basis_must_be_known_and_default_is_consumption():
+    start, cons, gen = _history()
+    kw = {"carbon": _carbon("PACE", start, cons, gen),
+              "fuel_ci": _fuel("PACE", start, [9.0] * len(cons))}
+    assert fill_truth(T0, T0 + 24 * H, ["PACE"], **kw).equals(
+        fill_truth(T0, T0 + 24 * H, ["PACE"], basis="consumption", **kw))
+    with pytest.raises(ValueError, match="basis"):
+        fill_truth(T0, T0 + 24 * H, ["PACE"], basis="marginal", **kw)
