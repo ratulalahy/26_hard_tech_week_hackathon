@@ -624,7 +624,7 @@ The Mac offline rehearsal moves to Wed morning.
 - Benchmark on a 2-week slice first.
 
 ### F11. Baseline bookings: every job holds its U slot as a fallback (lead ruling during Stage 2, Task 4; revised after the task review)
-- **Simulated** on a 2-week synthetic slice (bench_sim_core.py): under F1 deadlines, G and S miss deadlines (11 and 5 late jobs at 1.0×; 985 and 203 at 1.6×). Every ledger was legal on capacity.
+- **Simulated** on a synthetic Poisson slice: under F1 deadlines without bookings, G and S missed deadlines on capacity-legal ledgers.
 - **Cause:** a zero-slack job's deadline equals its U finish, and greedy list scheduling is not monotone. Moving or advancing some jobs lets others backfill, which pushes a later job past its U finish. Small-slack flexible jobs are exposed the same way.
 - **Rule (bookings):**
   - Every job in the run holds a booking: its U site and interval, computed once per scenario from the U run (F1).
@@ -693,3 +693,45 @@ These override earlier sections where they differ. F11's motivating counts came 
 **F12.8 Not changed.** The envelopes, the seal protocol, the H2 framing ("system-level forecast value"), and R1–R6, which Astra found sound.
 
 **F12.9 R4a (A3),** if ever revived, needs independence from the validation period used for selection, and an audit of republished target sources.
+
+### F13. Sol re-check r2 fixes (2026-10-27 ~03:10 MT; review: `docs/reviews/2026-10-27-spec-sol-r2-sol.md`)
+
+These override F11 and F12 where they differ.
+
+**F13.1 Three action sets (R1).**
+- **Envelope (per job):** release at arrival (+ transfer when remote), deadline, mobility, transfer, truth support (F12.1), and gang size ≤ site capacity.
+- **Operational candidates:** the F10 candidates plus the exact booking, filtered against the evolving reservation ledger. H uses the same candidates and reservations; only its scoring signal differs.
+- **C_relaxed:** minimises over the continuous envelope and drops all other jobs' occupancy, bookings and warm-up occupancy.
+
+**F13.2 Cohort prefix rule (R2).**
+1. Compute workload-only U bookings through the declared horizon.
+2. A = the first arrival timestamp at which any request's deadline exceeds F, taking the minimum across registered scenarios that need a common cohort. Exclude that whole simultaneous-arrival group and every later arrival. If none fails, A is the horizon end.
+3. Stop the arrival stream at A, and install no suffix bookings. U is causal, so the prefix's bookings are unchanged.
+4. Warm-up running and queued work is kept exactly once, with no double booking, reported separately, and support-checked through its actual completion.
+5. Before grid scoring, record the initialisation time, A, the cohort IDs, the booking hash and the drain coverage.
+
+**F13.3 U tie-break and booking support (R3).**
+- U's pass orders simultaneous arrivals by `(arrival, declared deadline = arrival + duration + allowed delay, job_uid)`. None of these depends on U. Final deadlines come afterwards.
+- Bookings are **not** exempt from truth support. Every U booking is pre-checked against F and PACE truth (F12.3); a failure is an accounting-support failure.
+
+**F13.4 Bootstrap and diagnostics (R4, R5, R9).**
+- **Weeks:** every Monday-based America/Denver week that intersects the arrival interval, zero-job weeks included, with partial edges unchanged.
+- **Draws:** for each b ∈ {2, 4, 8}, reset `numpy.random.Generator(PCG64(20261027))`. For each of 2,000 replicates, draw `ceil(n/b)` starts with replacement from `[0, n)`, expand each start to `(start+j) % n`, concatenate, and keep the first n indices. Source blocks may overlap.
+- **Shared indices:** the same indices go to every policy. Differences and ratios are computed from resampled totals.
+- **Quantiles:** 0.025 and 0.975, `method="linear"`.
+- **Degenerate cases:** empty input returns null intervals; a zero reference total gives a null ratio.
+- **H2 direction:** favourable only if all three lower endpoints of W − L are > 0; adverse only if all three upper endpoints are < 0. Anything else is inconclusive.
+- **Influence ties** go to the stable `source_job_id`.
+
+**F13.5 Fallback and benchmark (R6).**
+- The 18:00 fallback is a **91-day truth window** [2025-07-25T00Z, 2025-10-24T00Z), with its own recorded initialisation and a workload-derived A under F13.2. Its actual, shorter arrival window is reported.
+- The fallback never replaces the registered full validation selection before freeze.
+- The benchmark times forecast construction, carbon-search replay and export, with full booking density.
+
+**F13.6 Wording (R7, R11).**
+- Coefficient confidence intervals for §10's first-difference marginal regressions are omitted unless a dependence-aware estimator and its settings are frozen before evaluation. R2's descriptive correlations are separate.
+- F12.1's deferred variant is a **missingness-blind scheduling sensitivity**: carbon signals are kept and whole-run bookings remain. An arrival-causal reading is reserved for a replay that also removes booking knowledge.
+
+**F13.7 Blocked diagnostic (R9).**
+- For each job, compare its preferred action under the real view with its preferred action under a view without other jobs' pending (not-yet-arrived) U bookings. Earlier committed moves are kept in both views.
+- The job is blocked if these differ. Count it once, and sum its modeled execution energy once.
