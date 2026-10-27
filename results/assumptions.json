@@ -764,7 +764,7 @@
    "evidence": "assumed",
    "reality": "Stress is not one net-load threshold; operators' tight hours depend on reserves, imports and outages.",
    "tested": true,
-   "result_text": "Quantile sweep: 95% → 269 hours, W changes the cluster's PACE load by −0.29 MW; 98% → 67 hours, W changes the cluster's PACE load by −0.29 MW; 99% → 12 hours, W changes the cluster's PACE load by −0.25 MW (§2: against a grid peak in the thousands of MW).",
+   "result_text": "Quantile sweep: 95% → 269 hours, W changes the cluster's PACE load by −0.29 MW; 98% → 67 hours, W changes the cluster's PACE load by −0.29 MW; 99% → 12 hours, W changes the cluster's PACE load by −0.25 MW, against a PACE net-load peak of 8,173 MW.",
    "results": {
     "q0": {
      "quantile": {
@@ -853,7 +853,7 @@
   {
    "id": "water_hydro",
    "assumption": "Water: whether hydro reservoir evaporation counts",
-   "value_text": "generation water from NREL median factors × the EIA-930 fuel mix, without and with hydro evaporation (illustrative; read from origin/s3/t14-water:results/water.json (PR #69, pending merge))",
+   "value_text": "generation water from NREL median factors × the EIA-930 fuel mix, without and with hydro evaporation (illustrative; PR #69, pending merge)",
    "values": {
     "hydro_factor_span": {
      "value": 12.631578947368421,

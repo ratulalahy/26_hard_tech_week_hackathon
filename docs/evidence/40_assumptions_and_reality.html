@@ -7796,7 +7796,7 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=19d6ec87">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a7c8f151">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7815,7 +7815,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d6d634d7">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ddf7cd7e">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7825,7 +7825,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7a83d9e4">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=8c22b86c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7968,7 +7968,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1eec2130">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=57058ae9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7978,7 +7978,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=24989062">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d7572226">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8119,7 +8119,7 @@ a.anchor-link {
     <span class="s2">"outages."</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span>
     <span class="s2">"Quantile sweep: "</span> <span class="o">+</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">pct</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'quantile'</span><span class="p">],</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s2"> → </span><span class="si">{</span><span class="n">V</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'n_hours'</span><span class="p">])</span><span class="si">}</span><span class="s2"> hours, W changes the "</span>
                                    <span class="sa">f</span><span class="s2">"cluster's PACE load by </span><span class="si">{</span><span class="n">sgn</span><span class="p">(</span><span class="n">V</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'W_PACE_relief_mw'</span><span class="p">]),</span><span class="w"> </span><span class="s1">'.2f'</span><span class="p">)</span><span class="si">}</span><span class="s2"> MW"</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rs</span><span class="p">)</span>
-    <span class="o">+</span> <span class="s2">" (§2: against a grid peak in the thousands of MW)."</span><span class="p">,</span>
+    <span class="o">+</span> <span class="sa">f</span><span class="s2">", against a PACE net-load peak of </span><span class="si">{</span><span class="n">V</span><span class="p">(</span><span class="n">num</span><span class="p">(</span><span class="s1">'storage.json#/rush/peak_net_load_mw'</span><span class="p">))</span><span class="si">:</span><span class="s2">,.0f</span><span class="si">}</span><span class="s2"> MW."</span><span class="p">,</span>
     <span class="p">{</span><span class="sa">f</span><span class="s2">"q</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">r</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rs</span><span class="p">)},</span> <span class="p">[</span><span class="s2">"D-031"</span><span class="p">,</span> <span class="s2">"D-061"</span><span class="p">])</span>
 
 <span class="k">if</span> <span class="s2">"water.json"</span> <span class="ow">in</span> <span class="n">SRC</span><span class="p">:</span>
@@ -8128,7 +8128,8 @@ a.anchor-link {
     <span class="n">hspan</span> <span class="o">=</span> <span class="n">derived</span><span class="p">(</span><span class="s2">"ratio"</span><span class="p">,</span> <span class="n">hmax</span><span class="p">,</span> <span class="n">hmin</span><span class="p">,</span> <span class="s2">"ratio"</span><span class="p">,</span> <span class="s2">"observed"</span><span class="p">)</span>
     <span class="n">row</span><span class="p">(</span><span class="s2">"water_hydro"</span><span class="p">,</span> <span class="s2">"Water: whether hydro reservoir evaporation counts"</span><span class="p">,</span>
         <span class="s2">"generation water from NREL median factors × the EIA-930 fuel mix, without and with hydro "</span>
-        <span class="sa">f</span><span class="s2">"evaporation (illustrative; read from </span><span class="si">{</span><span class="n">WATER_FROM</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"hydro_factor_span"</span><span class="p">:</span> <span class="n">hspan</span><span class="p">},</span>
+        <span class="s2">"evaporation (illustrative"</span> <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">"; </span><span class="si">{</span><span class="n">WATER_PR</span><span class="si">}</span><span class="s2">, pending merge)"</span> <span class="k">if</span> <span class="s2">"pending"</span> <span class="ow">in</span> <span class="n">WATER_FROM</span> <span class="k">else</span> <span class="s2">")"</span><span class="p">),</span>
+        <span class="p">{</span><span class="s2">"hydro_factor_span"</span><span class="p">:</span> <span class="n">hspan</span><span class="p">},</span>
         <span class="s2">"the water illustration only"</span><span class="p">,</span> <span class="s2">"assumed"</span><span class="p">,</span>
         <span class="sa">f</span><span class="s2">"Evaporation from a reservoir serves many uses, and NREL's hydro range spans </span><span class="si">{</span><span class="n">V</span><span class="p">(</span><span class="n">hspan</span><span class="p">)</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">×; "</span>
         <span class="s2">"allocating it to power is a choice, and it decides the sign."</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span>
@@ -8162,13 +8163,13 @@ a.anchor-link {
   white-space: pre-wrap;
 }
 </style>
-<table border="1" class="dataframe"><thead><tr><th>assumption</th><th>our value</th><th>used in</th><th>evidence</th><th>how reality differs</th><th>tested?</th><th>result / why not</th><th>evidence of the numbers</th><th>decisions</th></tr></thead><tbody><tr><td>"Flexible-job share, and every flexible job may move"</td><td>"41.8% of jobs and 46.1% of GPU-hours are flexible (half of the Pretrain/SFT/MLLM/Eval candidates, by a seeded hash); mobile = flexible"</td><td>"every policy: which jobs may wait or move"</td><td>"assumed"</td><td>"Large multi-node jobs are tied to their site by data, checkpoints and interconnect (data gravity); few real fleets could move them freely."</td><td>"yes"</td><td>"Mobility ≤ 8 GPUs: W saves 3.9% [2.6, 5.4] against the primary 22.5% [18.4, 26.7]. The no-flexible and all-candidates-flexible runs were cut (D-058)."</td><td>"assumed, simulated"</td><td>"D-058, D-064"</td></tr><tr><td>"Spare GPU slots at each destination (CISO, BPAT, NEVP)"</td><td>"512 slots each, always available"</td><td>"every moving policy (S, K, W, L, H)"</td><td>"assumed"</td><td>"Spare remote capacity is not a standing reservation: it varies by hour, and the cleanest sites are the ones everyone else wants too."</td><td>"yes"</td><td>"0 slots: S saves 0.0% [0.0, 0.0] and W 0.7% [0.5, 0.9] (time-only). 1,024 slots: S saves 35.0% [32.7, 37.6] (primary S 22.6% [18.4, 26.8])."</td><td>"assumed, simulated"</td><td>"D-058"</td></tr><tr><td>"Transfer before a remote run: time and energy"</td><td>"30 min and 5% of the job's IT energy"</td><td>"every remote run: deadline slack and transfer CO₂"</td><td>"assumed"</td><td>"Staging a multi-terabyte dataset or checkpoint can take hours; no dataset size or network power was measured."</td><td>"yes"</td><td>"120 min: S saves 20.2% [16.6, 23.7] (primary S 22.6% [18.4, 26.8]). Transfer energy 0% and 20% was cut (D-058)."</td><td>"assumed, simulated"</td><td>"D-058"</td></tr><tr><td>"Active IT power per GPU slot"</td><td>"0.6 kW, constant"</td><td>"all energy and CO₂; the storage site connection"</td><td>"assumed"</td><td>"Real draw varies with the GPU generation and with utilisation; it was not measured."</td><td>"no"</td><td>"Not run: the 0.40 and 0.80 kW runs were cut (D-058). Every kWh and tonne scales with it, so the saving fractions do not change in this model; the storage connection limit (2,288 slots × kW × PUE) does."</td><td>"assumed"</td><td>"D-058"</td></tr><tr><td>"Power usage effectiveness (PUE)"</td><td>"1.2 at every site"</td><td>"all energy and CO₂"</td><td>"assumed"</td><td>"PUE differs by site and climate and rises in hot weather; one value for all sites is a simplification."</td><td>"no"</td><td>"Not run: remote PUE 1.10 and 1.56 was cut (D-058); temperature-dependent PUE is future work (D-063)."</td><td>"assumed"</td><td>"D-058, D-063"</td></tr><tr><td>"Advance bookings"</td><td>"every job holds its U booking as a fallback (F11; assumed)"</td><td>"every policy: what a job may displace"</td><td>"assumed"</td><td>"A real router does not know future jobs' bookings; the result is an advance-reservation scenario, not an online router, and zero deadline misses hold by construction."</td><td>"no"</td><td>"Not run: the shadow-U sensitivity ('possible without advance reservations') was cut (D-058). The bookings' effect on the saving is not signed."</td><td>""</td><td>"D-048, D-050, D-058"</td></tr><tr><td>"Exact runtimes"</td><td>"realized runtime = declared runtime (known at arrival)"</td><td>"deadlines, capacity checks, every schedule"</td><td>"assumed"</td><td>"Jobs overrun or end early, and declared budgets are rarely exact."</td><td>"no"</td><td>"Not run: the +25% runtime-overrun stress was cut (D-058)."</td><td>""</td><td>"D-050, D-058"</td></tr><tr><td>"Workload replay mapped to Utah"</td><td>"Seren 161-day cycle at phase 0 (simulated arrivals; measured durations and GPU counts): 435,833 source attempts, 5.4 M GPU-hours per cycle"</td><td>"the whole experiment: arrivals, sizes, durations"</td><td>"simulated"</td><td>"Seren is one AI lab's trace on another continent's clock; a Utah cluster's job mix, sizes and timing would differ."</td><td>"yes"</td><td>"Phase 49 days: S saves 23.2% [18.9, 27.6]; phase 98: 22.0% [18.1, 26.5] (primary S 22.6% [18.4, 26.8]). Civil-time (DST) alignment was cut (D-058)."</td><td>"measured, simulated"</td><td>"D-033, D-058"</td></tr><tr><td>"Consumption-basis attributed emissions"</td><td>"EIA's estimated hourly consumption-basis CO₂ intensity (an average, attributed)"</td><td>"every CO₂ number"</td><td>"modeled"</td><td>"Attributed average intensity is not the CO₂ a moved job physically changes; on the margin the gain can be far smaller (notebook 05)."</td><td>"yes"</td><td>"Production basis (same schedules): S saves 25.5% [20.8, 30.1], against 22.6% [18.4, 26.8] on the consumption basis. A flat marginal factor is tested on storage (§2)."</td><td>"simulated"</td><td>"D-027, D-028, D-055"</td></tr><tr><td>"Colour-scale midpoint"</td><td>"356 g/kWh (US average 2024, EIA)"</td><td>"the dashboard's carbon colour scale only"</td><td>"observed"</td><td>"It is a national, annual, generation-basis average; the hourly consumption-basis values it colours are on a different basis."</td><td>"no"</td><td>"Not tested: a display reference only; no result depends on it (D-055)."</td><td>"observed"</td><td>"D-053, D-055"</td></tr><tr><td>"Storage round-trip efficiency and the site connection limit"</td><td>"η 0.85; charging limited by a 1.65 MW connection"</td><td>"the illustrative storage piece only (not the scheduler)"</td><td>"assumed"</td><td>"Real batteries also lose energy to self-discharge, auxiliaries and ageing (ignored here), and a site connection can be upgraded."</td><td>"yes"</td><td>"At 4 MWh, fixed schedule: cut 2.0% at η 0.75, 3.5% at η 0.85, 4.2% at η 0.9; connection +25%: 4.5%. Average basis; on a flat marginal factor it adds CO₂ (§2)."</td><td>"assumed, simulated"</td><td>"D-061, D-067"</td></tr><tr><td>"Rush-hour (grid stress) threshold"</td><td>"PACE net load ≥ the training years' 99% quantile (7,207 MW): 12 validation hours"</td><td>"peak relief and the storage rush view"</td><td>"assumed"</td><td>"Stress is not one net-load threshold; operators' tight hours depend on reserves, imports and outages."</td><td>"yes"</td><td>"Quantile sweep: 95% → 269 hours, W changes the cluster's PACE load by −0.29 MW; 98% → 67 hours, W changes the cluster's PACE load by −0.29 MW; 99% → 12 hours, W changes the cluster's PACE load by −0.25 MW (§2: against a grid peak in the thousands of MW)."</td><td>"assumed, measured, observed, simulated"</td><td>"D-031, D-061"</td></tr><tr><td>"Water: whether hydro reservoir evaporation counts"</td><td>"generation water from NREL median factors × the EIA-930 fuel mix, without and with hydro evaporation (illustrative; read from origin/s3/t14-water:results/water.json (PR #69, pending merge))"</td><td>"the water illustration only"</td><td>"assumed"</td><td>"Evaporation from a reservoir serves many uses, and NREL's hydro range spans 13×; allocating it to power is a choice, and it decides the sign."</td><td>"yes"</td><td>"S without hydro: −20.5%; with hydro evaporation: +145.4% against U (§2)."</td><td>"observed, simulated"</td><td>"D-063"</td></tr></tbody></table></div>
+<table border="1" class="dataframe"><thead><tr><th>assumption</th><th>our value</th><th>used in</th><th>evidence</th><th>how reality differs</th><th>tested?</th><th>result / why not</th><th>evidence of the numbers</th><th>decisions</th></tr></thead><tbody><tr><td>"Flexible-job share, and every flexible job may move"</td><td>"41.8% of jobs and 46.1% of GPU-hours are flexible (half of the Pretrain/SFT/MLLM/Eval candidates, by a seeded hash); mobile = flexible"</td><td>"every policy: which jobs may wait or move"</td><td>"assumed"</td><td>"Large multi-node jobs are tied to their site by data, checkpoints and interconnect (data gravity); few real fleets could move them freely."</td><td>"yes"</td><td>"Mobility ≤ 8 GPUs: W saves 3.9% [2.6, 5.4] against the primary 22.5% [18.4, 26.7]. The no-flexible and all-candidates-flexible runs were cut (D-058)."</td><td>"assumed, simulated"</td><td>"D-058, D-064"</td></tr><tr><td>"Spare GPU slots at each destination (CISO, BPAT, NEVP)"</td><td>"512 slots each, always available"</td><td>"every moving policy (S, K, W, L, H)"</td><td>"assumed"</td><td>"Spare remote capacity is not a standing reservation: it varies by hour, and the cleanest sites are the ones everyone else wants too."</td><td>"yes"</td><td>"0 slots: S saves 0.0% [0.0, 0.0] and W 0.7% [0.5, 0.9] (time-only). 1,024 slots: S saves 35.0% [32.7, 37.6] (primary S 22.6% [18.4, 26.8])."</td><td>"assumed, simulated"</td><td>"D-058"</td></tr><tr><td>"Transfer before a remote run: time and energy"</td><td>"30 min and 5% of the job's IT energy"</td><td>"every remote run: deadline slack and transfer CO₂"</td><td>"assumed"</td><td>"Staging a multi-terabyte dataset or checkpoint can take hours; no dataset size or network power was measured."</td><td>"yes"</td><td>"120 min: S saves 20.2% [16.6, 23.7] (primary S 22.6% [18.4, 26.8]). Transfer energy 0% and 20% was cut (D-058)."</td><td>"assumed, simulated"</td><td>"D-058"</td></tr><tr><td>"Active IT power per GPU slot"</td><td>"0.6 kW, constant"</td><td>"all energy and CO₂; the storage site connection"</td><td>"assumed"</td><td>"Real draw varies with the GPU generation and with utilisation; it was not measured."</td><td>"no"</td><td>"Not run: the 0.40 and 0.80 kW runs were cut (D-058). Every kWh and tonne scales with it, so the saving fractions do not change in this model; the storage connection limit (2,288 slots × kW × PUE) does."</td><td>"assumed"</td><td>"D-058"</td></tr><tr><td>"Power usage effectiveness (PUE)"</td><td>"1.2 at every site"</td><td>"all energy and CO₂"</td><td>"assumed"</td><td>"PUE differs by site and climate and rises in hot weather; one value for all sites is a simplification."</td><td>"no"</td><td>"Not run: remote PUE 1.10 and 1.56 was cut (D-058); temperature-dependent PUE is future work (D-063)."</td><td>"assumed"</td><td>"D-058, D-063"</td></tr><tr><td>"Advance bookings"</td><td>"every job holds its U booking as a fallback (F11; assumed)"</td><td>"every policy: what a job may displace"</td><td>"assumed"</td><td>"A real router does not know future jobs' bookings; the result is an advance-reservation scenario, not an online router, and zero deadline misses hold by construction."</td><td>"no"</td><td>"Not run: the shadow-U sensitivity ('possible without advance reservations') was cut (D-058). The bookings' effect on the saving is not signed."</td><td>""</td><td>"D-048, D-050, D-058"</td></tr><tr><td>"Exact runtimes"</td><td>"realized runtime = declared runtime (known at arrival)"</td><td>"deadlines, capacity checks, every schedule"</td><td>"assumed"</td><td>"Jobs overrun or end early, and declared budgets are rarely exact."</td><td>"no"</td><td>"Not run: the +25% runtime-overrun stress was cut (D-058)."</td><td>""</td><td>"D-050, D-058"</td></tr><tr><td>"Workload replay mapped to Utah"</td><td>"Seren 161-day cycle at phase 0 (simulated arrivals; measured durations and GPU counts): 435,833 source attempts, 5.4 M GPU-hours per cycle"</td><td>"the whole experiment: arrivals, sizes, durations"</td><td>"simulated"</td><td>"Seren is one AI lab's trace on another continent's clock; a Utah cluster's job mix, sizes and timing would differ."</td><td>"yes"</td><td>"Phase 49 days: S saves 23.2% [18.9, 27.6]; phase 98: 22.0% [18.1, 26.5] (primary S 22.6% [18.4, 26.8]). Civil-time (DST) alignment was cut (D-058)."</td><td>"measured, simulated"</td><td>"D-033, D-058"</td></tr><tr><td>"Consumption-basis attributed emissions"</td><td>"EIA's estimated hourly consumption-basis CO₂ intensity (an average, attributed)"</td><td>"every CO₂ number"</td><td>"modeled"</td><td>"Attributed average intensity is not the CO₂ a moved job physically changes; on the margin the gain can be far smaller (notebook 05)."</td><td>"yes"</td><td>"Production basis (same schedules): S saves 25.5% [20.8, 30.1], against 22.6% [18.4, 26.8] on the consumption basis. A flat marginal factor is tested on storage (§2)."</td><td>"simulated"</td><td>"D-027, D-028, D-055"</td></tr><tr><td>"Colour-scale midpoint"</td><td>"356 g/kWh (US average 2024, EIA)"</td><td>"the dashboard's carbon colour scale only"</td><td>"observed"</td><td>"It is a national, annual, generation-basis average; the hourly consumption-basis values it colours are on a different basis."</td><td>"no"</td><td>"Not tested: a display reference only; no result depends on it (D-055)."</td><td>"observed"</td><td>"D-053, D-055"</td></tr><tr><td>"Storage round-trip efficiency and the site connection limit"</td><td>"η 0.85; charging limited by a 1.65 MW connection"</td><td>"the illustrative storage piece only (not the scheduler)"</td><td>"assumed"</td><td>"Real batteries also lose energy to self-discharge, auxiliaries and ageing (ignored here), and a site connection can be upgraded."</td><td>"yes"</td><td>"At 4 MWh, fixed schedule: cut 2.0% at η 0.75, 3.5% at η 0.85, 4.2% at η 0.9; connection +25%: 4.5%. Average basis; on a flat marginal factor it adds CO₂ (§2)."</td><td>"assumed, simulated"</td><td>"D-061, D-067"</td></tr><tr><td>"Rush-hour (grid stress) threshold"</td><td>"PACE net load ≥ the training years' 99% quantile (7,207 MW): 12 validation hours"</td><td>"peak relief and the storage rush view"</td><td>"assumed"</td><td>"Stress is not one net-load threshold; operators' tight hours depend on reserves, imports and outages."</td><td>"yes"</td><td>"Quantile sweep: 95% → 269 hours, W changes the cluster's PACE load by −0.29 MW; 98% → 67 hours, W changes the cluster's PACE load by −0.29 MW; 99% → 12 hours, W changes the cluster's PACE load by −0.25 MW, against a PACE net-load peak of 8,173 MW."</td><td>"assumed, measured, observed, simulated"</td><td>"D-031, D-061"</td></tr><tr><td>"Water: whether hydro reservoir evaporation counts"</td><td>"generation water from NREL median factors × the EIA-930 fuel mix, without and with hydro evaporation (illustrative; PR #69, pending merge)"</td><td>"the water illustration only"</td><td>"assumed"</td><td>"Evaporation from a reservoir serves many uses, and NREL's hydro range spans 13×; allocating it to power is a choice, and it decides the sign."</td><td>"yes"</td><td>"S without hydro: −20.5%; with hydro evaporation: +145.4% against U (§2)."</td><td>"observed, simulated"</td><td>"D-063"</td></tr></tbody></table></div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5162935a">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=68ba8287">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8179,7 +8180,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a22aedf8">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=834ea7ec">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8189,7 +8190,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=40957f9d">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c4cd2506">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8312,7 +8313,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=eceb87cd">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4a446ac3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8360,7 +8361,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f01160b2">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0c4fb0ef">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8371,7 +8372,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=14a27ee0">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2575c997">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8381,7 +8382,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fd88a425">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=d9250fe7">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8444,7 +8445,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1a3f8c23">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=159827b3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8455,7 +8456,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2e495367">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b89cfbbe">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8465,7 +8466,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a153f80d">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=b9d05527">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8513,7 +8514,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=af769e82">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5f7ec1e2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8577,7 +8578,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=c7ddc073">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2ece9a88">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8587,7 +8588,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=7163fab0">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5b95e76f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -8646,14 +8647,14 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>results/assumptions.json: 13 register rows, 11 negative results, 16 not-done items; sha256 7d9a911773c699a2
+<pre>results/assumptions.json: 13 register rows, 11 negative results, 16 not-done items; sha256 7333f6542fcaa1d0
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=aed49cc6">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0be07b9f">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
