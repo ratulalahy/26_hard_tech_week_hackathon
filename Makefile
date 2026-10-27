@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test notebooks profile slice need-run-dir ext-runs extensions storage web
+.PHONY: test notebooks profile slice need-run-dir ext-runs extensions storage case-days web
 
 test:
 	cd lab && uv run pytest
@@ -57,6 +57,12 @@ extensions: need-run-dir
 # runs/ext next to it) holds the mobility <= 8 GPUs run that results/extensions.json names.
 storage: need-run-dir
 	cd lab && uv run python scripts/export_storage.py --registered-run $(RUN_DIR) --ext-root $(EXT_ROOT)
+
+# "Utah's toughest grid days" (Stage 3 T16, D-066; validation only, illustrative):
+# results/case-days.json and the manifest's `case_days` pointer. The pre-registered top 3
+# validation days by PACE daily maximum net load, day-sliced from RUN_DIR's ledgers.
+case-days: need-run-dir
+	cd lab && uv run python scripts/export_case_days.py --registered-run $(RUN_DIR)
 
 # The dashboard's validation-year grid context (Task 8): results/grid-profile.json.
 # RUN_DIR: the registered slice run (default runs/slice/<results/manifest.json run_id>).
