@@ -7,8 +7,10 @@ description: Use when a spec, plan, risky branch, result set or dashboard screen
 
 **Codex budget (owner, 2026-10-27, ~02:30 MT): at most 3 runs, pre-approved.** Each one spends the owner's limited credits.
 1. **Spec soundness gate:** Astra on the `astrahigh` profile, once, after 03:14 MT.
-2. **Code review of the leakage-sensitive forecast and simulator code:** Sol, Tue afternoon. Run it only if the Claude reviewer flags something it can't settle.
+2. **Code review of the leakage-sensitive forecast and simulator code:** Sol at xhigh (the `review` profile), Tue afternoon. Run it only if the Claude reviewer flags something it can't settle.
 3. **Results audit before the 13:00 freeze:** Astra on the `astrahigh` profile, Wed morning.
+
+Effort (owner): Astra runs at high (`astrahigh`), Sol at xhigh (`review`).
 
 Any other Codex run needs the owner's yes first. That covers re-checks, image critiques and `codex exec`. Without a yes, use a fresh-context Claude reviewer and record the substitution.
 
