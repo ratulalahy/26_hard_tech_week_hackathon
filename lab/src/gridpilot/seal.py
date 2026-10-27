@@ -108,8 +108,8 @@ SITES = ("PACE", "BPAT", "CISO", "NEVP")
 SELECTION_POLICIES = ("U", "G", "S", "K", "W", "L")  # spec §8 deployment candidates
 TAG_LINE = re.compile(r"config/freeze\.json sha256: ([0-9a-f]{64})")
 # Ignored files under lab/ that the clean check tolerates (caches and the environment).
-LAB_IGNORED_OK = re.compile(r"(^|/)(\.venv|__pycache__|\.pytest_cache|\.ruff_cache|"
-                            r"[^/]*\.egg-info)(/|$)|\.py[cod]$")
+LAB_IGNORED_OK = re.compile(r"(^|/)(\.venv|__pycache__|\.pytest_cache|\.ruff_cache|\.hypothesis|"
+                            r"\.ipynb_checkpoints|[^/]*\.egg-info)(/|$)|\.py[cod]$")
 OPENING_EVENTS = ("invocation", "read")
 
 _HEX40 = re.compile(r"^[0-9a-f]{40}$")

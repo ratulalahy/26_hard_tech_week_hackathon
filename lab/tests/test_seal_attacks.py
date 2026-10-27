@@ -246,9 +246,20 @@ def test_ignored_code_under_lab_is_refused_but_caches_are_not(tmp_path):
     (repo / "lab" / "__pycache__" / "keep.cpython-312.pyc").write_bytes(b"x")
     (repo / "lab" / ".venv").mkdir()
     (repo / "lab" / ".venv" / "pyvenv.cfg").write_text("x")
+    # hypothesis keeps a self-ignored cache under lab/ (as in the real checkout)
+    (repo / "lab" / ".hypothesis" / "constants").mkdir(parents=True)
+    (repo / "lab" / ".hypothesis" / ".gitignore").write_text("*\n")
     assert sealkit.authorize(repo, data).F == sealkit.F_SYN  # caches and the venv are fine
     (repo / "lab" / "override.py").write_text("PATCH = True\n")  # ignored, so git is blind
     refused(repo, data, r"\(a\) ignored files under lab/.*lab/override.py")
+
+
+def test_this_checkouts_ignored_lab_files_are_all_tolerated():
+    """A regression guard for the real run: every ignored path under lab/ in this checkout is a
+    cache or the environment, so check (a) would not refuse it."""
+    out = seal._git_out(paths.REPO_ROOT, "ls-files", "--others", "--ignored",
+                        "--exclude-standard", "--directory", "--", "lab").splitlines()
+    assert [p for p in out if not seal.LAB_IGNORED_OK.search(p)] == []
 
 
 # --------------------------------------------------------------------------- I4: real roots
