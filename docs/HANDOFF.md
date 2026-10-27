@@ -24,6 +24,18 @@ Each entry is dated in Mountain Time (MDT, UTC−6) and cites its evidence: a co
 
 ## Entries
 
+### 2026-10-27 00:50 MT: Claude
+
+- **Plan v2 approved** by the owner: `docs/plan/2026-10-27-plan-v2.md` (`b2b89ea`). Its amendment moves the experiment freeze to **Wed 13:00** and adds a **checkable version by Tue 18:00** (`cb1c6fb`).
+- **Data profile merged:** PR #10 → `7502983`. Manifests are frozen in snapshot `05efabe781cc` (`data/manifests/snapshot.json`). `openmeteo.json` is still growing (the Previous Runs P2 download) and is committed when it finishes. The branch → PR → merge path is verified (W02).
+- **Codex independent spec:** the prompt is `docs/reviews/prompts/2026-10-27-codex-spec.md` (`124ac99`).
+  - Auto mode blocked Claude from launching `codex exec` with full access, so the owner's interactive Codex session writes it.
+  - Output goes to `docs/superpowers/specs/2026-10-26-gridpilot-design-codex.md` on `codex/planning`.
+- **Running (Claude subagents, worktrees, PRs not merged):**
+  - `evidence/notebooks`: notebooks + `docs/decisions.md` + Makefile;
+  - `design/references`: references + `docs/design/brief.md`, which Astra's design direction should build from;
+  - `tools/impeccable`: vendored in-repo, no hooks.
+
 ### 2026-10-26 23:25 MT: Claude
 
 - **Merged PR #9** by fast-forward: `main` = `c7f878d` = `codex/planning`. There are no review findings. The changes match the owner's decisions and the Sol dispositions.
