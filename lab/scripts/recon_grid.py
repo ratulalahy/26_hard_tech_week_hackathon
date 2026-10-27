@@ -23,6 +23,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 
+from gridpilot.carbon import (
+    EF_G_KWH,
+    EF_OTHER_SENS_G_KWH,
+    LB_TO_G,
+    fuel_co2_kg,
+    fuel_gen_total,
+)
 from gridpilot.data.eia930 import (
     INTERIM_EIA_DIR,
     PARTITION_FUELS,
@@ -50,9 +57,10 @@ COMPLETENESS_CUTOFF = datetime(2026, 10, 25, tzinfo=UTC)  # last full day before
 # solar and wind as carbon neutral). "Unknown" takes the all-source US average (assumed);
 # "Other" (biomass, waste, geothermal and, before 2024-07, storage) is 0 in the primary case and
 # the all-source average in the sensitivity case.
-LB = 453.592
-EF = {"coal": 2.31 * LB, "gas": 0.96 * LB, "oil": 2.46 * LB, "unknown": 0.81 * LB}
-EF_OTHER_SENS = 0.81 * LB
+# The factors and the formula live in gridpilot.carbon (shared with the F14.6 truth fill).
+LB = LB_TO_G
+EF = EF_G_KWH
+EF_OTHER_SENS = EF_OTHER_SENS_G_KWH
 
 INK, INK2, MUTED, GRID, SURF = "#0b0b0b", "#52514e", "#8a8984", "#e6e5e0", "#fcfcfb"
 C1, C2, C3, C4, C5, C6, C7, C8 = ("#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4",
@@ -123,11 +131,6 @@ def add_derived(pre: pl.DataFrame) -> pl.DataFrame:
     for ba, tz in TZ_OVERRIDE.items():
         local = pl.when(pl.col("ba") == ba).then(
             pl.col("ts_utc").dt.convert_time_zone(tz).dt.replace_time_zone(None)).otherwise(local)
-    adj = {f: pl.col(f"gen_{f}_adj_mw") for f in PARTITION_FUELS}
-    any_fuel = pl.any_horizontal([e.is_not_null() for e in adj.values()])
-    gen_total = pl.sum_horizontal([e.fill_null(0) for e in adj.values()])
-    emis = pl.sum_horizontal([adj[f].fill_null(0).clip(lower_bound=0) * ef for f, ef in EF.items()])
-    emis_sens = emis + adj["other"].fill_null(0).clip(lower_bound=0) * EF_OTHER_SENS
     # Isolated single-hour spikes: the rule lives in gridpilot.data.eia930.add_demand_clean
     # (flagged hours and non-positive demand are nulled in demand_clean_mw).
     pre = add_demand_clean(pre)
@@ -136,9 +139,9 @@ def add_derived(pre: pl.DataFrame) -> pl.DataFrame:
         local.alias("ts_local"),
         (clean - pl.col("gen_wind_adj_mw").fill_null(0)
          - pl.col("gen_solar_adj_mw").fill_null(0)).alias("net_load_mw"),
-        pl.when(any_fuel).then(gen_total).otherwise(None).alias("gen_fuel_total_mw"),
-        pl.when(any_fuel).then(emis).otherwise(None).alias("co2_kg"),  # MW x kg/MWh per hour
-        pl.when(any_fuel).then(emis_sens).otherwise(None).alias("co2_kg_sens"),
+        fuel_gen_total().alias("gen_fuel_total_mw"),
+        fuel_co2_kg().alias("co2_kg"),  # MW x kg/MWh per hour
+        fuel_co2_kg(other_sens=True).alias("co2_kg_sens"),
     ).with_columns(
         pl.when(pl.col("gen_fuel_total_mw") > 0)
         .then(pl.col("co2_kg") / pl.col("gen_fuel_total_mw")).alias("ci_g_kwh"),
