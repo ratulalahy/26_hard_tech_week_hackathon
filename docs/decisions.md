@@ -532,3 +532,12 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - `docs/plan/2026-10-27-master-plan.md` holds the milestones, the critical path, the rules and the risks.
   - The project board's plan section is generated from the CSV by `scripts/render_board.py`.
 - **Clock drift:** the lead's narrated times ran ahead of the system clock twice (about +1.5 h this afternoon). Decision headers D-054 to D-064 were corrected to commit times in PR #52. From now on, plans and status use `date` output only.
+
+## D-066 · 2026-10-27 15:00 MT · Outer factor: "Utah's toughest grid days" case study (pre-registered day rule)
+- **Decided by:** owner. The lead's advice: weather in the forecasts is not worth it, because forecast quality barely affects the result and it would disturb the freeze.
+- **Decision:** add an illustrative case study of the **3 validation days with the highest PACE daily maximum net load**. The rule is fixed here, before any day is examined.
+  - Content: what the cluster did under U vs S/W on each day, plus cited public context (EIA, NERC, WECC, NOAA, news), labelled as context.
+  - It merges after the test run.
+- **Cut order if time is short:** water (T14) first, then this case study (T16). The toggle and flexibility budget (T15) stay.
+- **Not added:** weather-driven forecasts and temperature-dependent cooling (future work).
+- **Brief:** `docs/superpowers/plans/amendments/stage3-T16-worst-days.md`.
