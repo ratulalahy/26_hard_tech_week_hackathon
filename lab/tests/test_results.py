@@ -318,9 +318,16 @@ def test_case_days_evidence_classes_and_rule():
                 assert w[k]["evidence"] == "forecast", k
         assert d["context"] and all("sentence" in c and "kind" in c for c in d["context"])
         assert all(c["kind"] == "none" or c["url"].startswith("https://") for c in d["context"])
+    # execution and transfer each reconcile to the registered run; the total equals co2_kg
+    met = json.loads((RESULTS_DIR / "metrics.json").read_text())
     for p in ("U", "S", "W"):
         c = cd["accounting_check"][p]
-        assert abs(c["hourly_sliced_t"]["value"] - c["accounting_t"]["value"]) < 1e-3
+        for k in ("execution", "transfer", "total"):
+            assert abs(c[k]["sliced_kg"]["value"] - c[k]["accounting_kg"]["value"]) < 1e-3, (p, k)
+        tot = met["policies"][p]["metrics"]["co2_kg"]["value"]
+        assert abs(c["total"]["accounting_kg"]["value"] - tot) < 1e-6 * tot, p
+    assert cd["accounting_check"]["U"]["transfer"]["accounting_kg"]["value"] == 0
+    assert cd["accounting_check"]["S"]["transfer"]["accounting_kg"]["value"] > 0
 
 
 def test_manifest_carries_claim_frame():

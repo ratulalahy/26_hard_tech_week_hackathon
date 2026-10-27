@@ -10,6 +10,7 @@ import { Ev, EvCI } from './ui';
 import { Panel, useWidth } from './charts';
 import type { Json } from '../lib/data';
 
+export const BY_DAY = 'CO₂ counted in the hour the job ran, transfer at arrival; a job spanning midnight is split between days. Not comparable to the annual saving.';
 const day = (iso: string, o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', ...o }).format(new Date(iso + 'T12:00:00Z'));
 
 /** The day's sentences, built only from enveloped numbers in case-days.json (tests rebuild them). */
@@ -19,11 +20,19 @@ export function caseSentences(cd: Json, d: Json) {
   const uMW: number = U.utah_cluster_at_peak_mw.value, sMW: number = S.utah_cluster_at_peak_mw.value;
   const lower = sMW < uMW - 1e-9;
   const story = `Rank ${d.rank.value} of ${fmt(cd.days_considered.n.value)} days. Moving work (S) ${lower ? 'lowered' : 'did not lower'} the Utah cluster in the ${fmtHour(pk)} peak hour, `
-    + `${fmt(uMW, 2)} → ${fmt(sMW, 2)} MW; the day's CO₂ fell ${pct(-S.co2_change_vs_U_frac.value, 0)}% (W ${pct(-W.co2_change_vs_U_frac.value, 0)}%).`;
+    + `${fmt(uMW, 2)} → ${fmt(sMW, 2)} MW; day CO₂ −${pct(-S.co2_change_vs_U_frac.value, 0)}% (W −${pct(-W.co2_change_vs_U_frac.value, 0)}%).`;
   const slc = d.weather.PACE_SLC;
   const temp = slc.tmax_f.value == null ? 'No archived temperature for Salt Lake City this day.'
     : `${fmt(slc.tmax_f.value)} °F high, ${fmt(slc.tmin_f.value)} °F low in Salt Lake City (${fmt(slc.cdd_65f.value)} cooling degree-days); net load peaked at ${fmt(peak)} MW at ${fmtHour(pk)}.`;
-  return { story, temp, lower };
+  // the day's Utah workload (U) against the other chosen days: a caveat when it is far smaller
+  const uE = (x: Json) => Object.values(x.policies.U.energy_mwh_by_site as Record<string, Json>).reduce((a, e) => a + (e.value as number), 0);
+  const others = cd.days.filter((x: Json) => x.date !== d.date).map(uE);
+  const ratio = uE(d) / Math.max(...others);
+  const small = ratio < 0.6
+    ? `This day's Utah workload was ${ratio >= 0.4 ? 'about half' : `${pct(ratio, 0)}%`} of the other days' (${fmt(uE(d))} vs ${fmt(Math.min(...others))}–${fmt(Math.max(...others))} MWh), so its share moves more.`
+    : '';
+  const scale = `Scale: about ${uMW < 1.5 ? fmt(uMW, 1) : fmt(uMW)} MW against a ${fmt(Math.round(peak / 100) * 100)} MW peak; illustrative.`;
+  return { story, temp, lower, small, scale };
 }
 
 function DayChart({ d }: { d: Json }) {
@@ -44,7 +53,7 @@ function DayChart({ d }: { d: Json }) {
   const path = (a: number[], y: (v: number) => number) => a.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
   const label = `${day(d.date, { month: 'long', day: 'numeric' })}: Utah net load by hour peaking at ${fmt(net[pk])} MW at ${fmtHour(pk)}, carbon intensity by hour, and the Utah cluster's load under U and S`;
   return (
-    <div ref={ref} className="min-h-0" style={{ flex: '1 1 150px' }} data-testid="case-chart">
+    <div ref={ref} className="min-h-0" style={{ flex: '1 1 0' }} data-testid="case-chart">
       {w > 0 && h > 0 && (
         <svg width={w} height={h} role="img" aria-label={label} style={{ display: 'block' }}>
           {/* the day's peak hour: a neutral rush hatch column through all three bands */}
@@ -78,11 +87,11 @@ function Context({ d }: { d: Json }) {
   const more = d.context.filter((c: Json) => c.kind !== 'none');
   const full = d.context.map((c: Json) => c.sentence + (c.url ? ` (${c.publisher}, ${c.published}; ${c.scope})` : '')).join(' ');
   return (
-    <p className="t-11 ink-3" style={{ margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }} title={full} data-testid="case-context">
+    <p className="t-11 ink-3" style={{ margin: 0 }} title={full} data-testid="case-context">
       <span className="fw-600 ink-2">Context, not evidence: </span>
       {none ? none.sentence : ''}
       {more.map((c: Json) => (
-        <span key={c.url}> {c.kind === 'month' ? 'Month: ' : 'Nearby: '}<a href={c.url} target="_blank" rel="noreferrer" className="ink-2" style={{ textDecoration: 'underline' }}>{c.title}</a> ({c.publisher.split(' (')[0]}).</span>
+        <span key={c.url}> {c.kind === 'month' ? 'Month: ' : 'Nearby: '}<a href={c.url} target="_blank" rel="noreferrer" className="ink-2" style={{ textDecoration: 'underline' }}>{c.kind === 'month' ? 'July 2025 summary' : 'forecast for the day before'}</a> ({c.publisher.split(' (')[0].split(',')[0].replace(' (via Yahoo News)', '')}).</span>
       ))}
     </p>
   );
@@ -94,9 +103,9 @@ export function ToughDays() {
   const [i, setI] = useState(0);
   if (!cd) return null;
   const d = cd.days[i];
-  const { story, temp } = caseSentences(cd, d);
+  const { story, temp, small, scale } = caseSentences(cd, d);
   return (
-    <Panel className="flex flex-col min-h-0" style={{ padding: '12px 14px 10px', gap: 6 }}>
+    <Panel className="flex flex-col min-h-0 flex-1" style={{ padding: '12px 14px 10px', gap: 8 }}>
       <div data-testid="case-days" className="flex items-center justify-between gap-2">
         <span className="t-15" style={{ whiteSpace: 'nowrap' }}>Utah's toughest grid days</span>
         <div className="seg seg-tight" role="radiogroup" aria-label="Toughest days">
@@ -108,13 +117,18 @@ export function ToughDays() {
         </div>
       </div>
       <div className="t-11 ink-3 flex flex-wrap gap-x-3">
-        <span>Top 3 validation days by peak net load, a rule fixed in advance</span>
-        <Ev e="observed">load</Ev><EvCI /><Ev e="simulated">cluster, CO₂ (day-sliced)</Ev>
+        <span>Top 3 validation days by peak net load (rule fixed in advance)</span>
+        <Ev e="observed">load</Ev><EvCI /><Ev e="simulated" title={BY_DAY}>CO₂ incl. transfer, by day</Ev>
       </div>
-      <DayChart d={d} />
-      <p className="t-12" style={{ margin: 0, lineHeight: 1.35 }} data-testid="case-story"><span className="fw-600">{d.weekday} {day(d.date, { month: 'short', day: 'numeric' })}.</span> {story}</p>
-      <p className="t-11 ink-2 flex flex-wrap items-center gap-x-2" style={{ margin: 0 }} data-testid="case-temp">{temp} <Ev e="forecast">archived forecast, descriptive</Ev></p>
-      <Context d={d} />
+      <div className="grid flex-1 min-h-0" style={{ gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.05fr)', gap: 16 }}>
+        <div className="flex flex-col min-h-0"><DayChart d={d} /></div>
+        <div className="flex flex-col min-h-0" style={{ gap: 6 }}>
+          <p className="t-12" style={{ margin: 0, lineHeight: 1.35 }} data-testid="case-story"><span className="fw-600">{d.weekday} {day(d.date, { month: 'short', day: 'numeric' })}.</span> {story}</p>
+          <p className="t-11 ink-2" style={{ margin: 0 }} data-testid="case-temp">{temp} <Ev e="forecast" title="Open-Meteo archived forecast for the Salt Lake City point only (PACE's one load-centre point); descriptive, never used by any model">archived forecast · Salt Lake City only</Ev></p>
+          <p className="t-11 ink-3" style={{ margin: 0 }} data-testid="case-note"><span className="ink-2 fw-500">By day:</span> {BY_DAY} {small} {scale}</p>
+          <Context d={d} />
+        </div>
+      </div>
     </Panel>
   );
 }

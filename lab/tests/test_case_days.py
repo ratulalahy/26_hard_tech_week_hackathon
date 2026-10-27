@@ -179,6 +179,27 @@ def test_day_co2_counts_execution_by_hour_and_transfer_at_arrival():
     assert got["energy_mwh_by_site"]["CISO"] == 0.0
 
 
+def test_transfer_slices_by_arrival_hour_sum_to_the_window_total():
+    """Days partition the window: the per-day transfer totals add up to the whole-window one."""
+    ci = {s: np.linspace(50.0, 500.0, 48) for s in ("PACE", "BPAT", "CISO", "NEVP")}
+    ci["BPAT"] = ci["BPAT"][::-1].copy()
+    rows = [(f"j{k}", "BPAT" if k % 2 else "CISO", T0 + timedelta(hours=k, minutes=40),
+             T0 + timedelta(hours=k + 1, minutes=40), 1 + k, T0 + timedelta(hours=k, minutes=10),
+             3600.0 + k) for k in range(0, 48, 5)]
+    rows.append(("home", "PACE", T0, T0 + timedelta(hours=1), 8, T0, 3600.0))  # never charged
+    led = _ledger(rows)
+    whole = cd.transfer_by_arrival_kg(led, T0, 48, ci)
+    d1 = cd.transfer_by_arrival_kg(led, T0, 24, {s: v[:24] for s, v in ci.items()})
+    d2 = cd.transfer_by_arrival_kg(led, T0 + timedelta(hours=24), 24,
+                                   {s: v[24:] for s, v in ci.items()})
+    assert len(whole) == len(rows) - 1 and len(d1) + len(d2) == len(whole)
+    assert math.fsum(d1) + math.fsum(d2) == pytest.approx(math.fsum(whole), rel=1e-12)
+    k, g, dur = 5, 6, 3605.0  # job j5: arrives in hour 5 at BPAT
+    want = 0.5 * TRANSFER_FRACTION * g * GPU_KW * dur / 3600 * PUE * (ci["PACE"][k] + ci["BPAT"][k]) / 1000
+    one = cd.transfer_by_arrival_kg(led.filter(pl.col("job_uid") == "j5"), T0, 48, ci)
+    assert one == [pytest.approx(want, rel=1e-12)]
+
+
 def test_peak_hour_change_reads_the_cluster_load_at_that_hour():
     u = _ledger([("a", "PACE", T0 + timedelta(hours=20), T0 + timedelta(hours=21), 100,
                   T0 + timedelta(hours=20), 3600.0)])

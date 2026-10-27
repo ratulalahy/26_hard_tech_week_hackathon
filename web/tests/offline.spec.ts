@@ -71,6 +71,14 @@ test('every view renders registered values with zero non-localhost requests', as
     await expect(page.getByTestId('case-context')).toContainText('Context, not evidence');
     await expect(page.getByTestId('case-context')).toContainText(e.context);
     await expect(page.getByTestId('case-chart')).toBeVisible();
+    // fix round 1: totals include transfer; "by day" is explained; the scale note; SLC only
+    await expect(page.getByTestId('case-days').locator('..')).toContainText('CO₂ incl. transfer, by day');
+    await expect(page.getByTestId('case-note')).toContainText('CO₂ counted in the hour the job ran, transfer at arrival; a job spanning midnight is split between days. Not comparable to the annual saving.');
+    await expect(page.getByTestId('case-note')).toContainText(e.scale);
+    await expect(page.getByTestId('case-temp')).toContainText('Salt Lake City only');
+    if (e.small) await expect(page.getByTestId('case-note')).toContainText("This day's Utah workload was about half");
+    // every cited source is fully visible (no clamp)
+    for (const a of await page.getByTestId('case-context').getByRole('link').all()) await expect(a).toBeInViewport({ ratio: 1 });
   }
 
   await page.goto('./#story');

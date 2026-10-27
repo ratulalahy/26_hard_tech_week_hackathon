@@ -139,61 +139,175 @@
    }
   }
  ],
- "accounting": "day-sliced accounting: execution energy counted in the hour it ran (exact overlap with each UTC hour of the local day) at the execution site's hourly intensity; transfer energy at its arrival hour, half at home and half at the destination (F14.5). A job spanning midnight is split between days. Summed over every hour of the cohort window, it equals the registered accounting",
+ "accounting": "day-sliced accounting; totals include transfer. Execution CO₂ is counted in the hour the job ran (exact overlap with each UTC hour of the local day, at the execution site's hourly intensity); transfer CO₂ at its arrival hour, half at home and half at the destination (F14.5). A job spanning midnight is split between days. Over the whole cohort window, execution CO₂ and transfer CO₂ each reconcile to the registered run, and the total equals co2_kg (accounting_check). Not comparable to the annual saving",
  "accounting_check": {
-  "rule": "Σ over every hour of the cohort window of hourly kWh × hourly intensity equals Σ execution_co2_kg of the registered job accounting (rel 1e-9)",
+  "rule": "over every hour of the cohort window, execution CO₂ sliced by hour, transfer CO₂ sliced by arrival hour and their total each equal the registered job accounting (execution_co2_kg, transfer_co2_kg, co2_kg; rel 1e-9)",
   "U": {
-   "hourly_sliced_t": {
-    "value": 4669.6861,
-    "unit": "t_CO2",
-    "evidence": "simulated",
-    "provenance_id": "case-days:check:U:sliced",
-    "status": "ok",
-    "reason": null
+   "execution": {
+    "sliced_kg": {
+     "value": 4669686.1233,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:U:execution:sliced",
+     "status": "ok",
+     "reason": null
+    },
+    "accounting_kg": {
+     "value": 4669686.1233,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:U:execution:acc",
+     "status": "ok",
+     "reason": null
+    }
    },
-   "accounting_t": {
-    "value": 4669.6861,
-    "unit": "t_CO2",
-    "evidence": "simulated",
-    "provenance_id": "case-days:check:U:acc",
-    "status": "ok",
-    "reason": null
+   "transfer": {
+    "sliced_kg": {
+     "value": 0.0,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:U:transfer:sliced",
+     "status": "ok",
+     "reason": null
+    },
+    "accounting_kg": {
+     "value": 0.0,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:U:transfer:acc",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "total": {
+    "sliced_kg": {
+     "value": 4669686.1233,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:U:total:sliced",
+     "status": "ok",
+     "reason": null
+    },
+    "accounting_kg": {
+     "value": 4669686.1233,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:U:total:acc",
+     "status": "ok",
+     "reason": null
+    }
    }
   },
   "S": {
-   "hourly_sliced_t": {
-    "value": 3569.1543,
-    "unit": "t_CO2",
-    "evidence": "simulated",
-    "provenance_id": "case-days:check:S:sliced",
-    "status": "ok",
-    "reason": null
+   "execution": {
+    "sliced_kg": {
+     "value": 3569154.2803,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:S:execution:sliced",
+     "status": "ok",
+     "reason": null
+    },
+    "accounting_kg": {
+     "value": 3569154.2803,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:S:execution:acc",
+     "status": "ok",
+     "reason": null
+    }
    },
-   "accounting_t": {
-    "value": 3569.1543,
-    "unit": "t_CO2",
-    "evidence": "simulated",
-    "provenance_id": "case-days:check:S:acc",
-    "status": "ok",
-    "reason": null
+   "transfer": {
+    "sliced_kg": {
+     "value": 44268.8865,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:S:transfer:sliced",
+     "status": "ok",
+     "reason": null
+    },
+    "accounting_kg": {
+     "value": 44268.8865,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:S:transfer:acc",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "total": {
+    "sliced_kg": {
+     "value": 3613423.1668,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:S:total:sliced",
+     "status": "ok",
+     "reason": null
+    },
+    "accounting_kg": {
+     "value": 3613423.1668,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:S:total:acc",
+     "status": "ok",
+     "reason": null
+    }
    }
   },
   "W": {
-   "hourly_sliced_t": {
-    "value": 3573.9759,
-    "unit": "t_CO2",
-    "evidence": "simulated",
-    "provenance_id": "case-days:check:W:sliced",
-    "status": "ok",
-    "reason": null
+   "execution": {
+    "sliced_kg": {
+     "value": 3573975.8547,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:W:execution:sliced",
+     "status": "ok",
+     "reason": null
+    },
+    "accounting_kg": {
+     "value": 3573975.8547,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:W:execution:acc",
+     "status": "ok",
+     "reason": null
+    }
    },
-   "accounting_t": {
-    "value": 3573.9759,
-    "unit": "t_CO2",
-    "evidence": "simulated",
-    "provenance_id": "case-days:check:W:acc",
-    "status": "ok",
-    "reason": null
+   "transfer": {
+    "sliced_kg": {
+     "value": 44387.2101,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:W:transfer:sliced",
+     "status": "ok",
+     "reason": null
+    },
+    "accounting_kg": {
+     "value": 44387.2101,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:W:transfer:acc",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "total": {
+    "sliced_kg": {
+     "value": 3618363.0648,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:W:total:sliced",
+     "status": "ok",
+     "reason": null
+    },
+    "accounting_kg": {
+     "value": 3618363.0648,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "case-days:check:W:total:acc",
+     "status": "ok",
+     "reason": null
+    }
    }
   }
  },

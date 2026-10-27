@@ -83,4 +83,15 @@ export const caseExpect = (caseDays.days as any[]).map((d) => ({
   peak: `net load peaked at ${Number(d.peak.net_load_mw.value).toLocaleString('en-US')} MW at ${hr(d.peak.hour_index.value)}`,
   slc: `${Math.round(d.weather.PACE_SLC.tmax_f.value)} °F high`,
   context: (d.context as { kind: string; sentence: string }[]).find((c) => c.kind === 'none')?.sentence ?? '',
+  scale: (() => {
+    const u: number = d.policies.U.utah_cluster_at_peak_mw.value;
+    const peak = Math.round(d.peak.net_load_mw.value / 100) * 100;
+    return `Scale: about ${u < 1.5 ? u.toFixed(1) : Math.round(u)} MW against a ${peak.toLocaleString('en-US')} MW peak; illustrative.`;
+  })(),
+  // the Sep 2 caveat: a Utah workload under 60% of the other chosen days'
+  small: (() => {
+    const e = (x: any) => Object.values(x.policies.U.energy_mwh_by_site).reduce((a: number, v: any) => a + v.value, 0) as number;
+    const others = (caseDays.days as any[]).filter((x) => x.date !== d.date).map(e);
+    return e(d) / Math.max(...others) < 0.6;
+  })(),
 }));

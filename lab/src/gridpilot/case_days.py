@@ -19,8 +19,9 @@ maximum; ties go to the earlier hour. Every chosen day's rank is reported.
   counted in the hour it ran (exact overlap of each ledger interval with each UTC hour of the
   local day, at the execution site's hourly intensity) and transfer energy at its arrival hour
   (F14.5: half at home, half at the destination), so a job that spans midnight is split between
-  days. The sum over every hour of the cohort window equals the registered job accounting
-  (checked in `from_run`);
+  days; the totals include transfer. Over every hour of the cohort window, execution CO₂ and
+  transfer CO₂ each reconcile to the registered run and the total equals `co2_kg` (checked in
+  `from_run`, exported as `accounting_check`);
 - the Utah cluster's load in that day's net-load peak hour under each policy.
 
 **Weather (owner addendum; descriptive only).** Daily max and min 2 m temperature and degree
@@ -76,11 +77,13 @@ WEATHER_POINTS = (
     ("PACE_SOLAR_UT", "previous-runs", "Milford UT", "solar resource site"),
     ("PACE_WIND_WY", "previous-runs", "Medicine Bow WY", "wind resource site"),
 )
-ACCOUNTING_NOTE = ("day-sliced accounting: execution energy counted in the hour it ran (exact "
-                   "overlap with each UTC hour of the local day) at the execution site's hourly "
-                   "intensity; transfer energy at its arrival hour, half at home and half at the "
-                   "destination (F14.5). A job spanning midnight is split between days. Summed "
-                   "over every hour of the cohort window, it equals the registered accounting")
+ACCOUNTING_NOTE = ("day-sliced accounting; totals include transfer. Execution CO₂ is counted in "
+                   "the hour the job ran (exact overlap with each UTC hour of the local day, at "
+                   "the execution site's hourly intensity); transfer CO₂ at its arrival hour, "
+                   "half at home and half at the destination (F14.5). A job spanning midnight is "
+                   "split between days. Over the whole cohort window, execution CO₂ and transfer "
+                   "CO₂ each reconcile to the registered run, and the total equals co2_kg "
+                   "(accounting_check). Not comparable to the annual saving")
 
 
 def _us(t: datetime) -> int:
@@ -148,6 +151,26 @@ def day_load_kwh(ledger: pl.DataFrame, site: str, d: date) -> np.ndarray:
     return hourly_load_kwh(ledger, site, _us(t0), n)
 
 
+def transfer_by_arrival_kg(ledger: pl.DataFrame, t0: datetime, n: int,
+                           ci: dict[str, np.ndarray]) -> list[float]:
+    """Transfer CO₂ (kg) of every remote job arriving in the UTC hours [t0, t0 + n h), sorted by
+    job_uid: 0.05 × gpus × 0.60 kW × requested hours × PUE, half at home and half at the
+    destination, both at the arrival hour (F14.5, as `job_accounting`). `ci[site][k]`: g/kWh of
+    hour k."""
+    t0_us = _us(t0)
+    r = ledger.filter((pl.col("site") != HOME)
+                      & (pl.col("arrival_ts") >= t0)
+                      & (pl.col("arrival_ts") < t0 + timedelta(hours=n))).sort("job_uid")
+    out = []
+    for site, arr, g, dur in r.select(
+            "site", pl.col("arrival_ts").dt.epoch("us"), "gpus", "duration_s").iter_rows():
+        k = (arr - t0_us) // H_US
+        req_us = round(dur * 1_000_000)
+        fac = TRANSFER_FRACTION * g * GPU_KW * req_us / H_US * PUE
+        out.append(0.5 * fac * (ci[HOME][k] + ci[site][k]) / 1000)
+    return out
+
+
 def day_co2(ledger: pl.DataFrame, d: date, ci: dict[str, np.ndarray]) -> dict:
     """Day-sliced attributed CO₂ of one policy's ledger on day `d`. `ci[site]`: g/kWh for each
     hour of the day. Execution by hour; transfer at its arrival hour (F14.5)."""
@@ -157,17 +180,7 @@ def day_co2(ledger: pl.DataFrame, d: date, ci: dict[str, np.ndarray]) -> dict:
         if ci[s].shape != (n,) or not np.isfinite(ci[s]).all():
             raise ValueError(f"{s}: need {n} finite hourly intensities for {d}")
     exec_kg = math.fsum(math.fsum((loads[s] * ci[s] / 1000).tolist()) for s in SITES)
-    t0_us = _us(t0)
-    r = ledger.filter((pl.col("site") != HOME)
-                      & (pl.col("arrival_ts") >= t0)
-                      & (pl.col("arrival_ts") < t0 + timedelta(hours=n))).sort("job_uid")
-    tr = []
-    for site, arr, g, dur in r.select(
-            "site", pl.col("arrival_ts").dt.epoch("us"), "gpus", "duration_s").iter_rows():
-        k = (arr - t0_us) // H_US
-        req_us = round(dur * 1_000_000)
-        fac = TRANSFER_FRACTION * g * GPU_KW * req_us / H_US * PUE
-        tr.append(0.5 * fac * (ci[HOME][k] + ci[site][k]) / 1000)
+    tr = transfer_by_arrival_kg(ledger, t0, n, ci)
     tr_kg = math.fsum(tr)
     return {"execution_kg": exec_kg, "transfer_kg": tr_kg, "total_kg": exec_kg + tr_kg,
             "n_transfers": len(tr),
@@ -398,8 +411,8 @@ def from_run(run_dir: Path, sources: dict[str, list[dict]]) -> dict:
     top = select_days(daily)
     led = {p: pl.read_parquet(run_dir / f"ledger_{p}.parquet") for p in POLICIES}
     truth = _truth(run_dir)
-    # whole-window check: day slicing (hourly loads × hourly truth) reproduces the
-    # registered execution accounting exactly
+    # whole-window check: day slicing reproduces the registered accounting exactly, part by
+    # part: execution (hourly loads × hourly truth), transfer (by arrival hour) and the total
     tt = TruthTable(truth)
     jobs = led["U"].select("job_uid",
                            pl.col("job_uid").str.split("#").list.first().alias("source_id"),
@@ -409,24 +422,28 @@ def from_run(run_dir: Path, sources: dict[str, list[dict]]) -> dict:
     n_all = -(-(_us(last) - _us(t_start)) // H_US)
     grid = pl.DataFrame({"ts_utc": [t_start + timedelta(hours=k) for k in range(n_all)]},
                         schema={"ts_utc": pl.Datetime("us", "UTC")})
-    check = {"rule": "Σ over every hour of the cohort window of hourly kWh × hourly intensity "
-                     "equals Σ execution_co2_kg of the registered job accounting (rel 1e-9)"}
+    ci_all = {s: grid.join(truth.filter(pl.col("ba") == s), on="ts_utc", how="left")
+              ["ci_g_kwh"].fill_null(0.0).to_numpy() for s in SITES}
+    check = {"rule": "over every hour of the cohort window, execution CO₂ sliced by hour, "
+                     "transfer CO₂ sliced by arrival hour and their total each equal the "
+                     "registered job accounting (execution_co2_kg, transfer_co2_kg, co2_kg; "
+                     "rel 1e-9)"}
     for p in POLICIES:
         acc = job_accounting(led[p], jobs, tt)
-        want = fsum_by(acc, "execution_co2_kg")
-        got = []
-        for s in SITES:
-            c = grid.join(truth.filter(pl.col("ba") == s), on="ts_utc", how="left")
-            civ = c["ci_g_kwh"].fill_null(0.0).to_numpy()
-            got.append(math.fsum((hourly_load_kwh(led[p], s, _us(t_start), n_all) * civ
-                                  / 1000).tolist()))
-        g = math.fsum(got)
-        if not math.isclose(g, want, rel_tol=1e-9):
-            raise AssertionError(f"{p}: hourly-sliced CO₂ {g} != accounting {want}")
-        check[p] = {"hourly_sliced_t": _e(g / 1000, "t_CO2", "simulated",
-                                          f"{PROV}:check:{p}:sliced"),
-                    "accounting_t": _e(want / 1000, "t_CO2", "simulated",
-                                       f"{PROV}:check:{p}:acc")}
+        ex = math.fsum(math.fsum((hourly_load_kwh(led[p], s, _us(t_start), n_all) * ci_all[s]
+                                  / 1000).tolist()) for s in SITES)
+        tr = math.fsum(transfer_by_arrival_kg(led[p], t_start, n_all, ci_all))
+        want = {"execution": fsum_by(acc, "execution_co2_kg"),
+                "transfer": fsum_by(acc, "transfer_co2_kg"), "total": fsum_by(acc, "co2_kg")}
+        got = {"execution": ex, "transfer": tr, "total": ex + tr}
+        check[p] = {}
+        for k in ("execution", "transfer", "total"):
+            if not math.isclose(got[k], want[k], rel_tol=1e-9, abs_tol=1e-9):
+                raise AssertionError(f"{p} {k}: sliced {got[k]} != accounting {want[k]}")
+            check[p][k] = {
+                "sliced_kg": _e(got[k], "kg_CO2", "simulated", f"{PROV}:check:{p}:{k}:sliced"),
+                "accounting_kg": _e(want[k], "kg_CO2", "simulated",
+                                    f"{PROV}:check:{p}:{k}:acc")}
     wx = weather_frames()
     days = [build_day(r["date"], r, bal, truth, led, wx, sources.get(r["date"].isoformat(), []))
             for r in top.iter_rows(named=True)]

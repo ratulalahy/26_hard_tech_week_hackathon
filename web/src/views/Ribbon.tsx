@@ -27,7 +27,7 @@ export function Ribbon() {
   const night = curve.slice(0, 7) as number[];
   const k: number = g.pace_top100_net_load.k.value;
   return (
-    <section aria-label="Day ribbon" className="fixed z-10 grid" style={{ top: 72, left: 16, right: 16, bottom: 32, gridTemplateRows: data!.caseDays ? 'auto minmax(0,1.32fr) minmax(0,1fr)' : 'auto minmax(0,1.15fr) minmax(0,1fr)', gap: 16 }}>
+    <section aria-label="Day ribbon" className="fixed z-10 grid" style={{ top: 72, left: 16, right: 16, bottom: 32, gridTemplateRows: 'auto minmax(0,1.15fr) minmax(0,1fr)', gap: 16 }}>
       <div className="flex items-end justify-between gap-6" style={{ padding: '0 8px' }}>
         <div>
           <h1 className="t-20" style={{ margin: 0 }}>In Utah, the clean hours aren't the rush hours</h1>
@@ -42,7 +42,7 @@ export function Ribbon() {
         </div>
       </div>
 
-      <div className="grid min-h-0" style={{ gridTemplateColumns: data!.caseDays ? 'minmax(0,1fr) minmax(392px, 0.4fr)' : 'minmax(0,1fr)', gap: 16 }}>
+      <div className="grid min-h-0" style={{ gridTemplateColumns: data!.caseDays ? 'minmax(0,1fr) minmax(600px,0.8fr)' : 'minmax(0,1fr)', gap: 16 }}>
       <Panel className="flex flex-col min-h-0" style={{ padding: '12px 0 8px' }}>
         <div className="flex items-baseline justify-between" style={{ padding: '0 16px' }}>
           <span className="t-15">Utah · PacifiCorp East, a {lm.short} weekday</span>
@@ -51,7 +51,7 @@ export function Ribbon() {
         <div className="flex-1 min-h-0"><LoadChart rush={rush} clean={clean} dem={dem} net={net} sol={jul.solar_mw.value} month={lm.short} /></div>
         <CarbonRibbon curve={curve} />
       </Panel>
-      <ToughDays />
+      {data!.caseDays && <div className="flex min-h-0"><ToughDays /></div>}
       </div>
 
       <div className="grid min-h-0" style={{ gridTemplateColumns: '1.25fr 1fr 1fr', gap: 16 }}>
