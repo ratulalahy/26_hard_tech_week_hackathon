@@ -6,6 +6,7 @@
   "job-replay.json",
   "manifest.json",
   "metrics.json",
+  "overview.json",
   "storage.json",
   "workload-profile.json"
  ],
