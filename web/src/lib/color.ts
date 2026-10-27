@@ -11,6 +11,7 @@ export const C = {
   rush: '#4a3a30', rushFill: '#eadfd3',
   solar: '#f4d846', solarMark: '#ddbc1a', solarInk: '#6b4708',
   route: '#1157a4', routeSoft: '#dfedfe',
+  stored: '#14706b', // energy held in a battery (T10b): an outline only, never a fill
   sky0: '#fdf9f4', sky1: '#faf2ea', sky2: '#f6ebdf', surface: '#fffdfa',
   sand0: '#8c6a4f',
 } as const;

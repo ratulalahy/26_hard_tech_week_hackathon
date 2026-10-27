@@ -1,6 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { PolicyTable } from '../components/charts';
-import { ExtensionsTable, extRows, placementSpan } from '../components/extensions';
+import { CONSUMPTION_CHECKS, ExtensionsTable, PHRASE, extRows, listJoin, placementSpan } from '../components/extensions';
+import { hourSpans, storageFacts } from '../components/storage';
 import { Ev, Icon, SEALED } from '../components/ui';
 import { DEADLINE_RULE, VALIDATION_LINE, asNum, headline, plainLimitations, pname, stripCodes } from '../lib/data';
 import { fmt, fmtDate, pct, pctRange, signed } from '../lib/format';
@@ -17,7 +18,16 @@ export function MethodDrawer() {
   const h2 = m.h2;
   const h2b4 = h2.intervals['4'];
   const rb = m.relaxed_bound;
-  const mob = data!.ext ? placementSpan(extRows(m, data!.ext), ['mobility_le_8gpus']) : null;
+  const xr = data!.ext ? extRows(m, data!.ext) : [];
+  const mob = data!.ext ? placementSpan(xr, ['mobility_le_8gpus']) : null;
+  // the robustness summary (moved here from the story's last beat, F18)
+  const span = placementSpan(xr, CONSUMPTION_CHECKS), spanProd = placementSpan(xr, ['production']), spanBig = placementSpan(xr, ['dest_slots_1024']);
+  const keptRun = xr.filter((r) => CONSUMPTION_CHECKS.includes(r.id) && r.status === 'ok');
+  const xRun = xr.filter((r) => r.group !== 'registered' && r.status === 'ok'), xMiss = xr.filter((r) => r.status !== 'ok');
+  const wait0 = xr.find((r) => r.id === 'dest_slots_0' && r.status === 'ok');
+  const w0 = [wait0?.cells.W?.v, wait0?.cells.L?.v].filter((v): v is number => typeof v === 'number');
+  const allOnTime = xRun.every((r) => r.late == null || r.late === 0);
+  const sto = data!.storage, sf = sto ? storageFacts(sto) : null;
   return (
     <Dialog.Root open={drawer} onOpenChange={(o) => set({ drawer: o })}>
       <Dialog.Portal>
@@ -65,7 +75,21 @@ export function MethodDrawer() {
                 The published-values row drops, from every policy, the {fmt(data!.ext.common_support.cohort.n_dropped.value)} jobs that touch a filled hour under any policy.
                 {mob ? <> Letting only jobs of 8 GPUs or fewer move leaves {pctRange(mob[0], mob[1])}%: most of the energy, and most of the saving, sits in large multi-node jobs, so the result depends on those jobs' data being ready at the destination.</> : null}
               </p>
+              {span ? <p className="t-13" style={{ margin: '0 0 8px' }} data-testid="method-checks">We checked it {xRun.length} more ways. {listJoin(keptRun.map((r) => PHRASE[r.id] ?? r.label)).replace(/^./, (c) => c.toUpperCase())}, {pname('S')}, {pname('W')} and {pname('L')} still cut <b className="fw-600">{pctRange(span[0], span[1])}%</b>.{spanProd ? ` On production-basis carbon the cut is ${pctRange(spanProd[0], spanProd[1])}%; production basis flatters hydro-heavy destinations.` : ''}{spanBig ? ` Twice the room at the destinations raises it to ${pctRange(spanBig[0], spanBig[1])}%` : ''}{w0.length ? `; with no room there, waiting alone saves ${pctRange(Math.min(...w0), Math.max(...w0))}%` : ''}.{allOnTime ? ' No job was late in any run.' : ''}{xMiss.length ? ` ${xMiss.length} more check${xMiss.length > 1 ? 's' : ''} did not run (${xMiss[0].reason}).` : ''}</p> : null}
               <ExtensionsTable m={m} ext={data!.ext} testId="method-extensions" />
+            </Sec> : null}
+            {sto && sf ? <Sec title="Storage illustration (not the registered result)">
+              <p className="t-13" style={{ margin: 0 }} data-testid="method-storage">
+                {sto.note.replace(/^./, (c: string) => c.toUpperCase())}. A battery behind the meter at the Utah cluster is dispatched against the cluster's hourly energy from the registered ledgers ({pname('U')}, and {pname('W')} with only jobs of 8 GPUs or fewer allowed to move), over the registered cohort window, on the same EIA consumption-basis carbon. <Ev e="simulated">dispatch</Ev> <Ev e="modeled">carbon</Ev>
+              </p>
+              <ul className="t-13 ink-2" style={{ margin: '8px 0 0', paddingLeft: 16 }}>
+                <li>Sizes {VS_LIST(sto.assumptions.sizes_mwh)} MWh, power = size ÷ 4; round-trip efficiency {fmt(sf.eta, 2)} (also 0.75 and 0.90), all lost on the charging side. Charging fits under the site connection, {fmt(sf.conn, 3)} MW (2,288 GPUs × 0.60 kW × 1.20) minus the cluster's load; discharge never exceeds the load (no export). The state of charge runs from empty through the whole window; energy left at the end ({fmt(sf.terminal, 1)} MWh for the fixed schedule at {fmt(sf.E)} MWh) is valued at zero. Degradation, self-discharge and cost are ignored. <Ev e="assumed" /></li>
+                <li>Fixed daily schedule: charge in the 6 local hours with the lowest mean carbon in 2022 to Oct 2024 ({hourSpans(sf.charge).join(', ')}), discharge in the 6 highest of the rest ({hourSpans(sf.discharge).join(', ')}); no forecasts, no validation data. <Ev e="assumed">schedule</Ev></li>
+                <li>Hindsight heuristic: each day is planned on that day's actual carbon (a small linear program per day), so it sees the future within a day; it is not an optimum over the year and not a bound.</li>
+                <li>Break-even: storing 1 kWh helps only if charging carbon ÷ efficiency is below the carbon it displaces. Marginal emissions have no defensible hourly estimate here (the training-only proxy was not built; our reference is a rough validation-year regression by 6-hour block), so the skeptic number is a threshold scenario: at a flat {fmt(sf.mFlat)} g/kWh, storage only adds its losses.</li>
+                <li>Rush hours: validation hours with Utah net load at or above the 2022–24 top 1% ({fmt(sf.rushThr)} MW); {fmt(sf.rushN)} hours. Peak relief compares each site's cluster load in those hours under {pname('U')}, {pname('S')} and {pname('W')}. <Ev e="observed">net load</Ev> <Ev e="simulated">cluster load</Ev></li>
+                <li>{sto.power_quality}</li>
+              </ul>
             </Sec> : null}
             <Sec title="A bound, not a target">
               <p className="t-13" style={{ margin: 0 }}>
@@ -111,6 +135,7 @@ export function MethodDrawer() {
             <Sec title="Reproduce">
               <code className="t-12 block" style={{ padding: 8, borderRadius: 8, background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--hair-2)' }}>{man.reproduce}</code>
               <code className="t-12 block" style={{ padding: 8, borderRadius: 8, background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--hair-2)', marginTop: 4 }}>make profile  # results/grid-profile.json and workload-profile.json</code>
+              <code className="t-12 block" style={{ padding: 8, borderRadius: 8, background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--hair-2)', marginTop: 4 }}>make storage RUN_DIR=…  # results/storage.json (illustrative)</code>
             </Sec>
           </div>
         </Dialog.Content>
@@ -118,6 +143,8 @@ export function MethodDrawer() {
     </Dialog.Root>
   );
 }
+
+const VS_LIST = (e: { value: number[] }) => e.value.join(', ');
 
 function Sec({ title, children }: { title: string; children: React.ReactNode }) {
   return (

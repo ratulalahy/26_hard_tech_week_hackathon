@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { IntervalChart, Panel, PolicyTable } from '../components/charts';
-import { CONSUMPTION_CHECKS, ExtensionsTable, PHRASE, extRows, listJoin, placementSpan } from '../components/extensions';
+import { extRows, placementSpan } from '../components/extensions';
+import { ImportChart, ReliefTable, StorageCurve, StorageDayStrip, hourSpans, storageFacts } from '../components/storage';
+import { C } from '../lib/color';
 import { Ev, EvCI, Icon } from '../components/ui';
-import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, VALIDATION_LINE, asNum, dayCurve, headline, loadMonth, plainLimitations, pname, type Core, type Json } from '../lib/data';
+import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, VALIDATION_LINE, asNum, dayCurve, headline, loadMonth, pname, type Core, type Json } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
 import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange } from '../lib/format';
 import { useViewport } from '../lib/useViewport';
@@ -10,8 +12,10 @@ import { initialStep, useApp } from '../lib/store';
 import { WestMap, type ArcSpec } from '../map/WestMap';
 import { CarbonRibbon, ForecastPanel, LoadChart, YearHeat } from './Ribbon';
 
-/** Six beats, about 45 s each (lead ruling R8): the rush, tomorrow's report, one job, place the
- * work, the count, challenge it. The visual on the left follows the step in view; #story-N deep-links. */
+/** Six beats, about 45 s each (lead ruling R8; F18): the rush, tomorrow's report, one job, place
+ * the work, the count, and "move what you can, store for what you can't" (T10b: the storage
+ * illustration and router peak relief; the robustness table lives in the method drawer). The
+ * visual on the left follows the step in view; #story-N deep-links. */
 export function Story() {
   const { data, step, month, set } = useApp();
   const m = data!.metrics, g = data!.grid, wl = data!.workload;
@@ -49,14 +53,9 @@ export function Story() {
   }, [set]);
 
   const top1 = wl.top.find((t: Json) => Math.abs(t.fraction.value - 0.01) < 1e-9) ?? wl.top[1];
-  const xr = extRows(m, data!.ext), span = placementSpan(xr, CONSUMPTION_CHECKS);
-  const spanProd = placementSpan(xr, ['production']);
-  const spanMob = placementSpan(xr, ['mobility_le_8gpus']), spanBig = placementSpan(xr, ['dest_slots_1024']);
-  const keptRun = xr.filter((r) => CONSUMPTION_CHECKS.includes(r.id) && r.status === 'ok');
-  const xRun = xr.filter((r) => r.group !== 'registered' && r.status === 'ok'), xMiss = xr.filter((r) => r.status !== 'ok');
-  const wait0 = xr.find((r) => r.id === 'dest_slots_0' && r.status === 'ok');
-  const w0 = [wait0?.cells.W?.v, wait0?.cells.L?.v].filter((v): v is number => typeof v === 'number');
-  const allOnTime = xRun.every((r) => r.late == null || r.late === 0);
+  const xr = extRows(m, data!.ext);
+  const spanMob = placementSpan(xr, ['mobility_le_8gpus']);
+  const sto = data!.storage, sf = sto ? storageFacts(sto) : null;
   const steps: { t: string; body: React.ReactNode; ev: React.ReactNode }[] = [
     {
       t: "Utah's grid has a rush hour, and it comes after sunset",
@@ -84,9 +83,9 @@ export function Story() {
       ev: <><Ev e="simulated">{fmt(m.cohort.n_jobs.value)} jobs, 95% intervals</Ev><Ev e="measured">job sizes</Ev></>,
     },
     {
-      t: 'Challenge it',
-      body: <>This is a simulated scheduling scenario on EIA's estimated emissions, with jobs running exactly as long as declared.{span ? <span data-testid="story-checks"> We checked it {xRun.length} more ways. {listJoin(keptRun.map((r) => PHRASE[r.id] ?? r.label)).replace(/^./, (c) => c.toUpperCase())}, {pname('S')}, {pname('W')} and {pname('L')} still cut <b className="fw-600">{pctRange(span[0], span[1])}%</b>.{spanProd ? ` On production-basis carbon the cut is ${pctRange(spanProd[0], spanProd[1])}%; production basis flatters hydro-heavy destinations.` : ''} The result leans on moving large jobs: {spanMob ? <>if only jobs of 8 GPUs or fewer may move, the cut falls to <b className="fw-600">{pctRange(spanMob[0], spanMob[1])}%</b></> : 'the small-jobs-only check did not run'}{spanBig ? <>; twice the room at the destinations raises it to {pctRange(spanBig[0], spanBig[1])}%</> : null}{w0.length ? <>; with no room there, waiting alone saves {pctRange(Math.min(...w0), Math.max(...w0))}%</> : null}.{allOnTime ? ' No job was late in any run.' : ''}{xMiss.length ? ` ${xMiss.length} more check${xMiss.length > 1 ? 's' : ''} did not run (${xMiss[0].reason}).` : ''}</span> : null} Here is what the result does not say, and the method drawer lists every assumption and the run behind each number. {VALIDATION_LINE}</>,
-      ev: <><Ev e="simulated">checks</Ev><Ev e="assumed">settings</Ev><button className="btn" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button></>,
+      t: "Move what you can, store for what you can't",
+      body: sf ? <span data-testid="story-storage">Moving cuts {pctRange(h.placement.lo, h.placement.hi)}%, but it leans on large multi-node jobs: {spanMob ? <>if only jobs of 8 GPUs or fewer may move, the cut is <b className="fw-600">{pctRange(spanMob[0], spanMob[1])}%</b></> : 'the small-jobs-only check did not run'}. For the work that stays, a battery at the Utah cluster can move its <i>energy</i> instead. <b className="fw-600" data-testid="storage-headline">{/^(8|11|18)/.test(String(sf.E)) ? "An" : "A"} {fmt(sf.E)} MWh battery ({fmt(sf.P)} MW), about {fmt(sf.hours, 0)} hours of the cluster's load, cuts its CO₂ by {pct(sf.cutA, 1)}% with a fixed daily schedule</b> (charge {hourSpans(sf.charge).join(', ')}, discharge {hourSpans(sf.discharge).join(', ')}; hours set from 2022–24 data); planning each day on that day's actual carbon, a hindsight heuristic, gets {pct(sf.cutB, 1)}%. <span data-testid="storage-combined">Move the small jobs and store for the big ones: <b className="fw-600">{pct(sf.moveStoreA, 1)}%</b> less CO₂ than {pname('U')}, against {pct(sf.moveOnly, 1)}% from moving alone.</span> <span data-testid="storage-skeptic">It pays only while charging carbon ÷ efficiency stays below the carbon it displaces: {fmt(sf.chargeCI)} ÷ {fmt(sf.eta, 2)} = {fmt(sf.chargeOverEta)} against {fmt(sf.dischargeCI)} g/kWh. On the margin it may not: Utah's marginal emissions barely dip at midday (about {fmt(sf.mCharge)} vs {fmt(sf.mDischarge)} g/kWh on our rough reference, where {fmt(sf.ratio, 2)}× is needed), and at a flat {fmt(sf.mFlat)} g/kWh the same battery adds about {fmt(sf.flatAddT)} t of CO₂ a year, its losses.</span> <span data-testid="storage-relief-line">For the grid: in Utah's {fmt(sf.rushN)} rush hours, {pname('W')} took {fmt(sf.reliefW, 2)} MW off the cluster and added {fmt(sf.destW, 2)} MW elsewhere. The battery, scheduled for carbon, discharges after the rush and trims only {fmt(sf.rushBefore - sf.rushAfter, 2)} MW, while its charging adds {fmt(sf.rebound, 2)} MW at midday.</span></span> : <>{VALIDATION_LINE}</>,
+      ev: <><span className="ev" data-ev="modeled" style={{ padding: '2px 8px', borderRadius: 8, boxShadow: 'inset 0 0 0 1px var(--hair)', color: 'var(--ink-2)' }}>illustrative · not the registered result</span><EvCI /><Ev e="simulated">dispatch, peak relief</Ev><Ev e="assumed">battery, schedule</Ev><button className="btn" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button></>,
     },
   ];
   return (
@@ -122,7 +121,7 @@ function Visual({ step, rush, clean, curve }: { step: number; rush: [number, num
   if (step === 3) return <JobCard />;
   if (step === 4) return <PlaceWork />;
   if (step === 5) return <Count />;
-  if (step === 6) return <Limits />;
+  if (step === 6) return <StorageBeat />;
   return (
     <div className="grid h-full" style={{ gridTemplateRows: 'minmax(0,1.4fr) minmax(0,1fr)', gap: 16 }}>
       <Panel className="flex flex-col min-h-0" style={{ padding: '12px 0 8px' }}>
@@ -243,25 +242,40 @@ function Count() {
   );
 }
 
-function Limits() {
+function StorageBeat() {
   const { data } = useApp();
-  const lim: string[] = data!.manifest.limitations;
+  const sto = data!.storage;
+  const tight = useViewport().h < 1000;
+  if (!sto) return <Panel><span className="t-13 ink-3">The storage illustration was not exported (results/storage.json is missing).</span></Panel>;
+  const f = storageFacts(sto);
   return (
-    <Panel className="flex flex-col" style={{ gap: 12, overflow: 'auto', maxHeight: '100%' }}>
-      {data!.ext ? <>
-        <span className="t-15">Does it hold? The same comparison under other choices</span>
-        <ExtensionsTable m={data!.metrics} ext={data!.ext} testId="story-extensions" />
+    <div className="grid h-full" style={{ gridTemplateRows: 'minmax(0,1fr) auto', gap: tight ? 12 : 16 }}>
+      <div className="grid min-h-0" style={{ gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 16 }}>
+        <Panel className="flex flex-col min-h-0" style={{ gap: 8 }}>
+          <div className="flex items-baseline justify-between gap-2"><span className="t-15">Utah cluster's CO₂ cut by battery size</span><Ev e="simulated" /></div>
+          <div className="flex-1 min-h-0" style={{ minHeight: 150 }}><StorageCurve s={sto} /></div>
+          <div className="t-12 ink-3">Every job in Utah ({pname('U')}), {pct(f.eta, 0)}% round trip (also run at 75% and 90%). Gains level off because charging must fit under the site's {fmt(f.conn, 2)} MW connection. <Ev e="assumed">η, size</Ev></div>
+        </Panel>
+        <Panel className="flex flex-col min-h-0" style={{ gap: 8 }}>
+          <div className="flex items-baseline justify-between gap-2"><span className="t-15">Utah cluster's grid import, typical day</span><Ev e="simulated" /></div>
+          <div className="flex-1 min-h-0" style={{ minHeight: 150 }}><ImportChart s={sto} /></div>
+          <div className="t-12 ink-3">{fmt(f.E)} MWh, {fmt(f.P)} MW, fixed schedule. Peak import {fmt(f.peakBefore, 2)} → {fmt(f.peakAfter, 2)} MW (charging rebound); rush hours {fmt(f.rushBefore, 2)} → {fmt(f.rushAfter, 2)} MW ({fmt(f.rushAfterB, 2)} with the hindsight heuristic).</div>
+        </Panel>
+      </div>
+      <Panel className={`flex flex-col ${tight ? 'tight' : ''}`} style={{ gap: tight ? 6 : 10 }}>
+        <div className="flex items-baseline justify-between gap-2"><span className="t-15">The fixed schedule on Utah's day</span><EvCI extra="validation-year mean" /></div>
+        <StorageDayStrip s={sto} />
+        <div className="flex flex-wrap items-center gap-4 t-11 ink-2">
+          <span className="inline-flex items-center gap-1"><svg width="18" height="10" aria-hidden="true"><rect x="1" y="1" width="16" height="8" rx="2" fill="#fff" stroke={C.ink} strokeWidth="1.5" /></svg>charge</span>
+          <span className="inline-flex items-center gap-1"><svg width="18" height="10" aria-hidden="true"><rect x="1" y="1" width="16" height="8" rx="2" fill={C.ink} /></svg>discharge</span>
+          <span className="inline-flex items-center gap-1"><svg width="18" height="10" aria-hidden="true"><rect x="1" y="1" width="16" height="8" rx="2" fill="none" stroke={C.stored} strokeWidth="1.5" strokeDasharray="3 2" /></svg>stored</span>
+          <span className="inline-flex items-center gap-1"><svg width="18" height="10" aria-hidden="true"><rect x="1" y="1" width="16" height="8" rx="2" fill={C.rushFill} stroke={C.rush} /></svg>rush hours: net load above the 2022–24 top 1% ({fmt(f.rushThr)} MW)</span>
+        </div>
         <hr className="rule" />
-      </> : null}
-      <span className="t-15">What the result does not say</span>
-      <ul className="t-13" style={{ margin: 0, paddingLeft: 16, columns: 2, columnGap: 32 }}>
-        {plainLimitations(lim).map((l) => <li key={l} style={{ marginBottom: 8, breakInside: 'avoid' }}>{l}</li>)}
-        <li style={{ breakInside: 'avoid' }}>Jobs run exactly as long as declared; what happens when runtimes are uncertain is untested.</li>
-      </ul>
-      <details className="t-12 ink-2">
-        <summary className="cursor-pointer fw-500">Source text</summary>
-        <ul style={{ margin: '8px 0 0', paddingLeft: 16 }}>{lim.map((l) => <li key={l} style={{ marginBottom: 4 }}>{l}</li>)}</ul>
-      </details>
-    </Panel>
+        <div className="flex items-baseline justify-between gap-2"><span className="t-15">Router peak relief: cluster load in Utah's rush</span><Ev e="simulated">registered ledgers</Ev></div>
+        <ReliefTable s={sto} />
+        <div className="t-11 ink-3">{sto.power_quality} Not part of the registered experiment; storage is not simulated in the scheduler.</div>
+      </Panel>
+    </div>
   );
 }
