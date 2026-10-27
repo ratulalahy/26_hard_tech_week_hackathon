@@ -374,7 +374,7 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 
 ## D-049 · 2026-10-27 02:45 MT · Astra spec gate r1: not_ready → fixes F12
 - **Decided by:** lead (Claude). Every finding is dispositioned; the claim reframing goes to the owner at G1.
-- **Decision:** 22 findings, of which 10 are important and 12 minor. 21 are fixed and 1 is deferred (A3); none is rejected.
+- **Decision:** 22 findings, of which 11 are important and 11 minor (corrected per Sol r2 R12). 21 were dispositioned as fixed, 7 of them only partially per the Sol r2 re-check, and 1 is deferred (A3); none is rejected.
   - The main reframing: the experiment is an **advance-reservation scheduling scenario** (F11 bookings and the F3 closure calendar are both assumed and advance-known), with baseline-relative deadlines and exact declared runtimes. It is not a historical online-router claim.
   - Causal sensitivities (shadow-U, carbon-blind scheduling on common support) are deferred until after 18:00.
 - **Evidence:** `docs/reviews/2026-10-27-spec-astra-r1-astra.md`.
@@ -386,3 +386,9 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - The headline is framed as a simulated advance-reservation scheduling scenario, with baseline-relative deadlines and exact declared runtimes (F12.5, F12.7). The shadow-U causal version is a sensitivity.
   - The spec re-check uses the optional Sol slot (budget run 2 of 3) at xhigh, instead of a second Astra run.
 - **Evidence:** the owner's answers in session; `docs/reviews/2026-10-27-spec-astra-r1-astra.md`.
+
+## D-051 · 2026-10-27 03:10 MT · Sol r2 re-check: not_ready → F13 (precision fixes)
+- **Decided by:** lead (Claude).
+- **Decision:** Sol's 12 findings and one interaction note are adopted as spec §15 F13. Sol stated that validation-only implementation proceeds now.
+- **Re-check:** a fresh-context Claude reviewer re-checks F13. This is a substitution, since the budget's last run is reserved for the Wed results audit.
+- **Evidence:** `docs/reviews/2026-10-27-spec-sol-r2-sol.md`.
