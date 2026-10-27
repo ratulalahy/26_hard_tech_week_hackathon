@@ -7,8 +7,12 @@ Contents, all on **America/Denver** clock hours (one clock for every BA, because
 arrives in Utah and the views compare sites at the same instant):
 - `ci.by_ba[BA]` for the four core sites: EIA consumption-basis CO2 intensity, **tier 1 only**
   (rows where EIA publishes a consumed value; no fills), as a 12 x 24 month x hour mean, the
-  hour counts behind each cell, the all-days 24-hour profile and the year mean. `observed`.
-  The PACE row is the month x hour heatmap.
+  hour counts behind each cell, the all-days 24-hour profile and the year mean. `modeled`:
+  EIA's consumption-basis intensity is an EIA estimate (spec §4, §11, F7; lead ruling R3).
+  The hour counts are `measured`. The PACE row is the month x hour heatmap.
+- `reference.us_avg_ci`: the US average generation-basis CO2 intensity for 2024, the colour
+  scale's midpoint (785 lb CO2/MWh x 0.453592 = 356 g/kWh). `observed` (EIA's published
+  annual figure; lead ruling R4).
 - `pace_july_weekday`: Utah's mean July 2025 weekday (23 days, holidays included): adjusted
   demand with isolated spikes removed (`add_demand_clean`), solar, wind and net load
   (= demand − wind − solar). `observed`.
@@ -42,6 +46,10 @@ CONTEXT_BAS = ("AVA", "AZPS", "BANC", "CHPD", "DOPD", "EPE", "GCPD", "IID", "IPC
                "TPWR", "WACM", "WALC", "WAUW")
 TOP_K = 100
 PROV = "grid-profile"
+US_AVG_LB_PER_MWH = 785.0  # EIA, United States Electricity Profile 2024 (CO2 emission rate)
+LB_TO_KG = 0.453592
+US_AVG_SOURCE = ("EIA United States Electricity Profile 2024, "
+                 "https://www.eia.gov/electricity/state/unitedstates/")
 NO_HOURS = "no tier-1 hours in this cell of the validation window"
 
 
@@ -143,15 +151,15 @@ def build_profile(carbon: pl.DataFrame, balance: pl.DataFrame) -> dict:
         pid = f"{PROV}:ci:{ba}"
         ym = _mean(day, n)
         by_ba[ba] = {
-            "month_hour": env(vals, "g/kWh", "observed", f"{pid}:month_hour",
+            "month_hour": env(vals, "g/kWh", "modeled", f"{pid}:month_hour",
                               reason=NO_HOURS if has_null else None),
-            "month_hour_hours": env(counts, "hours", "observed", f"{pid}:month_hour_n"),
-            "day": env(day, "g/kWh", "observed", f"{pid}:day",
+            "month_hour_hours": env(counts, "hours", "measured", f"{pid}:month_hour_n"),
+            "day": env(day, "g/kWh", "modeled", f"{pid}:day",
                        reason=NO_HOURS if any(v is None for v in day) else None),
-            "year_mean": env(ym, "g/kWh", "observed", f"{pid}:year_mean",
+            "year_mean": env(ym, "g/kWh", "modeled", f"{pid}:year_mean",
                              status="ok" if ym is not None else "unavailable",
                              reason=None if ym is not None else NO_HOURS),
-            "n_hours": env(sum(n), "hours", "observed", f"{pid}:n_hours"),
+            "n_hours": env(sum(n), "hours", "measured", f"{pid}:n_hours"),
         }
     jul = july_weekday_profile(balance)
     jnull = "no July weekday rows in the window"
@@ -169,22 +177,27 @@ def build_profile(carbon: pl.DataFrame, balance: pl.DataFrame) -> dict:
         "tz_display": TZ_NAME,
         "months": MONTHS,
         "hour_index": "index i of every 24-value series is the America/Denver clock hour i",
+        "reference": {
+            "us_avg_ci": env(US_AVG_LB_PER_MWH * LB_TO_KG, "g/kWh", "observed", US_AVG_SOURCE),
+            "note": "US average CO2 intensity of generation, 2024 (785 lb/MWh); the colour "
+                    "scale's midpoint, a national reference, not a consumption-basis value",
+        },
         "ci": {
             "source": "EIA consumption-basis CO2 intensity (BA workbooks), tier 1 only: hours "
-                      "EIA publishes; no fills",
+                      "EIA publishes; no fills. An EIA estimate, hence modeled",
             "by_ba": by_ba,
         },
         "pace_july_weekday": {
             "definition": "mean over July 2025 weekdays (America/Denver; holidays included) of "
                           "EIA-930 adjusted demand (isolated spikes removed), solar and wind; "
                           "net load = demand − wind − solar",
-            "n_days": env(jul["n_days"], "days", "observed", f"{PROV}:pace_july:n_days"),
+            "n_days": env(jul["n_days"], "days", "measured", f"{PROV}:pace_july:n_days"),
             **jp,
         },
         "pace_top100_net_load": {
             "definition": f"the {TOP_K} highest PACE net-load hours of the window, counted by "
                           "America/Denver month and hour",
-            "k": env(TOP_K, "hours", "observed", f"{PROV}:top100:k"),
+            "k": env(TOP_K, "hours", "assumed", f"{PROV}:top100:k"),
             "counts_month_hour": env(counts, "hours", "observed", f"{PROV}:top100:counts"),
         },
         "context_year_mean_ci": {

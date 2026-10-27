@@ -22,8 +22,19 @@
   "2025-10"
  ],
  "hour_index": "index i of every 24-value series is the America/Denver clock hour i",
+ "reference": {
+  "us_avg_ci": {
+   "value": 356.06972,
+   "unit": "g/kWh",
+   "evidence": "observed",
+   "provenance_id": "EIA United States Electricity Profile 2024, https://www.eia.gov/electricity/state/unitedstates/",
+   "status": "ok",
+   "reason": null
+  },
+  "note": "US average CO2 intensity of generation, 2024 (785 lb/MWh); the colour scale's midpoint, a national reference, not a consumption-basis value"
+ },
  "ci": {
-  "source": "EIA consumption-basis CO2 intensity (BA workbooks), tier 1 only: hours EIA publishes; no fills",
+  "source": "EIA consumption-basis CO2 intensity (BA workbooks), tier 1 only: hours EIA publishes; no fills. An EIA estimate, hence modeled",
   "by_ba": {
    "PACE": {
     "month_hour": {
@@ -342,7 +353,7 @@
       ]
      ],
      "unit": "g/kWh",
-     "evidence": "observed",
+     "evidence": "modeled",
      "provenance_id": "grid-profile:ci:PACE:month_hour",
      "status": "ok",
      "reason": null
@@ -663,48 +674,48 @@
       ]
      ],
      "unit": "hours",
-     "evidence": "observed",
+     "evidence": "measured",
      "provenance_id": "grid-profile:ci:PACE:month_hour_n",
      "status": "ok",
      "reason": null
     },
     "day": {
      "value": [
-      660.2499476448064,
-      660.7232628525136,
-      656.3228174026327,
-      649.9567376711385,
+      660.2499476448066,
+      660.7232628525135,
+      656.322817402633,
+      649.9567376711382,
       648.9037198891375,
       655.1727755602788,
-      663.060391276084,
-      632.0262655922031,
+      663.0603912760841,
+      632.0262655922029,
       539.7514416811503,
-      462.46988242431127,
-      430.4419913408775,
+      462.4698824243113,
+      430.4419913408776,
       418.73032028615404,
       416.82770973740503,
-      415.5780743383483,
+      415.5780743383482,
       417.599236828103,
-      428.6353543908781,
+      428.6353543908782,
       464.92616513712323,
-      512.0715878970973,
+      512.0715878970972,
       561.51244398123,
-      620.5822811676328,
-      654.7493619343288,
+      620.5822811676327,
+      654.7493619343286,
       657.1478288922019,
       656.1118134993653,
-      659.6848947545478
+      659.6848947545477
      ],
      "unit": "g/kWh",
-     "evidence": "observed",
+     "evidence": "modeled",
      "provenance_id": "grid-profile:ci:PACE:day",
      "status": "ok",
      "reason": null
     },
     "year_mean": {
-     "value": 564.30202634822,
+     "value": 564.3020263482199,
      "unit": "g/kWh",
-     "evidence": "observed",
+     "evidence": "modeled",
      "provenance_id": "grid-profile:ci:PACE:year_mean",
      "status": "ok",
      "reason": null
@@ -712,7 +723,7 @@
     "n_hours": {
      "value": 8568,
      "unit": "hours",
-     "evidence": "observed",
+     "evidence": "measured",
      "provenance_id": "grid-profile:ci:PACE:n_hours",
      "status": "ok",
      "reason": null
@@ -1035,7 +1046,7 @@
       ]
      ],
      "unit": "g/kWh",
-     "evidence": "observed",
+     "evidence": "modeled",
      "provenance_id": "grid-profile:ci:BPAT:month_hour",
      "status": "ok",
      "reason": null
@@ -1356,7 +1367,7 @@
       ]
      ],
      "unit": "hours",
-     "evidence": "observed",
+     "evidence": "measured",
      "provenance_id": "grid-profile:ci:BPAT:month_hour_n",
      "status": "ok",
      "reason": null
@@ -1366,38 +1377,38 @@
       107.68952096870056,
       110.21371545981722,
       114.04474003323777,
-      116.18998470483753,
+      116.1899847048375,
       116.45663160937556,
-      113.98817049262458,
-      106.97659723890952,
-      100.06036359700786,
-      99.53271198070287,
+      113.98817049262459,
+      106.97659723890955,
+      100.06036359700784,
+      99.53271198070283,
       99.81845222425642,
       99.59082486508382,
-      100.2745549728685,
-      101.93359587114833,
+      100.27455497286847,
+      101.93359587114831,
       102.84118039161376,
-      102.80937764870683,
-      101.23343624183691,
-      97.15044907228624,
-      90.98168250086424,
+      102.8093776487068,
+      101.23343624183693,
+      97.15044907228622,
+      90.98168250086422,
       85.82753166869266,
-      85.21153558138928,
+      85.21153558138926,
       87.4979525803809,
-      91.29553769669569,
-      96.37993104082683,
-      102.51976396325739
+      91.2955376966957,
+      96.37993104082682,
+      102.51976396325733
      ],
      "unit": "g/kWh",
-     "evidence": "observed",
+     "evidence": "modeled",
      "provenance_id": "grid-profile:ci:BPAT:day",
      "status": "ok",
      "reason": null
     },
     "year_mean": {
-     "value": 101.27114630182713,
+     "value": 101.27114630182712,
      "unit": "g/kWh",
-     "evidence": "observed",
+     "evidence": "modeled",
      "provenance_id": "grid-profile:ci:BPAT:year_mean",
      "status": "ok",
      "reason": null
@@ -1405,7 +1416,7 @@
     "n_hours": {
      "value": 8568,
      "unit": "hours",
-     "evidence": "observed",
+     "evidence": "measured",
      "provenance_id": "grid-profile:ci:BPAT:n_hours",
      "status": "ok",
      "reason": null
@@ -1728,7 +1739,7 @@
       ]
      ],
      "unit": "g/kWh",
-     "evidence": "observed",
+     "evidence": "modeled",
      "provenance_id": "grid-profile:ci:CISO:month_hour",
      "status": "ok",
      "reason": null
@@ -2049,40 +2060,40 @@
       ]
      ],
      "unit": "hours",
-     "evidence": "observed",
+     "evidence": "measured",
      "provenance_id": "grid-profile:ci:CISO:month_hour_n",
      "status": "ok",
      "reason": null
     },
     "day": {
      "value": [
-      212.25349625650517,
+      212.25349625650514,
       224.59957599688263,
-      228.01787219195495,
+      228.01787219195492,
       232.02813159932376,
       234.62017236673097,
-      234.9034113802226,
-      231.4897410169512,
-      222.12861689549803,
+      234.9034113802225,
+      231.48974101695111,
+      222.128616895498,
       204.03757164050506,
-      175.097497576772,
-      152.57430601443286,
+      175.09749757677204,
+      152.5743060144329,
       150.96531047364405,
-      151.9533629087753,
+      151.95336290877526,
       153.36803914976298,
       151.35294791089458,
       147.23651586523053,
-      144.12220523038408,
-      145.83187470990103,
-      155.30966911886574,
-      162.9438300693681,
-      172.2148330978261,
-      179.56445019929976,
-      186.369205090642,
-      197.33800827774513
+      144.12220523038417,
+      145.83187470990106,
+      155.30966911886566,
+      162.94383006936806,
+      172.21483309782613,
+      179.56445019929973,
+      186.36920509064205,
+      197.3380082777452
      ],
      "unit": "g/kWh",
-     "evidence": "observed",
+     "evidence": "modeled",
      "provenance_id": "grid-profile:ci:CISO:day",
      "status": "ok",
      "reason": null
@@ -2090,7 +2101,7 @@
     "year_mean": {
      "value": 185.43340530539285,
      "unit": "g/kWh",
-     "evidence": "observed",
+     "evidence": "modeled",
      "provenance_id": "grid-profile:ci:CISO:year_mean",
      "status": "ok",
      "reason": null
@@ -2098,7 +2109,7 @@
     "n_hours": {
      "value": 8465,
      "unit": "hours",
-     "evidence": "observed",
+     "evidence": "measured",
      "provenance_id": "grid-profile:ci:CISO:n_hours",
      "status": "ok",
      "reason": null
@@ -2421,7 +2432,7 @@
       ]
      ],
      "unit": "g/kWh",
-     "evidence": "observed",
+     "evidence": "modeled",
      "provenance_id": "grid-profile:ci:NEVP:month_hour",
      "status": "ok",
      "reason": null
@@ -2742,48 +2753,48 @@
       ]
      ],
      "unit": "hours",
-     "evidence": "observed",
+     "evidence": "measured",
      "provenance_id": "grid-profile:ci:NEVP:month_hour_n",
      "status": "ok",
      "reason": null
     },
     "day": {
      "value": [
-      398.72328542752973,
+      398.72328542752956,
       396.42124784244703,
-      400.93804065821183,
+      400.938040658212,
       399.685341294219,
-      400.0194907602616,
-      399.8305321508533,
-      398.0471544939709,
-      377.3681647886516,
+      400.0194907602617,
+      399.8305321508532,
+      398.04715449397077,
+      377.3681647886515,
       301.97667114633407,
-      224.17895734382807,
+      224.17895734382796,
       196.54409200612565,
-      191.24718786736403,
+      191.2471878673641,
       192.42452177143733,
-      196.52498569209192,
+      196.52498569209186,
       201.34299465472546,
-      211.00896866855138,
-      241.37817695633038,
-      279.28932149016765,
-      307.4055880997979,
-      330.31551748364456,
+      211.00896866855123,
+      241.37817695633032,
+      279.2893214901676,
+      307.40558809979797,
+      330.3155174836445,
       346.1253226313608,
-      356.04633055647247,
-      373.18015401418063,
+      356.0463305564724,
+      373.1801540141806,
       390.1553769428244
      ],
      "unit": "g/kWh",
-     "evidence": "observed",
+     "evidence": "modeled",
      "provenance_id": "grid-profile:ci:NEVP:day",
      "status": "ok",
      "reason": null
     },
     "year_mean": {
-     "value": 312.8904232682694,
+     "value": 312.89042326826933,
      "unit": "g/kWh",
-     "evidence": "observed",
+     "evidence": "modeled",
      "provenance_id": "grid-profile:ci:NEVP:year_mean",
      "status": "ok",
      "reason": null
@@ -2791,7 +2802,7 @@
     "n_hours": {
      "value": 8564,
      "unit": "hours",
-     "evidence": "observed",
+     "evidence": "measured",
      "provenance_id": "grid-profile:ci:NEVP:n_hours",
      "status": "ok",
      "reason": null
@@ -2804,7 +2815,7 @@
   "n_days": {
    "value": 23,
    "unit": "days",
-   "evidence": "observed",
+   "evidence": "measured",
    "provenance_id": "grid-profile:pace_july:n_days",
    "status": "ok",
    "reason": null
@@ -2947,7 +2958,7 @@
   "k": {
    "value": 100,
    "unit": "hours",
-   "evidence": "observed",
+   "evidence": "assumed",
    "provenance_id": "grid-profile:top100:k",
    "status": "ok",
    "reason": null

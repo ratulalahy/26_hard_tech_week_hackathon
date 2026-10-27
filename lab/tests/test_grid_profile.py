@@ -130,7 +130,10 @@ def test_build_profile_is_fully_enveloped_and_pre_seal():
     assert sealed_timestamps(prof) == []
     assert set(prof["ci"]["by_ba"]) == {"PACE", "BPAT", "CISO", "NEVP"}
     pace = prof["ci"]["by_ba"]["PACE"]
-    assert pace["month_hour"]["evidence"] == "observed"
+    assert pace["month_hour"]["evidence"] == "modeled"  # EIA consumption-basis CI is an EIA estimate (spec §11, F7)
+    ref = prof["reference"]["us_avg_ci"]
+    assert ref["value"] == pytest.approx(785 * 0.453592) and ref["evidence"] == "observed"
+    assert "eia.gov" in ref["provenance_id"]
     assert len(pace["month_hour"]["value"]) == 12
     assert prof["pace_july_weekday"]["net_load_mw"]["evidence"] == "observed"
     assert sum(map(sum, prof["pace_top100_net_load"]["counts_month_hour"]["value"])) == 100
