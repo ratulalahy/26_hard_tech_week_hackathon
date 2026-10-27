@@ -4,6 +4,8 @@ import { defineConfig } from '@playwright/test';
 // PW_CHROMIUM overrides the path; on a machine with Playwright's own browsers, leave it unset.
 const chromium = process.env.PW_CHROMIUM ?? '/home/nvidia/.cache/ms-playwright/chromium-1243/chrome-linux-arm64/chrome';
 import { existsSync } from 'node:fs';
+// PW_PORT serves the preview on another port when 4173 is busy (default 4173).
+const port = process.env.PW_PORT ?? '4173';
 
 export default defineConfig({
   testDir: './tests',
@@ -12,7 +14,7 @@ export default defineConfig({
   workers: 1,
   reporter: [['list']],
   use: {
-    baseURL: 'http://127.0.0.1:4173/',
+    baseURL: `http://127.0.0.1:${port}/`,
     viewport: { width: 1728, height: 1117 },
     deviceScaleFactor: 1,
     launchOptions: {
@@ -21,5 +23,5 @@ export default defineConfig({
     },
   },
   // Serves the built dist/ (run `npm run build` first) exactly as the Mac does.
-  webServer: { command: 'npm run preview', url: 'http://127.0.0.1:4173/', reuseExistingServer: false, timeout: 60_000 },
+  webServer: { command: `npx vite preview --port ${port} --strictPort`, url: `http://127.0.0.1:${port}/`, reuseExistingServer: false, timeout: 60_000 },
 });

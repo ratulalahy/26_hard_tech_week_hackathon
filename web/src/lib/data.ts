@@ -24,6 +24,8 @@ export interface Results {
   ext: Json | null;
   /** results/storage.json (Stage 3 T10b, D-061; illustrative); null if the file is absent. */
   storage: Json | null;
+  /** results/assumptions.json (Stage 3 T17, D-068; built by notebook 40); null if the file is absent. */
+  assumptions: Json | null;
 }
 
 const base = import.meta.env?.BASE_URL ?? './'; // './' (relative deployment base)
@@ -34,11 +36,11 @@ async function get(name: string): Promise<Json> {
   return r.json();
 }
 export async function loadResults(): Promise<Results> {
-  const [metrics, manifest, forecast, jobs, grid, workload, ext, storage] = await Promise.all([
+  const [metrics, manifest, forecast, jobs, grid, workload, ext, storage, assumptions] = await Promise.all([
     get('metrics.json'), get('manifest.json'), get('forecast-replay.json'), get('job-replay.json'), get('grid-profile.json'), get('workload-profile.json'),
-    get('extensions.json').catch(() => null), get('storage.json').catch(() => null),
+    get('extensions.json').catch(() => null), get('storage.json').catch(() => null), get('assumptions.json').catch(() => null),
   ]);
-  return { metrics, manifest, forecast, jobs, grid, workload, ext, storage };
+  return { metrics, manifest, forecast, jobs, grid, workload, ext, storage, assumptions };
 }
 
 export const CORE = ['PACE', 'BPAT', 'CISO', 'NEVP'] as const;

@@ -1,7 +1,7 @@
 // Offline acceptance (Task 8 Step 1): the built dist/, served on localhost, makes no request to any other
 // host, and every view renders a value that comes from results/metrics.json.
 import { expect, test, type Page } from '@playwright/test';
-import { consumptionSpan, lCommonSupport, mobilityAbout, placementRange, sProduction, sTonnes, storageCombined, storageFlatT, storageHeadline, storageRushDays, storageRushN, timeOnlyRange, uTonnes } from './expected';
+import { consumptionSpan, mobilityW, nRegister, waitW, weatherH, weatherS, lCommonSupport, mobilityAbout, placementRange, sProduction, sTonnes, storageCombined, storageFlatT, storageHeadline, storageRushDays, storageRushN, timeOnlyRange, uTonnes } from './expected';
 
 const LOCAL = new Set(['127.0.0.1', 'localhost', '[::1]']);
 
@@ -83,6 +83,14 @@ test('every view renders registered values with zero non-localhost requests', as
   await expect(drawer.getByTestId('method-rush')).toContainText(`${storageRushN} hours on ${storageRushDays} days`);
   await expect(drawer.getByTestId('method-breakeven')).toContainText('On our rough reference the charging hours are no cleaner on the margin');
   await expect(drawer.getByTestId('storage-rush-sens')).toBeVisible();
+  // T17 (D-068): assumptions & what didn't work, from results/assumptions.json
+  await expect(drawer.getByTestId('assumptions-register').locator('tbody tr')).toHaveCount(nRegister);
+  await expect(drawer.getByTestId('assumptions-register')).toContainText(mobilityW);
+  await expect(drawer.getByTestId('assumptions-negative')).toContainText(waitW);
+  await expect(drawer.getByTestId('assumptions-negative')).toContainText('H3 not supported');
+  await expect(drawer.getByTestId('assumptions-weather')).toContainText(weatherH);
+  await expect(drawer.getByTestId('assumptions-weather')).toContainText(weatherS);
+  await expect(drawer.getByTestId('assumptions-weather')).toContainText('even perfect carbon foresight does not beat a fixed ranking');
 
   await page.waitForLoadState('networkidle');
   expect(errors, 'page errors').toEqual([]);

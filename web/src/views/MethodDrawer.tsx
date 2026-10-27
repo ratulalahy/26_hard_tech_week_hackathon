@@ -1,4 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
+import { AssumptionsSection } from '../components/assumptions';
 import { PolicyTable } from '../components/charts';
 import { CONSUMPTION_CHECKS, ExtensionsTable, PHRASE, extRows, listJoin, placementSpan } from '../components/extensions';
 import { ReliefTable, RushSensitivity, hourSpans, storageFacts } from '../components/storage';
@@ -96,6 +97,7 @@ export function MethodDrawer() {
                 <li>Colour midpoint: {fmt(asNum(g.reference?.us_avg_ci) ?? 0)} g/kWh, the 2024 US average (EIA). <Ev e="observed" /></li>
               </ul>
             </Sec>
+            {data!.assumptions ? <Sec title="Assumptions & what didn't work"><AssumptionsSection a={data!.assumptions} /></Sec> : null}
             <Sec title="Limitations">
               <ul className="t-13" style={{ margin: 0, paddingLeft: 16 }}>
                 {plainLimitations(man.limitations).map((l: string) => <li key={l} style={{ marginBottom: 4 }}>{l}</li>)}
