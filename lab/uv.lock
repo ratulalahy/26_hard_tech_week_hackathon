@@ -508,6 +508,7 @@ dev = [
     { name = "jupyter" },
     { name = "nbconvert" },
     { name = "nbformat" },
+    { name = "openpyxl" },
     { name = "pytest" },
     { name = "ruff" },
 ]
@@ -541,6 +542,7 @@ dev = [
     { name = "jupyter", specifier = ">=1.1.1" },
     { name = "nbconvert", specifier = ">=7.17.2" },
     { name = "nbformat", specifier = ">=5.11.1" },
+    { name = "openpyxl" },
     { name = "pytest" },
     { name = "ruff" },
 ]
