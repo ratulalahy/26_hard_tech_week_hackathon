@@ -20,8 +20,10 @@ from gridpilot.completeness import test_cutoff
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--log", required=True, help="the completeness log (JSONL, appended)")
+    p.add_argument("--purpose", default="T12 test cutoff F_test",
+                   help="why this call is made (logged)")
     a = p.parse_args(argv)
-    rec = test_cutoff(Path(a.log).resolve())
+    rec = test_cutoff(Path(a.log).resolve(), purpose=a.purpose)
     print(json.dumps(rec, indent=1, sort_keys=True))
     print(f"\nD = {rec['D']}   F_test = {rec['test_F']}   (logged to {a.log})")
     return 0

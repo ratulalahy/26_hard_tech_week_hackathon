@@ -67,12 +67,12 @@ ALLOWLIST = {
         "raw-source parser (raw/ -> interim/ cleaning, nothing summarised); interchange is not "
         "read by any analysis",
     ("src/gridpilot/completeness.py", "_workbook_presence", "read_excel"):
-        "counts only (T12, B4): the time column and whether the consumed-CI cell is empty, "
-        "reduced to row/null/complete-day counts and timestamps by test_cutoff; no value is "
-        "returned or logged",
+        "counts only (T12, B4): the time column and whether the consumed-CI cell holds a valid "
+        "value, reduced to row/valued/null/day counts and timestamps by test_cutoff; no value "
+        "is returned or logged",
     ("src/gridpilot/completeness.py", "_balance_presence", "scan_parquet"):
-        "counts only (T12, B4): PACE's ts_utc and the null flag of demand_adj_mw (the value is "
-        "never materialized), reduced to counts and timestamps by test_cutoff",
+        "counts only (T12, B4): PACE's ts_utc and a validity flag of demand_adj_mw (the value "
+        "is never materialized), reduced to counts and timestamps by test_cutoff",
     ("src/gridpilot/data/eia_co2.py", "parse_ba_workbook", "read_excel"):
         "the BA-workbook parser; its calls are checked (build_carbon wraps it in drop_sealed, "
         "the test build passes it to sealed_read as the reader)",

@@ -77,19 +77,61 @@ def test_the_cutoff_is_the_day_after_the_last_complete_day(tmp_path):
         assert sentinel not in lines[0]
 
 
-def test_a_missing_row_moves_D_back_but_an_empty_cell_does_not(tmp_path):
+START_SYN, END_SYN = datetime(2025, 10, 1, tzinfo=UTC), datetime(2025, 11, 8, tzinfo=UTC)
+
+
+def _hours_between(a: datetime, b: datetime) -> set[datetime]:
+    return {a + i * H for i in range(int((b - a) / H))}
+
+
+def test_a_missing_row_moves_D_back(tmp_path):
     data = make_data_dir(tmp_path)
-    start, end = datetime(2025, 10, 1, tzinfo=UTC), datetime(2025, 11, 8, tzinfo=UTC)
-    _workbook(data / seal.WORKBOOK_REL.format(ba="CISO"), start, end,
+    _workbook(data / seal.WORKBOOK_REL.format(ba="CISO"), START_SYN, END_SYN,
               skip={datetime(2025, 11, 7, 5, tzinfo=UTC)})
-    _workbook(data / seal.WORKBOOK_REL.format(ba="PACE"), start, end,
-              empty={datetime(2025, 11, 7, 9, tzinfo=UTC), datetime(2025, 11, 6, 2, tzinfo=UTC)})
     rec = completeness.test_cutoff(tmp_path / "c.jsonl", data_dir=data, repo_root=tmp_path)
     assert (rec["D"], rec["test_F"]) == ("2025-11-06", "2025-11-07T00:00:00Z")
     assert rec["last_complete_day_by_series"]["CISO/ci_consumed"] == "2025-11-06"
-    assert rec["last_complete_day_by_series"]["PACE/ci_consumed"] == "2025-11-07"
-    assert rec["series"]["PACE/ci_consumed"]["n_null_in_window"] == 2
     assert rec["series"]["CISO/ci_consumed"]["n_rows_in_window"] == 7 * 24 - 1
+
+
+def test_a_tail_of_null_rows_moves_D_back(tmp_path):
+    """T12r finding 1 (spec §5): rows that exist without a value do not make a day complete.
+    The publication-lag shape: the last 44 h have rows but empty consumed-CI cells."""
+    data = make_data_dir(tmp_path)
+    tail = _hours_between(END_SYN - 44 * H, END_SYN)  # 2025-11-06T04Z .. 11-07T23Z
+    for ba in seal.CORE_BAS:
+        _workbook(data / seal.WORKBOOK_REL.format(ba=ba), START_SYN, END_SYN, empty=tail)
+    rec = completeness.test_cutoff(tmp_path / "c.jsonl", data_dir=data, repo_root=tmp_path)
+    assert (rec["D"], rec["test_F"]) == ("2025-11-05", "2025-11-06T00:00:00Z")
+    s = rec["series"]["PACE/ci_consumed"]
+    assert s["last_row_complete_day"] == "2025-11-07"  # rows exist ...
+    assert s["last_fully_valued_day"] == "2025-11-05"  # ... values do not
+    assert s["last_valued_row_ts_utc"] == "2025-11-06T03:00:00Z"
+    assert s["n_null_in_window"] == 44 and s["through_F"]["n_null"] == 0
+    assert s["last_days_through_D"]["n_valued"] == 7 * 24  # 10-30 .. 11-05, all valued
+
+
+def test_an_interior_null_day_before_a_complete_day_does_not_move_D(tmp_path):
+    data = make_data_dir(tmp_path)
+    interior = _hours_between(datetime(2025, 11, 3, tzinfo=UTC), datetime(2025, 11, 4, tzinfo=UTC))
+    _workbook(data / seal.WORKBOOK_REL.format(ba="PACE"), START_SYN, END_SYN, empty=interior)
+    rec = completeness.test_cutoff(tmp_path / "c.jsonl", data_dir=data, repo_root=tmp_path)
+    assert (rec["D"], rec["test_F"]) == ("2025-11-07", "2025-11-08T00:00:00Z")
+    s = rec["series"]["PACE/ci_consumed"]
+    assert s["n_null_in_window"] == 24 and s["through_F"]["n_null"] == 24
+    assert s["n_fully_valued_days_in_window"] == 6
+
+
+def test_a_null_demand_tail_moves_D_back(tmp_path):
+    data = make_data_dir(tmp_path)
+    bal = balance_frame(START_SYN, END_SYN).with_columns(
+        pl.when((pl.col("ba").cast(pl.Utf8) == "PACE")
+                & (pl.col("ts_utc") >= datetime(2025, 11, 7, 20, tzinfo=UTC)))
+        .then(None).otherwise(pl.col("demand_adj_mw")).alias("demand_adj_mw"))
+    bal.write_parquet(data / seal.BALANCE_REL)
+    rec = completeness.test_cutoff(tmp_path / "c.jsonl", data_dir=data, repo_root=tmp_path)
+    assert rec["D"] == "2025-11-06"
+    assert rec["series"]["PACE/demand"]["n_null_in_window"] == 4
 
 
 def test_pace_demand_rows_count_and_other_bas_do_not(tmp_path):
@@ -218,13 +260,25 @@ def test_the_completeness_basis_needs_agreement_and_the_same_inputs(tmp_path):
     raw = "".join(json.dumps(r) + "\n" for r in recs).encode()
     with pytest.raises(wf.Refusal, match="disagree"):
         wf.completeness_basis(raw, cur)
+    # A line made under an earlier rule (T12r finding 1) is superseded, not a disagreement.
+    recs[0]["rule"] = "an earlier rule: row present, null or not"
+    raw = "".join(json.dumps(r) + "\n" for r in recs).encode()
+    assert wf.completeness_basis(raw, cur)[0] == "2025-11-08T00:00:00Z"
+    recs[1]["rule"] = recs[0]["rule"]
+    raw = "".join(json.dumps(r) + "\n" for r in recs).encode()
+    with pytest.raises(wf.Refusal, match="current rule"):
+        wf.completeness_basis(raw, cur)
 
 
 def test_the_lead_commands_commit_the_record_alone_and_check_the_remote_tag():
     cmds = wf.lead_commands("a" * 40, "b" * 64)
     assert "-- config/freeze.json" in cmds and "seal.freeze_tag_message" in cmds
     assert f"git tag -a {seal.FREEZE_TAG}" in cmds and "git ls-remote origin" in cmds
-    assert "git push origin main config-freeze" in cmds
+    assert "git push --atomic origin main config-freeze" in cmds
+    assert cmds.splitlines()[3] == "set -euo pipefail"
+    assert 'test "$(git rev-parse origin/main)" = ' + "a" * 40 in cmds
+    r = subprocess.run(["bash", "-n"], input=cmds, text=True, capture_output=True, check=False)
+    assert r.returncode == 0, r.stderr  # the printed sequence is valid bash
 
 
 # --------------------------------------------------------------------------- make data

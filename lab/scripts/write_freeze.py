@@ -44,6 +44,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from gridpilot import paths, seal
+from gridpilot.completeness import RULE as COMPLETENESS_RULE
 from gridpilot.completeness import read_log
 from gridpilot.data import eia_co2
 from gridpilot.scenario import Scenario
@@ -163,12 +164,16 @@ def l_leaves(forecast_metrics: dict) -> dict[str, int]:
 
 
 def completeness_basis(raw: bytes, current: dict[str, str]) -> tuple[str, dict]:
-    """test_F and test_F_basis from the committed completeness log: every successful line must
-    agree on D and F_test, and the last one's input hashes must equal the current files'."""
+    """test_F and test_F_basis from the committed completeness log: the successful lines made
+    under the current rule (`completeness.RULE`; lines under an earlier rule are superseded,
+    T12r finding 1) must agree on D and F_test, and the last one's input hashes must equal the
+    current files'."""
     recs = read_log(raw)
-    ok = [r for r in recs if r.get("event") == "completeness" and r.get("outcome") == "ok"]
+    ok = [r for r in recs if r.get("event") == "completeness" and r.get("outcome") == "ok"
+          and r.get("rule") == COMPLETENESS_RULE]
     if not ok:
-        raise Refusal(f"{COMPLETENESS_LOG_REL} holds no successful completeness line")
+        raise Refusal(f"{COMPLETENESS_LOG_REL} holds no successful completeness line under the "
+                      f"current rule")
     if len({(r["D"], r["test_F"]) for r in ok}) != 1:
         raise Refusal(f"{COMPLETENESS_LOG_REL}: the logged calls disagree on D / F_test: "
                       f"{sorted({(r['D'], r['test_F']) for r in ok})}")
@@ -320,8 +325,13 @@ def lead_commands(head: str, file_sha: str) -> str:
     msg = (f"$(cd lab && uv run python -c 'from gridpilot import seal; "
            f"print(seal.freeze_tag_message(\"{file_sha}\"))')")
     return "\n".join([
-        "# In the main checkout, on main, HEAD = the freeze commit, nothing else merged:",
+        "# In the main checkout, on main, HEAD = the freeze commit, nothing else merged.",
+        "# Run as one script (fail-fast); if the atomic push is rejected, do not rebase: delete",
+        "# the local tag and record commit, update to origin/main, and run make freeze again.",
+        "set -euo pipefail",
+        "git fetch origin",
         f'test "$(git rev-parse HEAD)" = {head}',
+        f'test "$(git rev-parse origin/main)" = {head}',
         "git add config/freeze.json",
         (f'git commit -m "freeze: configuration freeze record for {head[:12]}" -- '
          f"config/freeze.json"),
@@ -329,9 +339,12 @@ def lead_commands(head: str, file_sha: str) -> str:
         'test "$(git diff-tree --no-commit-id --name-only -r HEAD)" = config/freeze.json',
         f'test "$(sha256sum config/freeze.json | cut -d" " -f1)" = {file_sha}',
         f'git tag -a {seal.FREEZE_TAG} -m "{msg}"',
-        f"git push origin main {seal.FREEZE_TAG}",
+        (f'grep -qx "config/freeze.json sha256: {file_sha}" <<<"$(git for-each-ref '
+         f"refs/tags/{seal.FREEZE_TAG} --format='%(contents)')\""),
+        f"git push --atomic origin main {seal.FREEZE_TAG}",
         (f'test "$(git ls-remote origin refs/tags/{seal.FREEZE_TAG} | cut -f1)" = '
          f'"$(git rev-parse refs/tags/{seal.FREEZE_TAG})"'),
+        'test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$(git rev-parse HEAD)"',
         "# Then merge nothing else until T13 has run.",
     ])
 

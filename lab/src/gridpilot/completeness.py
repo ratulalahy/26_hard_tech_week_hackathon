@@ -7,16 +7,21 @@ completeness checks (row counts, missing hours). `test_cutoff` is that check for
 (PACE, CISO, BPAT, NEVP; sheet "Published Hourly Data") and PACE demand (`demand_adj_mw`) in
 the EIA-930 balance table `interim/eia930/balance.parquet`.
 
-**Rule.** D is the last UTC day on or before TEST_END − 1 day on which every hour of D exists as
-a published row in all five series. A row counts as present whether its value is null or not:
-nulls are handled by the F14.6 fill. F_test = (D + 1 day) 00:00Z, capped at TEST_END.
+**Rule (spec §5: "the last complete UTC day supported by the frozen core carbon/demand snapshot
+… verify consumption-intensity completeness before locking F"; T12r finding 1).** D is the last
+UTC day on or before TEST_END − 1 day on which all 24 hours of D exist as rows **with a valid
+value** in all five series. Valid means: for CO₂, a cell that `eia_co2._clean` accepts (present,
+finite numeric, not negative: the pipeline's tier-1 availability); for demand, non-null and
+finite. Interior invalid hours before D stay with the F14.6 fill; only the last fully valued day
+matters. F_test = (D + 1 day) 00:00Z, capped at TEST_END. (The first T12 call used row presence,
+null or not; it is superseded and kept in the log.)
 
 **Seal discipline.** The function reads the workbooks' time column and the consumed-CI cell only
-to tell an empty cell from a filled one, and the balance table's `ts_utc` and the null flag of
-`demand_adj_mw`. It returns, and logs, **only counts and timestamps** (never a value). Each file
-is read once into memory, hashed, and parsed from the same bytes, so the logged sha256 is the
-file that was counted. Every call appends one fsynced JSON line to `log_path` (no default: a
-call cannot go unlogged), including a failed call.
+to classify it valid or not, and the balance table's `ts_utc` and a validity flag of
+`demand_adj_mw` (the value is never materialized). It returns, and logs, **only counts and
+timestamps** (never a value). Each file is read once into memory, hashed, and parsed from the
+same bytes, so the logged sha256 is the file that was counted. Every call appends one fsynced
+JSON line to `log_path` (no default: a call cannot go unlogged), including a failed call.
 """
 
 from __future__ import annotations
@@ -41,12 +46,13 @@ WORKBOOK_REL = "raw/eia930/ba_workbooks/{ba}.xlsx"
 BALANCE_REL = "interim/eia930/balance.parquet"
 DEMAND_COL = "demand_adj_mw"  # = forecast.BALANCE_COLS["demand"]
 SERIES = tuple(f"{ba}/ci_consumed" for ba in CORE_BAS) + ("PACE/demand",)
-TAIL_DAYS = 7  # the null-hour counts are also reported for the last 7 days through D
+TAIL_DAYS = 7  # the counts are also reported for the last 7 days through D
 EVENT = "completeness"
-RULE = ("D = the last UTC day <= TEST_END - 1 day on which every hour of D exists as a "
-        "published row (null or not) for PACE, CISO, BPAT and NEVP consumed CO2 intensity "
-        "(EIA BA workbooks) and PACE demand (EIA-930 balance); F_test = min(D + 1 day, "
-        "TEST_END) at 00:00Z")
+RULE = ("D = the last UTC day <= TEST_END - 1 day on which all 24 hours exist as rows with a "
+        "valid value (CO2: present, finite numeric, not negative; demand: non-null, finite) for "
+        "PACE, CISO, BPAT and NEVP consumed CO2 intensity (EIA BA workbooks) and PACE demand "
+        "(EIA-930 balance demand_adj_mw); interior invalid hours before D are left to the F14.6 "
+        "fill; F_test = min(D + 1 day, TEST_END) at 00:00Z (spec §5: value completeness)")
 H1 = timedelta(hours=1)
 D1 = timedelta(days=1)
 
@@ -56,7 +62,8 @@ def _iso(t: datetime) -> str:
 
 
 def _workbook_presence(buf: bytes) -> pl.DataFrame:
-    """(ts_utc hour start, is_null) per workbook row; the cell values are dropped here."""
+    """(ts_utc hour start, is_null) per workbook row, where is_null means no valid consumed CI
+    (missing, non-numeric or negative); the cell values are dropped here."""
     raw = pl.read_excel(io.BytesIO(buf), sheet_name=SHEET, engine="calamine",
                         columns=[TIME_COL, CONSUMED_COL],
                         schema_overrides={CONSUMED_COL: pl.Utf8})
@@ -74,10 +81,12 @@ def _workbook_presence(buf: bytes) -> pl.DataFrame:
 
 
 def _balance_presence(buf: bytes, ba: str = "PACE") -> pl.DataFrame:
-    """(ts_utc, is_null) of `ba`'s demand rows; the demand value is never materialized."""
+    """(ts_utc, is_null) of `ba`'s demand rows, is_null meaning null or not finite; the demand
+    value is never materialized."""
+    v = pl.col(DEMAND_COL)
     return (pl.scan_parquet(io.BytesIO(buf))
             .filter(pl.col("ba").cast(pl.Utf8) == ba)
-            .select("ts_utc", pl.col(DEMAND_COL).is_null().alias("is_null"))
+            .select("ts_utc", (v.is_null() | ~v.is_finite().fill_null(False)).alias("is_null"))
             .collect())
 
 
@@ -86,29 +95,41 @@ def _day_floor(t: datetime) -> datetime:
 
 
 def _summary(rows: pl.DataFrame) -> tuple[dict, set[datetime]]:
-    """Counts and timestamps for one series, and its set of complete days in the window."""
+    """Counts and timestamps for one series, and its set of fully valued days in the window."""
     if rows["ts_utc"].is_duplicated().any():
         raise ValueError("duplicate hours in a series")
     win = rows.filter((pl.col("ts_utc") >= TEST_START) & (pl.col("ts_utc") < TEST_END))
     per_day = (win.group_by(pl.col("ts_utc").dt.truncate("1d").alias("day"))
-               .agg(pl.len().alias("n")).sort("day"))
-    complete = {d for d, n in per_day.iter_rows() if n == 24}
+               .agg(pl.len().alias("n"), (~pl.col("is_null")).sum().alias("n_valued"))
+               .sort("day"))
+    row_complete = {d for d, n, _ in per_day.iter_rows() if n == 24}
+    valued = {d for d, _, nv in per_day.iter_rows() if nv == 24}
     last = rows["ts_utc"].max()
+    last_valued = rows.filter(~pl.col("is_null"))["ts_utc"].max()
     first_win = win["ts_utc"].min()
+    n_null = int(win["is_null"].sum())
     return {
         "last_row_ts_utc": _iso(last) if last is not None else None,
+        "last_valued_row_ts_utc": _iso(last_valued) if last_valued is not None else None,
         "first_row_in_window_ts_utc": _iso(first_win) if first_win is not None else None,
         "n_rows_in_window": win.height,
-        "n_null_in_window": int(win["is_null"].sum()),
-        "n_complete_days_in_window": len(complete),
-    }, complete
+        "n_valued_in_window": win.height - n_null,
+        "n_null_in_window": n_null,
+        "n_fully_valued_days_in_window": len(valued),
+        "n_row_complete_days_in_window": len(row_complete),
+        "last_fully_valued_day": max(valued).strftime("%Y-%m-%d") if valued else None,
+        "last_row_complete_day": (max(row_complete).strftime("%Y-%m-%d") if row_complete
+                                  else None),
+    }, valued
 
 
 def _counts_through(rows: pl.DataFrame, start: datetime, end: datetime) -> dict:
     sub = rows.filter((pl.col("ts_utc") >= start) & (pl.col("ts_utc") < end))
     n_hours = int((end - start) / H1)
+    n_null = int(sub["is_null"].sum())
     return {"range": [_iso(start), _iso(end)], "n_hours": n_hours, "n_rows": sub.height,
-            "n_missing_rows": n_hours - sub.height, "n_null": int(sub["is_null"].sum())}
+            "n_missing_rows": n_hours - sub.height, "n_null": n_null,
+            "n_valued": sub.height - n_null}
 
 
 def _git(root: Path, *args: str) -> str:
@@ -129,9 +150,10 @@ def _append(path: Path, record: dict) -> None:
 def test_cutoff(log_path: Path | str, *, data_dir: Path | None = None,
                 repo_root: Path | None = None, purpose: str = "T12 test cutoff F_test") -> dict:
     """F_test by the completeness rule (module docstring). Returns, and appends to `log_path`
-    as one JSON line, a record of counts and timestamps only: per series the last row, the
-    window's row, null and complete-day counts, the counts in [TEST_START, F_test) and in the
-    last 7 days through D; D, F_test, the sha256 of every file counted, and the code commit."""
+    as one JSON line, a record of counts and timestamps only: per series the last row and last
+    valued row, the window's row, valued, null and fully-valued-day counts, the counts in
+    [TEST_START, F_test) and in the last 7 days through D; D, F_test, the sha256 of every file
+    counted, and the code commit."""
     data = Path(data_dir or paths.DATA_DIR)
     root = Path(repo_root or paths.REPO_ROOT)
     rec: dict = {"event": EVENT, "utc": _iso(datetime.now(UTC)), "purpose": purpose,
@@ -152,13 +174,13 @@ def test_cutoff(log_path: Path | str, *, data_dir: Path | None = None,
         inputs[BALANCE_REL] = hashlib.sha256(buf).hexdigest()
         rows["PACE/demand"] = _balance_presence(buf)
         del buf
-        series, complete = {}, {}
+        series, valued = {}, {}
         for name in SERIES:
-            series[name], complete[name] = _summary(rows[name])
+            series[name], valued[name] = _summary(rows[name])
         latest = _day_floor(TEST_END - D1)
-        common = sorted(d for d in set.intersection(*complete.values()) if d <= latest)
+        common = sorted(d for d in set.intersection(*valued.values()) if d <= latest)
         if not common:
-            raise ValueError("no UTC day of the test window is complete in all five series")
+            raise ValueError("no UTC day of the test window is fully valued in all five series")
         D = common[-1]
         F = min(D + D1, TEST_END)
         for name in SERIES:
@@ -168,8 +190,7 @@ def test_cutoff(log_path: Path | str, *, data_dir: Path | None = None,
         rec |= {"outcome": "ok", "inputs_sha256": inputs, "series": series,
                 "D": D.strftime("%Y-%m-%d"), "test_F": _iso(F),
                 "last_complete_day_by_series": {
-                    n: (max(c).strftime("%Y-%m-%d") if c else None)
-                    for n, c in complete.items()}}
+                    n: series[n]["last_fully_valued_day"] for n in SERIES}}
     except Exception as e:
         rec |= {"outcome": f"error: {type(e).__name__}: {e}"[:500]}
         _append(Path(log_path), rec)
