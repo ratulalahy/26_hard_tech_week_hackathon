@@ -1,6 +1,6 @@
 {
  "schema_version": "gridpilot.results.v1",
- "run_id": "20261027T101902Z",
+ "run_id": "20261027T111148Z",
  "ba": "PACE",
  "target": "ci_consumed (EIA consumption-basis CO2 intensity)",
  "week": {
@@ -68,6 +68,35 @@
    "data_cutoff_hour_start": "2024-11-05T16:00:00Z"
   }
  ],
+ "issues_by_model": {
+  "K": [
+   "2024-11-03T17:00:00Z",
+   "2024-11-04T17:00:00Z",
+   "2024-11-05T17:00:00Z",
+   "2024-11-06T17:00:00Z",
+   "2024-11-07T17:00:00Z",
+   "2024-11-08T17:00:00Z",
+   "2024-11-09T17:00:00Z"
+  ],
+  "W": [
+   "2024-11-03T17:00:00Z",
+   "2024-11-04T17:00:00Z",
+   "2024-11-05T17:00:00Z",
+   "2024-11-06T17:00:00Z",
+   "2024-11-07T17:00:00Z",
+   "2024-11-08T17:00:00Z",
+   "2024-11-09T17:00:00Z"
+  ],
+  "L": [
+   "2024-11-03T17:00:00Z",
+   "2024-11-04T17:00:00Z",
+   "2024-11-05T17:00:00Z",
+   "2024-11-06T17:00:00Z",
+   "2024-11-07T17:00:00Z",
+   "2024-11-08T17:00:00Z",
+   "2024-11-09T17:00:00Z"
+  ]
+ },
  "hours": [
   "2024-11-04T07:00:00Z",
   "2024-11-04T08:00:00Z",
@@ -411,7 +440,7 @@
   ],
   "unit": "g/kWh",
   "evidence": "observed",
-  "provenance_id": "20261027T101902Z:fr:observed",
+  "provenance_id": "20261027T111148Z:fr:observed",
   "status": "ok",
   "reason": null
  },
@@ -589,7 +618,7 @@
    ],
    "unit": "g/kWh",
    "evidence": "forecast",
-   "provenance_id": "20261027T101902Z:K",
+   "provenance_id": "20261027T111149Z:K",
    "status": "ok",
    "reason": null
   },
@@ -766,7 +795,7 @@
    ],
    "unit": "g/kWh",
    "evidence": "forecast",
-   "provenance_id": "20261027T101902Z:W",
+   "provenance_id": "20261027T111149Z:W",
    "status": "ok",
    "reason": null
   },
@@ -943,7 +972,7 @@
    ],
    "unit": "g/kWh",
    "evidence": "forecast",
-   "provenance_id": "20261027T101902Z:L",
+   "provenance_id": "20261027T111149Z:L",
    "status": "ok",
    "reason": null
   }
@@ -1292,7 +1321,7 @@
    ],
    "unit": "g/kWh",
    "evidence": "observed",
-   "provenance_id": "20261027T101902Z:fr:history",
+   "provenance_id": "20261027T111148Z:fr:history",
    "status": "ok",
    "reason": null
   },
@@ -1304,7 +1333,7 @@
     "value": 97.31825363531206,
     "unit": "g/kWh",
     "evidence": "measured",
-    "provenance_id": "20261027T101902Z:fr:K:mae",
+    "provenance_id": "20261027T111148Z:fr:K:mae",
     "status": "ok",
     "reason": null
    },
@@ -1312,7 +1341,7 @@
     "value": -38.23017869621566,
     "unit": "g/kWh",
     "evidence": "measured",
-    "provenance_id": "20261027T101902Z:fr:K:bias",
+    "provenance_id": "20261027T111148Z:fr:K:bias",
     "status": "ok",
     "reason": null
    },
@@ -1320,7 +1349,7 @@
     "value": 168,
     "unit": "hours",
     "evidence": "measured",
-    "provenance_id": "20261027T101902Z:fr:K:n",
+    "provenance_id": "20261027T111148Z:fr:K:n",
     "status": "ok",
     "reason": null
    }
@@ -1330,7 +1359,7 @@
     "value": 100.44291255816712,
     "unit": "g/kWh",
     "evidence": "measured",
-    "provenance_id": "20261027T101902Z:fr:W:mae",
+    "provenance_id": "20261027T111148Z:fr:W:mae",
     "status": "ok",
     "reason": null
    },
@@ -1338,7 +1367,7 @@
     "value": 2.055124132135215,
     "unit": "g/kWh",
     "evidence": "measured",
-    "provenance_id": "20261027T101902Z:fr:W:bias",
+    "provenance_id": "20261027T111148Z:fr:W:bias",
     "status": "ok",
     "reason": null
    },
@@ -1346,7 +1375,7 @@
     "value": 168,
     "unit": "hours",
     "evidence": "measured",
-    "provenance_id": "20261027T101902Z:fr:W:n",
+    "provenance_id": "20261027T111148Z:fr:W:n",
     "status": "ok",
     "reason": null
    }
@@ -1356,7 +1385,7 @@
     "value": 108.84750858217211,
     "unit": "g/kWh",
     "evidence": "measured",
-    "provenance_id": "20261027T101902Z:fr:L:mae",
+    "provenance_id": "20261027T111148Z:fr:L:mae",
     "status": "ok",
     "reason": null
    },
@@ -1364,7 +1393,7 @@
     "value": -37.96357440122026,
     "unit": "g/kWh",
     "evidence": "measured",
-    "provenance_id": "20261027T101902Z:fr:L:bias",
+    "provenance_id": "20261027T111148Z:fr:L:bias",
     "status": "ok",
     "reason": null
    },
@@ -1372,7 +1401,7 @@
     "value": 168,
     "unit": "hours",
     "evidence": "measured",
-    "provenance_id": "20261027T101902Z:fr:L:n",
+    "provenance_id": "20261027T111148Z:fr:L:n",
     "status": "ok",
     "reason": null
    }
@@ -1383,7 +1412,7 @@
    "value": 86.5411252652457,
    "unit": "g/kWh",
    "evidence": "measured",
-   "provenance_id": "20261027T101902Z:PACE/ci_consumed:K:selection_mae",
+   "provenance_id": "20261027T111149Z:PACE/ci_consumed:K:selection_mae",
    "status": "ok",
    "reason": null
   },
@@ -1391,7 +1420,7 @@
    "value": 82.84475061033835,
    "unit": "g/kWh",
    "evidence": "measured",
-   "provenance_id": "20261027T101902Z:PACE/ci_consumed:W:selection_mae",
+   "provenance_id": "20261027T111149Z:PACE/ci_consumed:W:selection_mae",
    "status": "ok",
    "reason": null
   },
@@ -1399,7 +1428,7 @@
    "value": 83.31759937256511,
    "unit": "g/kWh",
    "evidence": "measured",
-   "provenance_id": "20261027T101902Z:PACE/ci_consumed:L:selection_mae",
+   "provenance_id": "20261027T111149Z:PACE/ci_consumed:L:selection_mae",
    "status": "ok",
    "reason": null
   }
