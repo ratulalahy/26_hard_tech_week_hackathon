@@ -6,7 +6,7 @@ import { C, CI_MAX, CI_MID, ci2c } from '../lib/color';
 import { CORE, DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, headline, loadMonth, pname, pnote, yearMean, type Dest } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
 import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange } from '../lib/format';
-import { heroHeadline } from '../lib/copy';
+import { cap, heroHeadline } from '../lib/copy';
 import { useCopy } from '../lib/useCopy';
 import { useApp } from '../lib/store';
 import type { Viewport } from '../lib/useViewport';
@@ -91,7 +91,7 @@ function ResultDock({ compact }: { compact: boolean }) {
               <span className="grid place-items-center" style={{ width: 24, height: 24, borderRadius: 8, background: c === dest ? C.route : ci2c(curve[hour]), color: c === dest ? '#fff' : C.ink, boxShadow: 'inset 0 0 0 1px rgba(110,62,30,.12)' }}>
                 <Icon name={c === dest ? 'route' : c === 'BPAT' ? 'drop' : 'bolt'} size={14} />
               </span>
-              <span className="t-13 fw-600" title={`Year mean ${fmt(ym)} g/kWh`}>{REGION[c].name} <span className="t-12 ink-3 fw-400">{c} · {c === 'PACE' ? `year ${fmt(ym)}` : `${pct(1 - ym / pm, 0)}% cleaner`}</span></span>
+              <span className="t-13 fw-600" title={`${cap(copy.yearMean)} ${fmt(ym)} g/kWh`}>{REGION[c].name} <span className="t-12 ink-3 fw-400">{c} · {c === 'PACE' ? `${copy.yearShort} ${fmt(ym)}` : `${pct(1 - ym / pm, 0)}% cleaner`}</span></span>
               <span className="t-15 num">{curve[hour] == null ? '–' : Math.round(curve[hour]!)}<span className="unit">g/kWh</span></span>
               {strips && <span />}
               {strips && <div style={{ gridColumn: '2 / 4' }}><Strip curve={curve} hour={hour} h={10} label={`${REGION[c].name} typical day carbon`} /></div>}
@@ -151,6 +151,7 @@ export function Legend({ width, short = false }: { width?: number; short?: boole
 }
 
 function RouterDock({ compact }: { compact: boolean }) {
+  const copy = useCopy();
   const { data, arcPolicy, dest, set } = useApp();
   const m = data!.metrics, j = data!.jobs;
   const wk = j.week;
@@ -189,7 +190,7 @@ function RouterDock({ compact }: { compact: boolean }) {
           })}
         </div>
         {!compact && <div className="t-12 ink-2" style={{ marginTop: 8 }}>
-          Over the year, {pname(arcPolicy)} moved {pct(year.moved_share_jobs.value)}% of jobs and ran {pct(year.remote_energy_share.value)}% of energy remotely; {fmt(year.late_jobs.value)} late jobs, {fmt(year.capacity_violations.value)} capacity violations. <Ev e="simulated" />
+          {cap(copy.overYear)}, {pname(arcPolicy)} moved {pct(year.moved_share_jobs.value)}% of jobs and ran {pct(year.remote_energy_share.value)}% of energy remotely; {fmt(year.late_jobs.value)} late jobs, {fmt(year.capacity_violations.value)} capacity violations. <Ev e="simulated" />
         </div>}
       </div>
     </Panel>

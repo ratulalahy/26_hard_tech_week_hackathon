@@ -31,7 +31,17 @@ export interface WindowCopy {
   periodMae: string;
   /** readings that were made on the validation year: shown only there */
   validationReadings: boolean;
+  /** M14: the period a number covers. Test copy never says "all year" or "over the year". */
+  overYear: string; // "over the year" | "over the covered period (N weeks)"
+  allYear: string; // "all year" | "over the covered period (N weeks)"
+  yearPoss: string; // "the year's" | "the covered period's"
+  yearMean: string; // "year mean" | "period mean"
+  yearShort: string; // "year" | "period"
+  wholeYear: string; // "the whole year" | "the whole covered period"
 }
+
+/** "Over the year" from "over the year". */
+export const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const span = (a: string, b: string) => `${fmtDate(a, { month: 'short', year: 'numeric', timeZone: 'UTC' })} – ${fmtDate(new Date(new Date(b).getTime() - 1).toISOString(), { month: 'short', year: 'numeric', timeZone: 'UTC' })}`;
 
@@ -46,9 +56,11 @@ export function freezeDate(man: Json | null | undefined): string | null {
 export const testOptionLabel = (frozenAt: string | null | undefined) =>
   `Test year (sealed until ${frozenAt ? fmtDate(frozenAt, { month: 'short', day: 'numeric', timeZone: 'UTC' }) : 'the freeze'})`;
 
-export function windowCopy(window: EvalWindow, man: Json): WindowCopy {
+export function windowCopy(window: EvalWindow, man: Json, metrics?: Json): WindowCopy {
   if (window === 'validation') {
     return {
+      overYear: 'over the year', allYear: 'all year', yearPoss: "the year's", yearMean: 'year mean',
+      yearShort: 'year', wholeYear: 'the whole year',
       window,
       chip: SEALED,
       footShort: 'Hours in America/Denver time. Validation year data.',
@@ -64,7 +76,11 @@ export function windowCopy(window: EvalWindow, man: Json): WindowCopy {
   }
   const covered = span(man.split.eval_start, man.split.F);
   const fz = freezeDate(man);
+  const nw: number | undefined = metrics?.cohort?.n_weeks?.value;
+  const period = `over the covered period${nw ? ` (${nw} weeks)` : ''}`;
   return {
+    overYear: period, allYear: period, yearPoss: "the covered period's", yearMean: 'period mean',
+    yearShort: 'period', wholeYear: 'the whole covered period',
     window,
     chip: `Test year (${covered}) · opened once, after the freeze${fz ? ` of ${fz}` : ''}`,
     footShort: 'Hours in America/Denver time. Test year data.',

@@ -106,6 +106,8 @@ test('the test-year state shows only test numbers and no validation wording (syn
     for (const loc of [page.locator('main'), page.locator('footer')]) {
       const t = (await loc.innerText()).toLowerCase();
       expect(t.includes('validation'), `${where}: validation wording on test numbers`).toBe(false);
+      // M14: the test year covers a period, not a full year
+      expect(/all year|over the year|the year's|whole year/.test(t), `${where}: "year" wording on test numbers`).toBe(false);
     }
   };
 

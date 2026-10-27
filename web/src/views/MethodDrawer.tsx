@@ -67,7 +67,7 @@ export function MethodDrawer() {
                 W − L = {signed(h2b4.diff_kg.value / 1000, 1)} t CO₂, 95% interval [{signed(h2b4.diff_kg_ci95.value[0] / 1000, 1)}, {signed(h2b4.diff_kg_ci95.value[1] / 1000, 1)}] t; {stripCodes(h2.reason ?? '')}. <Ev e="simulated" />
               </p>
               <p className="t-13 ink-2" style={{ margin: '8px 0 0' }}>
-                Waiting in Utah alone saves {pctRange(hd.timing.lo, hd.timing.hi)}%{copy.validationReadings ? '; nearly all of the saving comes from moving work, mostly to the Northwest' : ''}. A per-job search, even with hindsight, is not a best plan for the whole year: holding scarce Northwest slots for cleaner hours can push later jobs to dirtier sites.
+                Waiting in Utah alone saves {pctRange(hd.timing.lo, hd.timing.hi)}%{copy.validationReadings ? '; nearly all of the saving comes from moving work, mostly to the Northwest' : ''}. A per-job search, even with hindsight, is not a best plan for {copy.wholeYear}: holding scarce Northwest slots for cleaner hours can push later jobs to dirtier sites.
               </p>
             </Sec>
             {data!.ext ? <Sec title="Robustness and sensitivity checks">

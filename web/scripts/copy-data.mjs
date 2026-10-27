@@ -10,11 +10,13 @@
 //    (public domain) and Electricity Maps BA geometry (AGPL-3.0) attributions are written next to them.
 // Validation results only: this script never reads the sealed test window (it copies files).
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const repo = resolve(here, '..', '..');
+// COPY_DATA_REPO points the copy at another checkout (web/tests/copy-data.spec.ts uses a temp one)
+const repo = process.env.COPY_DATA_REPO ? resolve(process.env.COPY_DATA_REPO) : resolve(here, '..', '..');
 const out = join(repo, 'web', 'public', 'data');
 const dataDir = process.env.GRIDPILOT_DATA_DIR ?? join(repo, 'data');
 const geo = join(dataDir, 'processed', 'geo');
@@ -37,8 +39,18 @@ let test = { available: false, files: [], frozen_at: null };
 if (testDone) {
   const man = JSON.parse(readFileSync(join(testSrc, 'manifest.json'), 'utf8'));
   if (man.window !== 'test' || man.fixture) throw new Error('results/test/manifest.json is not a real test-window manifest');
-  mkdirSync(testOut, { recursive: true });
   const files = readdirSync(testSrc).filter((f) => f.endsWith('.json')).sort();
+  // M8: every artifact must match the sha256 the entry point logged in its last export line
+  const logPath = join(repo, 'results', 'test_reads.jsonl');
+  const exports = existsSync(logPath)
+    ? readFileSync(logPath, 'utf8').split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l)).filter((r) => r.event === 'export')
+    : [];
+  const logged = exports.length ? exports[exports.length - 1].artifacts_sha256 ?? {} : null;
+  if (!logged) throw new Error('results/test_reads.jsonl has no export line for results/test/');
+  const sha = (f) => createHash('sha256').update(readFileSync(join(testSrc, f))).digest('hex');
+  const bad = [...files.filter((f) => logged[f] !== sha(f)), ...Object.keys(logged).filter((f) => !files.includes(f))];
+  if (bad.length) throw new Error(`results/test/ does not match the logged export: ${bad.join(', ')}`);
+  mkdirSync(testOut, { recursive: true });
   for (const f of files) {
     copyFileSync(join(testSrc, f), join(testOut, f));
     console.log('results/test/' + f, kb(join(testOut, f)));

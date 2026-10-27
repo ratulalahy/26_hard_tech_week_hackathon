@@ -5,5 +5,5 @@ import { useApp } from './store';
  * the pure helpers (and lib/plan.ts's tests) never load the store. */
 export function useCopy(): WindowCopy {
   const { data, evalWindow } = useApp();
-  return windowCopy(data ? evalWindow : 'validation', data?.manifest);
+  return windowCopy(data ? evalWindow : 'validation', data?.manifest, data?.metrics);
 }

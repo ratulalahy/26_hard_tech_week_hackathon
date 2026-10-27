@@ -7,11 +7,14 @@ import { C, ci2c } from '../lib/color';
 import { CORE, REGION, asNum, dayCurve, headline, loadMonth, pname, yearMean, type Json } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
 import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange } from '../lib/format';
+import { cap } from '../lib/copy';
 import { useApp } from '../lib/store';
+import { useCopy } from '../lib/useCopy';
 
 const LX = 112, RX = 96; // shared margins: the load chart and the carbon ribbon line up hour for hour
 
 export function Ribbon() {
+  const copy = useCopy();
   const { data, month } = useApp();
   const g = data!.grid;
   const curve = dayCurve(g, 'PACE', month);
@@ -28,12 +31,12 @@ export function Ribbon() {
         <div>
           <h1 className="t-20" style={{ margin: 0 }}>In Utah, the clean hours aren't the rush hours</h1>
           <p className="t-13 ink-2" style={{ margin: '4px 0 0', maxWidth: '84ch' }}>
-            On a {lm.short} weekday, carbon is lowest {spanLabel(clean)} while the sun is up. The grid's rush comes after sunset: net load peaks at {fmtHour(argmax(net))} at {fmt(net[argmax(net)])} MW, and {fmtHour(rush[0])}–{fmtHour(rush[1])} holds most of the year's {fmt(k)} highest net-load hours.
+            On a {lm.short} weekday, carbon is lowest {spanLabel(clean)} while the sun is up. The grid's rush comes after sunset: net load peaks at {fmtHour(argmax(net))} at {fmt(net[argmax(net)])} MW, and {fmtHour(rush[0])}–{fmtHour(rush[1])} holds most of {copy.yearPoss} {fmt(k)} highest net-load hours.
             Night hours, midnight to 7 AM, run {fmt(Math.min(...night))}–{fmt(Math.max(...night))} g/kWh.
           </p>
         </div>
         <div data-testid="ribbon-timing" className="panel flex-none" style={{ padding: '8px 12px', maxWidth: 440 }}>
-          <div className="flex items-baseline gap-2"><span className="t-hero" style={{ fontSize: 28 }}>{pctRange(h.timing.lo, h.timing.hi)}%</span><span className="t-12 ink-2">saved by waiting in Utah alone, all year</span></div>
+          <div className="flex items-baseline gap-2"><span className="t-hero" style={{ fontSize: 28 }}>{pctRange(h.timing.lo, h.timing.hi)}%</span><span className="t-12 ink-2">saved by waiting in Utah alone, {copy.allYear}</span></div>
           <div className="t-11 ink-3">A flexible job may wait {fmt(delayH)} h, which rarely reaches the midday solar stretch from an evening or night start. 95% {pct(h.timing.ciLo)}–{pct(h.timing.ciHi)}%. <Ev e="simulated" /></div>
         </div>
       </div>
@@ -164,6 +167,7 @@ export function ForecastPanel() {
 }
 
 export function Neighbours() {
+  const copy = useCopy();
   const { data, month, hour } = useApp();
   const g = data!.grid;
   const pm = asNum(yearMean(g, 'PACE'))!;
@@ -177,7 +181,7 @@ export function Neighbours() {
             <div key={c} className="grid items-center" style={{ gridTemplateColumns: '104px minmax(0,1fr) 72px', gap: 8 }}>
               <span className="t-13 fw-600 truncate">{REGION[c].name}<span className="block t-11 ink-3 fw-400">{c}</span></span>
               <Strip curve={dayCurve(g, c, month)} h={28} hour={hour} label={`${REGION[c].name} typical ${monthLabel(month)} day`} />
-              <span className="text-right"><span className="t-13 fw-600 num">{fmt(ym)}</span><span className="block t-11 ink-3">{c === 'PACE' ? 'year mean' : `${pct(1 - ym / pm, 0)}% cleaner`}</span></span>
+              <span className="text-right"><span className="t-13 fw-600 num">{fmt(ym)}</span><span className="block t-11 ink-3">{c === 'PACE' ? copy.yearMean : `${pct(1 - ym / pm, 0)}% cleaner`}</span></span>
             </div>
           );
         })}
@@ -188,6 +192,7 @@ export function Neighbours() {
 }
 
 export function YearHeat() {
+  const copy = useCopy();
   const { data } = useApp();
   const g = data!.grid;
   const [ref, w, h] = useWidth<HTMLDivElement>();
@@ -196,14 +201,14 @@ export function YearHeat() {
   const lx = 32, top = 4, bottom = 18, cw = (w - lx) / 24, ch = (h - top - bottom) / 12;
   return (
     <Panel className="flex flex-col min-h-0">
-      <div className="flex items-baseline justify-between gap-2"><span className="t-15">All year, the rush sits on the evening</span></div>
+      <div className="flex items-baseline justify-between gap-2"><span className="t-15">{cap(copy.allYear)}, the rush sits on the evening</span></div>
       <div className="t-11 ink-3 flex flex-wrap gap-x-3" style={{ marginTop: 2 }}>
-        <span className="flex items-center gap-1"><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill={C.rushFill} stroke={C.rush} strokeWidth="1.5" /></svg>the year's top {fmt(g.pace_top100_net_load.k.value)} net-load hours, bigger for more <Ev e="observed" /></span>
+        <span className="flex items-center gap-1"><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" fill={C.rushFill} stroke={C.rush} strokeWidth="1.5" /></svg>{copy.yearPoss} top {fmt(g.pace_top100_net_load.k.value)} net-load hours, bigger for more <Ev e="observed" /></span>
         <span>cells: carbon by month and hour <EvCI /></span>
       </div>
       <div ref={ref} className="flex-1 min-h-0" style={{ marginTop: 8 }}>
         {w > 0 && h > 0 && (
-          <svg width={w} height={h} role="img" aria-label="Utah carbon intensity by month and hour, with the year's top 100 net-load hours circled">
+          <svg width={w} height={h} role="img" aria-label={`Utah carbon intensity by month and hour, with ${copy.yearPoss} top 100 net-load hours circled`}>
             {vals.map((row, mi) => (
               <g key={mi}>
                 {<text x={lx - 6} y={top + mi * ch + ch / 2 + 4} textAnchor="end" fontSize={11} fill={C.ink3}>{monthLabel(g.months[mi])}</text>}

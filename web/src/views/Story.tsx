@@ -3,6 +3,7 @@ import { IntervalChart, Panel, PolicyTable } from '../components/charts';
 import { extRows, placementSpan } from '../components/extensions';
 import { ImportChart, StorageCurve, hourSpans, storageFacts } from '../components/storage';
 import { Ev, EvCI, Icon } from '../components/ui';
+import { cap } from '../lib/copy';
 import { useCopy } from '../lib/useCopy';
 import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, headline, loadMonth, pname, type Core, type Json } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
@@ -60,7 +61,7 @@ export function Story() {
   const steps: { t: string; body: React.ReactNode; ev: React.ReactNode }[] = [
     {
       t: "Utah's grid has a rush hour, and it comes after sunset",
-      body: <>On a {lm.short} weekday demand peaks at {fmtHour(argmax(jul.demand_mw.value))}. Then the sun sets and solar drops away, so net load, the load the rest of the fleet must carry, keeps climbing to {fmtHour(argmax(net))} ({fmt(net[argmax(net)])} MW). All year, the {fmt(k)} highest net-load hours fall on {monthSpan} evenings, mostly {spanLabel(rush)}. The cleanest hours are {spanLabel(clean)}, while the sun is up.</>,
+      body: <>On a {lm.short} weekday demand peaks at {fmtHour(argmax(jul.demand_mw.value))}. Then the sun sets and solar drops away, so net load, the load the rest of the fleet must carry, keeps climbing to {fmtHour(argmax(net))} ({fmt(net[argmax(net)])} MW). {cap(copy.allYear)}, the {fmt(k)} highest net-load hours fall on {monthSpan} evenings, mostly {spanLabel(rush)}. The cleanest hours are {spanLabel(clean)}, while the sun is up.</>,
       ev: <><Ev e="observed">load: EIA-930</Ev><EvCI /></>,
     },
     {
@@ -74,9 +75,9 @@ export function Story() {
       ev: <><Ev e="measured">job size</Ev><Ev e="modeled">option CO₂</Ev><Ev e="simulated">placements</Ev></>,
     },
     {
-      t: `Place the work: over the year, ${pct(topDest[1] / remoteTot, 0)}% of the moved energy went to ${REGION[topDest[0]].name === 'Northwest hydro' ? 'the Northwest' : REGION[topDest[0]].name}`,
-      body: <>Over the year, {pname('W')} ran {remote.map(([d, v]) => `${pct(v / remoteTot, 0)}% of its moved energy in ${REGION[d].name}`).join(', ')}. {weekTop && weekTop.to !== topDest[0] ? <>The replay week shown on the map is different: {REGION[weekTop.to as Core].name} took more GPU-hours that week. </> : null}In that week it sent {DESTS.map((d) => { const a = w.arcs.find((x: Json) => x.to === d); return a ? `${fmt(a.gpu_h.value)} GPU-h to ${REGION[d].name}` : null; }).filter(Boolean).join(', ')}. Over the year it moved {pct(wyear.moved_share_jobs.value)}% of jobs and ran {pct(wyear.remote_energy_share.value)}% of the energy outside Utah, with {fmt(wyear.late_jobs.value)} late jobs.</>,
-      ev: <Ev e="simulated">energy by site, all year; arcs, one week</Ev>,
+      t: `Place the work: ${copy.overYear}, ${pct(topDest[1] / remoteTot, 0)}% of the moved energy went to ${REGION[topDest[0]].name === 'Northwest hydro' ? 'the Northwest' : REGION[topDest[0]].name}`,
+      body: <>{cap(copy.overYear)}, {pname('W')} ran {remote.map(([d, v]) => `${pct(v / remoteTot, 0)}% of its moved energy in ${REGION[d].name}`).join(', ')}. {weekTop && weekTop.to !== topDest[0] ? <>The replay week shown on the map is different: {REGION[weekTop.to as Core].name} took more GPU-hours that week. </> : null}In that week it sent {DESTS.map((d) => { const a = w.arcs.find((x: Json) => x.to === d); return a ? `${fmt(a.gpu_h.value)} GPU-h to ${REGION[d].name}` : null; }).filter(Boolean).join(', ')}. {cap(copy.overYear)} it moved {pct(wyear.moved_share_jobs.value)}% of jobs and ran {pct(wyear.remote_energy_share.value)}% of the energy outside Utah, with {fmt(wyear.late_jobs.value)} late jobs.</>,
+      ev: <Ev e="simulated">{`energy by site, ${copy.allYear}; arcs, one week`}</Ev>,
     },
     {
       t: 'The count: moving beats waiting',
