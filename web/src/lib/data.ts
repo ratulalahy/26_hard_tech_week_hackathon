@@ -1,6 +1,8 @@
 // Results loading and selectors. Every number the UI shows comes from results/*.json (copied to
 // public/data/results by scripts/copy-data.mjs) and keeps its §11 envelope, so its evidence label
 // travels with it. A null value is shown with its reason, never as 0.
+import { TEST_LINE, VALIDATION_LINE, type EvalWindow } from './copy';
+
 export type Evidence = 'observed' | 'measured' | 'forecast' | 'modeled' | 'assumed' | 'simulated';
 export interface Env<T = number> {
   value: T | null;
@@ -27,18 +29,28 @@ export interface Results {
 }
 
 const base = import.meta.env?.BASE_URL ?? './'; // './' (relative deployment base)
-async function get(name: string): Promise<Json> {
-  const url = `${base}data/results/${name}`;
+/** results/*.json (validation) or results/test/*.json (the sealed test year, once it is run). */
+const dir = (w: EvalWindow) => (w === 'test' ? 'data/results/test/' : 'data/results/');
+async function get(name: string, w: EvalWindow = 'validation'): Promise<Json> {
+  const url = `${base}${dir(w)}${name}`;
   const r = await fetch(url);
   if (!r.ok) throw new Error(`${name}: HTTP ${r.status}`);
   return r.json();
 }
-export async function loadResults(): Promise<Results> {
+export async function loadResults(w: EvalWindow = 'validation'): Promise<Results> {
+  const v = w === 'validation';  // the D-058 extensions and the T10b storage piece are validation-only
   const [metrics, manifest, forecast, jobs, grid, workload, ext, storage] = await Promise.all([
-    get('metrics.json'), get('manifest.json'), get('forecast-replay.json'), get('job-replay.json'), get('grid-profile.json'), get('workload-profile.json'),
-    get('extensions.json').catch(() => null), get('storage.json').catch(() => null),
+    get('metrics.json', w), get('manifest.json', w), get('forecast-replay.json', w), get('job-replay.json', w), get('grid-profile.json', w), get('workload-profile.json', w),
+    v ? get('extensions.json').catch(() => null) : Promise.resolve(null),
+    v ? get('storage.json').catch(() => null) : Promise.resolve(null),
   ]);
+  if (w === 'test' && (metrics.window !== 'test' || manifest.window !== 'test')) throw new Error('results/test/ does not hold test-window results');
   return { metrics, manifest, forecast, jobs, grid, workload, ext, storage };
+}
+/** What copy-data found: the test option is enabled only when results/test/manifest.json exists. */
+export interface ResultsIndex { files: string[]; test?: { available: boolean; files: string[]; frozen_at: string | null } }
+export async function loadIndex(): Promise<ResultsIndex> {
+  try { return await get('index.json'); } catch { return { files: [] }; }
 }
 
 export const CORE = ['PACE', 'BPAT', 'CISO', 'NEVP'] as const;
@@ -70,8 +82,6 @@ export const FRAME_LINE = 'Replay of a measured GPU-cluster trace mapped onto Ut
 export const DEADLINES_MET = 'deadlines met by construction (baseline bookings)';
 /** The deadline rule (A4), as the drawer and the cockpit state it. */
 export const DEADLINE_RULE = "A job's deadline is the later of (a) its run-now finish plus its allowed delay and (b) its finish in the stay-in-Utah baseline (baseline-relative).";
-/** The one plain-language line about the validation year (A6). */
-export const VALIDATION_LINE = 'These are validation-year results, which shaped the design; the sealed test year is the real test.';
 
 /** The month the weekday-load profile covers, read from the data (grid-profile `pace_july_weekday.month`, "2025-07"). */
 export function loadMonth(grid: Json): { short: string; long: string } {
@@ -108,12 +118,13 @@ const PLAIN: [RegExp, string][] = [
   [/shadow-U sensitivity/i, 'What is possible without advance reservations has not been tested yet.'],
   [/^Validation results are development evidence/i, VALIDATION_LINE],
   [/phases 49 and 98 are workload-alignment sensitivities/i, 'The headline uses one workload starting offset. Two other offsets were run as checks and are reported beside it, never pooled with it.'],
+  [/^Test-year results: the sealed test year was opened once/i, TEST_LINE],
   [/workload phase 0/i, 'The workload was replayed from one starting offset; two other offsets are still to run.'],
 ];
 export const stripCodes = (s: string) => s.replace(/\s*\((?:F\d[\d.]*|§\s*\d[\d.]*)(?:[,;][^)]*)?\)/g, '').replace(/§\s*\d[\d.]*/g, '').replace(/\bF\d+(?:\.\d+)?\b/g, '').replace(/\s{2,}/g, ' ').trim();
 export const plainLimitation = (s: string) => PLAIN.find(([re]) => re.test(s))?.[1] ?? stripCodes(s);
-/** The plain limitations list; the validation-year line is stated once, in its own place, so it is left out here. */
-export const plainLimitations = (ls: string[]) => ls.map(plainLimitation).filter((t) => t !== VALIDATION_LINE);
+/** The plain limitations list; the validation-year (or test-year) line is stated once, in its own place, so it is left out here. */
+export const plainLimitations = (ls: string[]) => ls.map(plainLimitation).filter((t) => t !== VALIDATION_LINE && t !== TEST_LINE);
 
 export interface Contrast {
   candidate: string;

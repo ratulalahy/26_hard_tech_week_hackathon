@@ -966,9 +966,9 @@ def _ts(kg: float) -> str:
     return "0.0 t" if abs(t) < 0.05 else f"{t:+,.1f} t"
 
 
-def framing_text(acct) -> str:
-    """The validation reading of H3 and placement vs timing, every number from this run
-    (fix round 1 #5). Each clause is chosen by the intervals, so it stays true."""
+def framing_text(acct, window: str = "validation") -> str:
+    """The validation (or test) reading of H3 and placement vs timing, every number from this
+    run (fix round 1 #5). Each clause is chosen by the intervals, so it stays true."""
     c = acct["contrasts"]
     s = acct["scores"]
 
@@ -1005,7 +1005,8 @@ def framing_text(acct) -> str:
     top = max(remote, key=remote.get)
     share = remote[top] / sum(remote.values()) if sum(remote.values()) else 0.0
     l_save = b4("L", "U")[2]
-    return (f"Validation: {'; '.join(parts)}. Waiting in Utah alone saves about "
+    lead = "Test year" if window == "test" else "Validation"
+    return (f"{lead}: {'; '.join(parts)}. Waiting in Utah alone saves about "
             f"{100 * sum(t_save) / 2:.1f}% (W_time {100 * t_save[0]:.2f}%, L_time "
             f"{100 * t_save[1]:.2f}% vs U); the saving comes from moving work (L "
             f"{100 * l_save:.2f}% vs U), mostly to {top} ({100 * share:.0f}% of L's remote "
@@ -1134,13 +1135,13 @@ def build_artifacts(**k) -> dict:
                                   f"{run_id}:common_support"),
             "status_rerun": "not_run",
             "reason": ("the test window runs the registered primary scenario only; the "
-                       "common-support rerun is a validation sensitivity" if test else
+                       "common-support rerun is not part of the test run" if test else
                        "the common-support sensitivity rerun is scheduled after 18:00 (Task 7 "
                        "amendment step 7)")},
         "weekly": _weekly_record(acct["weeks"], run_id),
         "coverage_stratum": _stratum_record(acct["stratum"], run_id, n_weeks, window),
         "framing": {
-            "placement_vs_timing": framing_text(acct),
+            "placement_vs_timing": framing_text(acct, window),
             "greedy_search": GREEDY_NOTE,
             "h_is_diagnostic": "H uses realized (filled) truth; it is never a contender",
         },
@@ -1506,6 +1507,8 @@ TRUTH_NULL = "null = hour without a tier-1 (EIA consumption-basis) value"
 RULE_LITERAL = ("§11: among validation flexible jobs with a feasible remote action in the "
                 "primary (U, bookings-held) replay, the job nearest the median GPU-hours of "
                 "that set; ties by stable ID")
+RULE_LITERAL_TEST = RULE_LITERAL.replace("among validation flexible jobs",
+                                         "among the test cohort's flexible jobs")
 RULE_V2 = ("illustration criterion v2 (D-054): over the same eligible set, sort by (declared "
            "GPU-h, job_uid) and take the first job whose cumulative declared GPU-h reaches 50% "
            "of the set's total (the GPU-hour-weighted median)")
@@ -1633,7 +1636,8 @@ def job_replay(k) -> dict:
     }
     illustrative = _illustrative_record(
         v2_uid, RULE_V2, k, {"criterion": "v2", "disclosure": disclosure, **common})
-    literal = _illustrative_record(lit_uid, RULE_LITERAL, k, {"criterion": "literal", **common})
+    rule = RULE_LITERAL_TEST if k.get("win") is not None and k["win"].is_test else RULE_LITERAL
+    literal = _illustrative_record(lit_uid, rule, k, {"criterion": "literal", **common})
     # One week of placements, with arcs (the forecast-replay week).
     w0, w1 = _replay_week(k["eval_start"])
     wk = {}
@@ -1728,7 +1732,7 @@ def print_table(acct, timer, scenario: Scenario | None = None,
             print(f"  bound check {name:7s} {basis:9s} gap {x['gap_kg']:.6f} kg "
                   f"min job gap {x['min_job_gap_kg']:.3e} kg ok={x['ok']}")
     if scenario.is_primary:
-        print("framing: " + framing_text(acct))
+        print("framing: " + framing_text(acct, window.name if window else "validation"))
     print("timing (s): " + ", ".join(f"{k} {v:.1f}" for k, v in timer.t.items()))
 
 

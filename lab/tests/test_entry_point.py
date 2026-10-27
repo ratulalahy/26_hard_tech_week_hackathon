@@ -31,7 +31,8 @@ def rs():
 
 
 def test_the_real_cli_refuses_without_a_freeze_record(rs, capsys):
-    assert not (REPO_ROOT / seal.FREEZE_REL).exists()  # T12 writes it; T13 runs the test
+    if (REPO_ROOT / seal.FREEZE_REL).exists():  # T12 wrote it: tests never invoke the real CLI
+        pytest.skip("a freeze record exists; the real --window test CLI is never run from tests")
     log = REPO_ROOT / seal.READ_LOG_REL
     before = log.read_bytes() if log.exists() else None
     assert rs.main(["--window", "test"]) == rs.REFUSED_RC

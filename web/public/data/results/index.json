@@ -8,5 +8,10 @@
   "metrics.json",
   "storage.json",
   "workload-profile.json"
- ]
+ ],
+ "test": {
+  "available": false,
+  "files": [],
+  "frozen_at": null
+ }
 }

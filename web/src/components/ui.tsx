@@ -58,7 +58,6 @@ export function Skel({ w = '100%', h = 12, r = 8, className }: { w?: number | st
   return <span className={`skel block ${className ?? ''}`} style={{ width: w, height: h, borderRadius: r }} aria-hidden="true" />;
 }
 
-export const SEALED = 'Validation year (Nov 2024 – Oct 2025) · test year sealed';
 
 /** EIA's consumption-basis carbon intensity is an EIA estimate: modeled (lead ruling R3). */
 export function EvCI({ extra }: { extra?: string }) {

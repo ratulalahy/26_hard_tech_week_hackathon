@@ -3,7 +3,8 @@ import { IntervalChart, Panel, PolicyTable } from '../components/charts';
 import { extRows, placementSpan } from '../components/extensions';
 import { ImportChart, StorageCurve, hourSpans, storageFacts } from '../components/storage';
 import { Ev, EvCI, Icon } from '../components/ui';
-import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, VALIDATION_LINE, asNum, dayCurve, headline, loadMonth, pname, type Core, type Json } from '../lib/data';
+import { useCopy } from '../lib/useCopy';
+import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, headline, loadMonth, pname, type Core, type Json } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
 import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange, sig2 } from '../lib/format';
 import { useViewport } from '../lib/useViewport';
@@ -19,6 +20,7 @@ export function Story() {
   const { data, step, month, set } = useApp();
   const m = data!.metrics, g = data!.grid, wl = data!.workload;
   const h = headline(m);
+  const copy = useCopy();
   const curve = dayCurve(g, 'PACE', month);
   const rush = rushHours(g), clean = cleanest(curve);
   const jul = g.pace_july_weekday, lm = loadMonth(g);
@@ -63,7 +65,7 @@ export function Story() {
     },
     {
       t: "Tomorrow's report: forecasts catch the daily swing",
-      body: <>Each day at 10 AM, three forecasts predict tomorrow's carbon in Utah from data that is at least four days old: {pname('K')}, {pname('W')} and {pname('L')}. All three follow the swing between night and midday; none is clearly better than the others.</>,
+      body: <>Each day at 10 AM, three forecasts predict tomorrow's carbon in Utah from data that is at least four days old: {pname('K')}, {pname('W')} and {pname('L')}. {copy.validationReadings ? 'All three follow the swing between night and midday; none is clearly better than the others.' : 'Their errors over the test year are in the method drawer.'}</>,
       ev: <><Ev e="forecast" /><Ev e="measured">errors</Ev></>,
     },
     {
@@ -78,12 +80,12 @@ export function Story() {
     },
     {
       t: 'The count: moving beats waiting',
-      body: <span data-testid="story-result">Over the validation year, the four placement policies cut attributed CO₂ by <b className="fw-600">{pctRange(h.placement.lo, h.placement.hi)}%</b> against U local (stay in Utah), with {DEADLINES_MET} and the same work done. Waiting in Utah alone cut <b className="fw-600">{pctRange(h.timing.lo, h.timing.hi)}%</b>. Forecast choice barely matters; placement dominates. Most jobs are tiny, but most of the energy, and most of the saving, sits in a few large jobs: the largest {pct(top1.fraction.value, 0)}% of jobs use {pct(top1.energy_share.value, 0)}% of the energy and carry {pct(top1.saving_share.value, 0)}% of the saving.<span className="block t-12 ink-3" style={{ marginTop: 8 }} data-testid="story-frame">{FRAME_LINE}</span></span>,
+      body: <span data-testid="story-result">{copy.over}, the four placement policies cut attributed CO₂ by <b className="fw-600">{pctRange(h.placement.lo, h.placement.hi)}%</b> against U local (stay in Utah), with {DEADLINES_MET} and the same work done. Waiting in Utah alone cut <b className="fw-600">{pctRange(h.timing.lo, h.timing.hi)}%</b>.{copy.validationReadings ? ' Forecast choice barely matters; placement dominates.' : ''} Most jobs are tiny, but most of the energy, and most of the saving, sits in a few large jobs: the largest {pct(top1.fraction.value, 0)}% of jobs use {pct(top1.energy_share.value, 0)}% of the energy and carry {pct(top1.saving_share.value, 0)}% of the saving.<span className="block t-12 ink-3" style={{ marginTop: 8 }} data-testid="story-frame">{FRAME_LINE}</span></span>,
       ev: <><Ev e="simulated">{fmt(m.cohort.n_jobs.value)} jobs, 95% intervals</Ev><Ev e="measured">job sizes</Ev></>,
     },
     {
       t: "Move what you can, store for what you can't",
-      body: sf ? <span data-testid="story-storage">Moving cuts {pctRange(h.placement.lo, h.placement.hi)}%, but only if large multi-node jobs can move; {spanMob ? <>if only jobs of 8 GPUs or fewer may, it falls to {pctRange(spanMob[0], spanMob[1])}%</> : 'the small-jobs-only check did not run'}. For work that stays, a battery can shift its energy instead. <b className="fw-600" data-testid="storage-headline">{/^(8|11|18)/.test(String(sf.E)) ? 'An' : 'A'} {fmt(sf.E)} MWh, {fmt(sf.P)} MW battery cuts the Utah cluster's CO₂ by {pct(sf.cutA, 1)}%</b> on a fixed daily schedule; charging is limited to the roughly {fmt(sf.headroomLo, 1)}–{fmt(sf.headroomMid, 1)} MW the site connection leaves free. <span data-testid="storage-combined">Moving the small jobs and storing for the big ones cuts <b className="fw-600">{pct(sf.moveStoreA, 1)}%</b> against {pname('U')}.</span> <b className="fw-600 block" style={{ marginTop: 8 }} data-testid="storage-skeptic">On a flat marginal basis it may add about {sig2(sf.flatAddT)} t: storage only helps if charging carbon ÷ η &lt; displaced carbon.</b></span> : <>{VALIDATION_LINE}</>,
+      body: sf ? <span data-testid="story-storage">Moving cuts {pctRange(h.placement.lo, h.placement.hi)}%, but only if large multi-node jobs can move; {spanMob ? <>if only jobs of 8 GPUs or fewer may, it falls to {pctRange(spanMob[0], spanMob[1])}%</> : 'the small-jobs-only check did not run'}. For work that stays, a battery can shift its energy instead. <b className="fw-600" data-testid="storage-headline">{/^(8|11|18)/.test(String(sf.E)) ? 'An' : 'A'} {fmt(sf.E)} MWh, {fmt(sf.P)} MW battery cuts the Utah cluster's CO₂ by {pct(sf.cutA, 1)}%</b> on a fixed daily schedule; charging is limited to the roughly {fmt(sf.headroomLo, 1)}–{fmt(sf.headroomMid, 1)} MW the site connection leaves free. <span data-testid="storage-combined">Moving the small jobs and storing for the big ones cuts <b className="fw-600">{pct(sf.moveStoreA, 1)}%</b> against {pname('U')}.</span> <b className="fw-600 block" style={{ marginTop: 8 }} data-testid="storage-skeptic">On a flat marginal basis it may add about {sig2(sf.flatAddT)} t: storage only helps if charging carbon ÷ η &lt; displaced carbon.</b></span> : <>{copy.line}</>,
       ev: <><span className="chip-neutral">illustrative · not the registered result</span><EvCI /><Ev e="simulated">dispatch</Ev><Ev e="assumed">battery, schedule</Ev><button className="btn" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button></>,
     },
   ];

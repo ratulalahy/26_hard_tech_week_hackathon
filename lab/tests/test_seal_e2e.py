@@ -72,6 +72,9 @@ def test_the_full_test_pipeline_on_synthetic_data(tmp_path):
         w = art["window"]["name"] if isinstance(art["window"], dict) else art["window"]
         assert w == "test", name
         assert unenveloped_numbers(art) == [], name
+        # no validation wording on test numbers (the freeze record's key names the run it cites)
+        text = (out / name).read_text().replace('"validation_run"', "")
+        assert "validation" not in text.lower(), name
         if name != "workload-profile.json":  # the only artifact without timestamps
             # sealed_timestamps (validation rule) flags stamps at/after TEST_START: test data
             assert sealed_timestamps(art), f"{name}: no test-window timestamp"

@@ -1,11 +1,15 @@
 // Copy the dashboard's inputs into web/public/data/ (committed, so a fresh clone builds with no data/ dir).
 //   node scripts/copy-data.mjs        (npm run data)
 // 1. results/*.json (Task 7 run + grid-profile.json) -> public/data/results/   (copied byte for byte)
+//    results/test/*.json (the sealed test year, once T13 has run it) -> public/data/results/test/, separately.
+//    index.json records both; the dashboard enables its test option only when results/test/manifest.json
+//    exists. A stale public/data/results/test/ is removed when results/test/ has no completed run, and the
+//    synthetic fixture in web/tests/fixtures is never copied here.
 // 2. the local map layers from $GRIDPILOT_DATA_DIR/processed/geo -> public/data/geo/, clipped to the
 //    western US view box and rounded to 3 decimals (about 100 m) to keep them small. Natural Earth
 //    (public domain) and Electricity Maps BA geometry (AGPL-3.0) attributions are written next to them.
 // Validation results only: this script never reads the sealed test window (it copies files).
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -25,7 +29,25 @@ for (const f of results) {
   copyFileSync(join(repo, 'results', f), join(out, 'results', f));
   console.log('results/' + f, kb(join(out, 'results', f)));
 }
-writeFileSync(join(out, 'results', 'index.json'), JSON.stringify({ files: results }, null, 1) + '\n');
+// the sealed test year: copied on its own, only once a completed test run exists (T11 B6)
+const testSrc = join(repo, 'results', 'test'), testOut = join(out, 'results', 'test');
+const testDone = existsSync(join(testSrc, 'manifest.json'));
+rmSync(testOut, { recursive: true, force: true });
+let test = { available: false, files: [], frozen_at: null };
+if (testDone) {
+  const man = JSON.parse(readFileSync(join(testSrc, 'manifest.json'), 'utf8'));
+  if (man.window !== 'test' || man.fixture) throw new Error('results/test/manifest.json is not a real test-window manifest');
+  mkdirSync(testOut, { recursive: true });
+  const files = readdirSync(testSrc).filter((f) => f.endsWith('.json')).sort();
+  for (const f of files) {
+    copyFileSync(join(testSrc, f), join(testOut, f));
+    console.log('results/test/' + f, kb(join(testOut, f)));
+  }
+  test = { available: true, files, frozen_at: man.freeze?.wallclock_frozen_at ?? null };
+} else {
+  console.log('results/test: no completed test run; the dashboard keeps the test year sealed');
+}
+writeFileSync(join(out, 'results', 'index.json'), JSON.stringify({ files: results, test }, null, 1) + '\n');
 
 // ---------------------------------------------------------------- geo
 if (!existsSync(geo)) {

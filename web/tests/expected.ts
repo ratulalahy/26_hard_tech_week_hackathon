@@ -6,12 +6,16 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const results = join(here, '..', 'public', 'data', 'results');
 export const metrics = JSON.parse(readFileSync(join(results, 'metrics.json'), 'utf8'));
+/** The synthetic results/test fixture (T11): served by a route in the test-year checks, never under public/. */
+export const FIXTURE_DIR = join(here, 'fixtures', 'results-test');
+export const fixtureMetrics = JSON.parse(readFileSync(join(FIXTURE_DIR, 'metrics.json'), 'utf8'));
+export const fixtureManifest = JSON.parse(readFileSync(join(FIXTURE_DIR, 'manifest.json'), 'utf8'));
 
 type Env = { value: number | number[] | null };
 const pct = (x: number) => (x * 100).toFixed(1);
 
-function saving(cand: string, ref = 'U'): number {
-  const c = metrics.contrasts.find((x: { candidate: string; reference: string }) => x.candidate === cand && x.reference === ref);
+function saving(cand: string, ref = 'U', m = metrics): number {
+  const c = m.contrasts.find((x: { candidate: string; reference: string }) => x.candidate === cand && x.reference === ref);
   return (c.blocks['4'].saving as Env).value as number;
 }
 
@@ -63,3 +67,7 @@ export const storageRushDays = String(storage.rush.n_days.value);
 const flat = -storage.cases.U.strategies.A['0.85'].flat_marginal_cut_t.value[iE];
 const p10 = Math.pow(10, Math.floor(Math.log10(Math.abs(flat))) - 1);
 export const storageFlatT = (Math.round(flat / p10) * p10).toLocaleString('en-US');
+
+/** The same ranges from the synthetic test fixture (its savings are halved, so they differ from validation). */
+export const testPlacementRange = range(['S', 'K', 'W', 'L'].map((p) => saving(p, 'U', fixtureMetrics)));
+export const testTimeOnlyRange = range(['W_time', 'L_time'].map((p) => saving(p, 'U', fixtureMetrics)));

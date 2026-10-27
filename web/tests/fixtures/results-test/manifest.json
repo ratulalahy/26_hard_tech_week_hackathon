@@ -1,0 +1,950 @@
+{
+ "schema_version": "gridpilot.results.v1",
+ "run_id": "20261027T160656Z",
+ "git_sha": "5be000b8d63cfdbbe09deb4def4c4258b3e20580",
+ "git_clean": true,
+ "snapshot_id": "05efabe781cc",
+ "wallclock_generated_at": "2027-10-27T16:26:31.659710+00:00",
+ "reproduce": "cd lab && uv run python scripts/run_slice.py --window test  # once, after the freeze; refuses otherwise",
+ "evidence_scope": "sealed test-window results [2026-11-01, F_test), opened once through the logged entry point after the configuration freeze; every read is in results/test_reads.jsonl",
+ "claim_frame": "simulated advance-reservation scheduling scenario; baseline-relative deadlines; exact declared runtimes; runtime uncertainty untested; EIA-attributed (consumption-basis) emissions; conditional temporal block-resampling intervals",
+ "limitations": [
+  "Publication-lagged replay of a revised historical snapshot (EIA regenerates files daily); real-time vintages are not reconstructed. Envelopes are assumed availability rules (spec §5); the adjusted-demand 2 h envelope is unverified against EIA's imputation timing.",
+  "EIA's consumption-basis intensity assigns imports from Canada and Mexico the average US emissions rate (EIA-930 convention).",
+  "Zero deadline misses hold by construction under baseline bookings; they are not evidence of production reliability.",
+  "The bookings' effect on realized savings is not signed.",
+  "The shadow-U sensitivity ('possible without advance reservations') is pending.",
+  "Only workload phase 0 is run; phases 49 and 98 are pending.",
+  "Test-year results: the sealed test year was opened once, through the logged entry point, after the model and policy configuration was frozen at a recorded commit; nothing was selected or refitted on it. They cover the days up to the snapshot's availability cutoff, not a full twelve months.",
+  "EIA's 2025-26 emission factors may be a provisional vintage (F7).",
+  "Baseline bookings are an assumed advance-reservation calendar synthesized from the whole U replay (F11, F12.7); the result is not a historical online-router claim.",
+  "Missing truth hours are filled by the pre-registered F14.6 tiers; the closure calendar is an assumed advance-known calendar (F12.1)."
+ ],
+ "inputs": {
+  "data_manifests_sha256": {
+   "eia930.json": "08b852396a0a6d9a093959f2930c684b720199c2392824180f5720c4fd5886fc",
+   "geo_ba_boundaries.json": "e045d726ea1661a6225c463ec73777aca79defeaac1f265b3d5d7c9cd4c94507",
+   "geo_natural_earth.json": "af60430e2f741e5b9e3e523fcba650e7afe0c58bd45fc50d020ef3860d2488a5",
+   "openmeteo.json": "814fd11ebb354784d3bef7a03df5c8fb3f889dda2b899560b8667c824cff789c",
+   "prices_caiso.json": "a10702aa90201ffea5076850a0a852c8a87ec952412d793d080f18ecd4a76cca",
+   "prices_ercot.json": "8bc13b6ab66a976a68216c4105733f08b8d982831ce24ab944092805ba7111c6",
+   "snapshot.json": "0cfbb80cd4f3c9b97e4fcc33ed84965c57b60215fe866287113711040f9f7a37",
+   "traces_acme.json": "636d81a7c3a75dc823933368175e1cc0badcac9e7164584268611072fa0ccd31",
+   "traces_alibaba_spot2026.json": "42d8e490f4aba2db4acdc0332562604c8902f0a4cc20bf060d872748e4caf56a",
+   "traces_pai2020.json": "1328d822040abf5b3aa0566f0932a4bc3bb84d295ef82ce60d583321c5f4ba8c"
+  },
+  "carbon_hourly_sha256": "c34a9f8a00caf22e1525bf7f6f92329eefcf2a9d7b474389ef636dd0ab7e1258",
+  "forecast_run": "runs/slice/20261027T160656Z/forecast/20261027T160656Z",
+  "forecast_run_forecasts_sha256": "9ab2c4401f6f85a429dab3565ff120481a6c131ce656577e44c696d94497f575",
+  "forecast_run_pinned": "K/W/L forecasts and the K tail climatology are read from this one run directory",
+  "forecast_metrics_run_id": "20261027T160656Z"
+ },
+ "reproducibility": {
+  "ledger_canonical_sha256": {
+   "U": "f2506967525706f960f90ce3e8bb923e9033e912a1bb88070047fe18bfe608e5",
+   "G": "40ee000efc175d93877d4449878317513473f8ca7bfbb304a4b8f6f5b5dac7cd",
+   "S": "2ca17acf18a76ef7b3e89df1a2c554ae3501647325c982a32dab0efc9f2c8b1e",
+   "K": "2ac04f323a9448ce3b8eda833016ea8cd73a801c1cba1d5c322c3a1d0d3fff74",
+   "W": "7d93538589284c7ac9d01bbf6fd5e0303490fac9bef1e7be3c8c7680154ae46a",
+   "L": "8bd359c887b6b6770fd937dd59d323c4854325e4ce11bfdddc47c32d4a44cf89",
+   "H": "8e327baf8a6d9163f466428c06bf28646d49e41b46d1943b60a34baedcd8deaa",
+   "W_time": "5c13bf1c1c0d250321b91a628d6fac40603c1e9a478a59221b1f3e79551df841",
+   "L_time": "91421a62a7325f0da60ef7e89df33e6721be4d12dbfc0364251c778afb6debcd"
+  },
+  "ledger_hash_rule": "sha256 over job_uid-sorted lines 'job_uid,site,start_us,end_us'",
+  "g_ledger_equal_with_and_without_diagnose_blocked": true,
+  "file_sha256": {
+   "forecasts.parquet": "9ab2c4401f6f85a429dab3565ff120481a6c131ce656577e44c696d94497f575",
+   "climatology.parquet": "bab08c89443e94aa14e81dbca53d0c00b548a1a98281ae68771edadec4f6b8a9",
+   "balance.parquet": "f63d0c2703c6e42a1bbdabc9ff746ab0405cbc72b1c5a9dad8c6251ef29d0e86",
+   "carbon_hourly.parquet": "c34a9f8a00caf22e1525bf7f6f92329eefcf2a9d7b474389ef636dd0ab7e1258",
+   "trace_seren.csv": "747854c73ce8b3263b764aa9ff8d866d89903705d31fcd0e0520c33dd14af9a1",
+   "cohort.json": "d78b39e588e27801f683d77f9269d2908a5d750b23f8ab63b90a33714117cde3",
+   "bookings.parquet": "fd01f42e6145b9ae59b13a4deae93ffd8b7e4bfaaa2cab3d363c6cc3a57f1ce2",
+   "truth_fill.parquet": "38307470923df3517d3e2ffec4301155ed2a5989128c7067567d23f7292c210b",
+   "ledger_U.parquet": "f610531decb7e4924f3ef385a2e82d3a279bf58dd761d6d83af02694c3a30fee",
+   "ledger_G.parquet": "0a70c78e7b29e34cc977bed9a877b9ec5443f635514a09fcc3f365d2e55f8fd9",
+   "ledger_S.parquet": "2aedde2f8b4345c335cf2863d0f85a5b64f9196395b4cad5575c3b4763da51f3",
+   "ledger_K.parquet": "328008a953af024d56e5d8154ebb618e47c1498e4ecebe3e25a7de6908d561bd",
+   "ledger_W.parquet": "a526bc235a9eb78e5b3600f70dfedf3ae6e4bffc233ea2fee9901d524ed62d84",
+   "ledger_L.parquet": "e72a590792b6eae18203f9ff8fd8ae578fc78c7137a9e4f8041bba51a4ccaa82",
+   "ledger_H.parquet": "6d5aa121bb5d0a3107a27b2c34c6d0b1c46c5cd47239eb407add7250cfb47005",
+   "ledger_W_time.parquet": "375d77c17461c50aa0e06df5c3188519ee5acb753d395989cfdf4fc3ef607bdf",
+   "ledger_L_time.parquet": "d75d43bae004a454e5509cda58e36bda290864dc4a095a06632d62b4c8c541c4",
+   "illustrative_candidates.parquet": "62b350e3fdaa551a2d393ac0f839e2bf402ad1d5657b66718e0ba4b114f0d412"
+  },
+  "snapshot_id": "05efabe781cc",
+  "forecast_run": {
+   "path": "runs/slice/20261027T160656Z/forecast/20261027T160656Z",
+   "forecasts_sha256": "9ab2c4401f6f85a429dab3565ff120481a6c131ce656577e44c696d94497f575"
+  },
+  "metrics_canonical_sha256": "69ef191bae6ccdd90a498789f1006b29632fb87ca85baa7e69450693159e4340"
+ },
+ "split": {
+  "window": "test",
+  "init": "2025-10-17T00:00:00Z",
+  "eval_start": "2025-11-01T00:00:00Z",
+  "A": "2026-10-16T07:49:42Z",
+  "F": "2026-10-24T00:00:00Z",
+  "sealed_window": "test window [TEST_START = 2026-11-01T00:00Z, 2027-11-01T00:00Z): opened by this run through gridpilot.seal.sealed_read, up to F_test",
+  "phase_days": {
+   "value": 0,
+   "unit": "days",
+   "evidence": "assumed",
+   "provenance_id": "spec§7:phase",
+   "status": "ok",
+   "reason": null
+  },
+  "s_ranking_training_rows": [
+   "2023-01-01T00:00:00Z",
+   "2025-10-29T00:00:00Z"
+  ],
+  "forecast_fit_at": "2025-10-29T00:00:00Z"
+ },
+ "cohort_record": {
+  "window": "test",
+  "phase_days": {
+   "value": 0,
+   "unit": "days",
+   "evidence": "assumed",
+   "provenance_id": "spec§7:phase",
+   "status": "ok",
+   "reason": null
+  },
+  "init": "2025-10-17T00:00:00Z",
+  "eval_start": "2025-11-01T00:00:00Z",
+  "F": "2026-10-24T00:00:00Z",
+  "A": "2026-10-16T07:49:42Z",
+  "first_failure": {
+   "primary": "2026-10-16T08:02:15Z",
+   "batch_delay_0h": "2026-10-16T08:02:15Z",
+   "batch_delay_24h": "2026-10-16T07:49:42Z",
+   "no_flexible": "2026-10-16T08:02:15Z",
+   "all_candidates_flexible": "2026-10-16T08:02:15Z",
+   "home_capacity_1.25x": "2026-10-16T08:02:15Z"
+  },
+  "n_stream": {
+   "value": 919112,
+   "unit": "jobs",
+   "evidence": "simulated",
+   "provenance_id": "20261027T160656Z:n_stream",
+   "status": "ok",
+   "reason": null
+  },
+  "n_cohort": {
+   "value": 917909,
+   "unit": "jobs",
+   "evidence": "simulated",
+   "provenance_id": "20261027T160656Z:n_cohort",
+   "status": "ok",
+   "reason": null
+  },
+  "n_excluded": {
+   "value": 1203,
+   "unit": "jobs",
+   "evidence": "simulated",
+   "provenance_id": "20261027T160656Z:n_excluded",
+   "status": "ok",
+   "reason": null
+  },
+  "excluded_gpu_h": {
+   "value": 460606.2913888889,
+   "unit": "GPU_h",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:excluded_gpu_h",
+   "status": "ok",
+   "reason": null
+  },
+  "cohort_ids_sha256": "abc56dc74589e419313b5cac4dd3d016e03ff2cf1d3577304f9b0ff0868323af",
+  "booking_sha256": "7b5efc55f925745b9592c5eaf03b2d2dbe8fd0c15ce699765b9b4e2e9fd5faa7",
+  "prefix_bookings_unchanged": true,
+  "drain": {
+   "max_booking_end": "2026-10-17T17:37:20Z",
+   "max_deadline": "2026-10-17T17:37:20Z",
+   "drain_window": [
+    "2026-10-16T07:49:42Z",
+    "2026-10-24T00:00:00Z"
+   ]
+  },
+  "warmup": {
+   "n_jobs": {
+    "value": 50112,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:warmup:n",
+    "status": "ok",
+    "reason": null
+   },
+   "gpu_h": {
+    "value": 427859.4861111111,
+    "unit": "GPU_h",
+    "evidence": "measured",
+    "provenance_id": "20261027T160656Z:warmup:gpu_h",
+    "status": "ok",
+    "reason": null
+   },
+   "last_arrival": "2025-10-31T23:59:58Z",
+   "last_completion": "2025-11-13T14:16:17Z"
+  },
+  "recorded_before_grid_scoring": true
+ },
+ "scenarios_for_A": {
+  "primary": {
+   "note": "flexible = candidate type and sha256 parity; delays 6 h (Pretrain/SFT/MLLM), 1 h (Eval); home 2,288 slots",
+   "first_failure": "2026-10-16T08:02:15Z",
+   "policies_run": true
+  },
+  "batch_delay_0h": {
+   "note": "flexible Pretrain/SFT/MLLM allowed delay 0 h; Eval stays 1 h",
+   "first_failure": "2026-10-16T08:02:15Z",
+   "policies_run": false
+  },
+  "batch_delay_24h": {
+   "note": "flexible Pretrain/SFT/MLLM allowed delay 24 h; Eval stays 1 h",
+   "first_failure": "2026-10-16T07:49:42Z",
+   "policies_run": false
+  },
+  "no_flexible": {
+   "note": "no job is flexible or mobile; every allowed delay is 0 h",
+   "first_failure": "2026-10-16T08:02:15Z",
+   "policies_run": false
+  },
+  "all_candidates_flexible": {
+   "note": "every Pretrain/SFT/MLLM/Eval job is flexible and mobile",
+   "first_failure": "2026-10-16T08:02:15Z",
+   "policies_run": false
+  },
+  "home_capacity_1.25x": {
+   "note": "home capacity 1.25x rounded to an 8-GPU node (2,864 slots)",
+   "first_failure": "2026-10-16T08:02:15Z",
+   "policies_run": false
+  }
+ },
+ "truth_fill": {
+  "rule": "F14.6: first available of tiers 1-4; forecasts never used as fill",
+  "tiers": {
+   "1": {
+    "source": "EIA's estimated consumption-basis hourly CO₂ intensity (BA workbook)",
+    "evidence": "modeled"
+   },
+   "2": {
+    "source": "EIA production-basis CO2 intensity, same hour (BA workbook)",
+    "evidence": "modeled"
+   },
+   "3": {
+    "source": "EIA-930 fuel-mix CI, same hour (adjusted generation x EIA direct factors)",
+    "evidence": "modeled"
+   },
+   "4": {
+    "source": "mean of tier-1 values at the same UTC hour over the 7 preceding days",
+    "evidence": "modeled"
+   }
+  },
+  "hours_by_ba_evidence_note": "hour counts are measured (counted from the frozen snapshot); each tier's values carry its own label",
+  "hours_by_ba": {
+   "BPAT": {
+    "1": {
+     "value": 8928,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:BPAT:1",
+     "status": "ok",
+     "reason": null
+    },
+    "2": {
+     "value": 0,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:BPAT:2",
+     "status": "ok",
+     "reason": null
+    },
+    "3": {
+     "value": 0,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:BPAT:3",
+     "status": "ok",
+     "reason": null
+    },
+    "4": {
+     "value": 0,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:BPAT:4",
+     "status": "ok",
+     "reason": null
+    },
+    "missing": {
+     "value": 0,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:BPAT:missing",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "CISO": {
+    "1": {
+     "value": 8808,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:CISO:1",
+     "status": "ok",
+     "reason": null
+    },
+    "2": {
+     "value": 48,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:CISO:2",
+     "status": "ok",
+     "reason": null
+    },
+    "3": {
+     "value": 48,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:CISO:3",
+     "status": "ok",
+     "reason": null
+    },
+    "4": {
+     "value": 24,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:CISO:4",
+     "status": "ok",
+     "reason": null
+    },
+    "missing": {
+     "value": 0,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:CISO:missing",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "NEVP": {
+    "1": {
+     "value": 8924,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:NEVP:1",
+     "status": "ok",
+     "reason": null
+    },
+    "2": {
+     "value": 0,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:NEVP:2",
+     "status": "ok",
+     "reason": null
+    },
+    "3": {
+     "value": 0,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:NEVP:3",
+     "status": "ok",
+     "reason": null
+    },
+    "4": {
+     "value": 4,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:NEVP:4",
+     "status": "ok",
+     "reason": null
+    },
+    "missing": {
+     "value": 0,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:NEVP:missing",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "PACE": {
+    "1": {
+     "value": 8928,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:PACE:1",
+     "status": "ok",
+     "reason": null
+    },
+    "2": {
+     "value": 0,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:PACE:2",
+     "status": "ok",
+     "reason": null
+    },
+    "3": {
+     "value": 0,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:PACE:3",
+     "status": "ok",
+     "reason": null
+    },
+    "4": {
+     "value": 0,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:PACE:4",
+     "status": "ok",
+     "reason": null
+    },
+    "missing": {
+     "value": 0,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "20261027T160656Z:tier:PACE:missing",
+     "status": "ok",
+     "reason": null
+    }
+   }
+  },
+  "window": [
+   "2025-10-17T00:00:00Z",
+   "2026-10-24T00:00:00Z"
+  ],
+  "missing_after_tier4": []
+ },
+ "support_check": {
+  "bookings": {
+   "ok": true,
+   "F": "2026-10-24T00:00:00+00:00",
+   "n_checked": {
+    "value": 917909,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:support:bookings:n_checked",
+    "status": "ok",
+    "reason": null
+   },
+   "n_after_f": {
+    "value": 0,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:support:bookings:n_after_f",
+    "status": "ok",
+    "reason": null
+   },
+   "n_missing_truth": {
+    "value": 0,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:support:bookings:n_missing_truth",
+    "status": "ok",
+    "reason": null
+   },
+   "n_filled_truth": {
+    "value": 0,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:support:bookings:n_filled_truth",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  "warmup_ledger": {
+   "ok": true,
+   "F": "2026-10-24T00:00:00+00:00",
+   "n_checked": {
+    "value": 50112,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:support:warmup_ledger:n_checked",
+    "status": "ok",
+    "reason": null
+   },
+   "n_after_f": {
+    "value": 0,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:support:warmup_ledger:n_after_f",
+    "status": "ok",
+    "reason": null
+   },
+   "n_missing_truth": {
+    "value": 0,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:support:warmup_ledger:n_missing_truth",
+    "status": "ok",
+    "reason": null
+   },
+   "n_filled_truth": {
+    "value": 0,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:support:warmup_ledger:n_filled_truth",
+    "status": "ok",
+    "reason": null
+   }
+  }
+ },
+ "s_ranking": {
+  "order": [
+   "BPAT",
+   "CISO",
+   "NEVP",
+   "PACE"
+  ],
+  "mean_consumed_ci": {
+   "BPAT": {
+    "value": 87.45797079416802,
+    "unit": "g/kWh",
+    "evidence": "modeled",
+    "provenance_id": "20261027T160656Z:rank:BPAT",
+    "status": "ok",
+    "reason": null
+   },
+   "CISO": {
+    "value": 202.5204161692532,
+    "unit": "g/kWh",
+    "evidence": "modeled",
+    "provenance_id": "20261027T160656Z:rank:CISO",
+    "status": "ok",
+    "reason": null
+   },
+   "NEVP": {
+    "value": 324.1402425936012,
+    "unit": "g/kWh",
+    "evidence": "modeled",
+    "provenance_id": "20261027T160656Z:rank:NEVP",
+    "status": "ok",
+    "reason": null
+   },
+   "PACE": {
+    "value": 582.468506436286,
+    "unit": "g/kWh",
+    "evidence": "modeled",
+    "provenance_id": "20261027T160656Z:rank:PACE",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  "provenance": "means of EIA's estimated consumption-basis hourly CO₂ intensity, 2023-01-01 to 2025-10-29",
+  "note": "unweighted hourly mean over training rows; never shown as an attributed factor (F7)"
+ },
+ "assumptions": {
+  "home_slots": {
+   "value": 2288,
+   "unit": "GPU_slots",
+   "evidence": "assumed",
+   "provenance_id": "spec§7:home_slots",
+   "status": "ok",
+   "reason": null
+  },
+  "destination_slots": {
+   "CISO": {
+    "value": 512,
+    "unit": "GPU_slots",
+    "evidence": "assumed",
+    "provenance_id": "spec§7:slots:CISO",
+    "status": "ok",
+    "reason": null
+   },
+   "BPAT": {
+    "value": 512,
+    "unit": "GPU_slots",
+    "evidence": "assumed",
+    "provenance_id": "spec§7:slots:BPAT",
+    "status": "ok",
+    "reason": null
+   },
+   "NEVP": {
+    "value": 512,
+    "unit": "GPU_slots",
+    "evidence": "assumed",
+    "provenance_id": "spec§7:slots:NEVP",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  "kw_per_gpu": {
+   "value": 0.6,
+   "unit": "kW",
+   "evidence": "assumed",
+   "provenance_id": "F7:kw_per_gpu",
+   "status": "ok",
+   "reason": null
+  },
+  "pue": {
+   "value": 1.2,
+   "unit": "ratio",
+   "evidence": "assumed",
+   "provenance_id": "F7:pue",
+   "status": "ok",
+   "reason": null
+  },
+  "transfer_energy_fraction": {
+   "value": 0.05,
+   "unit": "fraction",
+   "evidence": "assumed",
+   "provenance_id": "F7:transfer_fraction",
+   "status": "ok",
+   "reason": null
+  },
+  "transfer_time_s": {
+   "value": 1800,
+   "unit": "s",
+   "evidence": "assumed",
+   "provenance_id": "spec§7:transfer_time",
+   "status": "ok",
+   "reason": null
+  },
+  "allowed_delay_s": {
+   "Pretrain": {
+    "value": 21600,
+    "unit": "s",
+    "evidence": "assumed",
+    "provenance_id": "spec§7:delay:Pretrain",
+    "status": "ok",
+    "reason": null
+   },
+   "SFT": {
+    "value": 21600,
+    "unit": "s",
+    "evidence": "assumed",
+    "provenance_id": "spec§7:delay:SFT",
+    "status": "ok",
+    "reason": null
+   },
+   "MLLM": {
+    "value": 21600,
+    "unit": "s",
+    "evidence": "assumed",
+    "provenance_id": "spec§7:delay:MLLM",
+    "status": "ok",
+    "reason": null
+   },
+   "Eval": {
+    "value": 3600,
+    "unit": "s",
+    "evidence": "assumed",
+    "provenance_id": "spec§7:delay:Eval",
+    "status": "ok",
+    "reason": null
+   },
+   "other": {
+    "value": 0,
+    "unit": "s",
+    "evidence": "assumed",
+    "provenance_id": "spec§7:delay:other",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  "flexibility_rule": "candidate type and int(sha256(f'{source_job_id}:42'), 16) % 2 == 0; mobile iff flexible (assumed)",
+  "deadline_rule": "max(arrival + duration + allowed delay, finish under U) (F1)",
+  "bookings": "every job holds its U booking as a fallback (F11; assumed)",
+  "home_capacity_1.25x_rounding": "round half up to an 8-GPU node: 2,288 x 1.25 = 2,860 GPUs = 357.5 nodes -> 358 nodes = 2,864 slots",
+  "replay": "Seren 161-day cycle at phase 0 (simulated arrivals; measured durations and GPU counts)",
+  "bootstrap": {
+   "method": "conditional temporal block-resampling interval",
+   "blocks": {
+    "value": [
+     2,
+     4,
+     8
+    ],
+    "unit": "weeks",
+    "evidence": "assumed",
+    "provenance_id": "F12.4:blocks",
+    "status": "ok",
+    "reason": null
+   },
+   "primary_block": {
+    "value": 4,
+    "unit": "weeks",
+    "evidence": "assumed",
+    "provenance_id": "F12.4:primary_block",
+    "status": "ok",
+    "reason": null
+   },
+   "reps": {
+    "value": 2000,
+    "unit": "replicates",
+    "evidence": "assumed",
+    "provenance_id": "F12.4:reps",
+    "status": "ok",
+    "reason": null
+   },
+   "seed": "20261027"
+  }
+ },
+ "workload": {
+  "unique_attempts": {
+   "value": 435833,
+   "unit": "attempts",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:cycle:unique_attempts",
+   "status": "ok",
+   "reason": null
+  },
+  "instances": {
+   "value": 435833,
+   "unit": "jobs",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:cycle:instances",
+   "status": "ok",
+   "reason": null
+  },
+  "gpu_hours": {
+   "value": 5396200.904722223,
+   "unit": "GPU_h",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:cycle:gpu_hours",
+   "status": "ok",
+   "reason": null
+  },
+  "energy_share_gt_24h": {
+   "value": 0.6340978109463568,
+   "unit": "fraction",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:cycle:energy_share_gt_24h",
+   "status": "ok",
+   "reason": null
+  },
+  "energy_share_gt_512_gpus": {
+   "value": 0.3160240808711875,
+   "unit": "fraction",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:cycle:energy_share_gt_512_gpus",
+   "status": "ok",
+   "reason": null
+  },
+  "energy_share_either": {
+   "value": 0.7469528809972482,
+   "unit": "fraction",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:cycle:energy_share_either",
+   "status": "ok",
+   "reason": null
+  },
+  "job_share_gt_24h": {
+   "value": 0.0025445526153366083,
+   "unit": "fraction",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:cycle:job_share_gt_24h",
+   "status": "ok",
+   "reason": null
+  },
+  "job_share_gt_512_gpus": {
+   "value": 0.0014133854022068085,
+   "unit": "fraction",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:cycle:job_share_gt_512_gpus",
+   "status": "ok",
+   "reason": null
+  }
+ },
+ "f14_7_diagnostic": {
+  "status": "run",
+  "policies": [
+   "G",
+   "S",
+   "K",
+   "W",
+   "L",
+   "H"
+  ],
+  "g_ledger_identical_without_diagnostic": true,
+  "timing_s": {
+   "G_diagnosed": {
+    "value": 94.0568690742366,
+    "unit": "s",
+    "evidence": "measured",
+    "provenance_id": "20261027T160656Z:timing:G_diag",
+    "status": "ok",
+    "reason": null
+   },
+   "G_undiagnosed": {
+    "value": 38.68236493086442,
+    "unit": "s",
+    "evidence": "measured",
+    "provenance_id": "20261027T160656Z:timing:G_plain",
+    "status": "ok",
+    "reason": null
+   }
+  }
+ },
+ "not_run": [
+  {
+   "item": "shadow-U (no advance booking) sensitivity",
+   "reason": "cut by owner (D-058)"
+  },
+  {
+   "item": "PUE, power, transfer-energy, idle-power and flexibility-share sensitivities",
+   "reason": "cut by owner (D-058)"
+  },
+  {
+   "item": "1.25x home-capacity runs",
+   "reason": "cut by owner (D-058)"
+  },
+  {
+   "item": "missingness-blind scheduling sensitivity",
+   "reason": "cut by owner (D-058)"
+  }
+ ],
+ "artifacts": [
+  "manifest.json",
+  "metrics.json",
+  "forecast-replay.json",
+  "job-replay.json"
+ ],
+ "artifact_sha256": {
+  "metrics.json": "9ae02c9c55bc27b1d5e389c2e371da9b8b93f18537af02054628c320b6af97bd",
+  "forecast-replay.json": "41613a99a37013a98b17a4b150717ea34eba2487fbfc069b5b6ca46afc552721",
+  "job-replay.json": "8f05c8b7d8e9a9618908ff6845151179207c65f6bc2852aa2fa21a3cec57520b"
+ },
+ "timing_s": {
+  "forecast_construction": {
+   "value": 47.04924990190193,
+   "unit": "s",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:timing:forecast_construction",
+   "status": "ok",
+   "reason": null
+  },
+  "replay": {
+   "value": 0.8341442341916263,
+   "unit": "s",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:timing:replay",
+   "status": "ok",
+   "reason": null
+  },
+  "bookings": {
+   "value": 208.69424541015178,
+   "unit": "s",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:timing:bookings",
+   "status": "ok",
+   "reason": null
+  },
+  "truth_fill": {
+   "value": 0.05541143100708723,
+   "unit": "s",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:timing:truth_fill",
+   "status": "ok",
+   "reason": null
+  },
+  "policy_U": {
+   "value": 42.08350594714284,
+   "unit": "s",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:timing:policy_U",
+   "status": "ok",
+   "reason": null
+  },
+  "policy_G": {
+   "value": 94.0568690742366,
+   "unit": "s",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:timing:policy_G",
+   "status": "ok",
+   "reason": null
+  },
+  "policy_S": {
+   "value": 83.94405832281336,
+   "unit": "s",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:timing:policy_S",
+   "status": "ok",
+   "reason": null
+  },
+  "policy_K": {
+   "value": 128.14262216025963,
+   "unit": "s",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:timing:policy_K",
+   "status": "ok",
+   "reason": null
+  },
+  "policy_W": {
+   "value": 131.60621292609721,
+   "unit": "s",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:timing:policy_W",
+   "status": "ok",
+   "reason": null
+  },
+  "policy_L": {
+   "value": 128.73949205502868,
+   "unit": "s",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:timing:policy_L",
+   "status": "ok",
+   "reason": null
+  },
+  "policy_H": {
+   "value": 132.68693552305922,
+   "unit": "s",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:timing:policy_H",
+   "status": "ok",
+   "reason": null
+  },
+  "policy_W_time": {
+   "value": 48.14145191619173,
+   "unit": "s",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:timing:policy_W_time",
+   "status": "ok",
+   "reason": null
+  },
+  "policy_L_time": {
+   "value": 48.139512742869556,
+   "unit": "s",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:timing:policy_L_time",
+   "status": "ok",
+   "reason": null
+  },
+  "policy_G_undiagnosed": {
+   "value": 38.68236493086442,
+   "unit": "s",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:timing:policy_G_undiagnosed",
+   "status": "ok",
+   "reason": null
+  },
+  "accounting": {
+   "value": 33.43387645902112,
+   "unit": "s",
+   "evidence": "measured",
+   "provenance_id": "20261027T160656Z:timing:accounting",
+   "status": "ok",
+   "reason": null
+  }
+ },
+ "window": "test",
+ "fixture": "SYNTHETIC test-window fixture (web/tests/fixtures): numbers derived from the committed results, savings halved; never real test results",
+ "freeze": {
+  "freeze_commit": "0000000000000000000000000000000000000000",
+  "freeze_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "tag": "config-freeze",
+  "wallclock_frozen_at": "2026-10-27T23:00:00Z",
+  "deployed_policy": "W",
+  "test_F": "2026-10-24T00:00:00Z",
+  "validation_run": {
+   "run_id": "20261027T160656Z",
+   "metrics_canonical_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "rerun_reason": null,
+  "read_log": "results/test_reads.jsonl",
+  "session": "fixture",
+  "code_commit": "0000000000000000000000000000000000000000"
+ }
+}

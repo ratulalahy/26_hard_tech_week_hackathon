@@ -6,6 +6,8 @@ import { C, CI_MAX, CI_MID, ci2c } from '../lib/color';
 import { CORE, DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, headline, loadMonth, pname, pnote, yearMean, type Dest } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
 import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange } from '../lib/format';
+import { heroHeadline } from '../lib/copy';
+import { useCopy } from '../lib/useCopy';
 import { useApp } from '../lib/store';
 import type { Viewport } from '../lib/useViewport';
 import { useViewport } from '../lib/useViewport';
@@ -41,10 +43,11 @@ function ResultDock({ compact }: { compact: boolean }) {
   const pm = asNum(yearMean(g, 'PACE'))!;
   // the headline now carries the frame line, so below 1200 px the four sites drop their day strips (the timeline below still shows Utah's)
   const strips = useViewport().h >= 1200;
+  const copy = useCopy();
   return (
     <Panel over className="flex flex-col" style={{ height: '100%', padding: 0, overflow: 'hidden' }}>
       <div style={{ padding: compact ? '12px 16px 10px' : 16 }}>
-        <h1 className="t-20" style={{ margin: 0 }}>In a simulated replay, moving Utah's AI jobs cut their CO₂ by a fifth. Waiting barely helps.</h1>
+        <h1 className="t-20" style={{ margin: 0 }}>{heroHeadline(copy, h)}</h1>
         <div data-testid="hero-placement" style={{ marginTop: compact ? 8 : 12 }}>
           <div className="flex items-baseline gap-2">
             <span className="t-hero">{pctRange(h.placement.lo, h.placement.hi)}%</span>
