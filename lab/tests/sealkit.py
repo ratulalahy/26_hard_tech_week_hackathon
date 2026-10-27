@@ -165,3 +165,72 @@ def authorize(repo: Path, data: Path, results: Path | None = None, **kw) -> seal
 def read_log(results: Path) -> list[dict]:
     p = results / "test_reads.jsonl"
     return [json.loads(x) for x in p.read_text().splitlines()] if p.exists() else []
+
+
+# --------------------------------------------------------------------------- full synthetic data
+
+FULL_START = datetime(2022, 12, 1, tzinfo=UTC)
+BASE_G = {"PACE": 600.0, "NEVP": 380.0, "CISO": 220.0, "BPAT": 80.0}
+
+
+def _profile(ba: str, n: int, seed: int):
+    import numpy as np
+
+    rng = np.random.default_rng(seed)
+    h = np.arange(n)
+    day = np.sin(2 * np.pi * ((h % 24) - 14) / 24)
+    week = np.sin(2 * np.pi * h / (24 * 7))
+    return BASE_G[ba] * (1 + 0.25 * day + 0.05 * week + 0.03 * rng.standard_normal(n))
+
+
+def write_full_workbook(path: Path, ba: str, start: datetime, end: datetime, seed: int) -> None:
+    """A complete synthetic BA workbook (every hour, no gaps) in lb/kWh."""
+    from openpyxl import Workbook
+
+    hours = _hours(start, end)
+    ci = _profile(ba, len(hours), seed)
+    wb = Workbook(write_only=True)
+    ws = wb.create_sheet(SHEET)
+    ws.append([TIME_COL, GENERATED_COL, CONSUMED_COL])
+    for t, v in zip(hours, ci, strict=True):
+        ws.append([(t + H).replace(tzinfo=None), float(v * 0.9 / 453.592), float(v / 453.592)])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(path)
+
+
+def full_balance(start: datetime, end: datetime, bas=BALANCE_BAS) -> pl.DataFrame:
+    import numpy as np
+
+    hours = pl.datetime_range(start, end - H, "1h", time_unit="us", time_zone="UTC", eager=True)
+    n = hours.len()
+    h = np.arange(n)
+    parts = []
+    for i, ba in enumerate(bas):
+        rng = np.random.default_rng(100 + i)
+        day = np.sin(2 * np.pi * ((h % 24) - 16) / 24)
+        sun = np.clip(np.sin(2 * np.pi * ((h % 24) - 13) / 24), 0, None)
+        cols = {f"gen_{f}_adj_mw": np.zeros(n) for f in PARTITION_FUELS}
+        demand = 5000 * (1 + 0.2 * day + 0.02 * rng.standard_normal(n))
+        cols["gen_solar_adj_mw"] = 1500 * sun
+        cols["gen_wind_adj_mw"] = (800 * (1 + 0.5 * rng.standard_normal(n))).clip(0)
+        cols["gen_coal_adj_mw"] = (demand * 0.5).clip(0)
+        cols["gen_gas_adj_mw"] = (demand - cols["gen_solar_adj_mw"]
+                                  - cols["gen_wind_adj_mw"] - cols["gen_coal_adj_mw"]).clip(0)
+        parts.append(pl.DataFrame({"ba": [ba] * n, "ts_utc": hours, "demand_adj_mw": demand,
+                                   **cols}))
+    return pl.concat(parts).with_columns(pl.col("ba").cast(pl.Categorical))
+
+
+def make_full_data_dir(root: Path, F: datetime, trace_src: Path) -> Path:
+    """Synthetic grid data from FULL_START to F for the full test-pipeline dry run, plus a
+    copy of the (unsealed) workload trace."""
+    data = root / "data"
+    for i, ba in enumerate(seal.CORE_BAS):
+        write_full_workbook(data / seal.WORKBOOK_REL.format(ba=ba), ba, FULL_START, F, seed=i)
+    bal = data / seal.BALANCE_REL
+    bal.parent.mkdir(parents=True, exist_ok=True)
+    full_balance(FULL_START, F).write_parquet(bal)
+    trace = data / seal.TRACE_REL
+    trace.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(trace_src, trace)
+    return data

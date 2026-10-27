@@ -361,9 +361,16 @@ def run_pipeline(window: Window, scenario: Scenario, out_dir: Path | str | None 
     tmp = root / f".tmp-{run_id}-{os.getpid()}"
     final = root / run_id
     tmp.mkdir()
-    sha = _git("rev-parse", "HEAD")
-    status = _git("status", "--porcelain")
-    (tmp / "git.txt").write_text(f"sha {sha}\nstatus:\n{status}\n")
+    if window.is_test:
+        # Check (a) verified HEAD and a clean tree at authorization; the read log has been
+        # appended to since, so the live status is not the code's.
+        sha, status = ses.auth.code_commit, ""
+        (tmp / "git.txt").write_text(f"sha {sha}\nstatus: clean at authorization (seal check "
+                                     f"(a)); freeze commit {ses.freeze.freeze_commit}\n")
+    else:
+        sha = _git("rev-parse", "HEAD")
+        status = _git("status", "--porcelain")
+        (tmp / "git.txt").write_text(f"sha {sha}\nstatus:\n{status}\n")
     fc = Path(forecast_run) if forecast_run else None
     try:
         rc, info = _pipeline(window, scenario, fc, timer, tmp, run_id, sha, status)
@@ -1040,7 +1047,7 @@ def _freeze_record(ses) -> dict:
     """What the test artifacts carry about the freeze and the logged entry point."""
     fz = ses.freeze
     return {"freeze_commit": fz.freeze_commit, "freeze_sha256": fz.sha256,
-            "tag": seal.FREEZE_TAG, "frozen_at": fz.raw["frozen_at"],
+            "tag": seal.FREEZE_TAG, "wallclock_frozen_at": fz.raw["frozen_at"],
             "deployed_policy": fz.deployed_policy, "test_F": iso(fz.test_F),
             "validation_run": fz.raw["validation_run"], "rerun_reason": ses.auth.rerun_reason,
             "read_log": seal.READ_LOG_REL, "session": ses.session_id,
@@ -1176,7 +1183,8 @@ def build_artifacts(**k) -> dict:
              "calendar is an assumed advance-known calendar (F12.1)."),
         ],
         "inputs": {"data_manifests_sha256": m_inputs,
-                   "carbon_hourly_sha256": repro["file_sha256"]["carbon_hourly.parquet"],
+                   "carbon_hourly_sha256": repro["file_sha256"][
+                       "carbon_hourly_test.parquet" if test else "carbon_hourly.parquet"],
                    "forecast_run": k["fc_path"],
                    "forecast_run_forecasts_sha256": repro["forecast_run"]["forecasts_sha256"],
                    "forecast_run_pinned": "K/W/L forecasts and the K tail climatology are "

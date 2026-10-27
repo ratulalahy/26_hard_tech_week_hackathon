@@ -74,7 +74,9 @@ class Spec:
 
 
 def _months(start: datetime, end: datetime) -> list[str]:
-    a, b = start.astimezone(TZ), (end - timedelta(hours=1)).astimezone(TZ)
+    """Month labels like MONTHS: from start's UTC month (as the validation list starts at
+    2024-11, not the Denver evening of Oct 31) to the Denver month of end's last hour."""
+    a, b = start.astimezone(UTC), (end - timedelta(hours=1)).astimezone(TZ)
     out, y, m = [], a.year, a.month
     while (y, m) <= (b.year, b.month):
         out.append(f"{y}-{m:02d}")

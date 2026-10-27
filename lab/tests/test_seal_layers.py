@@ -179,3 +179,14 @@ def test_forecast_issues_cover_the_first_test_day_and_end_by_F(opened):
     assert first_day[0] <= TEST_START + 7 * H  # Utah's Nov 1 is forecast by the Oct 31 issue
     with pytest.raises(ValueError):
         fcmod.issues_for_window(Window.validation())
+
+
+def test_the_test_grid_profile_covers_the_test_year_months(tmp_path):
+    real_f = datetime(2026, 10, 25, tzinfo=UTC)
+    repo, data, _ = sealkit.setup(tmp_path, F=real_f)
+    assert gp.spec().months == gp.MONTHS  # validation is unchanged
+    with seal.test_mode(sealkit.authorize(repo, data)):
+        sp = gp.spec(Window.test())
+    assert sp.months[0] == "2025-11" and sp.months[-1] == "2026-10" and len(sp.months) == 12
+    assert sp.july == "2026-07" and sp.name == "test"
+    assert (sp.start, sp.end) == (TEST_START, real_f)
