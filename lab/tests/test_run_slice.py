@@ -90,6 +90,16 @@ def test_top_share_is_ceil_one_percent_by_declared_gpu_h(rs):
     assert unenveloped_numbers(rec) == []
 
 
+def test_disclosure_is_the_reviewers_text_verbatim(rs):
+    got = rs.disclosure_text("6007181#c2", 1, 203.0, "SFT", 0.05638888888888889)
+    assert got == (
+        "The literal count-median job is a 1-GPU, 203 s SFT job (6007181#c2; the set's median "
+        "is 0.056 GPU-h) because short jobs dominate the trace. We show the job at the "
+        "GPU-hour-weighted median, which represents where the set's energy sits. The criterion "
+        "was chosen after seeing that the count-median job is 3 minutes long, before seeing any "
+        "outcome for the new pick.")
+
+
 def test_export_results_stages_all_four(rs, tmp_path):
     src, dst = tmp_path / "run", tmp_path / "results"
     src.mkdir()

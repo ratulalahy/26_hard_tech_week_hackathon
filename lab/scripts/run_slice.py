@@ -1255,6 +1255,21 @@ def _illustrative_record(uid, rule, k, extra) -> dict:
     }
 
 
+def disclosure_text(uid: str, gpus: int, duration_s: float, job_type: str,
+                    median_gpu_h: float) -> str:
+    """D-054 disclosure: the reviewer's text verbatim, with the literal-rule job's ID and
+    numbers filled from the run."""
+    if duration_s < 3600:
+        dur, length = f"{duration_s:.0f} s", f"{round(duration_s / 60)} minutes"
+    else:
+        dur, length = f"{duration_s / 3600:.1f} h", f"{duration_s / 3600:.1f} hours"
+    return (f"The literal count-median job is a {gpus}-GPU, {dur} {job_type} job ({uid}; the "
+            f"set's median is {median_gpu_h:.3f} GPU-h) because short jobs dominate the trace. "
+            f"We show the job at the GPU-hour-weighted median, which represents where the set's "
+            f"energy sits. The criterion was chosen after seeing that the count-median job is "
+            f"{length} long, before seeing any outcome for the new pick.")
+
+
 def _num(x: float) -> str:
     """Readable display number: thousands separators, three significant digits when small."""
     return f"{x:,.0f}" if abs(x) >= 100 else f"{x:.3g}"
@@ -1276,16 +1291,8 @@ def job_replay(k) -> dict:
     lit_uid, med = pick_literal(cands)
     v2_uid, total = pick_weighted_median(cands)
     n = cands.height
-    disclosure = (
-        f"Illustration criterion v2 (D-054). The §11 rule (the job nearest the median GPU-hours "
-        f"of the {n:,} eligible flexible jobs with a feasible remote action) selects "
-        f"{_describe(cj, lit_uid)}, because that set's median is only {med:.3g} GPU-h. The "
-        f"story uses the GPU-hour-weighted median instead: the eligible jobs sorted by "
-        f"(declared GPU-h, job_uid), and the first whose cumulative declared GPU-h reaches 50% "
-        f"of the set's {total:,.0f} GPU-h, which is {_describe(cj, v2_uid)}. The criterion was "
-        f"registered after the literal rule's choice was seen and before the test window "
-        f"opened; the literal-rule job is exported as illustrative_job_literal. Neither example "
-        f"replaces the cohort aggregate.")
+    lit = cj.filter(pl.col("job_uid") == lit_uid).row(0, named=True)
+    disclosure = disclosure_text(lit_uid, lit["gpus"], lit["duration_s"], lit["job_type"], med)
     common = {
         "set_size": env(n, "jobs", "simulated", f"{run_id}:illustrative:set"),
         "set_median_gpu_h": env(med, "GPU_h", "measured", f"{run_id}:illustrative:median"),
