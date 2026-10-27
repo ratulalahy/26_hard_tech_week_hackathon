@@ -101,3 +101,12 @@ export const exact = (s: string) => new RegExp(`(?<![–\\d.])${s.replace(/[.]/g
 export const testOwn = (p: string) => `${pct(saving(p, 'U', fixtureMetrics))}%`;
 const wp = (xs: number[]) => (Math.min(...xs) >= 0 && Math.max(...xs) < 0.01 ? 'under 1%' : null);
 export const testWaitPhrase = wp(['W_time', 'L_time'].map((p) => saving(p, 'U', fixtureMetrics))) ?? testTimeOnlyRange;
+/** T14: results/water.json. The story's water line, as printed: signed million gallons, two decimals. */
+export const water = JSON.parse(readFileSync(join(results, 'water.json'), 'utf8'));
+const smg = (g: number) => (g > 0 ? '+' : g < 0 ? '−' : '') + (Math.abs(g) / 1e6).toFixed(2);
+const mspan = (r: number[]) => (smg(r[0]) === smg(r[1]) ? smg(r[0]) : `${smg(r[0])} to ${smg(r[1])}`);
+export const waterExSpan = mspan(water.headline.change_ex_hydro_gal.value);
+export const waterWithSpan = mspan(water.headline.change_with_hydro_gal.value);
+export const waterCaveats: string[] = water.caveats;
+/** the window in days, as the UI rounds it (not annualised) */
+export const waterDays = String(Math.round(water.window.n_hours.value / 24));

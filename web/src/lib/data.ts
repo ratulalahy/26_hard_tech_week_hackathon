@@ -30,6 +30,8 @@ export interface Results {
   flows: Json | null;
   /** results/flexibility-budget.json (Stage 3 T15, D-064); null if the file is absent. */
   budget: Json | null;
+  /** results/water.json (Stage 3 T14, D-063; illustrative); null if the file is absent. */
+  water: Json | null;
 }
 
 const base = import.meta.env?.BASE_URL ?? './'; // './' (relative deployment base)
@@ -42,16 +44,17 @@ async function get(name: string, w: EvalWindow = 'validation'): Promise<Json> {
   return r.json();
 }
 export async function loadResults(w: EvalWindow = 'validation'): Promise<Results> {
-  const v = w === 'validation';  // the D-058 extensions, the T10b storage piece and the T15 scenario flows and budget are validation-only
-  const [metrics, manifest, forecast, jobs, grid, workload, ext, storage, flows, budget] = await Promise.all([
+  const v = w === 'validation';  // the D-058 extensions, the T10b storage piece, the T15 scenario flows and budget and the T14 water piece are validation-only
+  const [metrics, manifest, forecast, jobs, grid, workload, ext, storage, flows, budget, water] = await Promise.all([
     get('metrics.json', w), get('manifest.json', w), get('forecast-replay.json', w), get('job-replay.json', w), get('grid-profile.json', w), get('workload-profile.json', w),
     v ? get('extensions.json').catch(() => null) : Promise.resolve(null),
     v ? get('storage.json').catch(() => null) : Promise.resolve(null),
     v ? get('scenario-flows.json').catch(() => null) : Promise.resolve(null),
     v ? get('flexibility-budget.json').catch(() => null) : Promise.resolve(null),
+    v ? get('water.json').catch(() => null) : Promise.resolve(null),
   ]);
   if (w === 'test' && (metrics.window !== 'test' || manifest.window !== 'test')) throw new Error('results/test/ does not hold test-window results');
-  return { metrics, manifest, forecast, jobs, grid, workload, ext, storage, flows, budget };
+  return { metrics, manifest, forecast, jobs, grid, workload, ext, storage, flows, budget, water };
 }
 /** What copy-data found: the test option is enabled only when results/test/manifest.json exists. */
 export interface ResultsIndex { files: string[]; test?: { available: boolean; files: string[]; frozen_at: string | null } }

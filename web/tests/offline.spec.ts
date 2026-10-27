@@ -1,7 +1,7 @@
 // Offline acceptance (Task 8 Step 1): the built dist/, served on localhost, makes no request to any other
 // host, and every view renders a value that comes from results/metrics.json.
 import { expect, test, type Page } from '@playwright/test';
-import { bpatGpuH, budgetHeadline, consumptionSpan, exact, fixtureManifest, placementRange, sMovedExec, sRemoteExec, testOwn, testPlacementRange, testWaitPhrase, lCommonSupport, sAbout, sMobility, sOwn, sOwnCI, sProduction, sTonnes, storageCombined, storageFlatT, storageHeadline, storageRushDays, storageRushN, testSOwn, testTimeOnlyRange, timeOnlyRange, uTonnes } from './expected';
+import { waterCaveats, waterDays, waterExSpan, waterWithSpan, bpatGpuH, budgetHeadline, consumptionSpan, exact, fixtureManifest, placementRange, sMovedExec, sRemoteExec, testOwn, testPlacementRange, testWaitPhrase, lCommonSupport, sAbout, sMobility, sOwn, sOwnCI, sProduction, sTonnes, storageCombined, storageFlatT, storageHeadline, storageRushDays, storageRushN, testSOwn, testTimeOnlyRange, timeOnlyRange, uTonnes } from './expected';
 import { openTestYear, serveTestFixture } from './fixture-route';
 
 const LOCAL = new Set(['127.0.0.1', 'localhost', '[::1]']);
@@ -82,6 +82,8 @@ test('every view renders registered values with zero non-localhost requests', as
   await expect(page.getByTestId('storage-curve')).toBeVisible();
   await expect(page.getByTestId('storage-import')).toBeVisible();
   await expect(page.getByText('illustrative · not the registered result')).toBeVisible();
+  // T14: one water line in story 5 (the storage beat, D-064 order), from results/water.json
+  await expect(page.getByTestId('story-water')).toContainText(`Moving work also shifts its water footprint: ${waterExSpan} million gallons over the ${waterDays}-day validation window on the fuel mix alone, but ${waterWithSpan} million if hydro reservoir evaporation is counted (illustrative).`);
   // D-064 beat 6, the evidence: the D-058 checks as scenario estimates; the full table is in the drawer (F18)
   await page.goto('./#story-6');
   await expect(page.getByTestId('story-checks')).toContainText(`still cut ${consumptionSpan}: scenario estimates`);
@@ -106,6 +108,11 @@ test('every view renders registered values with zero non-localhost requests', as
   await expect(drawer.getByTestId('method-breakeven')).toContainText('On our rough reference the charging hours are no cleaner on the margin');
   await expect(drawer.getByTestId('storage-rush-sens')).toBeVisible();
   await expect(drawer.getByTestId('method-dynamic')).toContainText('no demonstrated aggregate benefit from dynamic search in this replay');
+  // T14: the water panel, with Astra's caveats verbatim
+  await expect(drawer.getByTestId('method-water')).toContainText(`${waterExSpan} million gallons`);
+  await expect(drawer.getByTestId('water-table')).toContainText('W weekly profile');
+  await expect(drawer.getByTestId('water-sites')).toContainText('Northwest hydro');
+  for (const c of waterCaveats) await expect(drawer.getByTestId('water-caveats')).toContainText(c);
 
   await page.waitForLoadState('networkidle');
   expect(errors, 'page errors').toEqual([]);

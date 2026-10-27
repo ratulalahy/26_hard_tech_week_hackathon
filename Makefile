@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test data notebooks profile slice need-run-dir ext-runs extensions storage flows web freeze
+.PHONY: test data notebooks profile slice need-run-dir ext-runs extensions storage flows water web freeze
 
 test:
 	cd lab && uv run pytest
@@ -72,6 +72,12 @@ storage: need-run-dir
 # ones extensions.json names under EXT_ROOT. Re-reads ledgers only; validation only. About 15 s.
 flows: need-run-dir
 	cd lab && uv run python scripts/export_flows.py --run-dir $(RUN_DIR) --ext-root $(EXT_ROOT)
+
+# The water illustration (Stage 3 T14, D-063; validation only): results/water.json and the
+# manifest's `water` pointer. RUN_DIR (required): the registered run. The source PDFs are checked
+# against the committed data/manifests/water.json.
+water: need-run-dir
+	cd lab && uv run python scripts/export_water.py --registered-run $(RUN_DIR)
 
 # The dashboard's validation-year grid context (Task 8): results/grid-profile.json.
 # RUN_DIR: the registered slice run (default runs/slice/<results/manifest.json run_id>).

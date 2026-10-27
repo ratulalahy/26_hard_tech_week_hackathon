@@ -9,6 +9,7 @@
   "metrics.json",
   "scenario-flows.json",
   "storage.json",
+  "water.json",
   "workload-profile.json"
  ],
  "test": {
