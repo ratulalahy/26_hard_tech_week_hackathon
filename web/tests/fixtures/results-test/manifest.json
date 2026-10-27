@@ -13,12 +13,12 @@
   "EIA's consumption-basis intensity assigns imports from Canada and Mexico the average US emissions rate (EIA-930 convention).",
   "Zero deadline misses hold by construction under baseline bookings; they are not evidence of production reliability.",
   "The bookings' effect on realized savings is not signed.",
-  "The shadow-U sensitivity ('possible without advance reservations') is pending.",
-  "Only workload phase 0 is run; phases 49 and 98 are pending.",
+  "The shadow-U sensitivity ('possible without advance reservations') was cut by the owner (D-058) and is not run.",
   "Test-year results: the sealed test year was opened once, through the logged entry point, after the model and policy configuration was frozen at a recorded commit; nothing was selected or refitted on it. They cover the days up to the snapshot's availability cutoff, not a full twelve months.",
   "EIA's 2025-26 emission factors may be a provisional vintage (F7).",
   "Baseline bookings are an assumed advance-reservation calendar synthesized from the whole U replay (F11, F12.7); the result is not a historical online-router claim.",
-  "Missing truth hours are filled by the pre-registered F14.6 tiers; the closure calendar is an assumed advance-known calendar (F12.1)."
+  "Missing truth hours are filled by the pre-registered F14.6 tiers; the closure calendar is an assumed advance-known calendar (F12.1).",
+  "Workload phase 0 is the registered result; phases 49 and 98 are workload-alignment sensitivities (results/extensions.json), never pooled with it (§9)."
  ],
  "inputs": {
   "data_manifests_sha256": {
@@ -792,8 +792,20 @@
    "reason": "cut by owner (D-058)"
   },
   {
+   "item": "batch delay 0 h and transfer time 0 min sensitivities",
+   "reason": "cut by owner (D-058)"
+  },
+  {
    "item": "missingness-blind scheduling sensitivity",
    "reason": "cut by owner (D-058)"
+  },
+  {
+   "item": "civil-time (DST) alignment of the replay clock (§7)",
+   "reason": "cut by owner (D-058): remaining §7 sensitivities"
+  },
+  {
+   "item": "+25% runtime-overrun stress with fixed deadlines (§7)",
+   "reason": "cut by owner (D-058): remaining §7 sensitivities"
   }
  ],
  "artifacts": [
@@ -929,6 +941,13 @@
    "reason": null
   }
  },
+ "extensions": {
+  "artifact": "extensions.json",
+  "sha256": "340c80a8ff1789b86952c317ef352a04177889d6fbb97b330b27600287df9b98",
+  "canonical_sha256": "52a55185f8ee48f3de92452aaed4bafa6bee477530fdfa8e6284b8436064cdca",
+  "missing_runs": []
+ },
+ "common_support_rerun": "see extensions.json#common_support",
  "window": "test",
  "fixture": "SYNTHETIC test-window fixture (web/tests/fixtures): numbers derived from the committed results, savings halved; never real test results",
  "freeze": {

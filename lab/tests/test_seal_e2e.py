@@ -47,7 +47,8 @@ def _run(repo, data, results, runs, reason=""):
     env = {**os.environ, "GRIDPILOT_DATA_DIR": str(data)}
     return subprocess.run([sys.executable, str(driver), str(LAB / "scripts" / "run_slice.py"),
                            str(repo), str(data), str(results), str(runs), reason],
-                          cwd=LAB, env=env, capture_output=True, text=True, timeout=3600)
+                          cwd=LAB, env=env, capture_output=True, text=True, timeout=3600,
+                          check=False)
 
 
 def test_the_full_test_pipeline_on_synthetic_data(tmp_path):

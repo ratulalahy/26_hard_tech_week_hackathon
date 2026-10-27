@@ -50,7 +50,7 @@ def _reads(results):
 
 
 def test_every_layer_reads_the_test_window_through_sealed_read(opened):
-    s, data, results, calls = opened
+    _s, data, results, calls = opened
     w = Window.test()
     # eia_co2: the test table goes to its own path, built through sealed_read
     p = eia_co2.build_carbon(window=w)
@@ -81,7 +81,7 @@ def test_every_layer_reads_the_test_window_through_sealed_read(opened):
 
 
 def test_accounting_search_and_results_take_the_test_bound(opened):
-    s, data, results, calls = opened
+    s, _data, results, _calls = opened
     w = Window.test()
     eia_co2.build_carbon(window=w)
     filled = truth_fill.fill_truth(w.init, F, list(seal.CORE_BAS), window=w)

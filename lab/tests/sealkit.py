@@ -65,10 +65,10 @@ def balance_frame(start: datetime, end: datetime, bas=BALANCE_BAS) -> pl.DataFra
             rows["ba"].append(ba)
             rows["ts_utc"].append(t)
             rows["demand_adj_mw"].append(9000.0 if sealed else 5000.0)
-            for k in gen:
-                gen[k].append({"gen_coal_adj_mw": 300.0 if sealed else 100.0,
-                               "gen_solar_adj_mw": 50.0, "gen_wind_adj_mw": 20.0,
-                               "gen_hydro_adj_mw": 200.0}.get(k, 0.0))
+            mw = {"gen_coal_adj_mw": 300.0 if sealed else 100.0, "gen_solar_adj_mw": 50.0,
+                  "gen_wind_adj_mw": 20.0, "gen_hydro_adj_mw": 200.0}
+            for k, col in gen.items():
+                col.append(mw.get(k, 0.0))
     df = pl.DataFrame({**rows, **gen}).with_columns(
         pl.col("ts_utc").cast(pl.Datetime("us", "UTC")), pl.col("ba").cast(pl.Categorical))
     return df
