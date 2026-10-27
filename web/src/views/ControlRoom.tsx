@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { IntervalChart, Panel, PolicyTable, Strip, useWidth } from '../components/charts';
+import { extRows, roundedSpan } from '../components/extensions';
 import { Ev, EvCI, Icon } from '../components/ui';
 import { C, CI_MAX, CI_MID, ci2c } from '../lib/color';
 import { CORE, DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, headline, loadMonth, pname, pnote, yearMean, type Dest } from '../lib/data';
@@ -36,14 +37,15 @@ function ResultDock({ compact }: { compact: boolean }) {
   const { data, hour, month, dest, set } = useApp();
   const m = data!.metrics, g = data!.grid;
   const h = headline(m);
+  const mob = data!.ext ? roundedSpan(extRows(m, data!.ext), 'mobility_le_8gpus') : null;
   const pm = asNum(yearMean(g, 'PACE'))!;
   // the headline now carries the frame line, so below 1200 px the four sites drop their day strips (the timeline below still shows Utah's)
   const strips = useViewport().h >= 1200;
   return (
     <Panel over className="flex flex-col" style={{ height: '100%', padding: 0, overflow: 'hidden' }}>
-      <div style={{ padding: 16 }}>
+      <div style={{ padding: compact ? '12px 16px 10px' : 16 }}>
         <h1 className="t-20" style={{ margin: 0 }}>In a simulated replay, moving Utah's AI jobs cut their CO₂ by a fifth. Waiting barely helps.</h1>
-        <div data-testid="hero-placement" style={{ marginTop: 12 }}>
+        <div data-testid="hero-placement" style={{ marginTop: compact ? 8 : 12 }}>
           <div className="flex items-baseline gap-2">
             <span className="t-hero">{pctRange(h.placement.lo, h.placement.hi)}%</span>
             <span className="t-13 ink-2">less attributed CO₂</span>
@@ -56,16 +58,19 @@ function ResultDock({ compact }: { compact: boolean }) {
           </div>
           <div className="t-12 ink-2" style={{ marginTop: 4 }} data-testid="hero-frame">{FRAME_LINE}</div>
         </div>
-        <div data-testid="hero-timing" className="t-13" style={{ marginTop: 8 }}>
-          Waiting for cleaner hours in Utah alone: <b className="fw-600">{pctRange(h.timing.lo, h.timing.hi)}%</b> <span className="t-12 ink-3">(95% {pct(h.timing.ciLo)}–{pct(h.timing.ciHi)}%)</span> <Ev e="simulated" />
+        <div data-testid="hero-timing" className="t-13" style={{ marginTop: compact ? 6 : 8 }}>
+          Waiting for cleaner hours in Utah alone: <b className="fw-600">{pctRange(h.timing.lo, h.timing.hi)}%</b> <span className="t-12 ink-3">(95% {pct(h.timing.ciLo)}–{pct(h.timing.ciHi)}%)</span>{compact && mob ? null : <> <Ev e="simulated" /></>}
         </div>
+        {mob ? <div data-testid="hero-mobility" className="t-12 ink-2" style={{ marginTop: 4 }}>
+          The cut depends on moving large multi-node jobs: if only jobs of 8 GPUs or fewer could move, it would be about {mob}%. <Ev e="simulated">{compact ? 'both simulated' : 'simulated'}</Ev>
+        </div> : null}
       </div>
       <div style={{ padding: '0 16px 8px' }}>
         <div className="flex items-baseline justify-between t-12 ink-2" style={{ marginBottom: 4 }}>
           <span className="fw-500 whitespace-nowrap" style={{ color: C.ink }}>Saving vs U, 95% interval</span>
           <span className="t-11 ink-3 whitespace-nowrap">{fmt(h.nWeeks.value as number)} weeks <Ev e="simulated" /></span>
         </div>
-        <IntervalChart m={m} rows={['S', 'K', 'W', 'L', 'W_time', 'L_time']} stacked rowH={24} />
+        <IntervalChart m={m} rows={['S', 'K', 'W', 'L', 'W_time', 'L_time']} stacked rowH={compact ? 24 : 26} />
       </div>
       <hr className="rule" />
       {compact ? null : (<>

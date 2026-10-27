@@ -38,10 +38,12 @@ export function Strip({ curve, h = 14, hour, job, label, gap = 1.5 }: { curve: (
 }
 
 /** The registered result on one axis: each policy's saving vs U with its 95% interval (b = 4).
- * `stacked` puts each policy's name above its interval (narrow docks); otherwise names sit left. */
+ * `stacked` puts each policy's name above its interval (narrow docks); otherwise names sit left.
+ * Stacked rows keep the plot area inset from the left and the dot below the name's descenders, so a
+ * point near 0% (the wait-only runs) never sits on its label (T9 nit). */
 export function IntervalChart({ m, rows, rowH, stacked = false }: { m: Json; rows: string[]; rowH?: number; stacked?: boolean }) {
   const [ref, w] = useWidth<HTMLDivElement>();
-  const lx = stacked ? 4 : 232, rx = stacked ? 8 : 56, top = 4;
+  const lx = stacked ? 16 : 232, rx = stacked ? 8 : 56, top = 4;
   const rh = rowH ?? (stacked ? 30 : 30);
   const H = top + rows.length * rh + 22;
   const max = 0.3;
@@ -53,14 +55,14 @@ export function IntervalChart({ m, rows, rowH, stacked = false }: { m: Json; row
           {[0, 0.1, 0.2, 0.3].map((g) => (
             <g key={g}>
               <line x1={X(g)} x2={X(g)} y1={top} y2={top + rows.length * rh} stroke={g === 0 ? 'rgba(110,62,30,.3)' : C.hair2} />
-              <text x={X(g)} y={top + rows.length * rh + 14} textAnchor={g === 0 && stacked ? 'start' : 'middle'} fontSize={11} fill={C.ink3}>{g * 100}%</text>
+              <text x={X(g)} y={top + rows.length * rh + 14} textAnchor={g === 0 && stacked ? 'start' : g === max ? 'end' : 'middle'} fontSize={11} fill={C.ink3}>{g * 100}%</text>
             </g>
           ))}
           {rows.map((p, i) => {
             const c = contrast(m, p);
             const y0 = top + i * rh;
-            const y = stacked ? y0 + rh - 8 : y0 + rh / 2;
-            const ty = stacked ? y0 + 11 : y + 4;
+            const y = stacked ? y0 + rh - 6 : y0 + rh / 2;
+            const ty = stacked ? y0 + 10 : y + 4;
             if (!c || c.saving.value == null) return <text key={p} x={0} y={ty} fontSize={12} fill={C.ink3}>{pname(p)}: {c?.saving.reason ?? 'not run'}</text>;
             const [lo, hi] = c.saving_ci95.value as [number, number];
             const place = ['S', 'K', 'W', 'L'].includes(p);
@@ -68,7 +70,7 @@ export function IntervalChart({ m, rows, rowH, stacked = false }: { m: Json; row
             return (
               <g key={p}>
                 <title>{`${pname(p)}: ${pnote(m, p)}`}</title>
-                <text x={stacked ? lx : 0} y={ty} fontSize={12} fill={diag ? C.ink3 : C.ink} fontWeight={place ? 600 : 400}>{pname(p)}</text>
+                <text x={0} y={ty} fontSize={12} fill={diag ? C.ink3 : C.ink} fontWeight={place ? 600 : 400}>{pname(p)}</text>
                 <line x1={X(lo)} x2={X(hi)} y1={y} y2={y} stroke={C.ink} strokeWidth={2} strokeLinecap="round" opacity={diag ? 0.3 : 0.45} />
                 <circle cx={X(c.saving.value)} cy={y} r={4} fill={place ? C.ink : '#fff'} stroke={diag ? C.ink3 : C.ink} strokeWidth={1.5} strokeDasharray={diag ? '2 1.6' : undefined} />
                 <text x={w} y={ty} textAnchor="end" fontSize={12} fill={C.ink} fontWeight={500}>{pct(c.saving.value)}%</text>

@@ -27,9 +27,9 @@ def top_share(jobs: pl.DataFrame, frac: float = 0.01) -> dict:
     """
     ranked = jobs.sort(["gpu_h", "job_uid"], descending=[True, False])
     n = math.ceil(frac * ranked.height)
-    total = float(ranked["gpu_h"].sum())
+    total = math.fsum(ranked["gpu_h"].to_list())  # order-free (T10)
     head = ranked.head(n)
-    gpu_h = float(head["gpu_h"].sum())
+    gpu_h = math.fsum(head["gpu_h"].to_list())
     return {"n_jobs": n, "n_cohort": ranked.height, "gpu_h": gpu_h,
             "share": gpu_h / total if total else None, "top": head}
 
@@ -43,14 +43,15 @@ def concentration(acct_u: pl.DataFrame, acct_p: pl.DataFrame, qs=QS) -> dict:
                       pl.col("energy_kwh").alias("kwh"), pl.col("co2_kg").alias("co2_u")).join(
         acct_p.select("job_uid", pl.col("co2_kg").alias("co2_p")), on="job_uid")
     f = f.with_columns((pl.col("co2_u") - pl.col("co2_p")).alias("sav"))
-    tot = {k: f[k].sum() for k in ("gpu_h", "kwh", "sav")}
+    tot = {k: math.fsum(f[k].to_list()) for k in ("gpu_h", "kwh", "sav")}
     top = []
     for q in qs:
         ts = top_share(f, q)
         k, t = ts["n_jobs"], ts["top"]
-        top.append({"fraction": q, "n_jobs": k, "gpu_h_share": t["gpu_h"].sum() / tot["gpu_h"],
-                    "energy_share": t["kwh"].sum() / tot["kwh"],
-                    "saving_share": t["sav"].sum() / tot["sav"] if tot["sav"] else None})
+        ts_ = {c: math.fsum(t[c].to_list()) for c in ("gpu_h", "kwh", "sav")}
+        top.append({"fraction": q, "n_jobs": k, "gpu_h_share": ts_["gpu_h"] / tot["gpu_h"],
+                    "energy_share": ts_["kwh"] / tot["kwh"],
+                    "saving_share": ts_["sav"] / tot["sav"] if tot["sav"] else None})
     return {"n_jobs": f.height, "top": top, "median_gpu_h": float(f["gpu_h"].median()),
             "share_jobs_under_1_gpu_h": float((f["gpu_h"] < 1).mean()),
             "saving_kg": tot["sav"]}

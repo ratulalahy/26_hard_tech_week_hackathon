@@ -26,7 +26,7 @@ from gridpilot.results import (
 )
 
 ARTIFACTS = ("manifest.json", "metrics.json", "forecast-replay.json", "job-replay.json",
-             "grid-profile.json", "workload-profile.json")
+             "grid-profile.json", "workload-profile.json", "extensions.json")
 
 
 # --------------------------------------------------------------------------- env()
@@ -138,10 +138,10 @@ def test_claim_frame_text_is_verbatim():
 
 
 def test_canonical_hash_ignores_provenance_and_tiny_float_noise():
-    a = {"run_id": "r1", "x": env(1.0000001, "kg", "simulated", "r1:x"), "y": [0.0, -0.0]}
-    b = {"run_id": "r2", "x": env(1.0000004, "kg", "simulated", "r2:x"), "y": [-0.0, 0.0]}
-    assert canonical_hash(a) == canonical_hash(b)
-    c = {"run_id": "r1", "x": env(1.00001, "kg", "simulated", "r1:x"), "y": [0.0, 0.0]}
+    a = {"run_id": "r1", "x": env(1.00000000001, "kg", "simulated", "r1:x"), "y": [0.0, -0.0]}
+    b = {"run_id": "r2", "x": env(1.00000000004, "kg", "simulated", "r2:x"), "y": [-0.0, 0.0]}
+    assert canonical_hash(a) == canonical_hash(b)  # 10 significant digits (T10)
+    c = {"run_id": "r1", "x": env(1.000001, "kg", "simulated", "r1:x"), "y": [0.0, 0.0]}
     assert canonical_hash(a) != canonical_hash(c)
 
 
@@ -176,6 +176,52 @@ def test_no_sealed_dates():
     for p in _committed():
         bad = sealed_timestamps(json.loads(p.read_text()))
         assert bad == [], f"{p.name}: timestamps at or after TEST_START at {bad[:10]}"
+
+
+def _envs(x, path="$"):
+    if isinstance(x, dict):
+        if "value" in x and "evidence" in x:
+            yield path, x
+            return
+        for k, v in x.items():
+            yield from _envs(v, f"{path}.{k}")
+    elif isinstance(x, list):
+        for i, v in enumerate(x):
+            yield from _envs(v, f"{path}[{i}]")
+
+
+def test_extensions_evidence_classes():
+    """T10: repricing, common support and policy outcomes are simulated; scenario knobs are
+    assumed; the D-058 cuts are not_run with the owner's reason; the seal holds."""
+    _committed()
+    ext = json.loads((RESULTS_DIR / "extensions.json").read_text())
+    for path, e in _envs(ext):
+        leaf = path.rsplit(".", 1)[-1]
+        if ".scenario.knobs." in path:
+            assert e["evidence"] == "assumed", path
+        elif leaf in ("saving", "saving_ci95", "diff_kg", "diff_kg_ci95", "co2_kg"):
+            assert e["evidence"] == "simulated", path
+    for k, v in ext["not_run"].items():
+        assert v["status"] == "not_run" and v["reason"].startswith("cut by owner (D-058)"), k
+    assert ext["export_git_clean"] is True  # exported at a clean commit (fix r1 M-3)
+    rep = ext["primary_reproduction"]
+    assert rep["metrics_canonical_equal"] and all(rep["ledgers_equal"].values())
+    blocks = {**ext["phases"], **ext["sensitivities"]}
+    assert set(blocks) == {"phase_49", "phase_98", "dest_slots_0", "dest_slots_1024",
+                           "transfer_120min", "batch_delay_24h", "mobility_le_8gpus"}
+    for name, b in blocks.items():
+        if b["status"] == "ok":
+            assert b["all_on_time"], name  # late count stays 0 under bookings
+            assert b["run_id"] and b["canonical_hashes"]["summary_canonical_sha256"], name
+        else:
+            assert b["status"] == "not_run" and b["reason"], name
+    for b in (ext["repricing"], ext["common_support"]):
+        assert b["canonical_hashes"]["run_id"] == ext["registered_run_id"]
+        assert b["scenario"]["name"] == "primary"
+    man = json.loads((RESULTS_DIR / "manifest.json").read_text())
+    assert man["extensions"]["missing_runs"] == ext["missing_runs"]
+    assert man["extensions"]["canonical_sha256"] == canonical_hash(ext)
+    assert man["common_support_rerun"] == "see extensions.json#common_support"
 
 
 def test_manifest_carries_claim_frame():

@@ -1,5 +1,6 @@
 {
  "files": [
+  "extensions.json",
   "forecast-replay.json",
   "grid-profile.json",
   "job-replay.json",
