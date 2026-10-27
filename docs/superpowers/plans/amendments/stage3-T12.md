@@ -73,3 +73,24 @@ Add a draft decision entry (next free ID, D-063 or later) to your report (the le
 
 ## Report
 Write `/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/s3-t12-report.md`.
+
+## Addendum: T11's enforced requirements (from the T11 re-checks; binding)
+- **Base.** Start T12 from main **after T11 (PR #44) merges**; it brings snapshot `8a1b36b24b91`.
+- **S ranking.** Use `eia_co2.s_ranking_at(2023-01-01, 2025-10-29T00Z)`, which applies the 96 h envelope, for the test S ranking. Order by (mean, BA).
+- **validation_run.** Use `seal.validation_reference(repo)` at the freeze commit. It must equal `{run_id: 20261027T160656Z, metrics_canonical_sha256: e6ad2635…}`.
+- **Balance derivation.** Optionally commit `data/manifests/derived/balance.json` from `seal.balance_derivation` in the freeze-candidate code. Otherwise the documented exception is logged on every run.
+- **`write_freeze.py` must produce a record that passes `seal.load_freeze`:**
+  - integer L leaves;
+  - `test_F` at UTC midnight;
+  - `frozen_at` real UTC, never in the future;
+  - `scenario_catalog.primary == Scenario.primary().config()`, round-tripped through JSON;
+  - all 6 `TEST_INPUTS` in `input_sha256`.
+- **Commit and tag sequence, done by the lead on main, with no squash:**
+  1. main HEAD is the freeze commit;
+  2. commit `config/freeze.json` **alone**, so its only parent is the freeze commit;
+  3. `git tag -a config-freeze -m "$(seal.freeze_tag_message(sha))"` on that commit;
+  4. `git push origin main config-freeze`;
+  5. check that `git ls-remote origin refs/tags/config-freeze` equals the local tag;
+  6. **merge nothing else** until T13 has run.
+- **T13 runs in the main checkout:** `cd lab && uv run python scripts/run_slice.py --window test`, with a clean tree and no other flags. Afterwards, `git add results/test results/test_reads.jsonl` only (never `-A`, never the lock), then commit and push.
+- **Effort:** high for T12 and T12r (D-069).
