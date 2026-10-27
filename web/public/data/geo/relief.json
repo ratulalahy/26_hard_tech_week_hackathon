@@ -1,0 +1,40 @@
+{
+ "image": "relief.png",
+ "bounds": [
+  -140,
+  14,
+  -50,
+  62
+ ],
+ "deckgl_bounds": [
+  -140,
+  14,
+  -50,
+  62
+ ],
+ "maplibre_coordinates": [
+  [
+   -140,
+   62
+  ],
+  [
+   -50,
+   62
+  ],
+  [
+   -50,
+   14
+  ],
+  [
+   -140,
+   14
+  ]
+ ],
+ "projection": "rows resampled to Web Mercator (EPSG:3857) between the bounds; columns linear in longitude",
+ "width": 2048,
+ "height": 1489,
+ "source": "https://naciscdn.org/naturalearth/50m/raster/SR_50M.zip",
+ "attribution": "Made with Natural Earth. Free vector and raster map data @ naturalearthdata.com.",
+ "license": "public domain (Natural Earth)",
+ "note": "8-bit grayscale hillshade (Natural Earth 1:50m 'Shaded Relief'); blend with multiply/screen or use as opacity."
+}

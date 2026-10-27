@@ -1,0 +1,10 @@
+{
+ "files": [
+  "forecast-replay.json",
+  "grid-profile.json",
+  "job-replay.json",
+  "manifest.json",
+  "metrics.json",
+  "workload-profile.json"
+ ]
+}

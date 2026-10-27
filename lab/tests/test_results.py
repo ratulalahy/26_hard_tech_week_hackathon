@@ -24,7 +24,8 @@ from gridpilot.results import (
     write_json_atomic,
 )
 
-ARTIFACTS = ("manifest.json", "metrics.json", "forecast-replay.json", "job-replay.json")
+ARTIFACTS = ("manifest.json", "metrics.json", "forecast-replay.json", "job-replay.json",
+             "grid-profile.json", "workload-profile.json")
 
 
 # --------------------------------------------------------------------------- env()
