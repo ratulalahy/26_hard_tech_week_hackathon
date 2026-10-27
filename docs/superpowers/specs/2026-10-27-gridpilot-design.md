@@ -622,3 +622,12 @@ The Mac offline rehearsal moves to Wed morning.
 - Candidate starts are hourly boundaries plus the earliest feasible start at each site.
 - Capacity uses an interval or segment-tree structure.
 - Benchmark on a 2-week slice first.
+
+### F11. Rigid jobs are pinned to their U placement (lead ruling during Stage 2, Task 4)
+- **Observed** on a 2-week synthetic slice: under F1 deadlines, G and S miss deadlines (11 and 5 late jobs at 1.0×; 985 and 203 at 1.6×). Almost all are non-flexible jobs.
+- **Cause:** a zero-slack job's deadline equals its U finish, and greedy list scheduling is not monotone. Moving some jobs off PACE lets others backfill, which pushes a later rigid job past its U finish. A sweep-line check found every ledger legal on capacity, so it is not a capacity bug.
+- **Rule:** a job is pinned when `deadline − duration ≤ its U start`; every non-flexible job is pinned. In every policy run, a pinned job is pre-booked at its U site and start, and policies schedule the remaining jobs into the capacity left over.
+- **Why it adds no foresight:** F1 deadlines already come from one offline U run over the whole replay. Pinned jobs could not benefit from routing anyway, so the savings come only from flexible jobs.
+- **Label:** assumed ("rigid jobs are committed bookings at their baseline time").
+- **Search window for flexible jobs:** starts lie in `[arrival, deadline − duration]`, capped by R_max.
+- **What stays possible:** flexible jobs can still be late. The F1 fallback rule still applies, and late counts are reported.
