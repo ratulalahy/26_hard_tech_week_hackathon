@@ -46,6 +46,7 @@ CONTEXT_BAS = ("AVA", "AZPS", "BANC", "CHPD", "DOPD", "EPE", "GCPD", "IID", "IPC
                "TPWR", "WACM", "WALC", "WAUW")
 TOP_K = 100
 PROV = "grid-profile"
+JULY_MONTH = "2025-07"  # the month of the weekday-load profile (America/Denver)
 US_AVG_LB_PER_MWH = 785.0  # EIA, United States Electricity Profile 2024 (CO2 emission rate)
 LB_TO_KG = 0.453592
 US_AVG_SOURCE = ("EIA United States Electricity Profile 2024, "
@@ -112,7 +113,7 @@ def _net_load(balance: pl.DataFrame, ba: str = "PACE") -> pl.DataFrame:
 
 
 def july_weekday_profile(balance: pl.DataFrame) -> dict:
-    b = _net_load(balance).filter((pl.col("month") == "2025-07") & (pl.col("dow") <= 5))
+    b = _net_load(balance).filter((pl.col("month") == JULY_MONTH) & (pl.col("dow") <= 5))
     agg = b.group_by("hour").agg(
         pl.col("demand_clean_mw").mean().alias("demand_mw"),
         pl.col("net_load_mw").mean().alias("net_load_mw"),
@@ -195,6 +196,7 @@ def build_profile(carbon: pl.DataFrame, balance: pl.DataFrame) -> dict:
             "by_ba": by_ba,
         },
         "pace_july_weekday": {
+            "month": JULY_MONTH,  # the dashboard's load label reads this (T9 C8)
             "definition": "mean over July 2025 weekdays (America/Denver; holidays included) of "
                           "EIA-930 adjusted demand (isolated spikes removed), solar and wind; "
                           "net load = demand − wind − solar",
