@@ -15,7 +15,8 @@ import { useViewport } from './lib/useViewport';
 export function App() {
   const { data, error, view, set } = useApp();
   useEffect(() => {
-    loadResults().then((d) => set({ data: d })).catch((e) => set({ error: String(e) }));
+    // the allowed wait starts at the registered flexible-job delay (manifest, assumed)
+    loadResults().then((d) => set({ data: d, maxWait: Math.round((asNum(d.manifest.assumptions.allowed_delay_s.SFT) ?? 21600) / 3600) })).catch((e) => set({ error: String(e) }));
   }, [set]);
 
   return (
