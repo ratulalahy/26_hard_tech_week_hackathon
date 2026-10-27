@@ -188,7 +188,7 @@ def test_tier_counts_and_evidence():
     tc = tier_counts(out)
     assert tc["PACE"] == {"1": 3, "2": 1, "3": 0, "4": 0, "missing": 0}
     assert tc["NEVP"] == {"1": 0, "2": 0, "3": 0, "4": 0, "missing": 4}
-    assert TIER_EVIDENCE == {1: "observed", 2: "modeled", 3: "modeled", 4: "modeled"}
+    assert TIER_EVIDENCE == {1: "modeled", 2: "modeled", 3: "modeled", 4: "modeled"}
 
 
 def test_truth_table_accepts_fill_and_its_mask():

@@ -127,8 +127,8 @@ POLICY_ORDER = ("U", "G", "S", "K", "W", "L", "H", "W_time", "L_time")
 REFERENCES = ("U", "S", "W")
 BLOCKS = (2, 4, 8)
 SNAPSHOT_ID = "05efabe781cc"
-S_RANK_PROVENANCE = ("means of EIA's published consumption-basis hourly CO₂ intensity, "
-                     "2022-01-01 to 2024-10-29")
+EIA_CI_PROVENANCE = "EIA's estimated consumption-basis hourly CO₂ intensity"
+S_RANK_PROVENANCE = f"means of {EIA_CI_PROVENANCE}, 2022-01-01 to 2024-10-29"
 TIME_ONLY_SITES = {s: (n if s == HOME else 0) for s, n in SITES.items()}
 POLICY_NOTES = {
     "U": "earliest feasible execution at PACE (FIFO); local operational reference",
@@ -794,6 +794,33 @@ def framing_text(acct) -> str:
             f"execution energy).")
 
 
+def top_share(cj: pl.DataFrame, frac: float = 0.01) -> dict:
+    """Energy share of the top `frac` of cohort jobs by declared GPU-h (ties to job_uid).
+    Execution energy is 0.60 kW × PUE 1.20 per GPU-h for every job and policy, so the energy
+    share equals the declared GPU-h share."""
+    g = cj.select("job_uid", (pl.col("gpus") * pl.col("duration_s") / 3600).alias("gh")) \
+        .sort(["gh", "job_uid"], descending=[True, False])
+    n = math.ceil(frac * g.height)
+    total = float(g["gh"].sum())
+    top = float(g["gh"][:n].sum())
+    return {"n_jobs": n, "n_cohort": g.height, "gpu_h": top,
+            "energy_kwh": top * KW_PER_GPU * PUE, "share": top / total if total else None}
+
+
+def _workload_summary(cj, run_id) -> dict:
+    t = top_share(cj)
+    pid = f"{run_id}:workload:top1pct"
+    return {"top_1pct_jobs_by_declared_gpu_h": {
+        "definition": "the ceil(1%) of cohort jobs with the largest declared GPU-hours (ties "
+                      "to job_uid); their share of cohort execution energy (equal to their "
+                      "share of declared GPU-h, since every GPU-h carries 0.60 kW x PUE 1.20)",
+        "n_jobs": env(t["n_jobs"], "jobs", "simulated", f"{pid}:n"),
+        "energy_kwh": env(t["energy_kwh"], "kWh", "simulated", f"{pid}:kwh"),
+        "energy_share": env(t["share"], "fraction", "simulated", f"{pid}:share",
+                            *(("unavailable", "empty cohort") if t["share"] is None else ())),
+    }}
+
+
 def headline_wording(m) -> str:
     """F7 headline with the F12.5 frame; transfer energy is simulated (fix round 1 #6a)."""
     return ("attributed operational CO₂ (EIA consumption basis), including "
@@ -842,6 +869,7 @@ def build_artifacts(**k) -> dict:
             "n_weeks": env(n_weeks, "weeks", "measured", f"{run_id}:n_weeks"),
             "flex_shares": _flex_shares(cj, run_id),
         },
+        "workload": _workload_summary(cj, run_id),
         "policies": policies,
         "headline_wording": {p: headline_wording(scores[p]) for p in POLICY_ORDER},
         "relaxed_bound": {
@@ -930,7 +958,7 @@ def build_artifacts(**k) -> dict:
         },
         "support_check": _support_env(k["support"], run_id),
         "s_ranking": {"order": k["ranking"],
-                      "mean_consumed_ci": {b: env(v, "g/kWh", "observed",
+                      "mean_consumed_ci": {b: env(v, "g/kWh", "modeled",
                                                   f"{run_id}:rank:{b}")
                                            for b, v in k["rank_means"].items()},
                       "provenance": S_RANK_PROVENANCE,
@@ -1086,8 +1114,14 @@ def forecast_replay(k) -> dict:
                for m in ("K", "W", "L")} if sel else {}
 
     def nulls_reason(xs):
-        return "null = hour without a tier-1 (observed) value" if any(x is None for x in xs) \
-            else None
+        return TRUTH_NULL if any(x is None for x in xs) else None
+
+    truth_env = env(observed, "g/kWh", "modeled", f"{run_id}:fr:truth",
+                    reason=nulls_reason(observed))
+    hist_vals = [v if t == 1 else None for v, t in zip(hist["ci_g_kwh"], hist["tier"],
+                                                        strict=True)]
+    hist_env = env(hist_vals, "g/kWh", "modeled", f"{run_id}:fr:history",
+                   reason=nulls_reason(hist_vals))
 
     return {
         "schema_version": SCHEMA_VERSION, "run_id": run_id, "ba": HOME,
@@ -1100,18 +1134,16 @@ def forecast_replay(k) -> dict:
         "issues": issue_rows,
         "issues_by_model": {m: [iso(i) for i in v] for m, v in issues_by_model.items()},
         "hours": [iso(h) for h in hours.to_list()],
-        "observed": env(observed, "g/kWh", "observed", f"{run_id}:fr:observed",
-                        reason=nulls_reason(observed)),
+        "truth": truth_env,
+        "truth_provenance": EIA_CI_PROVENANCE + " (tier 1 of the F14.6 scoring truth)",
+        "observed": truth_env,  # deprecated alias of `truth` (same envelope, evidence modeled)
         "forecasts": {m: env(v, "g/kWh", "forecast", f"{k['fc_metrics']['run_id']}:{m}",
                              reason=nulls_reason(v) and "null = no issued forecast")
                       for m, v in series.items()},
         "history_to_first_cutoff": {
             "hours": [iso(h) for h in hist_hours.to_list()],
-            "observed": env([v if t == 1 else None for v, t in
-                             zip(hist["ci_g_kwh"], hist["tier"], strict=True)], "g/kWh",
-                            "observed", f"{run_id}:fr:history",
-                            reason="null = hour without a tier-1 (observed) value"
-                            if any(t != 1 for t in hist["tier"].to_list()) else None),
+            "truth": hist_env,
+            "observed": hist_env,  # deprecated alias of `truth`
             "cutoff_hour_start": iso(cut)},
         "week_errors": errors,
         "selection_mae": sel_mae,
@@ -1134,6 +1166,9 @@ def _action_co2(tt, gpus, duration_s, site, start_us, arrival_us) -> tuple[float
         cd, _ = tt.point(site, np.array([arrival_us]))
         tr = 0.5 * t_fac * (ch[0] + cd[0]) / 1000
     return float(ex), float(tr)
+
+
+TRUTH_NULL = "null = hour without a tier-1 (EIA consumption-basis) value"
 
 
 RULE_LITERAL = ("§11: among validation flexible jobs with a feasible remote action in the "

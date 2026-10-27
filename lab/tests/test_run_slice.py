@@ -75,6 +75,21 @@ def test_illustrative_criteria(rs):
     assert rs.pick_weighted_median(c2)[0] == "y"  # cumulative 2.0 >= 2.0 at y
 
 
+def test_top_share_is_ceil_one_percent_by_declared_gpu_h(rs):
+    n = 250  # ceil(2.5) = 3 jobs
+    cj = pl.DataFrame({"job_uid": [f"j{i:03d}" for i in range(n)],
+                       "gpus": [1] * n, "duration_s": [3600.0] * n})
+    cj = cj.with_columns(pl.when(pl.col("job_uid").is_in(["j007", "j100", "j200"]))
+                         .then(1000.0 * 3600).otherwise(pl.col("duration_s")).alias("duration_s"))
+    t = rs.top_share(cj)
+    assert t["n_jobs"] == 3
+    assert t["share"] == pytest.approx(3000 / (3000 + 247))
+    assert t["energy_kwh"] == pytest.approx(3000 * 0.6 * 1.2)
+    rec = rs._workload_summary(cj, "r")["top_1pct_jobs_by_declared_gpu_h"]
+    assert rec["energy_share"]["evidence"] == "simulated"
+    assert unenveloped_numbers(rec) == []
+
+
 def test_export_results_stages_all_four(rs, tmp_path):
     src, dst = tmp_path / "run", tmp_path / "results"
     src.mkdir()

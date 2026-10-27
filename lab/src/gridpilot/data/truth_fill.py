@@ -3,7 +3,8 @@
 For every BA and every UTC hour h in [start, end), the scoring truth is the first
 available of:
 
-1. EIA consumption-basis CI (`observed`);
+1. EIA consumption-basis CI (`modeled`: EIA's estimated consumption-basis hourly CO₂
+   intensity; spec §4, §11, F7);
 2. EIA production-basis CI for the same hour (`modeled` substitute);
 3. our EIA-930 fuel-mix CI for the same hour (`gridpilot.carbon.fuel_mix_ci`, the
    grid-profile formula over adjusted generation; `modeled`);
@@ -36,9 +37,11 @@ from gridpilot.splits import TEST_START, drop_sealed
 
 BALANCE_PATH = INTERIM_DIR / "eia930" / "balance.parquet"
 TIERS = (1, 2, 3, 4)
-TIER_EVIDENCE = {1: "observed", 2: "modeled", 3: "modeled", 4: "modeled"}
+# EIA consumption-basis intensity is EIA's own estimate: modeled (lead ruling, spec §4,
+# §11, F7), like every fill tier.
+TIER_EVIDENCE = {1: "modeled", 2: "modeled", 3: "modeled", 4: "modeled"}
 TIER_SOURCE = {
-    1: "EIA consumption-basis CO2 intensity (BA workbook)",
+    1: "EIA's estimated consumption-basis hourly CO₂ intensity (BA workbook)",
     2: "EIA production-basis CO2 intensity, same hour (BA workbook)",
     3: "EIA-930 fuel-mix CI, same hour (adjusted generation x EIA direct factors)",
     4: "mean of tier-1 values at the same UTC hour over the 7 preceding days",
