@@ -48,6 +48,7 @@ Key documents:
 - `cd lab && uv run pytest` runs the tests.
 - `make test` does the same from the repo root.
 - `make notebooks` re-executes the evidence notebooks in `notebooks/` in place and exports HTML copies to `docs/evidence/`. It reads the cached data through `GRIDPILOT_DATA_DIR` and takes about five minutes. Each notebook ends with the decisions it supports in `docs/decisions.md`.
+- `make slice` runs the registered phase-0 validation experiment (U, G, S, K, W, L, H and time-only W, L) and exports the evidence-enveloped `results/*.json` the dashboard reads. Run directories go to `runs/slice/<UTC>/`. It reads the cached data through `GRIDPILOT_DATA_DIR` and takes about 20 minutes. `make slice WINDOW=fallback` runs the 91-day fallback window, which never replaces the registered selection.
 
 Every command listed here must work. Add a command when its target lands.
 
