@@ -22,9 +22,14 @@ production); both use the same vocabulary:
     missing_row   no workbook row for this hour
 
 Seal (F8): `build_carbon` truncates at TEST_START before writing, so the stored
-parquet holds no sealed-window row. Sealed-window truth is not produced here; the
-logged test-evaluation entry point will build it into a separate path. `load_carbon`
-also applies `drop_sealed`, as a second guard.
+parquet holds no sealed-window row. `load_carbon` also applies `drop_sealed`, as a second
+guard. Every function takes a `window` (`gridpilot.window.Window`, default validation).
+
+Test window (Stage 3 T11, B2): the test truth goes to a separate path,
+`processed/carbon/carbon_hourly_test.parquet`, holding [TEST_HISTORY_START, F_test). Only the
+test entry point builds it (`build_carbon(window=Window.test())`, inside the test-mode
+context), reading the workbooks through `gridpilot.seal.sealed_read`; `load_carbon` reads it
+back the same way. The validation parquet stays truncated at TEST_START.
 
 `site_mask` is closed by default: any (ba, hour) with no carbon row is not ok.
 Lineage is written next to the parquet as `carbon_hourly.meta.json`.
@@ -36,12 +41,15 @@ import hashlib
 import json
 import os
 from datetime import UTC, datetime, timedelta
+from functools import partial
 from pathlib import Path
 
 import polars as pl
 
+from gridpilot import seal
 from gridpilot.paths import PROCESSED_DIR, RAW_DIR
 from gridpilot.splits import TEST_START, drop_sealed
+from gridpilot.window import Window, resolve
 
 # The exact factor is 453.59237 g/lb; the spec pins 453.592, so we use that.
 LB_TO_G = 453.592
@@ -53,6 +61,9 @@ GENERATED_COL = "CO2 Emissions Intensity for Generated Electricity"
 WORKBOOK_DIR = RAW_DIR / "eia930" / "ba_workbooks"
 CARBON_PATH = PROCESSED_DIR / "carbon" / "carbon_hourly.parquet"
 META_NAME = "carbon_hourly.meta.json"
+CARBON_TEST_REL = "processed/carbon/carbon_hourly_test.parquet"
+CARBON_TEST_PATH = PROCESSED_DIR / "carbon" / "carbon_hourly_test.parquet"  # test mode only
+TEST_META_NAME = "carbon_hourly_test.meta.json"
 CORE_BAS = ("PACE", "CISO", "BPAT", "NEVP")
 
 COLUMNS = ["ba", "ts_utc", "ci_consumed_g_kwh", "ci_generated_g_kwh", "null_reason",
@@ -123,14 +134,60 @@ def _sha256(path: Path) -> str:
     return h.hexdigest()
 
 
-def build_carbon(bas: tuple[str, ...] = CORE_BAS) -> Path:
+def _write_atomic(out: pl.DataFrame, parquet: Path, meta: Path, lineage: dict) -> None:
+    parquet.parent.mkdir(parents=True, exist_ok=True)
+    tmp_parquet = parquet.with_name(f".{parquet.name}.{os.getpid()}.tmp")
+    tmp_meta = meta.with_name(f".{meta.name}.{os.getpid()}.tmp")
+    try:
+        out.write_parquet(tmp_parquet)
+        lineage = lineage | {"rows": out.height, "ts_utc_max": out["ts_utc"].max().isoformat(),
+                             "output_sha256": _sha256(tmp_parquet)}
+        tmp_meta.write_text(json.dumps(lineage, indent=2) + "\n")
+        os.replace(tmp_parquet, parquet)
+        os.replace(tmp_meta, meta)
+    finally:
+        tmp_parquet.unlink(missing_ok=True)
+        tmp_meta.unlink(missing_ok=True)
+
+
+def _build_carbon_test(window: Window, bas: tuple[str, ...]) -> Path:
+    """The test truth table [TEST_HISTORY_START, F_test), read through `sealed_read` and
+    written to its own path (B2). Test mode only."""
+    s = seal.require_active("build_carbon(test)")
+    lo = seal.TEST_HISTORY_START
+    sources = {ba: s.data_path(seal.WORKBOOK_REL.format(ba=ba)) for ba in bas}
+    frames = [seal.sealed_read(
+        p, purpose="build the test carbon truth table (F14.6 tiers 1-2, forecast history)",
+        columns=COLUMNS, time_range=(lo, window.F), reader=partial(parse_ba_workbook, ba=ba))
+        for ba, p in sources.items()]
+    out = pl.concat(frames).sort("ba", "ts_utc")
+    if out.height and out["ts_utc"].max() >= window.F:
+        raise AssertionError("test carbon table reaches past F")
+    parquet = s.data_path(CARBON_TEST_REL)
+    _write_atomic(out, parquet, parquet.with_name(TEST_META_NAME), {
+        "evidence": "modeled", "window": "test",
+        "source_workbooks_sha256": {f"{ba}.xlsx": _sha256(p) for ba, p in sources.items()},
+        "sheet": SHEET, "unit": "lb/kWh", "g_per_lb_factor": LB_TO_G,
+        "time_shift": "UTC end -> hour-start (-1h)",
+        "range": [lo.isoformat(), window.F.isoformat()],
+        "built_at": datetime.now(UTC).isoformat(), "session": s.session_id,
+        "built_through": "gridpilot.seal.sealed_read (logged in results/test_reads.jsonl)"})
+    s.register_built(parquet)
+    return parquet
+
+
+def build_carbon(bas: tuple[str, ...] = CORE_BAS, *, window: Window | None = None) -> Path:
     """Parse the BA workbooks and write carbon_hourly.parquet plus its lineage sidecar.
 
     Rows at or after TEST_START are dropped before writing. Both files are written
     atomically (temp file, then rename); on failure the previous files are untouched.
+    With the test window (test mode only) it writes the separate test table instead.
     """
+    w = resolve(window, "build_carbon")
+    if w.is_test:
+        return _build_carbon_test(w, bas)
     sources = {ba: WORKBOOK_DIR / f"{ba}.xlsx" for ba in bas}
-    frames = [parse_ba_workbook(p, ba) for ba, p in sources.items()]
+    frames = [drop_sealed(parse_ba_workbook(p, ba)) for ba, p in sources.items()]
     out = drop_sealed(pl.concat(frames).sort("ba", "ts_utc"))
     parquet, meta = CARBON_PATH, CARBON_PATH.with_name(META_NAME)
     parquet.parent.mkdir(parents=True, exist_ok=True)
@@ -160,8 +217,15 @@ def build_carbon(bas: tuple[str, ...] = CORE_BAS) -> Path:
     return parquet
 
 
-def load_carbon(path: Path | None = None) -> pl.DataFrame:
-    """The carbon truth table with every sealed-window hour dropped."""
+def load_carbon(path: Path | None = None, *, window: Window | None = None,
+                purpose: str = "carbon truth table") -> pl.DataFrame:
+    """The carbon truth table with every sealed-window hour dropped. With the test window
+    (test mode only): the test table, [TEST_HISTORY_START, F_test), through `sealed_read`."""
+    w = resolve(window, "load_carbon")
+    if w.is_test:
+        s = seal.require_active("load_carbon(test)")
+        return seal.sealed_read(path or s.data_path(CARBON_TEST_REL), purpose=purpose,
+                                columns=COLUMNS, time_range=(seal.TEST_HISTORY_START, w.F))
     return drop_sealed(pl.read_parquet(path or CARBON_PATH))
 
 
@@ -170,14 +234,18 @@ def site_mask(
     start: datetime | None = None,
     end: datetime | None = None,
     bas: tuple[str, ...] | list[str] | None = None,
+    *,
+    window: Window | None = None,
 ) -> pl.DataFrame:
     """truth_ok for every (ba, hour-start) in [start, end), closed by default (F3).
 
     truth_ok is False where the consumed-basis truth is null AND wherever `carbon` has
     no row for the key (hour outside a BA's stored range, or a BA with no rows). Defaults:
     `bas` = the BAs present in `carbon`, `start` = earliest hour, `end` = latest hour + 1 h.
-    A window reaching TEST_START raises: the sealed window has no truth here.
+    A window reaching TEST_START raises: the sealed window has no truth here. With the test
+    `window` the bound is F_test instead.
     """
+    bound = resolve(window, "site_mask").read_end
     if bas is None:
         bas = carbon["ba"].unique().sort().to_list()
     if carbon.height:
@@ -185,8 +253,9 @@ def site_mask(
         end = end or carbon["ts_utc"].max() + timedelta(hours=1)
     if start is None or end is None:
         raise ValueError("site_mask needs start and end when carbon is empty")
-    if end > TEST_START:
-        raise ValueError(f"site_mask window ends {end}, after TEST_START {TEST_START}")
+    if end > bound:
+        raise ValueError(f"site_mask window ends {end}, after the read bound {bound} "
+                         f"(TEST_START outside test mode)")
     hours = pl.select(pl.datetime_range(
         start, end - timedelta(hours=1), interval="1h", time_unit="us", time_zone="UTC",
     ).alias("ts_utc"))

@@ -21,11 +21,17 @@ arrives in Utah and the views compare sites at the same instant):
 - `context_year_mean_ci`: other western BAs' year mean of our EIA-930 fuel-mix intensity
   (production basis, `gridpilot.carbon.fuel_mix_ci`). `modeled`; map context only, never
   compared with the core sites' consumption basis.
+
+**Window (Stage 3 T11, B2).** Every function takes the evaluation `window` (default
+validation). The test window (test mode only) profiles [TEST_START, F_test) instead, with its
+own months and July (2026-07), reads the test carbon table and the balance table through
+`gridpilot.seal.sealed_read`, and labels the artifact `window.name = "test"`.
 """
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import polars as pl
@@ -34,6 +40,7 @@ from gridpilot.carbon import fuel_mix_ci
 from gridpilot.data.eia930 import PARTITION_FUELS, add_demand_clean
 from gridpilot.results import SCHEMA_VERSION, env
 from gridpilot.splits import TEST_START, drop_sealed
+from gridpilot.window import Window, resolve
 
 TZ_NAME = "America/Denver"
 TZ = ZoneInfo(TZ_NAME)
@@ -54,19 +61,54 @@ US_AVG_SOURCE = ("EIA United States Electricity Profile 2024, "
 NO_HOURS = "no tier-1 hours in this cell of the validation window"
 
 
-def check_window(start: datetime, end: datetime) -> None:
+@dataclass(frozen=True)
+class Spec:
+    """What one window's profile covers."""
+
+    start: datetime
+    end: datetime
+    months: list[str]
+    july: str
+    name: str
+    no_hours: str
+
+
+def _months(start: datetime, end: datetime) -> list[str]:
+    a, b = start.astimezone(TZ), (end - timedelta(hours=1)).astimezone(TZ)
+    out, y, m = [], a.year, a.month
+    while (y, m) <= (b.year, b.month):
+        out.append(f"{y}-{m:02d}")
+        y, m = (y + 1, 1) if m == 12 else (y, m + 1)
+    return out
+
+
+def spec(window: Window | None = None) -> Spec:
+    w = resolve(window, "grid profile")
+    if not w.is_test:
+        return Spec(*WINDOW, MONTHS, JULY_MONTH,
+                    "validation year (eval_start to F); the test year is sealed", NO_HOURS)
+    months = _months(TEST_START, w.F)
+    july = next((m for m in months if m.endswith("-07")), months[-1])
+    return Spec(TEST_START, w.F, months, july, "test",
+                "no tier-1 hours in this cell of the test window")
+
+
+def check_window(start: datetime, end: datetime, window: Window | None = None) -> None:
+    bound = resolve(window, "grid profile").read_end
     if not end > start:
         raise ValueError(f"empty window [{start}, {end})")
-    if end > TEST_START or start >= TEST_START:
-        raise ValueError(f"window [{start}, {end}) reaches the seal at {TEST_START}")
+    if end > bound or start >= bound:
+        raise ValueError(f"window [{start}, {end}) reaches the seal at {bound}")
 
 
-def _guard(frame: pl.DataFrame, name: str) -> pl.DataFrame:
-    """Refuse any sealed row; keep only the window."""
-    if frame.height and frame["ts_utc"].max() >= TEST_START:
-        raise ValueError(f"{name}: input holds sealed rows (ts >= {TEST_START})")
-    s, e = WINDOW
-    return frame.filter((pl.col("ts_utc") >= s) & (pl.col("ts_utc") < e))
+def _guard(frame: pl.DataFrame, name: str, window: Window | None = None) -> pl.DataFrame:
+    """Refuse any row past the read bound (a sealed row outside test mode); keep only the
+    window."""
+    bound = resolve(window, name).read_end
+    if frame.height and frame["ts_utc"].max() >= bound:
+        raise ValueError(f"{name}: input holds sealed rows (ts >= {bound})")
+    sp = spec(window)
+    return frame.filter((pl.col("ts_utc") >= sp.start) & (pl.col("ts_utc") < sp.end))
 
 
 def _local(frame: pl.DataFrame) -> pl.DataFrame:
@@ -83,17 +125,18 @@ def _r(v):
     return round(v, DECIMALS) if isinstance(v, float) else v
 
 
-def _grid(agg: pl.DataFrame, col: str, fill) -> list[list]:
+def _grid(agg: pl.DataFrame, col: str, fill, months: list[str] | None = None) -> list[list]:
     look = {(r["month"], r["hour"]): _r(r[col]) for r in agg.iter_rows(named=True)}
-    return [[look.get((m, h), fill) for h in range(24)] for m in MONTHS]
+    return [[look.get((m, h), fill) for h in range(24)] for m in (months or MONTHS)]
 
 
-def typical_day_by_month(carbon: pl.DataFrame, ba: str) -> tuple[list[list], list[list]]:
+def typical_day_by_month(carbon: pl.DataFrame, ba: str,
+                         months: list[str] | None = None) -> tuple[list[list], list[list]]:
     """12 x 24 mean tier-1 consumed CI (None where a cell has no hours) and the hour counts."""
     c = _local(carbon.filter((pl.col("ba") == ba) & pl.col("ci_consumed_g_kwh").is_not_null()))
     agg = c.group_by("month", "hour").agg(pl.col("ci_consumed_g_kwh").mean().alias("v"),
                                           pl.len().alias("n"))
-    return _grid(agg, "v", None), _grid(agg, "n", 0)
+    return _grid(agg, "v", None, months), _grid(agg, "n", 0, months)
 
 
 def day_profile(carbon: pl.DataFrame, ba: str) -> tuple[list, list]:
@@ -112,8 +155,8 @@ def _net_load(balance: pl.DataFrame, ba: str = "PACE") -> pl.DataFrame:
          - pl.col("gen_solar_adj_mw").fill_null(0)).alias("net_load_mw")))
 
 
-def july_weekday_profile(balance: pl.DataFrame) -> dict:
-    b = _net_load(balance).filter((pl.col("month") == JULY_MONTH) & (pl.col("dow") <= 5))
+def july_weekday_profile(balance: pl.DataFrame, month: str = JULY_MONTH) -> dict:
+    b = _net_load(balance).filter((pl.col("month") == month) & (pl.col("dow") <= 5))
     agg = b.group_by("hour").agg(
         pl.col("demand_clean_mw").mean().alias("demand_mw"),
         pl.col("net_load_mw").mean().alias("net_load_mw"),
@@ -126,11 +169,12 @@ def july_weekday_profile(balance: pl.DataFrame) -> dict:
     return out
 
 
-def top_k_net_load_counts(balance: pl.DataFrame, k: int = TOP_K) -> list[list[int]]:
+def top_k_net_load_counts(balance: pl.DataFrame, k: int = TOP_K,
+                          months: list[str] | None = None) -> list[list[int]]:
     b = _net_load(balance).filter(pl.col("net_load_mw").is_not_null())
     top = b.sort(["net_load_mw", "ts_utc"], descending=[True, False]).head(k)
     agg = top.group_by("month", "hour").agg(pl.len().alias("n"))
-    return _grid(agg, "n", 0)
+    return _grid(agg, "n", 0, months)
 
 
 def context_year_means(balance: pl.DataFrame) -> dict[str, float | None]:
@@ -145,15 +189,19 @@ def _mean(vals, ns):
     return _r(tot / n) if n else None
 
 
-def build_profile(carbon: pl.DataFrame, balance: pl.DataFrame) -> dict:
-    """The enveloped grid-profile artifact from (carbon, balance) frames; validation year."""
-    check_window(*WINDOW)
-    carbon = _guard(carbon, "carbon")
-    balance = _guard(balance, "balance")
-    s, e = WINDOW
+def build_profile(carbon: pl.DataFrame, balance: pl.DataFrame, *,
+                  window: Window | None = None) -> dict:
+    """The enveloped grid-profile artifact from (carbon, balance) frames; validation year by
+    default, the test window's [TEST_START, F_test) with the test window (test mode only)."""
+    sp = spec(window)
+    check_window(sp.start, sp.end, window)
+    carbon = _guard(carbon, "carbon", window)
+    balance = _guard(balance, "balance", window)
+    s, e = sp.start, sp.end
+    NO_HOURS = sp.no_hours
     by_ba = {}
     for ba in CORE_BAS:
-        vals, counts = typical_day_by_month(carbon, ba)
+        vals, counts = typical_day_by_month(carbon, ba, sp.months)
         day, n = day_profile(carbon, ba)
         has_null = any(v is None for row in vals for v in row)
         pid = f"{PROV}:ci:{ba}"
@@ -169,21 +217,21 @@ def build_profile(carbon: pl.DataFrame, balance: pl.DataFrame) -> dict:
                              reason=None if ym is not None else NO_HOURS),
             "n_hours": env(sum(n), "hours", "measured", f"{pid}:n_hours"),
         }
-    jul = july_weekday_profile(balance)
+    jul = july_weekday_profile(balance, sp.july)
     jnull = "no July weekday rows in the window"
     jp = {k: env(jul[k], "MW", "observed", f"{PROV}:pace_july:{k}",
                  reason=jnull if any(v is None for v in jul[k]) else None)
           for k in ("demand_mw", "net_load_mw", "solar_mw", "wind_mw")}
-    counts = top_k_net_load_counts(balance)
+    counts = top_k_net_load_counts(balance, months=sp.months)
     ctx = context_year_means(balance)
     return {
         "schema_version": SCHEMA_VERSION,
         "kind": "grid-profile",
         "window": {"start": s.isoformat().replace("+00:00", "Z"),
                    "end": e.isoformat().replace("+00:00", "Z"),
-                   "name": "validation year (eval_start to F); the test year is sealed"},
+                   "name": sp.name},
         "tz_display": TZ_NAME,
-        "months": MONTHS,
+        "months": sp.months,
         "hour_index": "index i of every 24-value series is the America/Denver clock hour i",
         "reference": {
             "us_avg_ci": env(US_AVG_LB_PER_MWH * LB_TO_KG, "g/kWh", "observed", US_AVG_SOURCE),
@@ -196,8 +244,9 @@ def build_profile(carbon: pl.DataFrame, balance: pl.DataFrame) -> dict:
             "by_ba": by_ba,
         },
         "pace_july_weekday": {
-            "month": JULY_MONTH,  # the dashboard's load label reads this (T9 C8)
-            "definition": "mean over July 2025 weekdays (America/Denver; holidays included) of "
+            "month": sp.july,  # the dashboard's load label reads this (T9 C8)
+            "definition": f"mean over July {sp.july[:4]} weekdays (America/Denver; holidays "
+                          "included) of "
                           "EIA-930 adjusted demand (isolated spikes removed), solar and wind; "
                           "net load = demand − wind − solar",
             "n_days": env(jul["n_days"], "days", "measured", f"{PROV}:pace_july:n_days"),
@@ -220,17 +269,36 @@ def build_profile(carbon: pl.DataFrame, balance: pl.DataFrame) -> dict:
     }
 
 
-def load_inputs() -> tuple[pl.DataFrame, pl.DataFrame]:
-    """Read the carbon and balance tables through the seal, restricted to the window."""
+def load_inputs(window: Window | None = None) -> tuple[pl.DataFrame, pl.DataFrame]:
+    """Read the carbon and balance tables through the seal, restricted to the window. With
+    the test window (test mode only): through `sealed_read`."""
     from gridpilot.data.eia_co2 import CARBON_PATH
     from gridpilot.data.truth_fill import BALANCE_PATH
 
-    s, e = WINDOW
+    sp = spec(window)
+    s, e = sp.start, sp.end
+    cols = ["ba", "ts_utc", "demand_adj_mw"] + [f"gen_{f}_adj_mw" for f in PARTITION_FUELS]
+    if resolve(window, "load_inputs").is_test:
+        return _load_inputs_test(s, e, cols)
     win = (pl.col("ts_utc") >= s) & (pl.col("ts_utc") < e)
     carbon = (drop_sealed(pl.scan_parquet(CARBON_PATH)).filter(win)
               .select("ba", "ts_utc", "ci_consumed_g_kwh").collect())
-    cols = ["ba", "ts_utc", "demand_adj_mw"] + [f"gen_{f}_adj_mw" for f in PARTITION_FUELS]
     balance = (drop_sealed(pl.scan_parquet(BALANCE_PATH)).filter(win)
                .filter(pl.col("ba").cast(pl.Utf8).is_in(("PACE",) + CONTEXT_BAS))
                .select(cols).with_columns(pl.col("ba").cast(pl.Utf8)).collect())
+    return carbon, balance
+
+
+def _load_inputs_test(s: datetime, e: datetime, cols: list[str]):
+    from gridpilot import seal
+    from gridpilot.data.eia_co2 import CARBON_TEST_REL
+
+    ses = seal.require_active("grid profile (test)")
+    carbon = seal.sealed_read(ses.data_path(CARBON_TEST_REL), purpose="grid profile (test)",
+                              columns=["ba", "ts_utc", "ci_consumed_g_kwh"], time_range=(s, e))
+    balance = seal.sealed_read(
+        ses.data_path(seal.BALANCE_REL), purpose="grid profile (test)", columns=cols,
+        time_range=(s, e),
+        where=pl.col("ba").cast(pl.Utf8).is_in(("PACE",) + CONTEXT_BAS)
+    ).with_columns(pl.col("ba").cast(pl.Utf8))
     return carbon, balance

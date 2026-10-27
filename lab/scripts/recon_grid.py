@@ -733,13 +733,14 @@ def eia_co2_crosscheck(pre: pl.DataFrame) -> None:
         want = ["UTC time", "CO2 Emissions Generated", "Positive Generation",
                 "CO2 Emissions Intensity for Generated Electricity",
                 "CO2 Emissions Intensity for Consumed Electricity"]
-        x = pl.read_excel(p, sheet_name="Published Hourly Data", columns=want,
-                          schema_overrides={c: pl.Utf8 for c in want[1:]})
-        x = x.with_columns(
+        # The seal wraps the read itself (T11 F8 guard); the same rows as before.
+        x = drop_sealed(pl.read_excel(p, sheet_name="Published Hourly Data", columns=want,
+                                      schema_overrides={c: pl.Utf8 for c in want[1:]})
+                        .with_columns(
             (pl.col("UTC time").cast(pl.Datetime("us")).dt.replace_time_zone("UTC")
              - pl.duration(hours=1)).alias("ts_utc"),
-            *[pl.col(c).cast(pl.Float64, strict=False) for c in want[1:]])
-        x = drop_sealed(x).filter(pl.col("ts_utc") >= VAL_START)
+            *[pl.col(c).cast(pl.Float64, strict=False) for c in want[1:]]))
+        x = x.filter(pl.col("ts_utc") >= VAL_START)
         ours = val_year(pre.filter(pl.col("ba") == b)).select("ts_utc", "ci_g_kwh", "co2_kg", "gen_fuel_total_mw")
         j = ours.join(x, on="ts_utc").drop_nulls(["ci_g_kwh", "CO2 Emissions Intensity for Generated Electricity"])
         if j.height == 0:

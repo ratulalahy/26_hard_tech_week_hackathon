@@ -18,7 +18,9 @@ non-null row is tier 1) or the F14.6 scoring frame (`ba, ts_utc, ci_g_kwh, tier`
 tiers 2–4 are modeled fills. An hour is *missing* if it has no value, no row, or a
 `site_mask` row with `truth_ok = False`. Accounting never fills: a ledger interval that
 touches a missing hour raises. Rows at or after TEST_START are dropped, and any request
-for an hour at or after TEST_START raises (seal, F8).
+for an hour at or after TEST_START raises (seal, F8). `TruthTable(..., window=)` and
+`support_check(..., window=)` take the evaluation window (default validation); with the test
+window (test mode only, Stage 3 T11) the bound is F_test instead of TEST_START.
 
 **Evidence.** Energy is `modeled`; CO₂ outputs and schedule quantities are `simulated` (the
 policy outcomes of a simulated run; T9 C5).
@@ -41,6 +43,7 @@ from gridpilot.sim import HOME, SITES, TRANSFER_S, WarmupState
 from gridpilot.sim.power import GPU_KW as KW_PER_GPU  # one source of the constants (A14)
 from gridpilot.sim.power import PUE, TRANSFER_FRACTION
 from gridpilot.splits import TEST_START
+from gridpilot.window import Window, resolve
 
 BOUND_TOL_KG = 1e-6  # "feasible ≥ bound" tolerance on the scored cohort (F14.5)
 WEEK_TZ = "America/Denver"
@@ -96,10 +99,15 @@ def _ts(us: np.ndarray) -> pl.Series:
         .dt.replace_time_zone("UTC")
 
 
-def _seal(t_us: np.ndarray, what: str) -> None:
-    if t_us.size and int(t_us.max()) > TEST_START_US:
-        raise ValueError(f"{what} reaches past TEST_START {TEST_START.isoformat()}: the "
-                         f"sealed window is never read here (F8)")
+def _seal(t_us: np.ndarray, what: str, bound_us: int = TEST_START_US) -> None:
+    if t_us.size and int(t_us.max()) > bound_us:
+        raise ValueError(f"{what} reaches past the read bound {_us_dt_iso(bound_us)} "
+                         f"(TEST_START outside test mode): the sealed window is never read "
+                         f"here (F8)")
+
+
+def _us_dt_iso(us: int) -> str:
+    return (EPOCH + timedelta(microseconds=int(us))).isoformat()
 
 
 # --------------------------------------------------------------------------- truth
@@ -121,7 +129,11 @@ class TruthTable:
     closed.
     """
 
-    def __init__(self, truth: pl.DataFrame, mask: pl.DataFrame | None = None):
+    def __init__(self, truth: pl.DataFrame, mask: pl.DataFrame | None = None, *,
+                 window: Window | None = None):
+        self.window = resolve(window, "TruthTable")
+        bound = self.window.read_end
+        self.read_end_us = _dt_us(bound, "read_end")
         if "ci_g_kwh" in truth.columns:
             ci_col = "ci_g_kwh"
             tier = pl.col("tier").cast(pl.Int64) if "tier" in truth.columns else pl.lit(1)
@@ -129,7 +141,7 @@ class TruthTable:
             ci_col, tier = "ci_consumed_g_kwh", pl.lit(1)
         else:
             raise ValueError("truth needs ci_g_kwh (F14.6) or ci_consumed_g_kwh (Task 1)")
-        t = truth.filter(pl.col("ts_utc") < TEST_START).select(
+        t = truth.filter(pl.col("ts_utc") < bound).select(
             "ba", _us("ts_utc").alias("t"), pl.col(ci_col).cast(pl.Float64).alias("ci"),
             tier.alias("tier"),
         )
@@ -154,7 +166,7 @@ class TruthTable:
         closed: dict[str, np.ndarray] = {}
         if mask is not None:
             m = mask.filter(~pl.col("truth_ok").fill_null(False)
-                            & (pl.col("ts_utc") < TEST_START)).select(
+                            & (pl.col("ts_utc") < bound)).select(
                 "ba", ((_us("ts_utc") - self.start_us) // HOUR_US).alias("h"))
             m = m.filter((pl.col("h") >= 0) & (pl.col("h") < n))
             for ba, g in m.group_by("ba"):
@@ -200,7 +212,7 @@ class TruthTable:
     def _span(self, s, e):
         s = np.asarray(s, dtype=np.int64)
         e = np.asarray(e, dtype=np.int64)
-        _seal(e, "a truth request")
+        _seal(e, "a truth request", self.read_end_us)
         span = self.n * HOUR_US
         out = (s < self.start_us) | (e > self.end_us) | (e < s)
         rs = np.clip(s - self.start_us, 0, span)
@@ -224,9 +236,9 @@ class TruthTable:
 
     def _hour(self, t):
         t = np.asarray(t, dtype=np.int64)
-        if t.size and int(t.max()) >= TEST_START_US:
-            raise ValueError(f"a truth request at or after TEST_START {TEST_START.isoformat()}"
-                             f" (F8)")
+        if t.size and int(t.max()) >= self.read_end_us:
+            raise ValueError(f"a truth request at or after the read bound "
+                             f"{_us_dt_iso(self.read_end_us)} (TEST_START outside test mode; F8)")
         h = (t - self.start_us) // HOUR_US
         out = (h < 0) | (h >= self.n)
         return np.clip(h, 0, max(self.n - 1, 0)), out
@@ -248,12 +260,14 @@ class TruthTable:
         return ~out & (fill[h] > 0)
 
 
-def _truth(truth, mask) -> TruthTable:
+def _truth(truth, mask, window: Window | None = None) -> TruthTable:
     if isinstance(truth, TruthTable):
         if mask is not None:
             raise ValueError("pass the mask when building the TruthTable, not with it")
+        if window is not None and truth.window != window:
+            raise ValueError(f"TruthTable window {truth.window.name} != {window.name}")
         return truth
-    return TruthTable(truth, mask)
+    return TruthTable(truth, mask, window=window)
 
 
 # --------------------------------------------------------------------------- per job
@@ -885,20 +899,21 @@ def support_check(
     F: datetime,
     *,
     mask: pl.DataFrame | None = None,
+    window: Window | None = None,
 ) -> dict:
     """Accounting-support pre-check of U bookings (F12.3, F13.3; amendment 6).
 
     Reports every booking that ends after F (`ends_after_f`) or whose [start, end)
     touches an hour with no truth at its site (`missing_truth`). Pass the F14.6 filled
     truth (the pre-check uses it); `n_filled_truth` counts bookings priced partly on
-    tiers 2–4 (informational). Hours at or after TEST_START are never read: a booking
-    reaching them counts as `missing_truth`. Accepts `u_bookings` frames (start_us,
+    tiers 2–4 (informational). Hours at or after TEST_START (with the test `window`:
+    F_test) are never read: a booking reaching them counts as `missing_truth`. Accepts `u_bookings` frames (start_us,
     end_us) or ledgers (start_ts, end_ts), e.g. the warm-up ledger, which F13.2 checks
     through its actual completion. `ok` is False on any failure, which the driver must
     report as an accounting-support failure.
     """
     f_us = _dt_us(F, "F")
-    tt = _truth(truth, mask)
+    tt = _truth(truth, mask, window)
     if "start_us" in bookings.columns:
         s = bookings["start_us"].to_numpy().astype(np.int64)
         e = bookings["end_us"].to_numpy().astype(np.int64)
@@ -907,8 +922,8 @@ def support_check(
     uid = bookings["job_uid"].to_list()
     site = bookings["site"].to_numpy().astype(str)
     after = e > f_us
-    sealed = e > TEST_START_US
-    e_read = np.minimum(e, TEST_START_US)
+    sealed = e > tt.read_end_us
+    e_read = np.minimum(e, tt.read_end_us)
     s_read = np.minimum(s, e_read)
     miss = sealed.copy()
     filled = np.zeros(len(uid), dtype=bool)

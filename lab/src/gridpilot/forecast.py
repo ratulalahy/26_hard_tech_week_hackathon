@@ -27,6 +27,14 @@ historical revisions cannot be reconstructed from the bulk cache.
 
 Run the validation forecast with ``uv run python -m gridpilot.forecast`` (writes
 ``runs/forecast/<UTC>/``).
+
+**Test window** (Stage 3 T11 B2; spec §5): ``run_test(window, out_root)`` runs only inside the
+test-mode context. Models are fitted once at TEST_FIT_AT = 2025-10-29T00:00Z on history from
+TEST_HISTORY_START = 2023-01-01, with the **frozen** L ``max_leaf_nodes`` per series read from
+the freeze record (no reselection). Issues run daily from the fit, like the validation run,
+so the forecasts cover the first test day; every target day ends by F_test. The series are
+read through ``gridpilot.seal.sealed_read`` (lagged test observations become inputs under the
+same publication envelopes).
 """
 
 from __future__ import annotations
@@ -51,10 +59,12 @@ import polars as pl
 import yaml
 from sklearn.ensemble import HistGradientBoostingRegressor
 
+from gridpilot import seal
 from gridpilot.data.eia930 import add_demand_clean
-from gridpilot.data.eia_co2 import CARBON_PATH, CORE_BAS
+from gridpilot.data.eia_co2 import CARBON_PATH, CARBON_TEST_REL, CORE_BAS
 from gridpilot.paths import INTERIM_DIR, MANIFEST_DIR, REPO_ROOT
 from gridpilot.splits import TEST_START, VALIDATION_START, drop_sealed
+from gridpilot.window import Window, resolve
 
 log = logging.getLogger(__name__)
 
@@ -78,6 +88,9 @@ HGB_PARAMS = {"loss": "squared_error", "max_iter": 200, "learning_rate": 0.05,
 VAL_FIT_AT = datetime(2024, 10, 29, tzinfo=UTC)
 VAL_HISTORY_START = datetime(2022, 1, 1, tzinfo=UTC)
 SELECTION_END = datetime(2025, 10, 24, tzinfo=UTC)
+# Test fit (spec §5): fitted once at 2025-10-29 with history from 2023-01-01 (gridpilot.seal).
+TEST_FIT_AT = seal.TEST_FIT_AT
+TEST_HISTORY_START = seal.TEST_HISTORY_START
 # Tie-break for the best family (spec §6): seasonal, climatology, (persistence), boosting.
 FAMILY_ORDER = ("W", "K", "L")
 RUN_SERIES = tuple((ba, "ci_consumed") for ba in CORE_BAS) + (
@@ -481,9 +494,11 @@ def forecast(series: pl.DataFrame, ba: str, target: str, model: Model,
 # --------------------------------------------------------------------------------------------
 
 
-def score(fc: pl.DataFrame, truth: pl.DataFrame, train_mean: float) -> dict:
+def score(fc: pl.DataFrame, truth: pl.DataFrame, train_mean: float, *,
+          window: Window | None = None) -> dict:
     """MAE, signed bias (forecast - truth) and MAE / training mean over hours with non-null
-    truth. Refuses any target or truth hour at or after TEST_START.
+    truth. Refuses any target or truth hour at or after TEST_START (with the test window:
+    at or after F_test).
 
     ``fc`` must hold one (model, target) with unique (ba, target_ts), so that no hour is
     counted twice; ``truth`` must have unique (ba, ts_utc). The statistics are labelled
@@ -495,10 +510,11 @@ def score(fc: pl.DataFrame, truth: pl.DataFrame, train_mean: float) -> dict:
         raise ValueError("score expects unique (ba, target_ts) in the forecasts")
     if truth.select("ba", "ts_utc").is_duplicated().any():
         raise ValueError("score expects unique (ba, ts_utc) in the truth")
-    if fc.height and fc["target_ts"].max() >= TEST_START:
-        raise ValueError("forecast targets reach the sealed window")
-    if truth.height and truth["ts_utc"].max() >= TEST_START:
-        raise ValueError("truth reaches the sealed window")
+    bound = resolve(window, "score").read_end
+    if fc.height and fc["target_ts"].max() >= bound:
+        raise ValueError("forecast targets reach the sealed window (past the read bound)")
+    if truth.height and truth["ts_utc"].max() >= bound:
+        raise ValueError("truth reaches the sealed window (past the read bound)")
     j = fc.join(truth.select("ba", pl.col("ts_utc").alias("target_ts"),
                              pl.col("value").alias("truth")),
                 on=["ba", "target_ts"], how="inner").drop_nulls("truth")
@@ -520,10 +536,14 @@ def _mae_key(s: dict) -> float:
 # --------------------------------------------------------------------------------------------
 
 
-def load_series(target: str) -> pl.DataFrame:
+def load_series(target: str, *, window: Window | None = None) -> pl.DataFrame:
     """Published pre-seal series ``ba, ts_utc, value``: consumed CO2 intensity for the core BAs,
     or PACE demand / wind / solar (EIA-930 adjusted columns). Nulls are kept (dropped when
-    labels or truth are formed)."""
+    labels or truth are formed). With the test window (test mode only): the series over
+    [TEST_HISTORY_START, F_test) through ``sealed_read``."""
+    w = resolve(window, "load_series")
+    if w.is_test:
+        return _load_series_test(target, w)
     # The seal is applied in the lazy scan, so sealed rows never enter memory (F8).
     if target == "ci_consumed":
         lazy = drop_sealed(pl.scan_parquet(CARBON_PATH)).filter(
@@ -539,6 +559,36 @@ def load_series(target: str) -> pl.DataFrame:
     if frame.height and frame["ts_utc"].max() >= TEST_START:
         raise ValueError(f"{target}: loaded a sealed-window row")
     return frame
+
+
+def _load_series_test(target: str, w: Window) -> pl.DataFrame:
+    s = seal.require_active("load_series(test)")
+    rng = (TEST_HISTORY_START, w.F)
+    if target == "ci_consumed":
+        frame = seal.sealed_read(
+            s.data_path(CARBON_TEST_REL), purpose=f"forecast series {target} (test fit, issues)",
+            columns=["ba", "ts_utc", "ci_consumed_g_kwh"], time_range=rng,
+            where=pl.col("ba").is_in(list(CORE_BAS))).rename({"ci_consumed_g_kwh": "value"})
+    else:
+        col = BALANCE_COLS[target]
+        frame = seal.sealed_read(
+            s.data_path(seal.BALANCE_REL), purpose=f"forecast series {target} (test fit, issues)",
+            columns=["ba", "ts_utc", col], time_range=rng,
+            where=pl.col("ba").cast(pl.Utf8) == "PACE").rename({col: "value"})
+    frame = frame.select(pl.col("ba").cast(pl.Utf8), pl.col("ts_utc"),
+                         pl.col("value").cast(pl.Float64)).sort("ba", "ts_utc")
+    if frame.height and frame["ts_utc"].max() >= w.F:
+        raise ValueError(f"{target}: loaded a row past F_test")
+    return frame
+
+
+def issues_for_window(window: Window) -> list[datetime]:
+    """Issues of the test run: daily from TEST_FIT_AT, each at or after the fit, and each
+    whole target day ending at or before F_test."""
+    w = resolve(window, "issues_for_window")
+    if not w.is_test:
+        raise ValueError("issues_for_window needs the test window")
+    return [i for i in issue_times(TEST_FIT_AT, w.F) if target_hours(i)[-1] + H <= w.F]
 
 
 def validation_issues() -> tuple[list[datetime], list[datetime]]:
@@ -656,6 +706,91 @@ def run_validation(out_root: Path | None = None) -> Path:
              "window_note": ("selection = issues in [2024-11-01, 2025-10-24); all_issues = "
                              "every run issue, descriptive only. Development evidence: the "
                              "validation year was already exposed by the profiles."),
+             "metric_note": "bias = mean(forecast - truth); nmae = MAE / training mean",
+             "series": metrics}, indent=2) + "\n")
+        os.rename(tmp, final)
+    except BaseException:
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise
+    return final
+
+
+def run_test(window: Window, out_root: Path) -> Path:
+    """The test forecast run (test mode only): fit once at TEST_FIT_AT on history from
+    TEST_HISTORY_START with the frozen L configuration per series, forecast every test issue
+    with K, W and L, score on the test targets [TEST_START, F_test), and write the run
+    directory atomically. Nothing is selected here."""
+    w = resolve(window, "forecast.run_test")
+    if not w.is_test:
+        raise ValueError("run_test needs the test window")
+    s = seal.require_active("forecast.run_test")
+    frozen = s.freeze.l_max_leaf_nodes
+    if s.freeze.test_fit_at != TEST_FIT_AT or s.freeze.test_history_start != TEST_HISTORY_START:
+        raise ValueError("freeze record fit time / history start differ from spec §5")
+    run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    issues = issues_for_window(w)
+    if not issues:
+        raise ValueError("no test issue: F_test is too early")
+    in_test = pl.col("target_ts") >= TEST_START
+    data = {t: load_series(t, window=w) for t in sorted({t for _, t in RUN_SERIES})}
+    forecasts, climatologies, metrics = [], [], {}
+    for ba, target in RUN_SERIES:
+        key = f"{ba}/{target}"
+        m = frozen[key]
+        log.info("fitting %s/%s (test, frozen L max_leaf_nodes=%d)", ba, target, m)
+        fitted = fit(data[target], ba, target, TEST_FIT_AT, TEST_HISTORY_START, leaf_nodes=(m,))
+        sb = _one_ba(data[target], ba, TEST_HISTORY_START)
+        feats = issue_features(sb, target, issues, fitted.tz)
+        truth = prepare(sb, target).drop_nulls("value")
+        frames, clips, scores = {}, {}, {}
+        for name, (model, leaf) in {"K": ("K", None), "W": ("W", None), "L": ("L", m)}.items():
+            f, n_clip = predict(fitted, feats, model, leaf)
+            frames[name], clips[name] = f, n_clip
+            scores[name] = {"test": score(f.filter(in_test), truth, fitted.train_mean, window=w),
+                            "all_issues": score(f, truth, fitted.train_mean, window=w)}
+        forecasts += [frames["K"], frames["W"], frames["L"]]
+        climatologies.append(climatology_table(fitted.clim, ba, target))
+        metrics[key] = {
+            "ba": ba, "target": target, "unit": UNITS[target], "envelope_h": ENVELOPE_H[target],
+            "train_mean": fitted.train_mean, "n_labels": fitted.n_labels,
+            "n_train_rows_L": fitted.n_train_rows, "L_max_leaf_nodes": m,
+            "L_max_leaf_nodes_source": "frozen (config/freeze.json); no reselection on test",
+            "clip_counts": clips, "models": scores}
+    fc = pl.concat(forecasts)
+    if fc["target_ts"].max() + H > w.F:
+        raise ValueError("a target hour reaches past F_test")
+    config = {
+        "run_id": run_id, "window": "test", "evidence": "forecast", "limitation": LIMITATION,
+        "issue": {"tz": "America/Denver", "hour_local": ISSUE_HOUR,
+                  "target": "next Utah civil day (America/Denver), UTC hour starts"},
+        "envelope_h": ENVELOPE_H,
+        "envelope_rule": "keep row iff ts_utc + 1h + envelope_h <= issue (assumed availability)",
+        "fit_at": TEST_FIT_AT.isoformat(), "history_start": TEST_HISTORY_START.isoformat(),
+        "F": w.F.isoformat(),
+        "issues": {"first": issues[0].isoformat(), "last": issues[-1].isoformat(),
+                   "n": len(issues)},
+        "scored_targets": [TEST_START.isoformat(), w.F.isoformat()],
+        "L_max_leaf_nodes": frozen, "freeze_sha256": s.freeze.sha256,
+        "series": [f"{ba}/{t}" for ba, t in RUN_SERIES], "ba_tz": BA_TZ,
+        "weekly_lags_h": list(WEEKLY_LAGS_H), "hgb": HGB_PARAMS, "features": list(FEATURES),
+        "climatology_levels": [list(k) for k in Climatology.LEVELS] + [["ba_median"]],
+        "nonnegative_clip": sorted(NONNEGATIVE),
+        "inputs": "read through gridpilot.seal.sealed_read; see results/test_reads.jsonl",
+    }
+    out_root.mkdir(parents=True, exist_ok=True)
+    tmp = out_root / f".tmp-{run_id}-{os.getpid()}"
+    final = out_root / run_id
+    tmp.mkdir()
+    try:
+        fc.write_parquet(tmp / "forecasts.parquet")
+        pl.concat(climatologies).write_parquet(tmp / "climatology.parquet")
+        (tmp / "config.yaml").write_text(yaml.safe_dump(config, sort_keys=False))
+        (tmp / "metrics.json").write_text(json.dumps(
+            {"run_id": run_id, "window": "test", "evidence": "measured",
+             "forecast_evidence": "forecast", "limitation": LIMITATION,
+             "window_note": ("test = forecasts whose target hour is in [TEST_START, F_test); "
+                             "all_issues = every run issue. Frozen configuration; nothing is "
+                             "selected on test."),
              "metric_note": "bias = mean(forecast - truth); nmae = MAE / training mean",
              "series": metrics}, indent=2) + "\n")
         os.rename(tmp, final)
