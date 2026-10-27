@@ -109,9 +109,9 @@ export function Cockpit() {
       <div className="grid min-h-0" style={{ gridTemplateRows: short ? 'minmax(0,1fr) auto' : 'minmax(0,1fr)', gap: 16 }}>
         <Panel className="relative overflow-hidden" style={{ padding: 0 }}>
           <WestMap id="map-inset" variant="inset" interactive={false} ci={ci} context={context} hourLabel={fmtHour(s.hour)} arcs={arcs} ring={mode === 'wait'}
-            bounds={[[-127.8, 31.4], [-101.2, 49.0]]} padding={{ top: 52, bottom: 12, left: 12, right: 12 }} />
+            bounds={[[-124.6, 31.4], [-104.0, 49.0]]} padding={{ top: 56, bottom: 16, left: 150, right: 120 }} />
           <div className="absolute flex items-baseline justify-between gap-2" style={{ left: 16, right: 16, top: 16 }}>
-            <span className="t-15">{mode === 'move' ? `Utah to ${REGION[dest].name}` : mode === 'wait' ? `Held in Utah until ${fmtHour(p.wait.s)}` : 'Runs in Utah now'}</span>
+            <span className="t-15">{mode === 'move' ? `Utah to ${REGION[dest].name}` : mode === 'wait' ? (p.wait.d ? `Held in Utah until ${fmtHour(p.wait.s)}` : `Runs in Utah at ${fmtHour(p.a)}; waiting does not help`) : 'Runs in Utah now'}</span>
             <EvCI extra={fmtHour(s.hour)} />
           </div>
         </Panel>

@@ -127,24 +127,31 @@ export function WestMap(p: MapProps) {
   };
 
   // Labels show by zoom, and only inside the window the docks leave free (no callouts under panels).
+  // Labels show by zoom, only when their whole box sits in the window the docks leave free, and
+  // never on top of another shown label or an overlay marked data-map-avoid (caption, zoom buttons).
+  // Priority: region callouts, then arc labels, cities, states, context-region codes, the lake.
   const declutter = () => {
     const m = map.current; if (!m) return;
     const z = m.getZoom(), q = props.current;
-    const W = m.getContainer().clientWidth, H = m.getContainer().clientHeight;
+    const H = m.getContainer().clientHeight;
     const pad = q.padding ?? { top: 0, bottom: 0, left: 0, right: 0 };
     const box0 = m.getContainer().getBoundingClientRect();
-    // a label shows only if its whole box sits in the window the docks leave free
-    const fits = (node: HTMLElement) => {
+    const win = { l: box0.left + pad.left, r: box0.right - pad.right, t: box0.top + pad.top, b: box0.top + H - pad.bottom };
+    const inWin = (r: DOMRect) => r.left >= win.l && r.right <= win.r && r.top >= win.t && r.bottom <= win.b;
+    const inBox = (r: DOMRect) => r.left >= box0.left && r.right <= box0.right && r.top >= box0.top && r.bottom <= box0.bottom;
+    const taken: DOMRect[] = q.variant === 'main' ? [...document.querySelectorAll<HTMLElement>('[data-map-avoid]')].map((e) => e.getBoundingClientRect()) : [];
+    const hit = (r: DOMRect) => taken.some((t) => r.left < t.right + 2 && r.right > t.left - 2 && r.top < t.bottom + 2 && r.bottom > t.top - 2);
+    const show = (node: HTMLElement, ok: boolean) => {
+      node.style.display = '';
       const r = node.getBoundingClientRect();
-      return r.left >= box0.left + pad.left - 32 && r.right <= box0.right - pad.right + 64 && r.top >= box0.top + pad.top - 32 && r.bottom <= box0.top + H - pad.bottom + 16;
+      if (!ok || !(q.variant === 'inset' ? inBox(r) : inWin(r)) || hit(r)) { node.style.display = 'none'; return; }
+      taken.push(r);
     };
-    void W;
-    for (const l of labels.current) {
-      if (z < l.minZoom) { l.el.style.display = 'none'; continue; }
-      l.el.style.display = '';
-      if (!l.always && !fits(l.el)) l.el.style.display = 'none';
-    }
-    for (const a of arcEls.current) { const n = a.mk.getElement(); n.style.display = ''; if (!fits(n)) n.style.display = 'none'; }
+    const rank = (l: Lbl) => (l.el.classList.contains('mk-callout') ? 0 : l.el.classList.contains('mk-city') ? 2 : l.el.classList.contains('mk-state') ? 3 : l.el.classList.contains('mk-ba') ? 4 : 5);
+    const callouts = labels.current.filter((l) => rank(l) === 0);
+    for (const l of callouts) show(l.el, z >= l.minZoom);
+    for (const a of arcEls.current) show(a.mk.getElement(), true);
+    for (const l of labels.current.filter((x) => rank(x) > 0).sort((x, y) => rank(x) - rank(y))) show(l.el, z >= l.minZoom);
   };
 
   useEffect(() => {
@@ -295,7 +302,7 @@ export function WestMap(p: MapProps) {
         </div>
       )}
       {p.variant === 'main' && p.interactive && (
-        <div className="absolute flex flex-col gap-2" style={{ right: (p.padding?.right ?? 16) - 48, bottom: (p.padding?.bottom ?? 16) + 0 }}>
+        <div data-map-avoid className="absolute flex flex-col gap-2" style={{ right: (p.padding?.right ?? 16) - 48, bottom: (p.padding?.bottom ?? 16) + 0 }}>
           <button className="iconbtn" aria-label="Zoom in" onClick={() => map.current?.zoomIn({ duration: still() ? 0 : 200 })}><Icon name="plus" /></button>
           <button className="iconbtn" aria-label="Zoom out" onClick={() => map.current?.zoomOut({ duration: still() ? 0 : 200 })}><Icon name="minus" /></button>
           <button className="iconbtn" aria-label="Reset to the West" title="Reset to the West" onClick={() => fit(true)}><Icon name="reset" /></button>

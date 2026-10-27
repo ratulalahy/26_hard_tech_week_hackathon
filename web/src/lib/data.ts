@@ -59,12 +59,24 @@ export const NAME: Record<string, string> = {
   L_time: 'L wait-only',
 };
 export const pname = (p: string) => NAME[p] ?? p;
-export const pnote = (m: Json, p: string): string => m.policies?.[p]?.note ?? '';
+/** Plain-language rule of each policy, for hover titles (N9). */
+const ROLE: Record<string, string> = {
+  U: 'Runs every job at its Utah reservation, first come, first served. The baseline.',
+  G: 'Runs each job wherever it would finish earliest. Ignores carbon.',
+  S: 'Sends work to the cleanest site by a fixed ranking from past years.',
+  K: 'Searches for the cleanest time and site, using a seasonal-average forecast of carbon.',
+  W: 'Searches for the cleanest time and site, using a weekly-profile forecast of carbon.',
+  L: 'Searches for the cleanest time and site, using the learned forecast model.',
+  H: 'The same search with perfect hindsight of actual carbon. A check, never a contender.',
+  W_time: 'Like W weekly profile, but may only wait in Utah, never move.',
+  L_time: 'Like L learned model, but may only wait in Utah, never move.',
+};
+export const pnote = (_m: Json, p: string): string => ROLE[p] ?? '';
 export const POLICY_ORDER = ['U', 'G', 'S', 'K', 'W', 'L', 'H', 'W_time', 'L_time'];
 
 /** Plain-language limitations (lead ruling R7). Matched on the manifest text; the verbatim text stays behind "Source text". */
 const PLAIN: [RegExp, string][] = [
-  [/^Publication-lagged replay/i, "Forecasts were replayed on today's revised copy of EIA's historical data, with publication delays applied. The exact data available on each past day were not reconstructed, and the delay rules are our assumptions."],
+  [/^Publication-lagged replay/i, "Forecasts were replayed on today's revised copy of EIA's historical data, with publication delays applied. The exact data available on each past day were not reconstructed, and the delay rules are our assumptions. The two-hour delay assumed for EIA's adjusted demand has not been checked against EIA's own timing."],
   [/imports from Canada and Mexico/i, 'Electricity imported from Canada and Mexico is counted at the US average carbon rate, as EIA does.'],
   [/emission factors may be a provisional/i, "EIA's emission factors for 2025–26 may still be provisional."],
   [/^Baseline bookings/i, 'Every job holds an advance reservation at its home site, built from the baseline run. This is a planning scenario, not a replay of a real online scheduler.'],

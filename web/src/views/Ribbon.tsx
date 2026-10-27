@@ -58,30 +58,30 @@ export function Ribbon() {
 
 export function LoadChart({ rush, clean, dem, net, sol }: { rush: [number, number]; clean: [number, number]; dem: number[]; net: number[]; sol: number[] }) {
   const option = useMemo(() => {
-    const hours = Array.from({ length: 24 }, (_, i) => fmtHour(i));
+    const at = (a: number[]) => a.map((v, i) => [i + 0.5, v]);
     const pk = argmax(net), dk = argmax(dem);
     const ymax = Math.ceil((Math.max(...dem) + 1500) / 3000) * 3000;
     const yb = ymax * 0.94, tick = ymax * 0.03;
     const sk = sol.indexOf(Math.max(...sol));
     return {
       grid: { left: LX, right: RX, top: 16, bottom: 8 },
-      xAxis: { type: 'category', data: hours, boundaryGap: true, axisLabel: { show: false }, axisLine: { show: false } },
+      xAxis: { type: 'value', min: 0, max: 24, axisLabel: { show: false }, axisLine: { show: false }, splitLine: { show: false }, axisPointer: { label: { show: false } } },
       yAxis: { type: 'value', min: 0, max: ymax, interval: 3000, axisLabel: { formatter: (v: number) => (v ? `${v / 1000}k` : '0') } },
-      tooltip: { trigger: 'axis', valueFormatter: (v: number) => `${fmt(v)} MW` },
+      tooltip: { trigger: 'axis', valueFormatter: (v: number) => `${fmt(v)} MW`, formatter: (ps: { value: [number, number]; seriesName: string; marker: string }[]) => `${fmtHour(Math.floor(ps[0].value[0]))}<br/>${ps.map((q) => `${q.marker}${q.seriesName} ${fmt(q.value[1])} MW`).join('<br/>')}` },
       series: [
-        { name: 'Solar', type: 'line', data: sol.map((v) => Math.max(0, v)), areaStyle: { color: C.solar, opacity: 0.8 }, lineStyle: { width: 0 }, symbol: 'none', z: 1,
-          markPoint: { symbol: 'circle', symbolSize: 0, label: { show: true, formatter: 'Solar', color: C.solarInk, fontSize: 12, fontWeight: 600, position: 'inside' }, data: [{ coord: [sk, Math.max(...sol) * 0.45] }] },
-          markArea: { silent: true, itemStyle: { color: 'rgba(234,223,211,.45)' }, label: { show: true, position: 'insideTop', color: C.ink, fontSize: 11, fontWeight: 600, formatter: `Rush ${spanLabel(rush)}` }, data: [[{ xAxis: rush[0] }, { xAxis: rush[1] - 1 }]] } },
-        { name: 'Demand', type: 'line', data: dem, lineStyle: { color: C.ink3, width: 1.5 }, symbol: 'none', z: 3, endLabel: { show: true, formatter: 'Demand', color: C.ink2, fontSize: 12, offset: [8, 0] },
-          markPoint: { symbol: 'circle', symbolSize: 7, itemStyle: { color: C.ink3, borderColor: '#fff', borderWidth: 2 }, label: { show: true, position: 'bottom', color: C.ink2, fontSize: 11, formatter: `Demand peaks ${fmtHour(dk)}` }, data: [{ coord: [dk, dem[dk]] }] } },
-        { name: 'Net load', type: 'line', data: net, lineStyle: { color: C.ink, width: 2.25 }, symbol: 'none', z: 4, endLabel: { show: true, formatter: 'Net load', color: C.ink, fontSize: 12, fontWeight: 600, offset: [8, 0] },
-          markPoint: { symbol: 'circle', symbolSize: 8, itemStyle: { color: C.ink, borderColor: '#fff', borderWidth: 2 }, label: { show: true, position: 'left', distance: 8, color: C.ink, fontSize: 11, fontWeight: 600, formatter: `Net load peaks ${fmtHour(pk)} · ${fmt(net[pk])} MW` }, data: [{ coord: [pk, net[pk]] }] },
+        { name: 'Solar', type: 'line', data: at(sol.map((v) => Math.max(0, v))), areaStyle: { color: C.solar, opacity: 0.8 }, lineStyle: { width: 0 }, symbol: 'none', z: 1,
+          markPoint: { symbol: 'circle', symbolSize: 0, label: { show: true, formatter: 'Solar', color: C.solarInk, fontSize: 12, fontWeight: 600, position: 'inside' }, data: [{ coord: [sk + 0.5, Math.max(...sol) * 0.45] }] },
+          markArea: { silent: true, itemStyle: { color: 'rgba(234,223,211,.45)' }, label: { show: true, position: 'insideTop', color: C.ink, fontSize: 11, fontWeight: 600, formatter: `Rush ${spanLabel(rush)}` }, data: [[{ xAxis: rush[0] }, { xAxis: rush[1] }]] } },
+        { name: 'Demand', type: 'line', data: at(dem), lineStyle: { color: C.ink3, width: 1.5 }, symbol: 'none', z: 3, endLabel: { show: true, formatter: 'Demand', color: C.ink2, fontSize: 12, offset: [8, 0] },
+          markPoint: { symbol: 'circle', symbolSize: 7, itemStyle: { color: C.ink3, borderColor: '#fff', borderWidth: 2 }, label: { show: true, position: 'bottom', color: C.ink2, fontSize: 11, formatter: `Demand peaks ${fmtHour(dk)}` }, data: [{ coord: [dk + 0.5, dem[dk]] }] } },
+        { name: 'Net load', type: 'line', data: at(net), lineStyle: { color: C.ink, width: 2.25 }, symbol: 'none', z: 4, endLabel: { show: true, formatter: 'Net load', color: C.ink, fontSize: 12, fontWeight: 600, offset: [8, 0] },
+          markPoint: { symbol: 'circle', symbolSize: 8, itemStyle: { color: C.ink, borderColor: '#fff', borderWidth: 2 }, label: { show: true, position: 'left', distance: 8, color: C.ink, fontSize: 11, fontWeight: 600, formatter: `Net load peaks ${fmtHour(pk)} · ${fmt(net[pk])} MW` }, data: [{ coord: [pk + 0.5, net[pk]] }] },
           // the cleanest stretch as a bracket, so it never tints the data
           markLine: { silent: true, symbol: 'none', lineStyle: { color: C.ink3, width: 1, type: 'solid' }, label: { show: false },
             data: [
-              [{ coord: [clean[0], yb], label: { show: true, position: 'middle', formatter: `Cleanest 8 hours ${spanLabel(clean)}`, color: C.ink, fontSize: 11, fontWeight: 600, distance: 4 } }, { coord: [clean[1] - 1, yb] }],
+              [{ coord: [clean[0], yb], label: { show: true, position: 'middle', formatter: `Cleanest 8 hours ${spanLabel(clean)}`, color: C.ink, fontSize: 11, fontWeight: 600, distance: 4 } }, { coord: [clean[1], yb] }],
               [{ coord: [clean[0], yb] }, { coord: [clean[0], yb - tick] }],
-              [{ coord: [clean[1] - 1, yb] }, { coord: [clean[1] - 1, yb - tick] }],
+              [{ coord: [clean[1], yb] }, { coord: [clean[1], yb - tick] }],
             ] } },
       ],
     };
@@ -129,9 +129,10 @@ export function ForecastPanel() {
     const style: Record<string, [string, number[] | 'solid', number]> = { K: [C.ink3, [1, 3], 1.5], W: [C.ink3, [5, 3], 1.5], L: [C.ink2, 'solid', 1.5] };
     const L: (number | null)[] = fr.forecasts.L.value;
     return {
-      grid: { left: 40, right: 12, top: 12, bottom: 24 },
+      grid: { left: 56, right: 12, top: 12, bottom: 24 },
       xAxis: { type: 'category', data: lab, boundaryGap: false, axisLabel: { interval: 23, formatter: (v: string) => v.split(',')[0] } },
-      yAxis: { type: 'value', min: 0, max: 900, interval: 300 },
+      yAxis: { type: 'value', min: (e: { min: number }) => Math.floor((e.min - 20) / 200) * 200, max: (e: { max: number }) => Math.ceil((e.max + 20) / 200) * 200, interval: 200,
+        name: 'g CO₂/kWh', nameLocation: 'middle', nameRotate: 90, nameGap: 40, nameTextStyle: { color: C.ink3, fontSize: 11 } },
       tooltip: { trigger: 'axis', valueFormatter: (v: number) => (v == null ? '–' : `${Math.round(v)} g/kWh`) },
       series: [
         // L ± its week MAE, drawn as a stacked band (the lower edge is invisible)
@@ -152,7 +153,6 @@ export function ForecastPanel() {
         <Ev e="forecast" /><EvCI extra="actual" /><Ev e="measured">errors measured</Ev>
       </div>
       <div className="flex flex-wrap gap-x-4 gap-y-1 t-11 ink-2" style={{ marginTop: 4 }} aria-hidden="true">
-        <span>g CO₂/kWh:</span>
         <span className="flex items-center gap-1"><svg width="20" height="6"><line x1="0" x2="20" y1="3" y2="3" stroke={C.ink} strokeWidth="2" /></svg>actual</span>
         <span className="flex items-center gap-1"><svg width="20" height="8"><rect x="0" y="0" width="20" height="8" fill="rgba(91,73,63,.12)" /><line x1="0" x2="20" y1="4" y2="4" stroke={C.ink2} strokeWidth="1.5" /></svg>{pname('L')} ± {fmt(maeL)}</span>
         <span className="flex items-center gap-1"><svg width="20" height="6"><line x1="0" x2="20" y1="3" y2="3" stroke={C.ink3} strokeWidth="1.5" strokeDasharray="5 3" /></svg>{pname('W')}</span>

@@ -3,7 +3,8 @@ import { IntervalChart, Panel, PolicyTable } from '../components/charts';
 import { Ev, EvCI, Icon } from '../components/ui';
 import { DESTS, REGION, asNum, dayCurve, headline, plainLimitation, pname, type Core, type Json } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
-import { fmt, fmtDate, fmtHour, pct, pctRange } from '../lib/format';
+import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange } from '../lib/format';
+import { useViewport } from '../lib/useViewport';
 import { initialStep, useApp } from '../lib/store';
 import { WestMap, type ArcSpec } from '../map/WestMap';
 import { CarbonRibbon, ForecastPanel, LoadChart, YearHeat } from './Ribbon';
@@ -19,7 +20,21 @@ export function Story() {
   const jul = g.pace_july_weekday;
   const net: number[] = jul.net_load_mw.value;
   const k: number = g.pace_top100_net_load.k.value;
+  const cm: number[][] = g.pace_top100_net_load.counts_month_hour.value;
+  const hotMonths = g.months.filter((_: string, i: number) => cm[i].some((c) => c > 0));
+  const mName = (ym: string) => monthLabel(ym, true).split(' ')[0];
+  const monthSpan = hotMonths.length ? (hotMonths.length === 1 ? mName(hotMonths[0]) : `${mName(hotMonths[0])}–${mName(hotMonths[hotMonths.length - 1])}`) : '';
+  // N2: where W's moved (remote) execution energy went over the year
+  const byS = m.policies.W.metrics.execution_kwh_by_site as Record<string, { value: number }>;
+  const remote = DESTS.map((d) => [d, byS?.[d]?.value ?? 0] as const);
+  const remoteTot = remote.reduce((a, [, v]) => a + v, 0) || 1;
+  const topDest = [...remote].sort((a, b) => b[1] - a[1])[0];
+
   const box = useRef<HTMLDivElement>(null);
+  const ij: Json = data!.jobs.illustrative_job;
+  const w = data!.jobs.week.policies.W;
+  const wyear = m.policies.W.metrics;
+  const weekTop = [...w.arcs].sort((a: Json, b: Json) => b.gpu_h.value - a.gpu_h.value)[0];
   useEffect(() => {
     const st = initialStep ?? null;
     if (st && box.current) { const el = box.current.querySelector<HTMLElement>(`[data-step="${st}"]`); if (el) box.current.scrollTop = el.offsetTop - (box.current.clientHeight - el.offsetHeight) / 2; }
@@ -29,14 +44,12 @@ export function Story() {
     box.current?.querySelectorAll('[data-step]').forEach((s) => io.observe(s));
     return () => io.disconnect();
   }, [set]);
-  const ij: Json = data!.jobs.illustrative_job;
-  const w = data!.jobs.week.policies.W;
-  const wyear = m.policies.W.metrics;
+
   const top1 = wl.top.find((t: Json) => Math.abs(t.fraction.value - 0.01) < 1e-9) ?? wl.top[1];
   const steps: { t: string; body: React.ReactNode; ev: React.ReactNode }[] = [
     {
       t: "Utah's grid has a rush hour, and it comes after sunset",
-      body: <>On a July weekday demand peaks at {fmtHour(argmax(jul.demand_mw.value))}. Then the sun sets and solar drops away, so net load, the load the rest of the fleet must carry, keeps climbing to {fmtHour(argmax(net))} ({fmt(net[argmax(net)])} MW). All year, the {fmt(k)} highest net-load hours fall on June–September evenings, mostly {spanLabel(rush)}. The cleanest hours are {spanLabel(clean)}, while the sun is up.</>,
+      body: <>On a July weekday demand peaks at {fmtHour(argmax(jul.demand_mw.value))}. Then the sun sets and solar drops away, so net load, the load the rest of the fleet must carry, keeps climbing to {fmtHour(argmax(net))} ({fmt(net[argmax(net)])} MW). All year, the {fmt(k)} highest net-load hours fall on {monthSpan} evenings, mostly {spanLabel(rush)}. The cleanest hours are {spanLabel(clean)}, while the sun is up.</>,
       ev: <><Ev e="observed">load: EIA-930</Ev><EvCI /></>,
     },
     {
@@ -46,13 +59,13 @@ export function Story() {
     },
     {
       t: 'One job: stay, wait or move',
-      body: <>A {fmt(ij.gpus.value)}-GPU {ij.job_type} job of {ij.declared_duration_s.value < 3600 ? `${fmt(ij.declared_duration_s.value / 60, 1)} minutes` : `${fmt(ij.declared_duration_s.value / 3600, 1)} hours`} ({fmt(ij.declared_gpu_h.value, ij.declared_gpu_h.value < 1 ? 2 : 1)} GPU-h), arriving {fmtDate(ij.arrival, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}. It may start up to {fmt(ij.max_delay_s.value / 3600)} h late. Moving it adds a transfer delay but lands it on a cleaner grid. It was picked by a rule registered in advance: the job at the GPU-hour-weighted median of the eligible flexible jobs.{ij.disclosure ? <details className="t-12 ink-3" style={{ marginTop: 8 }}><summary className="cursor-pointer fw-500">How this job was chosen (source text)</summary><span>{ij.disclosure}</span></details> : null}</>,
+      body: <>A {fmt(ij.gpus.value)}-GPU {ij.job_type} job of {ij.declared_duration_s.value < 3600 ? `${fmt(ij.declared_duration_s.value / 60, 1)} minutes` : `${fmt(ij.declared_duration_s.value / 3600, 1)} hours`} ({fmt(ij.declared_gpu_h.value, ij.declared_gpu_h.value < 1 ? 2 : 1)} GPU-h), arriving {fmtDate(ij.arrival, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}. It may start up to {fmt(ij.max_delay_s.value / 3600)} h late. Moving it adds a transfer delay but lands it on a cleaner grid. It was picked by a rule fixed before seeing its outcome: the GPU-hour-weighted median of the eligible flexible jobs. The registered count-median job runs only 3 minutes; see how this job was chosen.{ij.disclosure ? <details className="t-12 ink-3" style={{ marginTop: 8 }}><summary className="cursor-pointer fw-500">How this job was chosen (source text)</summary><span>{ij.disclosure}</span></details> : null}</>,
       ev: <><Ev e="measured">job size</Ev><Ev e="modeled">option CO₂</Ev><Ev e="simulated">placements</Ev></>,
     },
     {
-      t: 'Place the work: most of it goes to the Northwest',
-      body: <>In one replay week, {pname('W')} sent {DESTS.map((d) => { const a = w.arcs.find((x: Json) => x.to === d); return a ? `${fmt(a.gpu_h.value)} GPU-h to ${REGION[d].name}` : null; }).filter(Boolean).join(', ')}. Over the year it moved {pct(wyear.moved_share_jobs.value)}% of jobs and ran {pct(wyear.remote_energy_share.value)}% of the energy outside Utah, with {fmt(wyear.late_jobs.value)} late jobs.</>,
-      ev: <Ev e="simulated" />,
+      t: `Place the work: over the year, ${pct(topDest[1] / remoteTot, 0)}% of the moved energy went to ${REGION[topDest[0]].name === 'Northwest hydro' ? 'the Northwest' : REGION[topDest[0]].name}`,
+      body: <>Over the year, {pname('W')} ran {remote.map(([d, v]) => `${pct(v / remoteTot, 0)}% of its moved energy in ${REGION[d].name}`).join(', ')}. {weekTop && weekTop.to !== topDest[0] ? <>The replay week shown on the map is different: {REGION[weekTop.to as Core].name} took more GPU-hours that week. </> : null}In that week it sent {DESTS.map((d) => { const a = w.arcs.find((x: Json) => x.to === d); return a ? `${fmt(a.gpu_h.value)} GPU-h to ${REGION[d].name}` : null; }).filter(Boolean).join(', ')}. Over the year it moved {pct(wyear.moved_share_jobs.value)}% of jobs and ran {pct(wyear.remote_energy_share.value)}% of the energy outside Utah, with {fmt(wyear.late_jobs.value)} late jobs.</>,
+      ev: <Ev e="simulated">energy by site, all year; arcs, one week</Ev>,
     },
     {
       t: 'The count: moving beats waiting',
@@ -72,9 +85,9 @@ export function Story() {
           <div className="sticky" style={{ top: 0, height: 'calc(100vh - 72px - 28px - 16px)' }}>
             <Visual step={step} rush={rush} clean={clean} curve={curve} />
           </div>
-          <div style={{ paddingBottom: '40vh' }}>
+          <div style={{ paddingBottom: '20vh' }}>
             {steps.map((s, i) => (
-              <div key={i} id={`story-${i + 1}`} data-step={i + 1} className="flex flex-col justify-center" style={{ minHeight: 'calc(100vh - 100px)' }}>
+              <div key={i} id={`story-${i + 1}`} data-step={i + 1} className="flex flex-col justify-start" style={{ minHeight: 'calc(100vh - 100px)', paddingTop: 0 }}>
                 <Panel style={{ opacity: step === i + 1 ? 1 : 0.55, transition: 'opacity 160ms var(--ease)' }}>
                   <h2 className="t-20" style={{ margin: 0 }}>{s.t}</h2>
                   <p className="t-13 ink-2" style={{ margin: '8px 0 0', maxWidth: '62ch' }}>{s.body}</p>
@@ -121,7 +134,7 @@ function JobCard() {
   const stay = acts.find((a) => a.kind === 'stay');
   const pl = ij.placements as Record<string, Json>;
   return (
-    <Panel className="h-full flex flex-col" style={{ gap: 16 }}>
+    <Panel className="flex flex-col" style={{ gap: 16, maxHeight: '100%', overflow: 'auto' }}>
       <div className="flex items-baseline justify-between"><span className="t-15">Job {ij.job_uid}: its options</span><Ev e="modeled">option CO₂</Ev></div>
       <table className="tbl">
         <thead><tr><th>Option</th><th>Starts (Denver)</th><th>Start delay (transfer)</th><th>CO₂ <span className="fw-400">kg</span></th><th>vs staying</th></tr></thead>
@@ -141,7 +154,7 @@ function JobCard() {
       <hr className="rule" />
       <div className="flex items-baseline justify-between"><span className="t-15">Where each policy put it</span><Ev e="simulated" /></div>
       <table className="tbl">
-        <thead><tr><th>Policy</th><th>Decision</th><th>CO₂ <span className="fw-400">kg</span></th></tr></thead>
+        <thead><tr><th>Policy</th><th>Decision</th><th>Starts (Denver)</th><th>CO₂ <span className="fw-400">kg</span></th></tr></thead>
         <tbody>
           {Object.keys(pl).map((p) => {
             const v = pl[p];
@@ -149,6 +162,7 @@ function JobCard() {
               <tr key={p}>
                 <td title={m.policies?.[p]?.note}>{pname(p)}</td>
                 <td>{v.site === 'PACE' ? (v.moved ? 'waited in Utah' : 'stayed in Utah') : `moved to ${REGION[v.site as Core]?.name ?? v.site}`}</td>
+                <td>{v.start ? fmtDate(v.start, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '–'}</td>
                 <td>{fmt(v.co2_kg.value, v.co2_kg.value < 1 ? 3 : 1)}</td>
               </tr>
             );
@@ -173,11 +187,12 @@ function PlaceWork() {
     <div className="grid h-full" style={{ gridTemplateRows: 'minmax(0,1fr) auto', gap: 16 }}>
       <Panel className="relative overflow-hidden" style={{ padding: 0 }}>
         <WestMap id="map-story" variant="inset" interactive={false} ci={ci} context={context} hourLabel={fmtHour(hour)} arcs={arcs}
-          bounds={[[-124.6, 31.8], [-104.5, 48.9]]} padding={{ top: 48, bottom: 12, left: 12, right: 12 }} />
+          bounds={[[-124.6, 31.8], [-104.0, 48.9]]} padding={{ top: 72, bottom: 16, left: 150, right: 120 }} />
         <div className="absolute flex items-baseline justify-between gap-2" style={{ left: 16, right: 16, top: 16 }}>
-          <span className="t-15">{pname('W')}: GPU-hours moved out of Utah, replay week {fmtDate(data!.jobs.week.start, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+          <span className="t-15">{pname('W')}: GPU-hours moved out of Utah</span>
           <Ev e="simulated" />
         </div>
+        <div className="absolute t-11 ink-2" style={{ left: 16, top: 40 }}>Regions: typical {monthLabel(month, true).split(' ')[0]} day, {fmtHour(hour)} · Arcs: replay week {fmtDate(data!.jobs.week.start, { month: 'short', day: 'numeric' })}–{fmtDate(new Date(new Date(data!.jobs.week.end).getTime() - 1).toISOString(), { day: 'numeric' })}, {fmtDate(data!.jobs.week.start, { year: 'numeric' })} <EvCI /></div>
       </Panel>
       <Panel>
         <div className="grid t-13" style={{ gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 16 }}>
@@ -193,10 +208,11 @@ function PlaceWork() {
 function Count() {
   const { data } = useApp();
   const m = data!.metrics, wl = data!.workload;
+  const tight = useViewport().h < 1000;
   return (
-    <Panel className="h-full flex flex-col" style={{ gap: 12 }}>
+    <Panel className={`flex flex-col ${tight ? 'tight' : ''}`} style={{ gap: tight ? 8 : 12, maxHeight: '100%', overflow: 'auto' }}>
       <span className="t-15">Saving in attributed CO₂ vs U local (stay in Utah), with 95% intervals</span>
-      <IntervalChart m={m} rows={['G', 'S', 'K', 'W', 'L', 'H', 'W_time', 'L_time']} rowH={26} />
+      <IntervalChart m={m} rows={['G', 'S', 'K', 'W', 'L', 'H', 'W_time', 'L_time']} rowH={tight ? 20 : 26} />
       <div className="t-12 ink-3">Filled dots: the four placement policies. Open dots: {pname('G')}, the two wait-only runs, and the dashed {pname('H')}. <Ev e="simulated" /></div>
       <div style={{ overflowX: 'auto' }}><PolicyTable m={m} /></div>
       <hr className="rule" />
@@ -210,7 +226,7 @@ function Count() {
             ))}
           </tbody>
         </table>
-        <div className="t-12 ink-3" style={{ marginTop: 4 }}>{pct(wl.share_jobs_under_1_gpu_h.value, 0)}% of jobs use under 1 GPU-hour; the median job uses {fmt(wl.median_gpu_h.value, 2)}. <Ev e="measured">sizes</Ev> <Ev e="simulated">energy and saving</Ev></div>
+        <div className="t-12 ink-3" style={{ marginTop: 4 }}>{pct(wl.share_jobs_under_1_gpu_h.value, 0)}% of jobs use under 1 GPU-hour; the median job uses {fmt(wl.median_gpu_h.value, 2)} GPU-hours. <Ev e="measured">sizes</Ev> <Ev e="simulated">energy and saving</Ev></div>
       </div>
     </Panel>
   );
@@ -220,7 +236,7 @@ function Limits() {
   const { data } = useApp();
   const lim: string[] = data!.manifest.limitations;
   return (
-    <Panel className="h-full flex flex-col" style={{ gap: 12, overflow: 'auto' }}>
+    <Panel className="flex flex-col" style={{ gap: 12, overflow: 'auto', maxHeight: '100%' }}>
       <span className="t-15">What the result does not say</span>
       <ul className="t-13" style={{ margin: 0, paddingLeft: 16, columns: 2, columnGap: 32 }}>
         {lim.map((l) => <li key={l} style={{ marginBottom: 8, breakInside: 'avoid' }}>{plainLimitation(l)}</li>)}

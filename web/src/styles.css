@@ -136,8 +136,8 @@ table.tbl tr.em td { font-weight: 600; }
 table.tbl tr.diag td { color: var(--ink-3); }
 table.tbl-stacked th { text-align: right; }
 table.tbl-stacked th:first-child { text-align: left; }
-table.tbl-stacked tr.name td { text-align: left; padding: 6px 0 0; border-top: 1px solid var(--hair-2); font-weight: 500; white-space: normal; }
-table.tbl-stacked tr.vals td { border-top: 0; padding: 0 8px 6px; }
+table.tbl-stacked tr.name td { text-align: left; padding: 4px 0 0; border-top: 1px solid var(--hair-2); font-weight: 500; white-space: normal; }
+table.tbl-stacked tr.vals td { border-top: 0; padding: 0 8px 4px; }
 table.tbl-stacked tr.vals td:first-child { text-align: left; padding-left: 0; color: var(--ink-2); }
 table.tbl-stacked tbody.em td { font-weight: 600; }
 
@@ -175,3 +175,6 @@ table.tbl-stacked tbody.em td { font-weight: 600; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0ms !important; animation: none !important; scroll-behavior: auto !important; }
 }
+
+/* tight tables below 1000 px of height (story 5) */
+.tight table.tbl td { padding-top: 3px; padding-bottom: 3px; }

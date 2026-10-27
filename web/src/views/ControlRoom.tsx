@@ -62,15 +62,15 @@ function ResultDock({ compact }: { compact: boolean }) {
           <span className="fw-500 whitespace-nowrap" style={{ color: C.ink }}>Saving vs U, 95% interval</span>
           <span className="t-11 ink-3 whitespace-nowrap">{fmt(h.nWeeks.value as number)} weeks <Ev e="simulated" /></span>
         </div>
-        <IntervalChart m={m} rows={['S', 'K', 'W', 'L', 'W_time', 'L_time']} stacked rowH={compact ? 26 : 30} />
+        <IntervalChart m={m} rows={['S', 'K', 'W', 'L', 'W_time', 'L_time']} stacked rowH={26} />
       </div>
       <hr className="rule" />
-      {compact ? <div style={{ flex: 1 }} /> : (<>
+      {compact ? null : (<>
       <div className="flex items-baseline justify-between" style={{ padding: '12px 16px 4px' }}>
         <span className="t-15 whitespace-nowrap">The four sites, {fmtHour(hour)}</span>
         <EvCI />
       </div>
-      <ul className="flex flex-col" style={{ listStyle: 'none', margin: 0, padding: '0 8px 8px', gap: 2, overflow: 'auto', flex: 1 }}>
+      <ul className="flex flex-col" style={{ listStyle: 'none', margin: 0, padding: '0 8px 4px', gap: 0, overflow: 'auto', flex: 1 }}>
         {CORE.map((c) => {
           const curve = dayCurve(g, c, month);
           const ym = asNum(yearMean(g, c))!;
@@ -104,7 +104,7 @@ function MapCaption({ left, bottom }: { left: number; bottom: number }) {
   const { data, hour, month, arcPolicy } = useApp();
   const wk = data!.jobs.week;
   return (
-    <div className="pointer-events-auto absolute panel over-map t-11 ink-2" style={{ left, bottom, padding: '8px 12px', borderRadius: 12, maxWidth: 440 }}>
+    <div data-map-avoid className="pointer-events-auto absolute panel over-map t-11 ink-2" style={{ left, bottom, padding: '8px 12px', borderRadius: 12, maxWidth: 440 }}>
       The four sites are coloured by carbon at {fmtHour(hour)} on a typical {monthLabel(month, true)} day <EvCI />; other regions are context only.
       Arcs: GPU-hours {pname(arcPolicy)} moved out of Utah in the replay week {weekSpan(wk)}, wider for more <Ev e="simulated" />. Scroll or pinch to zoom; drag to pan.
     </div>
@@ -148,18 +148,18 @@ function RouterDock({ compact }: { compact: boolean }) {
   const slots = data!.manifest.assumptions;
   return (
     <Panel over className="flex flex-col" style={{ height: '100%', padding: 0, overflow: 'hidden' }}>
-      <div style={{ padding: 16 }}>
+      <div style={{ padding: compact ? '12px 16px 8px' : 16, overflow: 'auto', minHeight: 0, flexShrink: 1 }}>
         <h2 className="t-15" style={{ margin: 0 }}>Every policy did the same work, with no late jobs</h2>
-        <div className="t-12 ink-2" style={{ marginTop: 4 }}>Attributed CO₂, {fmt(m.cohort.n_jobs.value)} jobs, {fmt(m.cohort.declared_gpu_h.value / 1e6, 2)} M GPU-h. U − policy above zero: the policy emits less.</div>
-        <div className="t-11 ink-3" style={{ marginTop: 4 }}>Key: S, K, W, L and H may move or delay work; G is carbon-blind; wait-only may not move. Hover a name for its rule.</div>
+        {!compact && <div className="t-12 ink-2" style={{ marginTop: 4 }}>Attributed CO₂, {fmt(m.cohort.n_jobs.value)} jobs, {fmt(m.cohort.declared_gpu_h.value / 1e6, 2)} M GPU-h. U − policy above zero: the policy emits less.</div>}
+        {!compact && <div className="t-11 ink-3" style={{ marginTop: 4 }}>Key: S, K, W, L and H may move or delay work; G is carbon-blind; wait-only may not move. Hover a name for its rule.</div>}
         <div style={{ marginTop: 8 }}><PolicyTable m={m} compact testId="policy-table-compact" /></div>
         <div className="flex gap-3 flex-wrap" style={{ marginTop: 8 }}><Ev e="simulated">outcomes simulated</Ev><Ev e="measured">job sizes measured</Ev></div>
       </div>
       <hr className="rule" />
-      <div style={{ padding: 16, flex: 1, minHeight: 0, overflow: 'auto' }}>
+      <div style={{ padding: compact ? '12px 16px' : 16, flex: compact ? 'none' : 1, minHeight: compact ? 156 : 140, overflow: 'auto' }}>
         <div className="flex items-center justify-between gap-2">
-          <h2 className="t-15" style={{ margin: 0 }}>Where the work went</h2>
-          <select className="sel" aria-label="Policy shown on the map" value={arcPolicy} onChange={(e) => set({ arcPolicy: e.target.value as 'S' | 'W' | 'L' })} title={pnote(m, arcPolicy)}>
+          <h2 className="t-15 whitespace-nowrap" style={{ margin: 0 }}>Where the work went</h2>
+          <select className="sel" style={{ maxWidth: '55%', minWidth: 0 }} aria-label="Policy shown on the map" value={arcPolicy} onChange={(e) => set({ arcPolicy: e.target.value as 'S' | 'W' | 'L' })} title={pnote(m, arcPolicy)}>
             {(['S', 'W', 'L'] as const).map((p) => <option key={p} value={p}>{pname(p)}</option>)}
           </select>
         </div>
