@@ -57,7 +57,7 @@ Sources: torus.co news (2025-02-07), BusinessWire (2025-09-09), Battery Technolo
 | Order | Download and profile the data first, then design the experiment. The test window stays sealed during design. |
 | Test window | The last 12 months, 2025-11-01 to 2026-10-31 (UTC). |
 | Team | Solo owner plus agents. Claude Code builds; Codex plans and reviews. |
-| Deadline | Experiments frozen Wed 11 AM; mostly done by Wed 2 PM. |
+| Deadline | **Owner, Tue 00:35:** experiments freeze **Wed 13:00 MT**; final numbers locked in the dashboard and deck by **14:00**; after the freeze, only logged bug-fix re-runs. A **checkable version by Tue 18:00 MT** (tagged, with real results in the dashboard). Earlier text: freeze Wed 11 AM. |
 
 ## Owner clarifications (2026-10-26 23:14 MT)
 
