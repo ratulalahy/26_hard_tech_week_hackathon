@@ -524,3 +524,11 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   6. the evidence.
 - **Evidence:** `docs/reviews/2026-10-27-plan-astra-owner-session.md`, `docs/reviews/2026-10-27-plan-astra-r1-astra.md`.
 - **Codex credits:** 5 runs so far (Astra spec gate, Sol re-check, the lead's Astra strategy run, the owner's own Astra session, plus the original failed/no-credit attempt). The Wed results audit remains planned.
+
+## D-065 · 2026-10-27 14:55 MT · Master plan and task list; plan times come from the system clock
+- **Decided by:** owner request; set up by the lead.
+- **Decision:**
+  - `docs/plan/tasks.csv` is the single task list: status, owner, dependencies, start, ETA, done.
+  - `docs/plan/2026-10-27-master-plan.md` holds the milestones, the critical path, the rules and the risks.
+  - The project board's plan section is generated from the CSV by `scripts/render_board.py`.
+- **Clock drift:** the lead's narrated times ran ahead of the system clock twice (about +1.5 h this afternoon). Decision headers D-054 to D-064 were corrected to commit times in PR #52. From now on, plans and status use `date` output only.
