@@ -372,7 +372,7 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - a slack tolerance, which breaks hard deadlines;
   - accepting lateness, which would make the headline carry a scheduling artifact.
 
-## D-049 · 2026-10-27 02:45 MT · Astra spec gate r1: not_ready → fixes F12
+## D-049 · 2026-10-27 02:35 MT · Astra spec gate r1: not_ready → fixes F12
 - **Decided by:** lead (Claude). Every finding is dispositioned; the claim reframing goes to the owner at G1.
 - **Decision:** 22 findings, of which 11 are important and 11 minor (corrected per Sol r2 R12). 21 were dispositioned as fixed, of which Sol r2 rated 6 partial and 1 inadequate (E2); 1 is deferred (A3); none is rejected.
   - The main reframing: the experiment is an **advance-reservation scheduling scenario** (F11 bookings and the F3 closure calendar are both assumed and advance-known), with baseline-relative deadlines and exact declared runtimes. It is not a historical online-router claim.
@@ -380,20 +380,20 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 - **Evidence:** `docs/reviews/2026-10-27-spec-astra-r1-astra.md`.
 - **Alternatives rejected:** adopting shadow U as the primary design. If no job moves away from PACE, it makes time-only savings exactly zero by construction, so it would answer a different question.
 
-## D-050 · 2026-10-27 02:55 MT · Owner accepts the advance-reservation claim frame; Sol re-checks the gate
+## D-050 · 2026-10-27 02:37 MT · Owner accepts the advance-reservation claim frame; Sol re-checks the gate
 - **Decided by:** owner.
 - **Decision:**
   - The headline is framed as a simulated advance-reservation scheduling scenario, with baseline-relative deadlines and exact declared runtimes (F12.5, F12.7). The shadow-U causal version is a sensitivity.
   - The spec re-check uses the optional Sol slot (budget run 2 of 3) at xhigh, instead of a second Astra run.
 - **Evidence:** the owner's answers in session; `docs/reviews/2026-10-27-spec-astra-r1-astra.md`.
 
-## D-051 · 2026-10-27 03:10 MT · Sol r2 re-check: not_ready → F13 (precision fixes)
+## D-051 · 2026-10-27 02:52 MT · Sol r2 re-check: not_ready → F13 (precision fixes)
 - **Decided by:** lead (Claude).
 - **Decision:** Sol's 12 findings and one interaction note are adopted as spec §15 F13. Sol stated that validation-only implementation proceeds now.
 - **Re-check:** a fresh-context Claude reviewer re-checks F13. This is a substitution, since the budget's last run is reserved for the Wed results audit.
 - **Evidence:** `docs/reviews/2026-10-27-spec-sol-r2-sol.md`.
 
-## D-052 · 2026-10-27 03:30 MT · Gate passes: fresh Claude re-check ready_with_minor_fixes → F14
+## D-052 · 2026-10-27 03:05 MT · Gate passes: fresh Claude re-check ready_with_minor_fixes → F14
 - **Decided by:** lead (Claude). The Codex re-check is substituted per the budget (D-046, D-050).
 - **Decision:** N1–N15 are adopted as spec F14, with one change.
   - For N6, the reviewer proposed closing PACE capacity in missing hours. Instead, F14.6 pre-registers a four-tier truth fill (consumption → production → fuel mix → 7-day same-hour mean, with tiers 2–4 labelled modeled).
