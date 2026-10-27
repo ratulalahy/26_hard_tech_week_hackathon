@@ -54,3 +54,4 @@ codex exec -p review --ephemeral --skip-git-repo-check -C <scratch dir> --image 
 2. Verify each finding against the code or the data before acting; reviewers can be wrong.
 3. Add a disposition table under it. Each finding is fixed (with the commit), rejected (with the reason) or deferred.
 4. Re-check until no critical or major finding is open. That usually takes 2–3 rounds.
+5. A gate passes only on `ready` or `ready_with_minor_fixes` with every finding dispositioned. Exit 0 means the review ran, not that it passed. Record the reviewed SHA, and re-review fixes on the final candidate.

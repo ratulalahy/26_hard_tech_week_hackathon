@@ -49,13 +49,16 @@ Every command listed here must work. Add a command when its target lands.
 ## Data rules
 
 - **Sealed test window: 2025-11-01T00:00Z to 2026-11-01T00:00Z.** Use the boundaries in `gridpilot.splits`.
-  - Until the spec is approved and a model or policy is final, nothing reads values from this window except completeness checks (row counts, missing hours).
-  - After that, it is read only through the test-evaluation entry point, which logs every read.
+  - The window ends at the availability cutoff: the last complete day in the frozen data snapshot. Results state the days they cover.
+  - It opens only after the spec is approved **and** the model and policy configurations are frozen at a recorded commit. Until then, nothing reads its values except completeness checks (row counts, missing hours).
+  - Numbers shown at G2 and G3 are validation results.
+  - Once open, the window is read only through the test-evaluation entry point. Each read is logged with its input, code and config hashes and its purpose.
 - **No lookahead.** A forecast issued at time t uses only data published before t. Weather features come from archived forecasts, never from observed weather.
 - **Evidence labels.** Every field that reaches `results/`, the UI or a slide is labeled `observed`, `measured`, `forecast`, `modeled`, `assumed` or `simulated`. The definitions are in `.claude/skills/hackathon-evidence/SKILL.md`.
 - **Raw data is immutable.**
   - Downloads go to `data/raw/<source>/` and are recorded in that source's manifest.
   - Cleaning writes to `data/interim/` or `data/processed/`.
+  - Derived outputs are written atomically (temp file, then rename) and versioned by run id or content hash. Each run writes only into its own run directory.
   - Code finds the data directory through `gridpilot.paths`. The `GRIDPILOT_DATA_DIR` environment variable overrides it; worktrees point it at the main checkout's `data/`.
 - **Free and open data only.**
   - No keys in git: `.env` is ignored, and `.env.example` lists the variable names.

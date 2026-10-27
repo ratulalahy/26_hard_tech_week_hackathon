@@ -23,7 +23,10 @@ Every field that reaches `results/`, the dashboard or a slide carries exactly on
 ## Inspecting data
 
 - Call `gridpilot.splits.drop_sealed` before any summary, plot or fit.
-- The sealed test window is [2025-11-01Z, 2026-11-01Z). Until the spec allows test evaluation, only its completeness may be looked at: row counts and missing hours.
+- The sealed test window is [2025-11-01Z, 2026-11-01Z), ending at the snapshot's availability cutoff.
+  - It opens only after spec approval and frozen model and policy configs (`AGENTS.md`).
+  - Until then, only its completeness may be looked at: row counts and missing hours.
+- Every fitted transform, threshold or coefficient records its fitting window, and that window ends before the data it is applied to. This covers percentiles, scalers, imputers, calibration and emission regressions.
 - Analyze a fixed snapshot. Record the manifest sha256 of every input in the run's config.
 - Keep timestamps in UTC internally. Convert only for display, and say which zone.
 - Write down every cleaning rule, and how many rows it touched.
@@ -45,9 +48,10 @@ Every field that reaches `results/`, the dashboard or a slide carries exactly on
 
 - It is compared with the baselines on the same data, paired: same days, same jobs.
 - It has an uncertainty estimate, with the method written next to it. Router results use a block bootstrap over weeks; forecasts use per-day error distributions.
-- The sanity orderings hold:
-  - on the objective, perfect hindsight ≥ our optimizer ≥ the baselines;
-  - forecasts beat persistence on validation.
-  If not, look for a bug before telling a story.
+- The one ordering that is a bug check holds: a solver-certified hindsight optimum, on the same objective and feasible set, is at least as good as every feasible policy.
+  - Any other ordering is a result, not a bug signal. That includes our optimizer vs a baseline, and a forecast vs persistence.
+  - Negative results are reported, never "fixed" against the test window.
+- Work is accounted for. Every policy gets the same cohort of jobs, with warm-up and drain periods. Completed work, deadline misses, backlog and an energy reconciliation are reported next to any saving.
+- Reproduction is judged by canonical hashes of sorted, rounded values, or by stated numeric tolerances, not by byte equality.
 - It states its labels, its main assumptions, and how sensitive the result is to those assumptions.
 - Its wording matches its evidence: "in simulation", "on 2025 data", "for these 10 regions". Never extrapolate without saying so.

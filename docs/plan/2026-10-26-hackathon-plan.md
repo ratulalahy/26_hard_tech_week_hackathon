@@ -341,3 +341,27 @@
   - status between the agents lives in `docs/HANDOFF.md`.
 - **2026-10-26 23:00 MT.** The basemap uses public-domain Natural Earth layers instead of Protomaps PMTiles, because the auto-mode classifier blocked downloading the `pmtiles` binary. PMTiles is still possible later, with the owner's OK.
 - **The demo laptop** is a MacBook Pro running Chrome.
+- **2026-10-26 23:35 MT, after Sol's plan review** (`docs/reviews/2026-10-26-plan-sol-r1-sol.md`, verdict not_ready, every finding dispositioned):
+  - **Deadline (F03).** Wed 11:00 is the only experiment deadline. From 11:00 to 14:00 we only package frozen results.
+  - **Gates (F02).** The gates are rebuilt around deliverables:
+    1. G1: data viability plus the spec.
+    2. G2, Tue ~08:00: spec approval if still pending, and the visual direction.
+    3. G3, Tue ~14:00: the first complete slice — a PACE validation result inside the offline map and replay.
+    4. Tue ~22:00: validation freeze; configs frozen at a recorded commit.
+    5. Overnight: the sealed evaluation runs.
+    6. Wed 08:00–11:00: Astra audit, then G4 freeze at 11:00.
+    7. Wed by 14:00: presentation release.
+  - **Seal and sanity rules (E01, E07).** Updated in `AGENTS.md` and the `hackathon-evidence` skill.
+  - **Demo (V01, V02).**
+    - A 4–5 minute core, with branches for longer slots.
+    - A bundled launcher plus a single-file fallback.
+    - A cold start on the MacBook with the network off, at both dry-runs.
+  - **Visualization stack (V04).**
+    - deck.gl and MapLibre for the map; ECharts as the only charting library; GSAP dropped.
+    - One theme, desktop only.
+    - Three named directions as single-screen static mockups, not prototypes.
+  - **Environment (W05).** Keep install, load, infer and solve evidence for the exact pins. Foundation models are timeboxed to 2 h; LightGBM and the CPU core carry the result.
+  - **Start state (W08).** This plan's "start state" is dated context. The current state lives in `docs/HANDOFF.md`.
+  - **Owner decisions pending:**
+    - F02: PACE-first vertical slice with a thinner regional overview;
+    - E09: which objective is primary.
