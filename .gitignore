@@ -24,3 +24,6 @@ runs/
 
 # Local tool binaries (pmtiles CLI etc.)
 .tools/
+
+# Subagent-driven development scratch (ledgers, briefs, reports)
+.superpowers/
