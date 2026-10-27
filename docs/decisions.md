@@ -374,9 +374,9 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 
 ## D-049 · 2026-10-27 02:45 MT · Astra spec gate r1: not_ready → fixes F12
 - **Decided by:** lead (Claude). Every finding is dispositioned; the claim reframing goes to the owner at G1.
-- **Decision:** 22 findings, of which 11 are important and 11 minor (corrected per Sol r2 R12). 21 were dispositioned as fixed, 7 of them only partially per the Sol r2 re-check, and 1 is deferred (A3); none is rejected.
+- **Decision:** 22 findings, of which 11 are important and 11 minor (corrected per Sol r2 R12). 21 were dispositioned as fixed, of which Sol r2 rated 6 partial and 1 inadequate (E2); 1 is deferred (A3); none is rejected.
   - The main reframing: the experiment is an **advance-reservation scheduling scenario** (F11 bookings and the F3 closure calendar are both assumed and advance-known), with baseline-relative deadlines and exact declared runtimes. It is not a historical online-router claim.
-  - Causal sensitivities (shadow-U, carbon-blind scheduling on common support) are deferred until after 18:00.
+  - Causal sensitivities (shadow-U, and the missingness-blind scheduling sensitivity of F13.6) are deferred until after 18:00.
 - **Evidence:** `docs/reviews/2026-10-27-spec-astra-r1-astra.md`.
 - **Alternatives rejected:** adopting shadow U as the primary design. If no job moves away from PACE, it makes time-only savings exactly zero by construction, so it would answer a different question.
 
@@ -392,3 +392,16 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 - **Decision:** Sol's 12 findings and one interaction note are adopted as spec §15 F13. Sol stated that validation-only implementation proceeds now.
 - **Re-check:** a fresh-context Claude reviewer re-checks F13. This is a substitution, since the budget's last run is reserved for the Wed results audit.
 - **Evidence:** `docs/reviews/2026-10-27-spec-sol-r2-sol.md`.
+
+## D-052 · 2026-10-27 03:30 MT · Gate passes: fresh Claude re-check ready_with_minor_fixes → F14
+- **Decided by:** lead (Claude). The Codex re-check is substituted per the budget (D-046, D-050).
+- **Decision:** N1–N15 are adopted as spec F14, with one change.
+  - For N6, the reviewer proposed closing PACE capacity in missing hours. Instead, F14.6 pre-registers a four-tier truth fill (consumption → production → fuel mix → 7-day same-hour mean, with tiers 2–4 labelled modeled).
+  - Why: the completeness check found a shared roughly 50 h gap across all four BAs in the sealed window, 24 h of it with no EIA data at all. Closing capacity for 50 h would make long jobs unplaceable.
+  - The spec gate is passed (G1 condition) at 41b2e30 + F14.
+- **Completeness check (counts only, values never read):** missing consumed-basis hours in [TEST_START, 2026-10-27T05Z]:
+  - PACE 51 (gaps of 50 h and 1 h), of which 24 h have no production basis and no fuel mix;
+  - CISO 138 (78 with no production basis; 54 of those have fuel mix);
+  - BPAT 51; NEVP 51.
+  - Last hour present: 2026-10-27T05Z.
+- **Evidence:** `docs/reviews/2026-10-27-spec-claude-r3.md`.

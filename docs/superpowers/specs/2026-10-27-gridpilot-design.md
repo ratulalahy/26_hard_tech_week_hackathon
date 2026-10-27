@@ -581,7 +581,7 @@ These come from the fresh-context soundness review of 2026-10-27, at about 02:45
    - the immutable ledger and the late queue;
    - policies U, G, S, K, W, L and H;
    - the primary scenario plus time-only;
-   - warm-up and drain per F2.
+   - warm-up and drain per F13.2 and F14.4.
 5. Accounting:
    - conservation checks;
    - the feasibility table;
@@ -641,7 +641,7 @@ The Mac offline rehearsal moves to Wed morning.
 
 ### F12. Astra gate r1 fixes (2026-10-27 ~02:45 MT; review: `docs/reviews/2026-10-27-spec-astra-r1-astra.md`)
 
-These override earlier sections where they differ. F11's motivating counts came from a **simulated** synthetic slice (`lab/scripts/bench_sim_core.py`, Poisson arrivals, PR #19); they are not validation grid or workload outcomes. F11 and F12 were written during Stage 2, after F1–F10.
+These override earlier sections where they differ. F11's motivating counts came from a **simulated** synthetic slice (`lab/scripts/bench_sim_core.py`, Poisson arrivals, PR #19); they are not validation grid or workload outcomes. F11 and F12 were written during Stage 2, after F1–F10. The motivating benchmark is `origin/s2/task-4` at 8f438aa, `lab/scripts/bench_sim_core.py` (synthetic Poisson slice, no bookings). When F11–F14 were written, the only validation outcomes that existed were forecast error metrics (Task 2) and workload-only U statistics; no policy CO₂ result had been computed.
 
 **F12.1 Truth support (A1, A2).**
 - F3's mask is an **assumed, advance-known closure calendar**. It is the same for every policy and disclosed beside the result, like F11.
@@ -696,7 +696,7 @@ These override earlier sections where they differ. F11's motivating counts came 
 
 ### F13. Sol re-check r2 fixes (2026-10-27 ~03:10 MT; review: `docs/reviews/2026-10-27-spec-sol-r2-sol.md`)
 
-These override F11 and F12 where they differ.
+These override §1–§14 and F1–F12 where they differ. Within §15, a later F-item overrides an earlier one.
 
 **F13.1 Three action sets (R1).**
 - **Envelope (per job):** release at arrival (+ transfer when remote), deadline, mobility, transfer, truth support (F12.1), and gang size ≤ site capacity.
@@ -735,3 +735,72 @@ These override F11 and F12 where they differ.
 **F13.7 Blocked diagnostic (R9).**
 - For each job, compare its preferred action under the real view with its preferred action under a view without other jobs' pending (not-yet-arrived) U bookings. Earlier committed moves are kept in both views.
 - The job is blocked if these differ. Count it once, and sum its modeled execution energy once.
+
+### F14. Fresh Claude re-check fixes (2026-10-27 ~03:30 MT; the re-check returned `ready_with_minor_fixes`; review: `docs/reviews/2026-10-27-spec-claude-r3.md`)
+
+These override §1–§14 and F1–F13 where they differ.
+
+**F14.1 Common cohort (N1).**
+- For each evaluation window (validation, fallback, test) and each phase, A is the minimum of the F13.2 first-failure arrival over these scenarios:
+  - primary;
+  - batch delay 0 h and 24 h;
+  - no flexible jobs, and all candidates flexible;
+  - 1.25× home capacity.
+  These are the §7 sensitivities that change U or deadlines.
+- A is computed from workload-only U before any grid scoring. Every scenario in that window and phase uses that A.
+- Phases 49 and 98 have their own arrival streams and their own A.
+
+**F14.2 U (N2, N5).**
+- U processes arrivals in the F13.3 order. It reserves each job at the earliest start at or after arrival at which its whole gang fits for its full duration, given all existing reservations. Later jobs may fill earlier gaps, and existing reservations never move. This makes U causal.
+- Every policy, the validator and the U pass process simultaneous arrivals by `(arrival, arrival + duration + allowed delay, job_uid)`, where `job_uid` is the cycle-qualified mapped ID.
+
+**F14.3 H2 population (N3).** The H2 decision rule (F13.4) applies to the full scored phase-0 cohort. The coverage stratum (F4) is a pre-registered secondary estimate with its own intervals and no decision rule.
+
+**F14.4 Windows (N4, N9).**
+- Initialisation = eval_start − 15 d exactly:
+  - validation: 2024-10-17T00Z → eval_start 2024-11-01T00Z, F = 2025-10-24T00Z;
+  - fallback: 2025-07-10T00Z → 2025-07-25T00Z, F = 2025-10-24T00Z;
+  - test: 2025-10-17T00Z → 2025-11-01T00Z, F = the frozen cutoff.
+- The U horizon is arrivals in [initialisation, F).
+- Warm-up arrivals keep their U reservations immutable in every policy. Policies decide only arrivals at or after eval_start.
+- The fallback reports n weeks and makes no H2 decision statement. Its b = 8 interval is labelled low-n.
+
+**F14.5 Interval semantics (N10).**
+- Execution intervals and closures are half-open, [s, s + d). "Touch" means positive overlap.
+- The transfer-charge hour is the UTC hour containing the arrival.
+- The bound's breakpoint set (window endpoints, hour boundaries, hour boundaries − d) is exact under hour-aligned closures.
+- Envelope parameters (latency, capacity, mobility) are the scenario's own.
+- The bound check uses a 1e-6 kg tolerance on the scored cohort, excluding warm-up.
+
+**F14.6 Scoring truth fill (N6; pre-registered, replaces the "accounting-support failure" outcome).**
+- **Why:** a completeness-only check (counts only, 2026-10-27 03:25 MT) found missing consumed-basis hours in the sealed window:
+  - PACE 51 (one 50 h gap and 1 h; 24 h also missing production basis and EIA-930 fuel mix);
+  - CISO 138;
+  - BPAT 51;
+  - NEVP 51.
+  A shared roughly 50 h gap hits every site. Closing PACE or every site for those hours would make long jobs unplaceable. Missing truth needs a rule set now, before the freeze.
+- **Fill rule.** For every BA, in validation and test alike, the scoring truth for hour h is the first available of:
+  1. EIA consumption-basis CI (observed);
+  2. EIA production-basis CI for the same hour (modeled substitute);
+  3. our EIA-930 fuel-mix CI for the same hour (the grid-profile formula over adjusted generation; modeled);
+  4. the mean over the 7 preceding days of tier-1 values at the same UTC hour (modeled).
+- **Recording and reporting.**
+  - Each scored hour records its tier.
+  - Report, per policy, the share of kWh priced on tiers 2–4.
+  - Sensitivity: common support, dropping every job whose charged hours touch tier ≥ 2 under any policy.
+- **Interaction with other rules.**
+  - The F3/F12.1 closure calendar now closes only hours with no value after tier 4. None is expected; any that occur are reported.
+  - The F13.3 booking pre-check uses filled truth.
+  - H uses filled truth.
+  - Forecasts are never used as fill.
+
+**F14.7 Blocked diagnostic (N7, N15).**
+- The counterfactual candidates are the union of both views' candidates, filtered against the counterfactual ledger.
+- A job is blocked only if the counterfactual choice differs **and** improves the policy's own score by more than 1e-9 kg (for G and S: an earlier finish, or a higher-ranked site).
+- It is a diagnostic only; state evolves under the real view. "Pending" means not yet processed in the F14.2 order.
+- Report it for G, S, K, W, L and H. It lands after 18:00 and before the freeze.
+
+**F14.8 Bootstrap details (N11).**
+- Starts = `rng.integers(0, n, size=ceil(n/b))`, int64, called once per replicate in replicate order.
+- If any replicate's reference total is 0, the ratio interval is null; the kg interval is unaffected.
+- Commit a reference index fixture for n = 10, b = 4.
