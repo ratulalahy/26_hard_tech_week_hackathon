@@ -606,3 +606,27 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - It uses the same battery, efficiency and site cap.
   - It runs on validation and on the test year, as a design comparison. The carbon headline is unchanged.
 - **Pitch:** until then, storage is pitched on carbon (3.5%) and on its known weakness (+109 t on a flat marginal basis), not on peak relief.
+
+## D-074 · 2026-10-27 19:20 MT · Freeze inputs, pre-registration choices, and the failure rule for the opening
+- **Decided by:** the lead, ruling on the T12r and T20r reviews before `make freeze`. D-070 is deliberately left unused: the evidence-trail test treats it as a skipped number.
+- **Freeze inputs (T12/T20).**
+  - **Independent rebuild of the final lab tree** `dbc52a6e`: a fresh GitHub clone and a fresh data dir from `make data`, then `run_slice --no-export` on validation with fresh forecasts.
+    - It reproduces the registered run 20261027T160656Z exactly: canonical metrics e6ad2635…, all 9 ledger hashes, the cohort and booking hashes, the forecasts and the L leaves.
+    - `balance.parquet` is byte-identical; `carbon_hourly.parquet` is frame-equal.
+    - Evidence: `docs/evidence/rebuild-20261027.json`, sha256 3d5d454f0712b5687f0df698ef8d05e4870457e139ee6d8c621c88396b1f33a2. Earlier pre-final rebuilds of 0dd46c18 and 8f8c427b also matched.
+  - **Test cutoff, value completeness (spec §5):** D = 2026-10-24, so F_test = 2026-10-25T00Z, which gives 358 days.
+    - Every hour after 2026-10-25T03Z has no CO₂ value (EIA's publication lag).
+    - The interior gaps before F (CISO 87 h, PACE 1 h) are filled by F14.6.
+    - Line 1 of `docs/evidence/completeness-20261027.jsonl` is the superseded row-presence call (F 10-27). It is kept and not edited.
+  - **Deployed policy S** (spec §8): S has the lowest validation CO₂, 3,613,423 kg against W's 3,618,363 kg, with all six candidates feasible.
+  - **Test S ranking:** BPAT 95.5 < CISO 194.2 < NEVP 312.6 < PACE 572.8 g/kWh. L leaves are 15, and 31 for PACE demand.
+  - **Inputs:** the 6 TEST_INPUTS, plus the 2 Salt Lake City archived-forecast files for D-071 item 3.
+- **Pre-registration choices (T20), accepted:**
+  - the frozen p10/p90 intervals are validation-fit residuals over the selection issues (spec §6), labelled "transferred from the validation-fit model";
+  - seasons are assigned by the Monday of each arrival week, so SON covers Nov 2025 together with Sep–Oct 2026;
+  - 2b ties go to the earlier hour, and incomplete training days are skipped (neither changes the schedule on this data);
+  - the extension scenarios run one after another, not in parallel as the brief said, because the seal session is bound to one process and thread.
+- **Failure rule for the opening.** The primary result is exported and logged before any extra runs. Any extra that fails, or a crash after the primary export, is reported `not_run` with its reason and **never** triggers a second opening. A crash **before** the primary export follows AGENTS.md: a logged rerun with a reason.
+- **Disclosures:**
+  - the T20r reviewer created and deleted an empty `data/.wtest` file, which changed only the directory's mtime;
+  - item 3's net-load reads are logged under item 2's purpose label, because they share a cache.
