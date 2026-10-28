@@ -1,0 +1,499 @@
+2026-10-27 19:22:59,172 gridpilot.forecast fitting PACE/ci_consumed (test, frozen L max_leaf_nodes=15)
+2026-10-27 19:23:03,929 gridpilot.forecast fitting CISO/ci_consumed (test, frozen L max_leaf_nodes=15)
+2026-10-27 19:23:08,699 gridpilot.forecast fitting BPAT/ci_consumed (test, frozen L max_leaf_nodes=15)
+2026-10-27 19:23:13,370 gridpilot.forecast fitting NEVP/ci_consumed (test, frozen L max_leaf_nodes=15)
+2026-10-27 19:23:18,390 gridpilot.forecast fitting PACE/demand (test, frozen L max_leaf_nodes=31)
+2026-10-27 19:23:29,059 gridpilot.forecast fitting PACE/wind (test, frozen L max_leaf_nodes=15)
+2026-10-27 19:23:33,785 gridpilot.forecast fitting PACE/solar (test, frozen L max_leaf_nodes=15)
+2026-10-27 19:23:38,499 run_slice forecast_construction: 45.1 s
+2026-10-27 19:23:38,907 gridpilot.workload workload exclusion: 20529 attempts dropped: submitted outside source cycle [2023-03-06 00:00:00+08:00, +161 d)
+2026-10-27 19:23:38,912 gridpilot.workload workload exclusion: 356219 attempts dropped: no GPU requested (CPU-only, or non-finite/non-positive gpu_count)
+2026-10-27 19:23:38,915 gridpilot.workload workload exclusion: 5746 attempts dropped: non-positive or non-finite run_s
+2026-10-27 19:23:38,916 gridpilot.workload workload: 435833 of 818327 Seren attempts kept (any status)
+2026-10-27 19:23:39,437 run_slice replay: 0.8 s
+2026-10-27 19:23:39,440 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:23:39,586 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:24:07,106 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:24:07,223 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:24:34,662 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:24:34,782 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:25:02,305 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:25:02,416 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:25:29,398 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:25:29,510 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:25:57,344 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:25:57,461 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:26:24,936 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:26:25,053 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:26:53,034 run_slice bookings: 193.6 s
+2026-10-27 19:26:53,063 run_slice A = 2026-10-15 23:03:57+00:00, cohort 888224 jobs, 8003 excluded
+2026-10-27 19:26:53,241 run_slice truth_fill: 0.2 s
+2026-10-27 19:26:53,654 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:27:33,716 run_slice policy_U: 40.1 s
+2026-10-27 19:27:33,809 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:29:02,499 run_slice policy_G: 88.7 s
+2026-10-27 19:29:02,584 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:30:23,453 run_slice policy_S: 80.9 s
+2026-10-27 19:30:23,552 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:32:29,233 run_slice policy_K: 125.7 s
+2026-10-27 19:32:29,312 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:34:33,650 run_slice policy_W: 124.4 s
+2026-10-27 19:34:33,734 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:36:38,958 run_slice policy_L: 125.3 s
+2026-10-27 19:36:39,054 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:38:41,865 run_slice policy_H: 122.9 s
+2026-10-27 19:38:41,973 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:39:28,307 run_slice policy_W_time: 46.4 s
+2026-10-27 19:39:28,386 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:40:14,594 run_slice policy_L_time: 46.2 s
+2026-10-27 19:40:17,450 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:40:54,772 run_slice policy_G_undiagnosed: 37.4 s
+2026-10-27 19:41:26,736 run_slice accounting: 31.4 s
+2026-10-27 19:41:31,460 run_slice export: 4.7 s
+2026-10-27 19:41:36,902 run_slice forecast_construction: 5.3 s
+2026-10-27 19:41:37,099 run_slice replay: 0.1 s
+2026-10-27 19:41:37,103 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:41:38,114 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:42:07,386 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:42:08,372 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:42:37,487 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:42:38,487 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:43:07,653 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:43:08,630 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:43:37,267 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:43:38,270 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:44:07,746 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:44:08,754 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:44:37,832 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:44:38,827 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:45:08,610 run_slice bookings: 211.5 s
+2026-10-27 19:45:08,642 run_slice A = 2026-10-22 07:49:42+00:00, cohort 946674 jobs, 440 excluded
+2026-10-27 19:45:08,831 run_slice truth_fill: 0.2 s
+2026-10-27 19:45:09,246 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:45:44,390 run_slice policy_U: 35.2 s
+2026-10-27 19:45:44,521 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:46:26,130 run_slice policy_S: 41.7 s
+2026-10-27 19:46:26,257 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:47:30,371 run_slice policy_K: 64.2 s
+2026-10-27 19:47:30,500 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:48:34,296 run_slice policy_W: 63.9 s
+2026-10-27 19:48:34,433 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:49:38,689 run_slice policy_L: 64.3 s
+2026-10-27 19:49:38,816 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:50:27,810 run_slice policy_W_time: 49.1 s
+2026-10-27 19:50:27,949 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:51:17,117 run_slice policy_L_time: 49.3 s
+2026-10-27 19:51:41,920 run_slice accounting: 22.5 s
+2026-10-27 19:51:41,950 run_slice export: 0.0 s
+2026-10-27 19:51:47,269 run_slice forecast_construction: 5.3 s
+2026-10-27 19:51:47,464 run_slice replay: 0.1 s
+2026-10-27 19:51:47,470 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:51:48,999 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:52:22,512 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:52:24,026 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:52:57,401 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:52:58,903 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:53:32,440 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:53:33,928 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:54:06,957 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:54:08,479 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:54:42,541 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:54:44,049 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:55:17,455 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:55:18,949 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:55:52,672 run_slice bookings: 245.2 s
+2026-10-27 19:55:52,721 run_slice A = 2026-10-20 08:01:32+00:00, cohort 1091508 jobs, 18312 excluded
+2026-10-27 19:55:52,922 run_slice truth_fill: 0.2 s
+2026-10-27 19:55:53,417 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:56:33,975 run_slice policy_U: 40.7 s
+2026-10-27 19:56:34,131 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:57:22,453 run_slice policy_S: 48.4 s
+2026-10-27 19:57:22,606 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:58:37,023 run_slice policy_K: 74.5 s
+2026-10-27 19:58:37,181 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 19:59:50,946 run_slice policy_W: 73.9 s
+2026-10-27 19:59:51,082 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:01:05,767 run_slice policy_L: 74.8 s
+2026-10-27 20:01:05,949 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:02:02,666 run_slice policy_W_time: 56.8 s
+2026-10-27 20:02:02,864 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:02:59,795 run_slice policy_L_time: 57.1 s
+2026-10-27 20:03:31,731 run_slice accounting: 29.1 s
+2026-10-27 20:03:31,767 run_slice export: 0.0 s
+
+Test-year results (sealed window to 2026-10-25T00:00:00Z; scenario primary; simulated outcomes; bound modeled).
+policy   status   feas  late       tCO2  vs U %             U-P b4 CI kg  moved% remote%E tier>=2% bound   sim s
+U        ok       True     0     4212.1    0.00                        -    0.00     0.00    0.014  True    40.1
+G        ok       True     0     4211.5    0.02              [24, 1,419]    0.15     0.02    0.014  True    88.7
+S        ok       True     0     3274.4   22.26     [755,608, 1,103,474]   42.07    29.98    0.122  True    80.9
+K        ok       True     0     3284.3   22.03     [749,478, 1,092,007]   42.09    29.91    0.127  True   125.7
+W        ok       True     0     3278.3   22.17     [755,447, 1,094,952]   42.05    29.82    0.126  True   124.4
+L        ok       True     0     3281.0   22.11     [753,898, 1,094,557]   42.08    29.91    0.125  True   125.3
+H        ok       True     0     3276.0   22.22     [759,636, 1,099,746]   42.05    29.94    0.128  True   122.9
+W_time   ok       True     0     4179.5    0.77         [25,552, 40,025]   15.08     0.00    0.013  True    46.4
+L_time   ok       True     0     4179.0    0.79         [25,688, 40,733]   12.88     0.00    0.014  True    46.2
+coverage stratum (secondary): 886260 jobs, flexible-energy share 0.29012995977192485; W-L b4 (418.8088656954933, (-2242.4791424020427, 3116.9209211461525))
+H2 (W-L, full cohort): inconclusive (intervals do not all lie on one side of zero); b2 -2706 [-13195, 6636], b4 -2706 [-12583, 6096], b8 -2706 [-10930, 5656]
+  U       mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+  G       mobile_remote_share 0.0008765537991616274, blocked 4 jobs / 1 kWh
+  S       mobile_remote_share 0.9985991272105423, blocked 62 jobs / 18 kWh
+  K       mobile_remote_share 0.9985668614265241, blocked 249 jobs / 707344 kWh
+  W       mobile_remote_share 0.9985480397191802, blocked 225 jobs / 539325 kWh
+  L       mobile_remote_share 0.9986071936565468, blocked 212 jobs / 722913 kWh
+  H       mobile_remote_share 0.9985641726111892, blocked 240 jobs / 834744 kWh
+  W_time  mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+  L_time  mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+relaxed bound (modeled): primary 3184.4 t, time-only 4138.4 t
+  bound check U       primary   gap 1027752.552873 kg min job gap 0.000e+00 kg ok=True
+  bound check G       primary   gap 1027064.599045 kg min job gap -5.364e-12 kg ok=True
+  bound check S       primary   gap 89978.576724 kg min job gap -3.433e-10 kg ok=True
+  bound check K       primary   gap 99900.761210 kg min job gap -3.433e-10 kg ok=True
+  bound check W       primary   gap 93904.174087 kg min job gap -4.292e-11 kg ok=True
+  bound check L       primary   gap 96610.080026 kg min job gap -1.878e-11 kg ok=True
+  bound check H       primary   gap 91609.373407 kg min job gap -3.433e-10 kg ok=True
+  bound check W_time  primary   gap 995138.834751 kg min job gap 0.000e+00 kg ok=True
+  bound check W_time  time_only gap 41080.506016 kg min job gap -3.353e-13 kg ok=True
+  bound check L_time  primary   gap 994600.447784 kg min job gap -6.706e-13 kg ok=True
+  bound check L_time  time_only gap 40542.119050 kg min job gap -1.341e-12 kg ok=True
+framing: Test year: no dynamic carbon search (K, W, L) improves on the static clean-region ranking S (H3 not supported); K emits more than S (9.9 t more; K − S = +9.9 t, b = 4 95% interval [+0.8 t, +19.5 t]; the interval excludes zero); W and L are not distinguishable from S (W − S = +3.9 t [-4.7 t, +13.8 t]; L − S = +6.6 t [-2.0 t, +16.7 t]). Waiting in Utah alone saves about 0.8% (W_time 0.77%, L_time 0.79% vs U); the saving comes from moving work (L 22.11% vs U), mostly to BPAT (67% of L's remote execution energy).
+timing (s): forecast_construction 45.1, replay 0.8, bookings 193.6, truth_fill 0.2, policy_U 40.1, policy_G 88.7, policy_S 80.9, policy_K 125.7, policy_W 124.4, policy_L 125.3, policy_H 122.9, policy_W_time 46.4, policy_L_time 46.2, policy_G_undiagnosed 37.4, accounting 31.4, export 4.7
+run directory: /home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/runs/test/20261028T012253Z
+exported 6 artifacts to /home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/results/test
+
+Test-year results (sealed window to 2026-10-25T00:00:00Z; scenario phase_49; simulated outcomes; bound modeled).
+policy   status   feas  late       tCO2  vs U %             U-P b4 CI kg  moved% remote%E tier>=2% bound   sim s
+U        ok       True     0     4131.3    0.00                        -    0.00     0.00    0.015  True    35.2
+S        ok       True     0     3177.6   23.08     [807,363, 1,086,417]   42.27    31.91    0.036  True    41.7
+K        ok       True     0     3181.7   22.99     [805,223, 1,081,439]   42.30    31.78    0.050  True    64.2
+W        ok       True     0     3187.5   22.84     [800,242, 1,071,550]   42.26    31.82    0.052  True    63.9
+L        ok       True     0     3185.7   22.89     [801,334, 1,073,500]   42.26    31.84    0.047  True    64.3
+W_time   ok       True     0     4095.9    0.85         [26,825, 43,636]   14.27     0.00    0.015  True    49.1
+L_time   ok       True     0     4095.9    0.86         [26,510, 44,087]   12.29     0.00    0.015  True    49.3
+H2 (W-L, full cohort): inconclusive (intervals do not all lie on one side of zero); b2 1782 [-897, 5038], b4 1782 [-1039, 5325], b8 1782 [-1222, 5661]
+  U       mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+  S       mobile_remote_share 0.9987719995772457, blocked 0 jobs / 0 kWh
+  K       mobile_remote_share 0.9987065733252137, blocked 0 jobs / 0 kWh
+  W       mobile_remote_share 0.9987569012113923, blocked 0 jobs / 0 kWh
+  L       mobile_remote_share 0.9987770323658636, blocked 0 jobs / 0 kWh
+  W_time  mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+  L_time  mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+relaxed bound (modeled): primary 3079.8 t, time-only 4060.6 t
+  bound check U       primary   gap 1051461.641034 kg min job gap 0.000e+00 kg ok=True
+  bound check S       primary   gap 97847.103404 kg min job gap -2.146e-11 kg ok=True
+  bound check K       primary   gap 101876.629049 kg min job gap -2.146e-11 kg ok=True
+  bound check W       primary   gap 107675.538457 kg min job gap -4.292e-11 kg ok=True
+  bound check L       primary   gap 105893.464104 kg min job gap -4.292e-11 kg ok=True
+  bound check W_time  primary   gap 1016148.033314 kg min job gap 0.000e+00 kg ok=True
+  bound check W_time  time_only gap 35325.021703 kg min job gap -2.682e-12 kg ok=True
+  bound check L_time  primary   gap 1016106.792025 kg min job gap -2.682e-12 kg ok=True
+  bound check L_time  time_only gap 35283.780415 kg min job gap -2.682e-12 kg ok=True
+timing (s): forecast_construction 5.3, replay 0.1, bookings 211.5, truth_fill 0.2, policy_U 35.2, policy_S 41.7, policy_K 64.2, policy_W 63.9, policy_L 64.3, policy_W_time 49.1, policy_L_time 49.3, accounting 22.5, export 0.0
+run directory: /home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/runs/test/ext/phase_49/20261028T014131Z
+
+Test-year results (sealed window to 2026-10-25T00:00:00Z; scenario phase_98; simulated outcomes; bound modeled).
+policy   status   feas  late       tCO2  vs U %             U-P b4 CI kg  moved% remote%E tier>=2% bound   sim s
+U        ok       True     0     4296.5    0.00                        -    0.00     0.00    0.010  True    40.7
+S        ok       True     0     3295.8   23.29     [855,951, 1,151,534]   42.16    32.23    0.054  True    48.4
+K        ok       True     0     3300.2   23.19     [854,798, 1,146,940]   42.17    32.14    0.067  True    74.5
+W        ok       True     0     3302.9   23.13     [854,097, 1,135,174]   42.17    32.19    0.053  True    73.9
+L        ok       True     0     3295.8   23.29     [858,598, 1,149,779]   42.17    32.19    0.054  True    74.8
+W_time   ok       True     0     4261.0    0.82         [26,191, 46,120]   13.17     0.00    0.011  True    56.8
+L_time   ok       True     0     4261.1    0.82         [26,109, 45,899]   12.34     0.00    0.011  True    57.1
+H2 (W-L, full cohort): inconclusive (intervals do not all lie on one side of zero); b2 7111 [-8041, 24009], b4 7111 [-7719, 24389], b8 7111 [-6900, 25632]2026-10-27 20:03:37,130 run_slice forecast_construction: 5.3 s
+2026-10-27 20:03:37,307 run_slice replay: 0.1 s
+2026-10-27 20:03:37,307 run_slice bookings: 0.0 s
+2026-10-27 20:03:37,337 run_slice A = 2026-10-15 23:03:57+00:00, cohort 888224 jobs, 8003 excluded
+2026-10-27 20:03:37,519 run_slice truth_fill: 0.2 s
+2026-10-27 20:03:37,832 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:04:10,896 run_slice policy_U: 33.1 s
+2026-10-27 20:04:10,993 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:04:44,435 run_slice policy_S: 33.5 s
+2026-10-27 20:04:44,535 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:05:30,962 run_slice policy_K: 46.5 s
+2026-10-27 20:05:31,054 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:06:17,351 run_slice policy_W: 46.3 s
+2026-10-27 20:06:17,454 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:07:03,367 run_slice policy_L: 46.0 s
+2026-10-27 20:07:17,662 run_slice accounting: 12.7 s
+2026-10-27 20:07:17,688 run_slice export: 0.0 s
+2026-10-27 20:07:22,990 run_slice forecast_construction: 5.3 s
+2026-10-27 20:07:23,177 run_slice replay: 0.1 s
+2026-10-27 20:07:23,177 run_slice bookings: 0.0 s
+2026-10-27 20:07:23,203 run_slice A = 2026-10-15 23:03:57+00:00, cohort 888224 jobs, 8003 excluded
+2026-10-27 20:07:23,398 run_slice truth_fill: 0.2 s
+2026-10-27 20:07:23,791 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:07:56,591 run_slice policy_U: 32.9 s
+2026-10-27 20:07:56,695 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:08:34,127 run_slice policy_S: 37.5 s
+2026-10-27 20:08:34,217 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:09:32,301 run_slice policy_K: 58.1 s
+2026-10-27 20:09:32,385 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:10:30,302 run_slice policy_W: 58.0 s
+2026-10-27 20:10:30,404 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:11:29,136 run_slice policy_L: 58.8 s
+2026-10-27 20:11:29,232 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:12:15,505 run_slice policy_W_time: 46.3 s
+2026-10-27 20:12:15,603 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:13:01,676 run_slice policy_L_time: 46.1 s
+2026-10-27 20:13:23,922 run_slice accounting: 20.0 s
+2026-10-27 20:13:23,950 run_slice export: 0.0 s
+2026-10-27 20:13:29,233 run_slice forecast_construction: 5.3 s
+2026-10-27 20:13:29,419 run_slice replay: 0.1 s
+2026-10-27 20:13:29,419 run_slice bookings: 0.0 s
+2026-10-27 20:13:29,448 run_slice A = 2026-10-15 23:03:57+00:00, cohort 888224 jobs, 8003 excluded
+2026-10-27 20:13:29,639 run_slice truth_fill: 0.2 s
+2026-10-27 20:13:29,997 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:14:02,878 run_slice policy_U: 32.9 s
+2026-10-27 20:14:02,977 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:14:38,131 run_slice policy_S: 35.2 s
+2026-10-27 20:14:38,213 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:15:28,370 run_slice policy_K: 50.2 s
+2026-10-27 20:15:28,464 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:16:18,226 run_slice policy_W: 49.8 s
+2026-10-27 20:16:18,327 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:17:08,379 run_slice policy_L: 50.1 s
+2026-10-27 20:17:08,478 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:17:54,435 run_slice policy_W_time: 46.0 s
+2026-10-27 20:17:54,528 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:18:40,360 run_slice policy_L_time: 45.9 s
+2026-10-27 20:19:01,059 run_slice accounting: 18.5 s
+2026-10-27 20:19:01,088 run_slice export: 0.0 s
+
+  U       mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+  S       mobile_remote_share 0.9989484385840136, blocked 0 jobs / 0 kWh
+  K       mobile_remote_share 0.9988568087510854, blocked 0 jobs / 0 kWh
+  W       mobile_remote_share 0.9989288036198147, blocked 0 jobs / 0 kWh
+  L       mobile_remote_share 0.9989418935959473, blocked 0 jobs / 0 kWh
+  W_time  mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+  L_time  mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+relaxed bound (modeled): primary 3196.9 t, time-only 4225.9 t
+  bound check U       primary   gap 1099532.457328 kg min job gap 0.000e+00 kg ok=True
+  bound check S       primary   gap 98900.423272 kg min job gap -2.146e-11 kg ok=True
+  bound check K       primary   gap 103229.766643 kg min job gap -5.364e-12 kg ok=True
+  bound check W       primary   gap 105940.305253 kg min job gap -2.146e-11 kg ok=True
+  bound check L       primary   gap 98829.534558 kg min job gap -1.073e-11 kg ok=True
+  bound check W_time  primary   gap 1064091.632725 kg min job gap 0.000e+00 kg ok=True
+  bound check W_time  time_only gap 35099.686491 kg min job gap -5.364e-12 kg ok=True
+  bound check L_time  primary   gap 1064188.987456 kg min job gap 0.000e+00 kg ok=True
+  bound check L_time  time_only gap 35197.041223 kg min job gap -5.364e-12 kg ok=True
+timing (s): forecast_construction 5.3, replay 0.1, bookings 245.2, truth_fill 0.2, policy_U 40.7, policy_S 48.4, policy_K 74.5, policy_W 73.9, policy_L 74.8, policy_W_time 56.8, policy_L_time 57.1, accounting 29.1, export 0.0
+run directory: /home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/runs/test/ext/phase_98/20261028T015141Z
+
+Test-year results (sealed window to 2026-10-25T00:00:00Z; scenario dest_slots_0; simulated outcomes; bound modeled).
+policy   status   feas  late       tCO2  vs U %             U-P b4 CI kg  moved% remote%E tier>=2% bound   sim s
+U        ok       True     0     4212.1    0.00                        -    0.00     0.00    0.014  True    33.1
+S        ok       True     0     4212.1    0.00                   [0, 0]    0.00     0.00    0.014  True    33.5
+K        ok       True     0     4178.7    0.79         [24,379, 42,064]   14.89     0.00    0.014  True    46.5
+W        ok       True     0     4179.5    0.77         [25,552, 40,025]   15.08     0.00    0.013  True    46.3
+L        ok       True     0     4179.0    0.79         [25,688, 40,733]   12.88     0.00    0.014  True    46.0
+H2 (W-L, full cohort): inconclusive (intervals do not all lie on one side of zero); b2 538 [-509, 1585], b4 538 [-619, 1624], b8 538 [-748, 1814]
+  U       mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+  S       mobile_remote_share 0.0, blocked 0 jobs / 0 kWh
+  K       mobile_remote_share 0.0, blocked 0 jobs / 0 kWh
+  W       mobile_remote_share 0.0, blocked 0 jobs / 0 kWh
+  L       mobile_remote_share 0.0, blocked 0 jobs / 0 kWh
+relaxed bound (modeled): primary 4138.4 t, time-only 4138.4 t
+  bound check U       primary   gap 73694.224138 kg min job gap -2.682e-12 kg ok=True
+  bound check S       primary   gap 73694.224138 kg min job gap -2.682e-12 kg ok=True
+  bound check K       primary   gap 40297.699209 kg min job gap -1.341e-12 kg ok=True
+  bound check W       primary   gap 41080.506016 kg min job gap -3.353e-13 kg ok=True
+  bound check L       primary   gap 40542.119050 kg min job gap -1.341e-12 kg ok=True
+timing (s): forecast_construction 5.3, replay 0.1, bookings 0.0, truth_fill 0.2, policy_U 33.1, policy_S 33.5, policy_K 46.5, policy_W 46.3, policy_L 46.0, accounting 12.7, export 0.0
+run directory: /home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/runs/test/ext/dest_slots_0/20261028T020331Z
+
+Test-year results (sealed window to 2026-10-25T00:00:00Z; scenario dest_slots_1024; simulated outcomes; bound modeled).
+policy   status   feas  late       tCO2  vs U %             U-P b4 CI kg  moved% remote%E tier>=2% bound   sim s
+U        ok       True     0     4212.1    0.00                        -    0.00     0.00    0.014  True    32.9
+S        ok       True     0     2743.3   34.87   [1,324,430, 1,623,533]   42.12    46.90    0.085  True    37.5
+K        ok       True     0     2747.2   34.78   [1,325,951, 1,618,784]   42.12    46.90    0.087  True    58.1
+W        ok       True     0     2748.8   34.74   [1,316,861, 1,621,045]   42.09    46.90    0.086  True    58.0
+L        ok       True     0     2745.6   34.82   [1,327,332, 1,621,739]   42.12    46.90    0.084  True    58.8
+W_time   ok       True     0     4179.5    0.77         [25,552, 40,025]   15.08     0.00    0.013  True    46.3
+L_time   ok       True     0     4179.0    0.79         [25,688, 40,733]   12.88     0.00    0.014  True    46.1
+H2 (W-L, full cohort): inconclusive (intervals do not all lie on one side of zero); b2 3223 [-4313, 15167], b4 3223 [-4175, 15142], b8 3223 [-3865, 14757]
+  U       mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+  S       mobile_remote_share 1.0, blocked 0 jobs / 0 kWh
+  K       mobile_remote_share 1.0, blocked 0 jobs / 0 kWh
+  W       mobile_remote_share 1.0, blocked 0 jobs / 0 kWh
+  L       mobile_remote_share 1.0, blocked 0 jobs / 0 kWh
+  W_time  mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+  L_time  mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+relaxed bound (modeled): primary 2666.7 t, time-only 4138.4 t
+  bound check U       primary   gap 1545444.661277 kg min job gap 0.000e+00 kg ok=True
+  bound check S       primary   gap 76602.750815 kg min job gap -1.609e-11 kg ok=True
+  bound check K       primary   gap 80490.581276 kg min job gap -4.292e-11 kg ok=True
+  bound check W       primary   gap 82136.558127 kg min job gap -1.878e-11 kg ok=True
+  bound check L       primary   gap 78913.885417 kg min job gap -4.292e-11 kg ok=True
+  bound check W_time  primary   gap 1512830.943155 kg min job gap 0.000e+00 kg ok=True
+  bound check W_time  time_only gap 41080.506016 kg min job gap -3.353e-13 kg ok=True
+  bound check L_time  primary   gap 1512292.556189 kg min job gap -6.706e-13 kg ok=True
+  bound check L_time  time_only gap 40542.119050 kg min job gap -1.341e-12 kg ok=True
+timing (s): forecast_construction 5.3, replay 0.1, bookings 0.0, truth_fill 0.2, policy_U 32.9, policy_S 37.5, policy_K 58.1, policy_W 58.0, policy_L 58.8, policy_W_time 46.3, policy_L_time 46.1, accounting 20.0, export 0.0
+run directory: /home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/runs/test/ext/dest_slots_1024/20261028T020717Z
+
+Test-year results (sealed window to 2026-10-25T00:00:00Z; scenario transfer_120min; simulated outcomes; bound modeled).
+policy   status   feas  late       tCO2  vs U %             U-P b4 CI kg  moved% remote%E tier>=2% bound   sim s
+U        ok       True     0     4212.1    0.00                        -    0.00     0.00    0.014  True    32.9
+S        ok       True     0     3372.0   19.95       [682,365, 987,713]   10.07    26.88    0.117  True    35.2
+K        ok       True     0     3371.5   19.96       [686,065, 984,305]   21.12    26.88    0.117  True    50.2
+W        ok       True     0     3369.5   20.01       [687,445, 988,072]   21.24    26.88    0.117  True    49.8
+L        ok       True     0     3369.8   20.00       [687,384, 987,132]   19.25    26.88    0.117  True    50.1
+W_time   ok       True     0     4179.5    0.77         [25,552, 40,025]   15.08     0.00    0.013  True    46.0
+L_time   ok       True     0     4179.0    0.79         [25,688, 40,733]   12.88     0.00    0.014  True    45.9
+H2 (W-L, full cohort): inconclusive (intervals do not all lie on one side of zero); b2 -329 [-3723, 2497], b4 -329 [-3369, 2277], b8 -329 [-2859, 1931]
+  U       mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+  S       mobile_remote_share 0.2367582566796895, blocked 0 jobs / 0 kWh
+  K       mobile_remote_share 0.23677707838703346, blocked 0 jobs / 0 kWh
+  W       mobile_remote_share 0.2367636343103592, blocked 0 jobs / 0 kWh
+  L       mobile_remote_share 0.2367690119410289, blocked 0 jobs / 0 kWh
+  W_time  mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)2026-10-27 20:19:06,395 run_slice forecast_construction: 5.3 s
+2026-10-27 20:19:06,575 run_slice replay: 0.1 s
+2026-10-27 20:19:06,578 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:19:06,706 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:19:34,087 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:19:34,203 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:20:01,771 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:20:01,886 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:20:29,310 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:20:29,421 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:20:56,567 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:20:56,691 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:21:24,516 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:21:24,629 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:21:52,242 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:21:52,362 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:22:20,095 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:22:20,208 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:22:48,287 run_slice bookings: 221.7 s
+2026-10-27 20:22:48,326 run_slice A = 2026-10-15 23:03:57+00:00, cohort 888224 jobs, 8003 excluded
+2026-10-27 20:22:48,523 run_slice truth_fill: 0.2 s
+2026-10-27 20:22:48,918 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:23:21,904 run_slice policy_U: 33.0 s
+2026-10-27 20:23:21,991 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:24:02,149 run_slice policy_S: 40.2 s
+2026-10-27 20:24:02,248 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:25:05,561 run_slice policy_K: 63.4 s
+2026-10-27 20:25:05,656 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:26:08,212 run_slice policy_W: 62.6 s
+2026-10-27 20:26:08,310 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:27:12,274 run_slice policy_L: 64.0 s
+2026-10-27 20:27:12,378 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:28:00,117 run_slice policy_W_time: 47.8 s
+2026-10-27 20:28:00,219 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:28:47,892 run_slice policy_L_time: 47.7 s
+2026-10-27 20:29:12,128 run_slice accounting: 22.0 s
+2026-10-27 20:29:12,156 run_slice export: 0.0 s
+2026-10-27 20:29:17,450 run_slice forecast_construction: 5.3 s
+2026-10-27 20:29:17,633 run_slice replay: 0.1 s
+2026-10-27 20:29:17,636 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:29:17,755 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:29:45,058 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:29:45,182 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:30:12,478 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:30:12,595 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:30:39,803 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:30:39,917 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:31:06,746 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:31:06,861 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:31:34,964 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:31:35,079 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:32:02,482 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:32:02,599 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:32:29,980 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:32:30,098 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:32:57,824 run_slice bookings: 220.2 s
+2026-10-27 20:32:57,853 run_slice A = 2026-10-15 23:03:57+00:00, cohort 888224 jobs, 8003 excluded
+2026-10-27 20:32:58,037 run_slice truth_fill: 0.2 s
+2026-10-27 20:32:58,426 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:33:31,186 run_slice policy_U: 32.8 s
+2026-10-27 20:33:31,279 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:34:08,089 run_slice policy_S: 36.9 s
+2026-10-27 20:34:08,183 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:35:05,866 run_slice policy_K: 57.7 s
+2026-10-27 20:35:05,964 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:36:03,689 run_slice policy_W: 57.8 s
+2026-10-27 20:36:03,784 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:37:02,150 run_slice policy_L: 58.4 s
+2026-10-27 20:37:02,240 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:37:48,470 run_slice policy_W_time: 46.3 s
+2026-10-27 20:37:48,571 gridpilot.sim.engine 0 rows are mobile but not flexible
+2026-10-27 20:38:34,787 run_slice policy_L_time: 46.3 s
+2026-10-27 20:38:56,903 run_slice accounting: 19.9 s
+2026-10-27 20:38:56,933 run_slice export: 0.0 s
+
+  L_time  mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+relaxed bound (modeled): primary 3293.2 t, time-only 4138.4 t
+  bound check U       primary   gap 918961.701238 kg min job gap -2.682e-12 kg ok=True
+  bound check S       primary   gap 78823.723640 kg min job gap -3.433e-10 kg ok=True
+  bound check K       primary   gap 78342.558194 kg min job gap -3.433e-10 kg ok=True
+  bound check W       primary   gap 76311.954750 kg min job gap -1.878e-11 kg ok=True
+  bound check L       primary   gap 76641.175787 kg min job gap -5.364e-12 kg ok=True
+  bound check W_time  primary   gap 886347.983116 kg min job gap -3.353e-13 kg ok=True
+  bound check W_time  time_only gap 41080.506016 kg min job gap -3.353e-13 kg ok=True
+  bound check L_time  primary   gap 885809.596150 kg min job gap -6.706e-13 kg ok=True
+  bound check L_time  time_only gap 40542.119050 kg min job gap -1.341e-12 kg ok=True
+timing (s): forecast_construction 5.3, replay 0.1, bookings 0.0, truth_fill 0.2, policy_U 32.9, policy_S 35.2, policy_K 50.2, policy_W 49.8, policy_L 50.1, policy_W_time 46.0, policy_L_time 45.9, accounting 18.5, export 0.0
+run directory: /home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/runs/test/ext/transfer_120min/20261028T021323Z
+
+Test-year results (sealed window to 2026-10-25T00:00:00Z; scenario batch_delay_24h; simulated outcomes; bound modeled).
+policy   status   feas  late       tCO2  vs U %             U-P b4 CI kg  moved% remote%E tier>=2% bound   sim s
+U        ok       True     0     4212.1    0.00                        -    0.00     0.00    0.014  True    33.0
+S        ok       True     0     3271.2   22.34     [759,301, 1,109,602]   42.07    29.99    0.021  True    40.2
+K        ok       True     0     3279.9   22.13     [755,581, 1,095,873]   42.10    29.98    0.154  True    63.4
+W        ok       True     0     3270.7   22.35     [763,192, 1,105,339]   42.06    29.98    0.125  True    62.6
+L        ok       True     0     3273.9   22.28     [761,820, 1,100,377]   42.10    29.88    0.127  True    64.0
+W_time   ok       True     0     4149.7    1.48         [49,809, 75,234]   17.40     0.00    0.014  True    47.8
+L_time   ok       True     0     4145.4    1.58         [53,254, 80,668]   15.60     0.00    0.014  True    47.7
+H2 (W-L, full cohort): inconclusive (intervals do not all lie on one side of zero); b2 -3174 [-15223, 8198], b4 -3174 [-15142, 8321], b8 -3174 [-15325, 7417]
+  U       mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+  S       mobile_remote_share 0.9986098824718818, blocked 0 jobs / 0 kWh
+  K       mobile_remote_share 0.9986125712872166, blocked 0 jobs / 0 kWh
+  W       mobile_remote_share 0.9985991272105423, blocked 0 jobs / 0 kWh
+  L       mobile_remote_share 0.9985856831338681, blocked 0 jobs / 0 kWh
+  W_time  mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+  L_time  mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+relaxed bound (modeled): primary 3127.1 t, time-only 4023.1 t
+  bound check U       primary   gap 1085008.766684 kg min job gap 0.000e+00 kg ok=True
+  bound check S       primary   gap 144096.316381 kg min job gap -3.433e-10 kg ok=True
+  bound check K       primary   gap 152788.567381 kg min job gap -1.609e-11 kg ok=True
+  bound check W       primary   gap 143557.157113 kg min job gap -3.433e-10 kg ok=True
+  bound check L       primary   gap 146731.172798 kg min job gap -3.433e-10 kg ok=True
+  bound check W_time  primary   gap 1022533.527101 kg min job gap -2.682e-12 kg ok=True
+  bound check W_time  time_only gap 126612.183318 kg min job gap -2.682e-12 kg ok=True
+  bound check L_time  primary   gap 1018270.750647 kg min job gap -1.341e-12 kg ok=True
+  bound check L_time  time_only gap 122349.406864 kg min job gap -1.341e-12 kg ok=True
+timing (s): forecast_construction 5.3, replay 0.1, bookings 221.7, truth_fill 0.2, policy_U 33.0, policy_S 40.2, policy_K 63.4, policy_W 62.6, policy_L 64.0, policy_W_time 47.8, policy_L_time 47.7, accounting 22.0, export 0.0
+run directory: /home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/runs/test/ext/batch_delay_24h/20261028T021901Z
+
+Test-year results (sealed window to 2026-10-25T00:00:00Z; scenario mobility_le_8gpus; simulated outcomes; bound modeled).
+policy   status   feas  late       tCO2  vs U %             U-P b4 CI kg  moved% remote%E tier>=2% bound   sim s
+U        ok       True     0     4212.1    0.00                        -    0.00     0.00    0.014  True    32.8
+S        ok       True     0     4079.3    3.15        [82,714, 186,529]   41.32     4.00    0.013  True    36.9
+K        ok       True     0     4048.6    3.88       [109,810, 221,212]   41.77     4.00    0.014  True    57.7
+W        ok       True     0     4049.1    3.87       [110,806, 219,627]   41.70     4.00    0.014  True    57.8
+L        ok       True     0     4048.8    3.88       [110,169, 220,687]   41.72     4.00    0.014  True    58.4
+W_time   ok       True     0     4179.5    0.77         [25,552, 40,025]   15.08     0.00    0.013  True    46.3
+L_time   ok       True     0     4179.0    0.79         [25,688, 40,733]   12.88     0.00    0.014  True    46.3
+H2 (W-L, full cohort): inconclusive (intervals do not all lie on one side of zero); b2 262 [-921, 1404], b4 262 [-968, 1562], b8 262 [-1052, 1779]
+  U       mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+  S       mobile_remote_share 1.0, blocked 0 jobs / 0 kWh
+  K       mobile_remote_share 1.0, blocked 0 jobs / 0 kWh
+  W       mobile_remote_share 1.0, blocked 0 jobs / 0 kWh
+  L       mobile_remote_share 1.0, blocked 0 jobs / 0 kWh
+  W_time  mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+  L_time  mobile_remote_share 0.0, blocked 0 jobs / 0 kWh (not diagnosed)
+relaxed bound (modeled): primary 4009.4 t, time-only 4138.4 t
+  bound check U       primary   gap 202695.816775 kg min job gap 0.000e+00 kg ok=True
+  bound check S       primary   gap 69886.323002 kg min job gap -1.609e-11 kg ok=True
+  bound check K       primary   gap 39152.126048 kg min job gap -1.609e-11 kg ok=True
+  bound check W       primary   gap 39628.832656 kg min job gap -5.364e-12 kg ok=True
+  bound check L       primary   gap 39366.396488 kg min job gap -1.609e-11 kg ok=True
+  bound check W_time  primary   gap 170082.098653 kg min job gap 0.000e+00 kg ok=True
+  bound check W_time  time_only gap 41080.506016 kg min job gap -3.353e-13 kg ok=True
+  bound check L_time  primary   gap 169543.711687 kg min job gap -6.706e-13 kg ok=True
+  bound check L_time  time_only gap 40542.119050 kg min job gap -1.341e-12 kg ok=True
+timing (s): forecast_construction 5.3, replay 0.1, bookings 220.2, truth_fill 0.2, policy_U 32.8, policy_S 36.9, policy_K 57.7, policy_W 57.8, policy_L 58.4, policy_W_time 46.3, policy_L_time 46.3, accounting 19.9, export 0.0
+run directory: /home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/runs/test/ext/mobility_le_8gpus/20261028T022912Z
+exported 1 artifacts to /home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/results/test
+D-071 extras: /home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/runs/test/extras/20261028T023856Z (3504 s); item1_phase_49 610 s, item1_phase_98 710 s, item1_dest_slots_0 226 s, item1_dest_slots_1024 366 s, item1_transfer_120min 337 s, item1_batch_delay_24h 611 s, item1_mobility_le_8gpus 585 s, storage 2 s, toughest_days 2 s, water 5 s, seasonal 2 s, forecast_skill 43 s, drift 0 s, total 3504 s
+exit=0
