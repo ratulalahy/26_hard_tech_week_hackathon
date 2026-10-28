@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { TestTag, TestToughDays } from '../components/testYear';
 import { EChart } from '../components/EChart';
 import { Panel, Strip, useWidth } from '../components/charts';
 import { Ev, EvCI } from '../components/ui';
@@ -36,7 +37,7 @@ export function Ribbon() {
           </p>
         </div>
         <div data-testid="ribbon-timing" className="panel flex-none" style={{ padding: '8px 12px', maxWidth: 460 }}>
-          <div className="t-12 ink-2">Saved by waiting in Utah alone, {copy.allYear}; each policy's own estimate</div>
+          <div className="t-12 ink-2">Saved by waiting in Utah alone, {copy.allYear}; each policy's own estimate{copy.validationReadings ? null : <> <TestTag /></>}</div>
           <div className="flex items-baseline gap-4" style={{ marginTop: 2 }}>
             {(['W_time', 'L_time'] as const).map((p) => { const o = own(data!.metrics, p); return o ? (
               <span key={p} className="flex items-baseline gap-1" data-testid={`ribbon-own-${p}`}><span className="t-hero" style={{ fontSize: 28 }}>{pct(o.v)}%</span><span className="t-11 ink-2">{pname(p)} <span className="ink-3">[{pct(o.lo)}, {pct(o.hi)}]</span></span></span>
@@ -46,7 +47,7 @@ export function Ribbon() {
         </div>
       </div>
 
-      <div className="grid min-h-0" style={{ gridTemplateColumns: data!.caseDays ? 'minmax(0,1fr) minmax(600px,0.8fr)' : 'minmax(0,1fr)', gap: 16 }}>
+      <div className="grid min-h-0" style={{ gridTemplateColumns: data!.caseDays || data!.extras?.toughest_days?.status === 'ok' ? 'minmax(0,1fr) minmax(600px,0.8fr)' : 'minmax(0,1fr)', gap: 16 }}>
       <Panel className="flex flex-col min-h-0" style={{ padding: '12px 0 8px' }}>
         <div className="flex items-baseline justify-between" style={{ padding: '0 16px' }}>
           <span className="t-15">Utah · PacifiCorp East, a {lm.short} weekday</span>
@@ -55,7 +56,7 @@ export function Ribbon() {
         <div className="flex-1 min-h-0"><LoadChart rush={rush} clean={clean} dem={dem} net={net} sol={jul.solar_mw.value} month={lm.short} /></div>
         <CarbonRibbon curve={curve} />
       </Panel>
-      {data!.caseDays && <div className="flex min-h-0"><ToughDays /></div>}
+      {data!.caseDays ? <div className="flex min-h-0"><ToughDays /></div> : data!.extras ? <div className="flex min-h-0"><TestToughDays x={data!.extras} /></div> : null}
       </div>
 
       <div className="grid min-h-0" style={{ gridTemplateColumns: '1.25fr 1fr 1fr', gap: 16 }}>

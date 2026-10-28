@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { TestTag, testFacts } from '../components/testYear';
 import { IntervalChart, Panel, PolicyTable, Strip, useWidth } from '../components/charts';
 import { BudgetBar, BudgetHeadline, NoChangeNote, RemoteLine, ScenarioToggle, budgetFacts, flowOf, kindOf, savingOf, scenarioOf } from '../components/flows';
 import { Ev, EvCI, Icon } from '../components/ui';
@@ -7,7 +8,7 @@ import { CORE, DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, contrast, dayCur
 import { cap, heroHeadline } from '../lib/copy';
 import { useCopy } from '../lib/useCopy';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
-import { fmt, fmtDate, fmtHour, monthLabel, pct } from '../lib/format';
+import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange } from '../lib/format';
 import { useApp } from '../lib/store';
 import type { Viewport } from '../lib/useViewport';
 import { useViewport } from '../lib/useViewport';
@@ -48,6 +49,8 @@ function ResultDock({ compact }: { compact: boolean }) {
   const regP = own(m, arcPolicy) ?? reg;
   const hero = savingOf(f) ?? regP;
   const mob = savingOf(flowOf(data!.flows, 'mobility_le_8gpus', 'S'));
+  // the test year has no scenario flows; its mobility check comes from results/test/extras.json
+  const tmob = mob ? null : testFacts(data!.extras, m)?.mob ?? null;
   const pm = asNum(yearMean(g, 'PACE'))!;
   const wt = (['W_time', 'L_time'] as const).map((p) => [p, contrast(m, p)] as const);
   const nWeeks = contrast(m, 'S')!.n_weeks;
@@ -59,7 +62,7 @@ function ResultDock({ compact }: { compact: boolean }) {
       <div style={{ padding: compact ? '12px 16px 10px' : 16 }}>
         <h1 className="t-20" style={{ margin: 0 }} data-testid="hero-title">{heroHeadline(copy, headline(m), reg)}</h1>
         <div data-testid="hero-placement" style={{ marginTop: compact ? 8 : 12 }}>
-          <div className="t-11 ink-2 fw-500" data-testid="hero-kind">{sc ? `${sc.label} · ${kindOf(sc)}` : 'registered result'}</div>
+          <div className="t-11 ink-2 fw-500" data-testid="hero-kind">{sc ? `${sc.label} · ${kindOf(sc)}` : copy.validationReadings ? 'registered result' : 'registered result · test year (sealed, opened once)'}</div>
           <div key={`${scenario}-${arcPolicy}`} className="flex items-baseline gap-2 swap">
             <span className="t-hero">{pct(Math.abs(hero.v))}%</span>
             <span className="t-13 ink-2">{hero.v < 0 ? 'more' : 'less'} attributed CO₂, {pname(arcPolicy)}</span>
@@ -78,6 +81,8 @@ function ResultDock({ compact }: { compact: boolean }) {
         </div>
         {mob ? <div data-testid="hero-mobility" className="t-12 ink-2" style={{ marginTop: 4 }}>
           The cut depends on moving large multi-node jobs: {pname('S')} <b className="fw-600">{pct(reg.v)}% → {pct(mob.v)}%</b> if only jobs of 8 GPUs or fewer may move (scenario estimate). <Ev e="simulated" />
+        </div> : tmob ? <div data-testid="hero-mobility" className="t-12 ink-2" style={{ marginTop: 4 }}>
+          The cut depends on moving large multi-node jobs: if only jobs of 8 GPUs or fewer may move, {pname('S')}, {pname('W')} and {pname('L')} cut <b className="fw-600">{pctRange(tmob.lo, tmob.hi)}%</b> (scenario estimates). <TestTag /> <Ev e="simulated" />
         </div> : null}
       </div>
       <div style={{ padding: '0 16px 8px' }}>
@@ -85,7 +90,7 @@ function ResultDock({ compact }: { compact: boolean }) {
           <span className="fw-500 whitespace-nowrap" style={{ color: C.ink }}>Saving vs U, 95% interval</span>
           <span className="t-11 ink-3 whitespace-nowrap">{fmt(nWeeks.value as number)} weeks, registered <Ev e="simulated" /></span>
         </div>
-        <IntervalChart m={m} rows={strips || compact ? ['S', 'K', 'W', 'L', 'W_time', 'L_time'] : ['S', 'K', 'W', 'L']} stacked rowH={compact ? 24 : 26} />
+        <IntervalChart m={m} rows={['S', 'K', 'W', 'L', 'W_time', 'L_time']} stacked rowH={compact ? 24 : 26} />
       </div>
       <hr className="rule" />
       {compact ? null : (<>

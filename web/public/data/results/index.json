@@ -10,14 +10,25 @@
   "job-replay.json",
   "manifest.json",
   "metrics.json",
+  "outlook.json",
+  "overview.json",
+  "prices.json",
   "scenario-flows.json",
   "storage.json",
   "water.json",
   "workload-profile.json"
  ],
  "test": {
-  "available": false,
-  "files": [],
-  "frozen_at": null
+  "available": true,
+  "files": [
+   "extras.json",
+   "forecast-replay.json",
+   "grid-profile.json",
+   "job-replay.json",
+   "manifest.json",
+   "metrics.json",
+   "workload-profile.json"
+  ],
+  "frozen_at": "2026-10-28T01:22:06Z"
  }
 }

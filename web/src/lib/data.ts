@@ -36,6 +36,10 @@ export interface Results {
   caseDays: Json | null;
   /** results/assumptions.json (Stage 3 T17, D-068; built by notebook 40); null if the file is absent. */
   assumptions: Json | null;
+  /** results/test/extras.json, the pre-registered test-year extras and the drift table (D-071); test window only, else null. */
+  extras: Json | null;
+  /** results/extras-validation.json, read in test mode for the validation side of the drift rows that need it (rush-hour draws). */
+  valExtras: Json | null;
 }
 
 const base = import.meta.env?.BASE_URL ?? './'; // './' (relative deployment base)
@@ -49,7 +53,7 @@ async function get(name: string, w: EvalWindow = 'validation'): Promise<Json> {
 }
 export async function loadResults(w: EvalWindow = 'validation'): Promise<Results> {
   const v = w === 'validation';  // the D-058 extensions, the T10b storage piece, the T15 scenario flows and budget, the T14 water piece, the T16 toughest days and the T17 assumptions register are validation-only
-  const [metrics, manifest, forecast, jobs, grid, workload, ext, storage, flows, budget, water, caseDays, assumptions] = await Promise.all([
+  const [metrics, manifest, forecast, jobs, grid, workload, ext, storage, flows, budget, water, caseDays, assumptions, extras, valExtras] = await Promise.all([
     get('metrics.json', w), get('manifest.json', w), get('forecast-replay.json', w), get('job-replay.json', w), get('grid-profile.json', w), get('workload-profile.json', w),
     v ? get('extensions.json').catch(() => null) : Promise.resolve(null),
     v ? get('storage.json').catch(() => null) : Promise.resolve(null),
@@ -57,10 +61,14 @@ export async function loadResults(w: EvalWindow = 'validation'): Promise<Results
     v ? get('flexibility-budget.json').catch(() => null) : Promise.resolve(null),
     v ? get('water.json').catch(() => null) : Promise.resolve(null),
     v ? get('case-days.json').catch(() => null) : Promise.resolve(null),
-    v ? get('assumptions.json').catch(() => null) : Promise.resolve(null),
+    // the assumptions register has no test counterpart: in test mode it is shown labelled as validation
+    get('assumptions.json').catch(() => null),
+    v ? Promise.resolve(null) : get('extras.json', w).catch(() => null),
+    v ? Promise.resolve(null) : get('extras-validation.json').catch(() => null),
   ]);
   if (w === 'test' && (metrics.window !== 'test' || manifest.window !== 'test')) throw new Error('results/test/ does not hold test-window results');
-  return { metrics, manifest, forecast, jobs, grid, workload, ext, storage, flows, budget, water, caseDays, assumptions };
+  if (extras && extras.window !== 'test') throw new Error('results/test/extras.json is not a test-window artifact');
+  return { metrics, manifest, forecast, jobs, grid, workload, ext, storage, flows, budget, water, caseDays, assumptions, extras, valExtras };
 }
 /** What copy-data found: the test option is enabled only when results/test/manifest.json exists. */
 export interface ResultsIndex { files: string[]; test?: { available: boolean; files: string[]; frozen_at: string | null } }
@@ -138,6 +146,26 @@ const PLAIN: [RegExp, string][] = [
 ];
 export const stripCodes = (s: string) => s.replace(/\s*\((?:F\d[\d.]*|§\s*\d[\d.]*)(?:[,;][^)]*)?\)/g, '').replace(/§\s*\d[\d.]*/g, '').replace(/\bF\d+(?:\.\d+)?\b/g, '').replace(/\s{2,}/g, ' ').trim();
 export const plainLimitation = (s: string) => PLAIN.find(([re]) => re.test(s))?.[1] ?? stripCodes(s);
+/** The test manifest's limitations were written before the D-071 extras ran: two of them still say
+ * "pending". Their status is derived here from results/test/extras.json and manifest.not_run instead
+ * (phases 49 and 98 ran as extras; shadow-U was cut by the owner, D-058), for the plain list and the
+ * source text alike. Validation lines pass through unchanged. */
+export function resolveLimitations(man: Json, extras: Json | null): string[] {
+  const ls: string[] = man.limitations ?? [];
+  if (man.window !== 'test') return ls;
+  const ran = ['phase_49', 'phase_98'].filter((k) => extras?.extensions?.[k]?.status === 'ok').map((k) => k.replace('phase_', ''));
+  const cut = (man.not_run ?? []).find((x: Json) => /shadow-U/i.test(x.item));
+  return ls.map((l) => {
+    if (/phases 49 and 98 are pending/i.test(l)) {
+      return ran.length === 2 ? 'The headline replays the workload from offset 0; the offsets of 49 and 98 days ran on the test year as pre-registered alignment checks (results/test/extras.json), reported beside it and never pooled with it.'
+        : `The headline replays the workload from offset 0; ${ran.length ? `only the ${ran[0]}-day offset ran as a check` : 'the 49- and 98-day offset checks did not run'} on the test year.`;
+    }
+    if (/shadow-U sensitivity/i.test(l) && /pending/i.test(l)) {
+      return `What is possible without advance reservations (the shadow-U check) was not run: ${cut ? cut.reason : 'not run'}.`;
+    }
+    return l;
+  });
+}
 /** The plain limitations list; the validation-year (or test-year) line is stated once, in its own place, so it is left out here. */
 export const plainLimitations = (ls: string[]) => ls.map(plainLimitation).filter((t) => t !== VALIDATION_LINE && t !== TEST_LINE);
 

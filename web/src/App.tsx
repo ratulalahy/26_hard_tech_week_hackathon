@@ -13,6 +13,8 @@ import { ControlRoom, controlPadding } from './views/ControlRoom';
 import { MethodDrawer } from './views/MethodDrawer';
 import { Ribbon } from './views/Ribbon';
 import { Story } from './views/Story';
+import { Outlook } from './pages/Outlook';
+import { Prices } from './pages/Prices';
 import { useViewport } from './lib/useViewport';
 
 export function App() {
@@ -43,7 +45,9 @@ export function App() {
       <SharedMap />
       <TopBar />
       <main>
-        {error ? <ErrorState msg={error} /> : !data ? <Loading /> : (
+        {/* T19 hook: the outlook is standalone (its own data), so it renders before the results load */}
+        {/* T22 hook: the price lens is standalone (its own data), so it renders before the results load */}
+        {view === 'outlook' ? <Outlook /> : view === 'prices' ? <Prices /> : error ? <ErrorState msg={error} /> : !data ? <Loading /> : (
           <>
             {view === 'control' && <ControlRoom />}
             {view === 'cockpit' && <Cockpit />}
@@ -104,7 +108,7 @@ function TopBar() {
         ))}
       </nav>
       <div className="ml-auto flex items-center gap-2">
-        <WindowSwitch />
+        {view !== 'outlook' && view !== 'prices' && <WindowSwitch />}{/* T19, T22: these pages read their own validation files; the year switch does nothing there */}
         <button className="btn whitespace-nowrap" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button>
       </div>
     </header>
@@ -129,7 +133,7 @@ function WindowSwitch() {
       <button role="radio" aria-checked={evalWindow === 'validation'} onClick={pick('validation')}>Validation year</button>
       <button role="radio" aria-checked={evalWindow === 'test'} disabled={!testOn} onClick={pick('test')}
         title={testOn ? 'The sealed test year, evaluated once after the configuration freeze' : 'Sealed: the test year is evaluated once, after the configuration freeze, through the logged entry point'}>
-        <Lock />{testOptionLabel(testIndex?.frozen_at)}
+        <Lock />{testOptionLabel(testIndex?.frozen_at, testOn)}
       </button>
     </div>
   );

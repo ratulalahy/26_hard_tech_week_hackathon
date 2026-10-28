@@ -40,7 +40,7 @@ export function ScenarioToggle({ compact = false }: { compact?: boolean }) {
   const lid = 'toggle-' + useId().replace(/[^a-zA-Z0-9]/g, '');
   const s = scenarioOf(data!.flows, scenario);
   // validation scenarios only: with no scenario-flows.json for this window, there is nothing to switch
-  if (!data!.flows) return <div className="t-11 ink-3" data-testid="scenario-toggle-off">The mobility and capacity scenarios are not shown for this window.</div>;
+  if (!data!.flows) return <div className="t-11 ink-3" data-testid="scenario-toggle-off"><span data-valok="">The mobility/capacity toggle: validation year · no test counterpart.</span> The map shows the test year's own replay week; the test year's mobility check is in the text and the method drawer.</div>;
   return (
     <div className={short ? 'flex items-center' : 'flex flex-col items-center'} style={{ gap: short ? 8 : 4 }} data-testid="scenario-toggle">
       <div className="flex items-center gap-2 justify-center">
@@ -109,7 +109,7 @@ export function BudgetBar({ p, rows = true, testId = 'budget' }: { p: string; ro
   const [ref, w] = useWidth<HTMLDivElement>();
   const hid = 'hatch-' + useId().replace(/[^a-zA-Z0-9]/g, '');
   const f = budgetFacts(data!.budget, p);
-  if (!f) return <div className="t-12 ink-3">The flexibility budget is not shown for this window.</div>;
+  if (!f) return <div className="t-12 ink-3" data-valok="">The flexibility budget was computed on the validation year only (no test counterpart).</div>;
   const ks: Json[] = f.b.buckets;
   let x = 0;
   const H = 22;

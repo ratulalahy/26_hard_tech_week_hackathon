@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test data notebooks profile slice need-run-dir ext-runs extensions storage flows water case-days extras-validation web freeze
+.PHONY: test data notebooks profile slice need-run-dir ext-runs extensions storage outlook overview prices flows water case-days extras-validation web freeze
 
 test:
 	cd lab && uv run pytest
@@ -90,6 +90,26 @@ case-days: need-run-dir
 # and the L permutation importance on validation). The test run reads it; it never recomputes it.
 extras-validation: need-run-dir
 	cd lab && uv run python scripts/export_extras_validation.py --registered-run $(RUN_DIR)
+
+# The grid outlook (Stage 3 T19): results/outlook.json. Default: the validation-dated demo
+# (ISSUE=<validation date>, default 2024-10-31). LIVE=1: the live outlook from a fresh EIA download,
+# refused until a completed test run exists (results/test/manifest.json, T13); every read of the
+# fresh files is logged in results/outlook_reads.jsonl.
+outlook:
+	cd lab && uv run python scripts/outlook.py $(if $(LIVE),--live,$(if $(ISSUE),--issue $(ISSUE),))
+
+# The ten-region overview (Stage 3 T18; validation only): results/overview.json, the existing
+# forecasters' day-ahead skill per region (consumed CO2 intensity, net load and its stress
+# percentile, against persistence and climatology), typical-day profiles, clean vs rush hours and
+# the median daily swing. Run directory: runs/overview/<UTC>/. About 10–15 minutes.
+overview:
+	cd lab && uv run python scripts/export_overview.py
+
+# The price lens (Stage 3 T22; validation only, wholesale scenario): results/prices.json, the
+# registered ledgers (and the mobility <= 8 GPUs W run from EXT_ROOT) priced at CAISO/WEIM
+# real-time LMPs. RUN_DIR (required): the registered run.
+prices: need-run-dir
+	cd lab && uv run python scripts/export_prices.py --registered-run $(RUN_DIR) --ext-root $(EXT_ROOT)
 
 # The dashboard's validation-year grid context (Task 8): results/grid-profile.json.
 # RUN_DIR: the registered slice run (default runs/slice/<results/manifest.json run_id>).

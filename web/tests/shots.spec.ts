@@ -24,6 +24,10 @@ const STATES: { name: string; hash: string; prep?: (p: Page) => Promise<void> }[
   ...[1, 2, 3, 4, 5, 6].map((n) => ({ name: `story-${n}`, hash: `#story-${n}`, prep: async (p: Page) => { await p.waitForTimeout(900); } })),
   { name: 'method', hash: '#control', prep: async (p) => { await p.getByRole('button', { name: 'Method & evidence' }).click(); await p.waitForTimeout(300); } },
   { name: 'method-checks', hash: '#control', prep: async (p) => { await p.getByRole('button', { name: 'Method & evidence' }).click(); await p.waitForTimeout(300); await p.getByTestId('method-extensions').scrollIntoViewIfNeeded(); await p.waitForTimeout(300); } },
+  // T18: the standalone ten-region overview page
+  { name: 'regions', hash: '#regions' },
+  { name: 'regions-table', hash: '#regions', prep: async (p) => { await p.getByTestId('regions-table').scrollIntoViewIfNeeded(); await p.waitForTimeout(300); } },
+  { name: 'regions-multiples', hash: '#regions', prep: async (p) => { await p.getByTestId('regions-multiples').scrollIntoViewIfNeeded(); await p.waitForTimeout(300); } },
   // T11: the test-year state on the SYNTHETIC fixture (never real test results)
   { name: 'fixture-test-control', hash: '#control', prep: async (p) => { await openTestYear(p); await p.waitForTimeout(1200); } },
   { name: 'fixture-test-method', hash: '#control', prep: async (p) => { await openTestYear(p); await p.waitForTimeout(800); await p.getByRole('button', { name: 'Method & evidence' }).click(); await p.waitForTimeout(300); } },
@@ -36,7 +40,7 @@ for (const s of SIZES) {
       await page.setViewportSize({ width: s.w, height: s.h });
       if (st.name.startsWith('fixture-test')) await serveTestFixture(page);
       await page.goto('./' + st.hash);
-      await page.locator('.mk-region').first().waitFor({ state: 'attached', timeout: 20_000 });
+      await page.locator(st.hash === '#regions' ? '.mk-ov' : '.mk-region').first().waitFor({ state: 'attached', timeout: 20_000 });
       await page.waitForTimeout(1200);
       if (st.prep) await st.prep(page);
       await page.waitForTimeout(500);

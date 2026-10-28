@@ -396,6 +396,7 @@ Validation year. "Ours" is modeled from fuel mix × EIA FAQ factors. "EIA gen" i
   - In NYIS, PJM, ISNE and DUK, demand and CI correlate at +0.54 to +0.75, and the top-100 demand hours are 20–36% dirtier than average.
   - In PACE the correlation is −0.18, and the top-100 demand hours are only 3% dirtier. Utah's summer afternoon peak coincides with solar output, while its dirtiest hours are at night (about 600–700 g/kWh, from coal).
   - A router that minimises carbon and one that avoids grid stress will move PACE jobs in different directions at night. The spec must pick, or weigh, the objective.
+  - **Reconciliation with the overview (T18, `results/overview.json`):** both findings hold, because they correlate carbon with different variables. Carbon against **demand** is r = −0.18 (Pearson, above). Carbon against **net load** (demand minus wind and solar) is ρ = 0.77 (Spearman, validation year to 2025-10-24, EIA consumed CI). Solar removes the afternoon from Utah's net load and moves its peak to about 6–10 PM MT, which are among the dirtiest hours; Utah's **net-load rush hours** are about 20% dirtier than the average hour. So say "net-load rush hours (demand minus wind and solar)", never just "rush hour" or "demand peak", when quoting either number.
 
 **Moving jobs between regions (where).** Validation-year hours where all 10 recommended BAs have a value (8,683 h):
 - The mean hourly spread between the dirtiest and cleanest BA is 580 g/kWh.

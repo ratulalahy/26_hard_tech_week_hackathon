@@ -67,6 +67,14 @@ export function IntervalChart({ m, rows, rowH, stacked = false }: { m: Json; row
             const [lo, hi] = c.saving_ci95.value as [number, number];
             const place = ['S', 'K', 'W', 'L'].includes(p);
             const diag = p === 'H';
+            // the wait-only runs sit at about 1%, on the 0% axis and under their own labels: shown as text, at every width (r1 m4)
+            if (p === 'W_time' || p === 'L_time') return (
+              <g key={p} data-testid={`interval-text-${p}`}>
+                <title>{`${pname(p)}: ${pnote(m, p)}`}</title>
+                <text x={0} y={ty} fontSize={12} fill={C.ink}>{pname(p)}</text>
+                <text x={w} y={ty} textAnchor="end" fontSize={12} fill={C.ink} fontWeight={500}>{pct(c.saving.value)}% <tspan fill={C.ink3} fontWeight={400}>[{pct(lo)}, {pct(hi)}]</tspan></text>
+              </g>
+            );
             return (
               <g key={p}>
                 <title>{`${pname(p)}: ${pnote(m, p)}`}</title>

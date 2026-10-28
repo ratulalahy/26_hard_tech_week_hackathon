@@ -198,5 +198,38 @@ table.tbl-text th, table.tbl-text td { text-align: left; white-space: normal; li
 /* a neutral label chip (no evidence shape): "illustrative · not the registered result" (T10b) */
 .chip-neutral { display: inline-flex; align-items: center; font-size: 11px; line-height: 16px; font-weight: 500; color: var(--ink-2); padding: 2px 8px; border-radius: var(--r-8); box-shadow: inset 0 0 0 1px var(--hair-3); background: var(--surface-2); white-space: nowrap; }
 
+/* the price lens page (T22): two columns, one below 1100 px */
+.prices-grid { grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); }
+.prices-grid-2 { grid-template-columns: minmax(0, 1.3fr) minmax(460px, 1fr); }
+@media (max-width: 1100px) { .prices-grid, .prices-grid-2 { grid-template-columns: minmax(0, 1fr); } }
+.prices-delta { height: 240px; }
+.prices-profile { height: 260px; }
+
 /* tight tables below 1000 px of height (story 5) */
 .tight table.tbl td { padding-top: 3px; padding-bottom: 3px; }
+
+/* ── the ten-region overview page (T18; web/src/pages/Regions.tsx): full width, scrolls on its own ── */
+.regions-page { position: fixed; inset: 0; overflow-y: auto; padding: 16px 24px 24px; }
+.ov-top { grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr); }
+@media (max-width: 1100px) { .ov-top { grid-template-columns: minmax(0, 1fr); } }
+.ov-mult { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 1280px) { .ov-mult { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.ov-card { text-align: left; border: 0; background: var(--surface-2); border-radius: var(--r-12); padding: 8px 10px; cursor: pointer; box-shadow: inset 0 0 0 1px var(--hair-2); min-width: 0;
+  transition: background var(--t) var(--ease), box-shadow var(--t) var(--ease); }
+.ov-card:hover { background: #fff; box-shadow: inset 0 0 0 1px var(--hair); }
+.ov-card[aria-pressed='true'] { background: #fff; box-shadow: inset 0 0 0 1.5px var(--route); }
+.ov-row { border: 0; background: none; padding: 2px 4px; margin-left: -4px; border-radius: var(--r-8); cursor: pointer; text-align: left; display: inline-flex; gap: 6px; align-items: baseline; font-size: 12px; }
+.ov-row:hover { background: rgba(255, 255, 255, 0.8); }
+table.ov-tbl tr.sel td { background: var(--route-wash); }
+table.ov-tbl tr.ov-ev th { padding-top: 0; }
+table.ov-tbl th { white-space: normal; max-width: 150px; }
+.ov-sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; box-shadow: inset 0 0 0 1px rgba(110, 62, 30, 0.18); }
+.ov-bar { display: inline-block; position: relative; width: 64px; height: 6px; border-radius: 3px; background: var(--hair-2); vertical-align: 1px; margin-right: 6px; overflow: hidden; }
+.ov-bar i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 3px; }
+.ov-bar-s::after { content: ''; position: absolute; left: 50%; top: -1px; bottom: -1px; width: 1px; background: var(--ink-3); }
+.ov-dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; }
+.ov-dl dt { color: var(--ink-3); }
+.ov-dl dd { margin: 0; color: var(--ink); }
+.mk-ov { font-size: 11px; color: var(--ink); background: rgba(255, 255, 255, 0.92); padding: 1px 6px; border-radius: 6px; box-shadow: 0 0 0 1px var(--hair); }
+.mk-ov .ov-v { color: var(--ink-2); }
+.mk-ov.sel { box-shadow: 0 0 0 1.5px var(--route); }
