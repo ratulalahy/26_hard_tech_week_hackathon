@@ -5235,8 +5235,8 @@
    }
   }
  },
- "export_git_sha": "89bf98f807ab70413b1bdad54e1470a5c46e1985",
+ "export_git_sha": "625cead811d1196ff1106b5f87a1b07e5ebeeffb",
  "export_git_clean": true,
- "wallclock_generated_at": "2026-10-28T00:19:03.564703+00:00",
+ "wallclock_generated_at": "2026-10-28T02:57:16.703072+00:00",
  "reproduce": "make prices RUN_DIR=<abs path of the registered run>"
 }
