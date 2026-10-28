@@ -1,0 +1,69 @@
+{
+  "sourceCommit": "739f411007a22f43a386983668e8a9ed8129b8c6",
+  "browserVersion": "156.0.8078.4",
+  "platform": "linux",
+  "checks": [
+    {
+      "state": "primary",
+      "width": 1440,
+      "axeViolations": 0
+    },
+    {
+      "state": "limited",
+      "width": 1440,
+      "axeViolations": 0
+    },
+    {
+      "state": "storage-peak",
+      "width": 1440,
+      "axeViolations": 0
+    },
+    {
+      "state": "storage-carbon",
+      "width": 1440,
+      "axeViolations": 0
+    },
+    {
+      "state": "primary",
+      "width": 1728,
+      "axeViolations": 0
+    },
+    {
+      "state": "limited",
+      "width": 1728,
+      "axeViolations": 0
+    },
+    {
+      "state": "storage-peak",
+      "width": 1728,
+      "axeViolations": 0
+    },
+    {
+      "state": "storage-carbon",
+      "width": 1728,
+      "axeViolations": 0
+    },
+    {
+      "state": "primary",
+      "width": 390,
+      "axeViolations": 0
+    },
+    {
+      "state": "limited",
+      "width": 390,
+      "axeViolations": 0
+    },
+    {
+      "state": "storage-peak",
+      "width": 390,
+      "axeViolations": 0
+    },
+    {
+      "state": "storage-carbon",
+      "width": 390,
+      "axeViolations": 0
+    }
+  ],
+  "browserErrors": [],
+  "networkAttempts": []
+}

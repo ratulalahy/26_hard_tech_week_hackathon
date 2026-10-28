@@ -1,0 +1,7 @@
+{
+  "name": "gridpilot-pilot-desk-checks",
+  "private": true,
+  "type": "module",
+  "scripts": {"check": "node tools/check.mjs"},
+  "devDependencies": {"playwright": "1.58.2", "axe-core": "4.11.1"}
+}
