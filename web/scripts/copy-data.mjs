@@ -6,7 +6,7 @@
 //    exists. A stale public/data/results/test/ is removed when results/test/ has no completed run, and the
 //    synthetic fixture in web/tests/fixtures is never copied here.
 // 2. the local map layers from $GRIDPILOT_DATA_DIR/processed/geo -> public/data/geo/, clipped to the
-//    western US view box (the overview's ten regions and the lower-48 states: the US box) and rounded to 3 decimals (about 100 m) to keep them small. Natural Earth
+//    western US view box (the overview's ten regions and the lower-48 states use a separate US box) and rounded to 3 decimals (about 100 m) to keep them small. Natural Earth
 //    (public domain) and Electricity Maps BA geometry (AGPL-3.0) attributions are written next to them.
 // Validation results only: this script never reads the sealed test window (it copies files).
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';

@@ -159,7 +159,11 @@ def test_region_alignment_on_a_grid_where_rush_hours_are_dirty():
     r = ov.region(carbon, balance, "PSCO", issues=issues, leaf_nodes=())
     al = r["alignment"]
     assert al["spearman_ci_net_load"] > 0.8
-    assert al["rush_vs_mean_pct"] > 0 and al["stress_vs_mean_pct"] > 0
+    assert al["rush"]["point"] > 0 and al["stress_vs_mean_pct"] > 0
+    assert al["rush"]["verdict"] == "dirtier" and al["rush"]["ci90"][0] > 0
+    sk = r["skill"]["ci"]["P"]
+    assert sk["verdict"] in ("beats", "worse", "not_distinguishable", "is_baseline")
+    assert sum(al["rush_hour_share"]) == pytest.approx(4.0)
     assert al["clean_rush_overlap_pct"] < 100 / 6  # cleanest hours are midday, rush is evening
     assert al["stress_top_quartile_share"] > 50
     assert len(r["profile"]["ci"]) == 24 and None not in r["profile"]["ci"]
@@ -178,7 +182,118 @@ def test_artifact_is_enveloped_unsealed_and_drops_regions_without_data():
     r = art["regions"]["PSCO"]
     assert r["profile"]["ci"]["evidence"] == "modeled"
     assert r["profile"]["net_load_mw"]["evidence"] == "observed"
-    assert r["forecast"]["ci"]["skill"]["vs_persistence"]["evidence"] == "measured"
+    sk = r["forecast"]["ci"]["skill"]["vs_persistence"]
+    assert sk["point"]["evidence"] == "measured" and sk["ci90"]["evidence"] == "measured"
+    assert sk["verdict"] in ("beats", "worse", "not_distinguishable")
     assert r["forecast"]["stress"]["threshold_mw"]["evidence"] == "modeled"
     assert art["parameters"]["stress_quantile"]["evidence"] == "assumed"
     assert r["forecast"]["ci"]["model"] in ("W", "K")
+    assert r["tz_local"] == "America/Denver"
+    assert r["alignment"]["rush_verdict"] == "dirtier"
+    assert r["profile"]["rush_hour_share"]["evidence"] == "observed"
+
+
+# --------------------------------------------------------------------------- intervals (r1, M1/m4)
+
+
+def _err(n_issues, model_err, base_err, hours=24):
+    rows = []
+    for i in range(n_issues):
+        for k in range(hours):
+            rows.append((START + i * 24 * H, START + (i * 24 + k) * H,
+                         model_err(i, k), base_err(i, k)))
+    return pl.DataFrame(rows, schema={"issue_ts": pl.Datetime("us", "UTC"),
+                                      "target_ts": pl.Datetime("us", "UTC"),
+                                      "W": pl.Float64, "P": pl.Float64}, orient="row")
+
+
+def test_skill_interval_beats_only_when_its_lower_end_is_above_zero():
+    rng = np.random.default_rng(1)
+    good = _err(120, lambda i, k: 1.0 + rng.random() * 0.1, lambda i, k: 2.0 + rng.random() * 0.1)
+    s = ov.skill_block(good, "W", "P")
+    assert s["verdict"] == "beats" and s["ci90"][0] > 0 and s["point"] == pytest.approx(0.5, abs=0.03)
+    assert s["ci90"][0] <= s["point"] <= s["ci90"][1] and s["ci90_b14"] is not None
+    # same errors on average, noisy days: not distinguishable
+    noisy = _err(120, lambda i, k: 1.0 + (i % 2), lambda i, k: 1.0 + ((i + 1) % 2))
+    assert ov.skill_block(noisy, "W", "P")["verdict"] == "not_distinguishable"
+    worse = _err(120, lambda i, k: 3.0, lambda i, k: 1.0 + 0.1 * (i % 3))
+    assert ov.skill_block(worse, "W", "P")["verdict"] == "worse"
+    base = ov.skill_block(good, "P", "P")
+    assert base["verdict"] == "is_baseline" and base["point"] == 0.0 and base["ci90"] is None
+
+
+def test_skill_interval_is_deterministic_and_uses_the_frozen_block_indices():
+    rng = np.random.default_rng(2)
+    e = _err(60, lambda i, k: rng.random(), lambda i, k: rng.random() + 0.2)
+    assert ov.skill_block(e, "W", "P") == ov.skill_block(e, "W", "P")
+    per = e.group_by("issue_ts").agg(pl.col("W").sum(), pl.col("P").sum()).sort("issue_ts")
+    from gridpilot.eval.bootstrap import block_indices
+    idx = block_indices(60, 7, 2000, 20261027)
+    s = 1 - per["W"].to_numpy()[idx].sum(1) / per["P"].to_numpy()[idx].sum(1)
+    lo, hi = np.quantile(s, [0.05, 0.95])
+    assert ov.skill_block(e, "W", "P")["ci90"] == pytest.approx((lo, hi))
+
+
+def test_issue_errors_pair_hours_across_models():
+    ts = [START + k * H for k in range(3)]
+    f = lambda vals: pl.DataFrame({"issue_ts": [START] * 3, "target_ts": ts, "value": vals},
+                                  schema={"issue_ts": pl.Datetime("us", "UTC"),
+                                          "target_ts": pl.Datetime("us", "UTC"),
+                                          "value": pl.Float64})
+    truth = pl.DataFrame({"ts_utc": ts, "value": [1.0, 1.0, None]},
+                         schema={"ts_utc": pl.Datetime("us", "UTC"), "value": pl.Float64})
+    e = ov.issue_errors({"W": f([2.0, 3.0, 1.0]), "P": f([None, 1.5, 1.0])}, truth)
+    assert e.height == 1 and e["W"].to_list() == [2.0] and e["P"].to_list() == [0.5]
+
+
+def test_profiles_use_the_regions_local_clock_and_arizona_keeps_mst():
+    # 2025-07-15 19:00Z is 12:00 in Phoenix (MST, no DST) and 13:00 in Denver (MDT)
+    t = datetime(2025, 7, 15, 19, tzinfo=UTC)
+    f = pl.DataFrame({"ts_utc": [t]}, schema={"ts_utc": pl.Datetime("us", "UTC")})
+    assert ov._local(f, ov.OVERVIEW_TZ["AZPS"])["hour"].item() == 12
+    assert ov._local(f, ov.OVERVIEW_TZ["PSCO"])["hour"].item() == 13
+    assert ov._local(f, ov.OVERVIEW_TZ["PJM"])["hour"].item() == 15
+    w = datetime(2025, 1, 15, 19, tzinfo=UTC)  # winter: Phoenix and Denver agree
+    g = pl.DataFrame({"ts_utc": [w]}, schema={"ts_utc": pl.Datetime("us", "UTC")})
+    assert ov._local(g, "America/Phoenix")["hour"].item() == ov._local(g, "America/Denver")["hour"].item()
+
+
+def test_rush_vs_mean_uses_the_same_complete_days_and_has_an_interval():
+    ts = _hours(datetime(2025, 1, 1, 7, tzinfo=UTC), datetime(2025, 3, 2, 7, tzinfo=UTC))
+    hz = np.array([t.hour for t in ts])
+    rng = np.random.default_rng(3)
+    net = 1000 + 100 * np.cos((hz - 1) / 24 * 2 * np.pi)
+    ci = 300 + 0.5 * (net - 1000) + rng.normal(0, 3, len(ts))
+    ci = ci.tolist()
+    ci[100] = None  # that day is dropped from both means
+    h = ov._local(pl.DataFrame({"ts_utc": ts, "ci": ci, "net_load_mw": net},
+                               schema={"ts_utc": pl.Datetime("us", "UTC"), "ci": pl.Float64,
+                                       "net_load_mw": pl.Float64}), "America/Denver")
+    d = ov.complete_days(h)
+    assert d["date"].n_unique() == h["date"].n_unique() - 1  # the day with the gap
+    rush = ov._daily_rank(d, "net_load_mw", 4, True)
+    rv = ov.rush_vs_mean(d, rush)
+    assert rv["verdict"] == "dirtier" and rv["ci90"][0] > 0 and rv["ci90_b28"][0] > 0
+    assert rv["mean"] == pytest.approx(float(d["ci"].mean()))
+
+
+def test_committed_overview_records_a_clean_export():
+    """m5: results/overview.json carries its git lineage, and it was exported from a clean tree."""
+    import json
+    from pathlib import Path
+    art = json.loads((Path(__file__).resolve().parents[2] / "results" / "overview.json").read_text())
+    lin = art["lineage"]
+    assert lin["git_clean"] is True
+    assert len(lin["git_sha"]) == 40 and lin["run_dir"] == f"runs/overview/{art['run_id']}"
+    assert validate_artifact(art) == [] and sealed_timestamps(art) == []
+    rule = art["parameters"]["bootstrap"]["block_days"]["value"]
+    assert rule == 7
+    for r in art["regions"].values():
+        for key in ("ci", "net_load", "stress"):
+            for b in ("vs_persistence", "vs_climatology"):
+                sk = r["forecast"][key]["skill"][b]
+                lo_hi = sk["ci90"]["value"]
+                if sk["verdict"] == "beats":
+                    assert lo_hi[0] > 0
+                elif sk["verdict"] != "is_baseline":
+                    assert lo_hi is not None and (lo_hi[0] <= 0 or sk["verdict"] == "worse")

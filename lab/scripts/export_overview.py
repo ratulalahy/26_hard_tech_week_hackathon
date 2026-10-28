@@ -37,9 +37,14 @@ def main() -> None:
     ap.add_argument("--out-root", default=str(REPO_ROOT / "runs" / "overview"))
     a = ap.parse_args()
     run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    # lineage first: the tree must be clean before anything is written (results/ is tracked)
+    sha, status = _git("rev-parse", "HEAD").strip(), _git("status", "--porcelain")
     carbon, balance = ov.load_carbon(), ov.load_balance()
     art = ov.build_overview(carbon, balance, workers=a.workers)
     art["run_id"] = run_id
+    art["lineage"] = {"git_sha": sha, "git_clean": status.strip() == "",
+                      "run_dir": f"runs/overview/{run_id}", "command": "make overview",
+                      "inputs_sha256": ov.input_hashes()}
 
     root = os.path.abspath(a.out_root)
     tmp, final = os.path.join(root, f".tmp-{run_id}-{os.getpid()}"), os.path.join(root, run_id)
@@ -64,19 +69,23 @@ def main() -> None:
     out = RESULTS_DIR / "overview.json"
     write_json_atomic(out, art)
     print(f"wrote {out} ({out.stat().st_size / 1024:.0f} KB) and {final}")
+    def cell(sk):
+        lo_hi = sk["ci90"]["value"]
+        iv = "[  n/a  ]" if lo_hi is None else f"[{lo_hi[0]:+.2f},{lo_hi[1]:+.2f}]"
+        return f"{sk['point']['value']:+.2f}{iv}{'*' if sk['verdict'] == 'beats' else ' '}"
+
     for ba in art["order"]:
         r = art["regions"][ba]
-        fc = r["forecast"]
-        print(f"{ba:5s} CI {fc['ci']['model']} MAE {fc['ci']['mae']['value']:7.1f} "
-              f"skill/P {fc['ci']['skill']['vs_persistence']['value']:+.2f} "
-              f"skill/K {fc['ci']['skill']['vs_climatology']['value']:+.2f} | "
-              f"NL {fc['net_load']['model']} skill/P {fc['net_load']['skill']['vs_persistence']['value']:+.2f} "
-              f"skill/K {fc['net_load']['skill']['vs_climatology']['value']:+.2f} "
-              f"top4 {fc['stress']['top4_precision'][fc['stress']['model']]['precision']['value']:.2f} | "
-              f"rush {r['alignment']['rush_vs_mean_pct']['value']:+.1f}% "
-              f"stress {r['alignment']['stress_vs_mean_pct']['value'] if r['alignment']['stress_vs_mean_pct']['value'] is not None else float('nan'):+.1f}% "
-              f"rho {r['alignment']['spearman_ci_net_load']['value']:+.2f} "
-              f"swing {r['swing']['median_g']['value']:.0f} g")
+        fc, al = r["forecast"], r["alignment"]
+        rv = al["rush_vs_mean_pct_ci90"]["value"]
+        print(f"{ba:5s} CI {fc['ci']['model']} {fc['ci']['mae']['value']:6.1f} "
+              f"P {cell(fc['ci']['skill']['vs_persistence'])} "
+              f"K {cell(fc['ci']['skill']['vs_climatology'])} | NL {fc['net_load']['model']} "
+              f"P {cell(fc['net_load']['skill']['vs_persistence'])} "
+              f"K {cell(fc['net_load']['skill']['vs_climatology'])} | "
+              f"rush {al['rush_vs_mean_pct']['value']:+.1f}% [{rv[0]:+.1f},{rv[1]:+.1f}] "
+              f"{al['rush_verdict']} | swing {r['swing']['median_g']['value']:.0f} g")
+    print("lineage", art["lineage"]["git_sha"], "clean" if art["lineage"]["git_clean"] else "DIRTY")
     for d in art["dropped"]:
         print("dropped", d["ba"], d["reason"])
 

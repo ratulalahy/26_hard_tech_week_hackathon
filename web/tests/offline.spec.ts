@@ -156,8 +156,17 @@ test('the ten-region overview page renders results/overview.json offline (T18)',
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.goto('./#regions');
   await expect(page.getByTestId('regions-table').locator('tbody tr')).toHaveCount(ov.order.length);
-  const dirtier = ov.order.filter((b: string) => ov.regions[b].alignment.rush_vs_mean_pct.value > 0).length;
-  await expect(page.getByTestId('regions-title')).toContainText(`${dirtier} of ${ov.order.length} regions`);
+  // r1: every count follows the artifact's interval verdicts, never the sign of a point estimate
+  const count = (f: (r: { alignment: { rush_verdict: string }; forecast: { ci: { skill: Record<string, { verdict: string }> } } }) => boolean) => ov.order.filter((b: string) => f(ov.regions[b])).length;
+  const dirtier = count((r) => r.alignment.rush_verdict === 'dirtier');
+  await expect(page.getByTestId('regions-title')).toContainText(`In ${dirtier} of ${ov.order.length} regions the net-load rush hours are dirtier`);
+  const beatP = count((r) => r.forecast.ci.skill.vs_persistence.verdict === 'beats');
+  const beatK = count((r) => r.forecast.ci.skill.vs_climatology.verdict === 'beats');
+  await expect(page.getByTestId('regions-lede')).toContainText(`beats same-hour persistence in ${beatP} of ${ov.order.length} regions and the seasonal average (climatology) in ${beatK}`);
+  // PACE vs climatology: shown greyed unless its interval clears zero (agrees with T19's outlook)
+  const paceK = ov.regions.PACE.forecast.ci.skill.vs_climatology;
+  const paceCell = page.getByTestId('regions-table').locator('tbody tr', { hasText: 'PACE' }).locator('[data-verdict]').nth(2);
+  await expect(paceCell).toHaveAttribute('data-verdict', paceK.verdict);
   // the default ranking is by daily swing: the first row is the widest swing
   const widest = [...ov.order].sort((a: string, b: string) => ov.regions[b].swing.median_g.value - ov.regions[a].swing.median_g.value)[0];
   await expect(page.getByTestId('regions-table').locator('tbody tr').first()).toContainText(widest);
