@@ -594,3 +594,15 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - Prices are not a test input.
   - The shipped code refuses files that start after the seal, and after the T22 fix it also refuses files that straddle the seal.
   - Recorded so the audit can weigh it.
+
+## D-073 · 2026-10-27 18:35 MT · Add a peak-aimed storage schedule to the pre-registered test-year list
+- **Decided by:** the lead, on the Q&A drill's finding (PR #89, Q21), before the seal opens.
+- **Evidence:**
+  - The D-061/D-067 carbon schedule discharges at 21:00–02:00 and 06:00 local, which misses 11 of the 12 net-load rush hours.
+  - Rush-hour import only falls from 1.12 to 1.04 MW (`storage.json`).
+  - The pitch line "storage helps during Utah's evening rush" is therefore not supported as built.
+- **Decision:** add item 2b to the D-071 list, a second fixed schedule derived from the training year only.
+  - It discharges in the 4 local hours most often among the day's top 4 net-load hours, and charges in the 4 hours most often lowest.
+  - It uses the same battery, efficiency and site cap.
+  - It runs on validation and on the test year, as a design comparison. The carbon headline is unchanged.
+- **Pitch:** until then, storage is pitched on carbon (3.5%) and on its known weakness (+109 t on a flat marginal basis), not on peak relief.
