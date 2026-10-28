@@ -13,6 +13,7 @@ import { ControlRoom, controlPadding } from './views/ControlRoom';
 import { MethodDrawer } from './views/MethodDrawer';
 import { Ribbon } from './views/Ribbon';
 import { Story } from './views/Story';
+import { Outlook } from './pages/Outlook';
 import { useViewport } from './lib/useViewport';
 
 export function App() {
@@ -43,7 +44,8 @@ export function App() {
       <SharedMap />
       <TopBar />
       <main>
-        {error ? <ErrorState msg={error} /> : !data ? <Loading /> : (
+        {/* T19 hook: the outlook is standalone (its own data), so it renders before the results load */}
+        {view === 'outlook' ? <Outlook /> : error ? <ErrorState msg={error} /> : !data ? <Loading /> : (
           <>
             {view === 'control' && <ControlRoom />}
             {view === 'cockpit' && <Cockpit />}
@@ -104,7 +106,7 @@ function TopBar() {
         ))}
       </nav>
       <div className="ml-auto flex items-center gap-2">
-        <WindowSwitch />
+        {view !== 'outlook' && <WindowSwitch />}{/* T19: the outlook reads its own file; the year switch does nothing there */}
         <button className="btn whitespace-nowrap" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button>
       </div>
     </header>

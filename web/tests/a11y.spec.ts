@@ -13,6 +13,7 @@ const STATES: { name: string; hash: string; drawer?: boolean; testYear?: boolean
   { name: 'story-5', hash: '#story-5' }, // T10b: the storage beat (F18), beat 5 in the D-064 order
   { name: 'story-6', hash: '#story-6' }, // the evidence
   { name: 'control-mobility', hash: '#control', toggle: 1 }, // T15: a scenario estimate on the control room
+  { name: 'outlook', hash: '#outlook' }, // T19: the grid outlook page
   { name: 'method', hash: '#control', drawer: true },
   { name: 'test-year control', hash: '#control', testYear: true },
   { name: 'test-year method', hash: '#control', testYear: true, drawer: true },

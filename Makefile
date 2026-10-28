@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test data notebooks profile slice need-run-dir ext-runs extensions storage flows water case-days extras-validation web freeze
+.PHONY: test data notebooks profile slice need-run-dir ext-runs extensions storage outlook flows water case-days extras-validation web freeze
 
 test:
 	cd lab && uv run pytest
@@ -90,6 +90,12 @@ case-days: need-run-dir
 # and the L permutation importance on validation). The test run reads it; it never recomputes it.
 extras-validation: need-run-dir
 	cd lab && uv run python scripts/export_extras_validation.py --registered-run $(RUN_DIR)
+# The grid outlook (Stage 3 T19): results/outlook.json. Default: the validation-dated demo
+# (ISSUE=<validation date>, default 2024-10-31). LIVE=1: the live outlook from a fresh EIA download,
+# refused until a completed test run exists (results/test/manifest.json, T13); every read of the
+# fresh files is logged in results/outlook_reads.jsonl.
+outlook:
+	cd lab && uv run python scripts/outlook.py $(if $(LIVE),--live,$(if $(ISSUE),--issue $(ISSUE),))
 
 # The dashboard's validation-year grid context (Task 8): results/grid-profile.json.
 # RUN_DIR: the registered slice run (default runs/slice/<results/manifest.json run_id>).
