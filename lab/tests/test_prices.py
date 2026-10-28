@@ -194,12 +194,17 @@ def _oasis_zip(path: Path, rows):
         z.writestr("x.csv", buf.getvalue())
 
 
+def _name(s, e):
+    return f"PRC_RTPD_LMP_{s:%Y%m%d}_{e:%Y%m%d}.zip"
+
+
 def _price_dir(tmp_path, files):
-    """files: (name, start, end, rows). Writes the zips and a manifest; returns data_dir."""
+    """files: (name or None, start, end, rows); None names the file from its dates, as OASIS
+    pulls are named. Writes the zips and a manifest; returns data_dir."""
     d = tmp_path / "data"
     entries = []
     for name, s, e, rows in files:
-        rel = f"raw/prices/caiso/rtpd/core/{name}"
+        rel = f"raw/prices/caiso/rtpd/core/{name or _name(s, e)}"
         p = d / rel
         p.parent.mkdir(parents=True, exist_ok=True)
         _oasis_zip(p, rows)
@@ -210,29 +215,60 @@ def _price_dir(tmp_path, files):
     return d
 
 
-def test_price_reads_skip_sealed_files_and_drop_sealed_rows(tmp_path):
+def _no_reads(monkeypatch):
+    """Fail if any price file is hashed or parsed."""
+    def boom(*a, **k):
+        raise AssertionError("a price file was opened")
+    monkeypatch.setattr(lens, "read_oasis_zip", boom)
+    monkeypatch.setattr(lens, "_sha256", boom)
+
+
+def test_a_file_reaching_past_the_seal_is_refused_before_any_read(tmp_path, monkeypatch):
     node = lens.NODES["PACE"]
     edge = TEST_START - timedelta(hours=1)
+    pre = [(edge - timedelta(days=3) + timedelta(minutes=15 * q), node, "LMP", 5.0)
+           for q in range(8)]
     straddle = [(edge + timedelta(minutes=15 * q), node, "LMP", 5.0) for q in range(8)]
     sealed = [(TEST_START + timedelta(days=2), node, "LMP", 999.0)]
     d = _price_dir(tmp_path, [
-        ("a.zip", TEST_START - timedelta(days=5), TEST_START + timedelta(days=25), straddle),
-        ("b.zip", TEST_START + timedelta(days=1), TEST_START + timedelta(days=30), sealed)])
-    win = (edge - timedelta(hours=1), TEST_START)
-    assert [f["path"].rsplit("/", 1)[1] for f in lens.price_files(win, d)] == ["a.zip"]
+        (None, TEST_START - timedelta(days=35), TEST_START - timedelta(days=5), pre),
+        (None, TEST_START - timedelta(days=5), TEST_START + timedelta(days=25), straddle),
+        (None, TEST_START + timedelta(days=1), TEST_START + timedelta(days=30), sealed)])
+    _no_reads(monkeypatch)
+    # a window that needs the straddling file: refused, nothing opened
+    with pytest.raises(ValueError, match="past the seal"):
+        lens.load_rt_intervals([node], (edge - timedelta(days=6), edge), d)
+    # the file name alone is enough: a manifest window that ends early does not let it through
+    entries = json.loads((d / lens.MANIFEST).read_text())
+    entries["files"][1]["end_utc"] = (TEST_START - timedelta(days=1)).isoformat()
+    (d / lens.MANIFEST).write_text(json.dumps(entries))
+    with pytest.raises(ValueError, match="past the seal"):
+        lens.price_files((edge - timedelta(days=6), edge), d)
+
+
+def test_files_before_the_seal_load_and_later_files_are_never_listed(tmp_path):
+    node = lens.NODES["PACE"]
+    t = TEST_START - timedelta(days=10)
+    d = _price_dir(tmp_path, [
+        (None, t - timedelta(days=20), t + timedelta(days=1),
+         [(t + timedelta(minutes=15 * q), node, "LMP", 5.0) for q in range(4)]),
+        (None, t + timedelta(days=3), TEST_START + timedelta(days=20),
+         [(TEST_START + timedelta(days=2), node, "LMP", 999.0)])])
+    win = (t, t + timedelta(hours=1))
+    assert len(lens.price_files(win, d)) == 1
     iv, files = lens.load_rt_intervals([node], win, d)
-    assert iv["ts_utc"].max() < TEST_START
     assert iv.height == 4 and (iv["lmp"] == 5.0).all()
-    assert [f["path"].rsplit("/", 1)[1] for f in files] == ["a.zip"]
+    assert len(files) == 1 and files[0]["path"].endswith(_name(t - timedelta(days=20),
+                                                                t + timedelta(days=1)))
 
 
 def test_price_reads_refuse_a_window_past_the_seal_and_a_changed_file(tmp_path):
     node = lens.NODES["PACE"]
-    d = _price_dir(tmp_path, [("a.zip", T0, T0 + timedelta(days=1),
+    d = _price_dir(tmp_path, [(None, T0, T0 + timedelta(days=1),
                                [(T0, node, "LMP", 1.0)])])
     with pytest.raises(ValueError, match="seal"):
         lens.load_rt_intervals([node], (T0, TEST_START + timedelta(hours=1)), d)
-    (d / "raw/prices/caiso/rtpd/core/a.zip").write_bytes(b"tampered")
+    (d / f"raw/prices/caiso/rtpd/core/{_name(T0, T0 + timedelta(days=1))}").write_bytes(b"x")
     with pytest.raises(ValueError, match="sha256"):
         lens.load_rt_intervals([node], (T0, T0 + timedelta(days=1)), d)
 
@@ -271,16 +307,16 @@ def _run_dir(tmp_path, data_dir):
                                             closed="left")):
         for s, node in [*lens.NODES.items(), ("CISO", lens.CISO_SENS_NODE)]:
             rows.append((t, node, "LMP", 20.0 + (i % 96) / 4 if s == "PACE" else 45.0))
-    d = _price_dir(tmp_path, [("a.zip", T0, T0 + timedelta(days=15), rows)])
+    d = _price_dir(tmp_path, [(None, T0, T0 + timedelta(days=15), rows)])
     return run, d
 
 
 def test_end_to_end_artifact_is_enveloped_and_honest(tmp_path):
     run, d = _run_dir(tmp_path, None)
     main = lens.compute(run, None, data_dir=d)
-    sens = lens.compute(run, None, data_dir=d, with_bootstrap=False,
-                        nodes={**lens.NODES, "CISO": lens.CISO_SENS_NODE})
-    art = lens.build_artifact(main, sens)
+    alt = lens.compute(run, None, data_dir=d,
+                       nodes={**lens.NODES, "CISO": lens.CISO_SENS_NODE})
+    art = lens.build_artifact(main, alt)
     assert validate_artifact(art) == []
     assert art["scenario"] == lens.SCENARIO and "retail" in art["caveat"]
     w = art["policies"]["W"]
@@ -297,6 +333,18 @@ def test_end_to_end_artifact_is_enveloped_and_honest(tmp_path):
     assert pu["value"] is None and pu["reason"]
     assert set(art["policies"]["W"]["interval"]["blocks"]) == {"2", "4", "8"}
     assert art["coverage"]["priced_share"]["value"] == 1.0
+    # both California load zones, the choice labelled assumed, the range spanning both
+    cn = art["california_node"]
+    assert cn["evidence"] == "assumed" and cn["shown"] == lens.NODES["CISO"]
+    lo, hi = cn["range"]["W"]["delta_vs_U_usd"]["value"]
+    vals = [w["delta_vs_U_usd"]["value"], cn["alternative_policies"]["W"]["delta_vs_U_usd"]["value"]]
+    assert (lo, hi) == (min(vals), max(vals))
+    # the interval in the sign of delta_vs_U_usd is the saving interval negated and swapped
+    b = w["interval"]["blocks"][str(w["interval"]["primary_block"]["value"])]
+    s_lo, s_hi = b["saving_usd_ci95"]["value"]
+    assert b["delta_vs_U_usd_ci95"]["value"] == [-s_hi, -s_lo]
+    assert w["energy_all_mwh"]["evidence"] == "simulated"
+    assert "arrival" in art["transfer_rule"] and "15-minute" in art["prices"]["pricing_rule"]
     assert math.isclose(art["policies"]["U"]["excluded_energy_share"]["value"], 0.0,
                         abs_tol=1e-12)
 

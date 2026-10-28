@@ -7,15 +7,19 @@ pays a retail tariff or a contract, with demand charges, transmission and fees. 
 which way and roughly how far the wholesale signal points, nothing more.
 
 **Validation only.** The cohort window lies before the seal (2025-11-01T00Z). Only raw price files
-whose manifest window starts before the seal are opened, each file's sha256 is checked against
-`data/manifests/prices_caiso.json`, and every parsed frame goes through `drop_sealed` first.
+whose whole span (manifest window and file-name dates) ends at or before the seal are opened; a
+window that would need a file reaching past the seal is refused before any file is read. Each
+opened file's sha256 is checked against `data/manifests/prices_caiso.json`, and every parsed frame
+still goes through `drop_sealed`.
 
 **Prices (observed).** CAISO OASIS `PRC_RTPD_LMP` (15-minute fifteen-minute-market LMP, real time
-for every site, including the WEIM load points), averaged to UTC hours. Real-time marks are used
-everywhere because PACE has no day-ahead price before EDAM (2026-05-01, inside the sealed window).
-Site → node (assumed): PACE `ELAP_PACE-APND`, BPAT `ELAP_BPAT-APND`, NEVP `ELAP_NEVP-APND` (the
-WEIM load aggregation points) and CISO `DLAP_PGAE-APND` (PG&E's default load aggregation point;
-`DLAP_SCE-APND` is the one sensitivity).
+for every site, including the WEIM load points), averaged to UTC hours: a partial hour of a job is
+priced at that hour's mean. The cluster (about 1 MW) is assumed too small to move any price.
+Real-time marks are used everywhere because PACE has no day-ahead price before EDAM (2026-05-01,
+inside the sealed window). Site → node (assumed): PACE `ELAP_PACE-APND`, BPAT `ELAP_BPAT-APND`,
+NEVP `ELAP_NEVP-APND` (the WEIM load aggregation points). The simulated CISO site has no location
+inside California, so CISO is computed at both large CAISO load zones, PG&E `DLAP_PGAE-APND`
+(shown first) and SCE `DLAP_SCE-APND`, and the headline is the range over the two.
 
 **Coverage rule (registered here, policy-independent).** An hour is *priced at a site* when all
 four of its 15-minute intervals have an LMP. An hour is *priced* when it is priced at every site.
@@ -35,8 +39,9 @@ emissions, not a marginal abatement cost.
 **Level vs timing (exact, additive).** With p̄_s the plain mean price of site s over the priced
 hours: level_P = Σ_s MWh_Ps · p̄_s and timing_P = cost_P − level_P (when, within the year, the
 energy is drawn relative to that site's mean). Δ vs U splits again: Δlevel = extra energy
-(ΔMWh · p̄_PACE, the transfer overhead) + location (Σ_s MWh_Ps · (p̄_s − p̄_PACE); U runs only at
-PACE). So Δcost = extra energy + location + timing.
+(ΔMWh · p̄_PACE: the transfer energy valued at Utah's mean) + location (Σ_s MWh_Ps · (p̄_s −
+p̄_PACE), which includes the destination half of the transfer energy; U runs only at PACE). So
+Δcost = extra energy + location + timing.
 
 **Interval.** The frozen paired block bootstrap (`gridpilot.eval.bootstrap`, b = 2, 4, 8 weeks,
 2,000 reps, seed 20261027) over weekly cost totals by arrival week, as for CO₂.
@@ -47,7 +52,8 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from datetime import UTC, datetime
+import re
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -101,16 +107,36 @@ def _utc(s: str) -> datetime:
 # --------------------------------------------------------------------------- prices
 
 
+_SPAN = re.compile(r"_(\d{8})_(\d{8})\.zip$")
+
+
+def file_span(f: dict) -> tuple[datetime, datetime]:
+    """A manifest entry's span, the widest of its manifest window and its file name's dates
+    (`..._YYYYMMDD_YYYYMMDD.zip`; the end date counts as the whole day). Metadata only."""
+    m = _SPAN.search(f["path"])
+    if not m:
+        raise ValueError(f"{f['path']}: no _YYYYMMDD_YYYYMMDD span in the file name")
+    ns = datetime.strptime(m[1], "%Y%m%d").replace(tzinfo=UTC)
+    ne = datetime.strptime(m[2], "%Y%m%d").replace(tzinfo=UTC) + timedelta(days=1)
+    return min(ns, _utc(f["start_utc"])), max(ne, _utc(f["end_utc"]))
+
+
 def price_files(window: tuple[datetime, datetime], data_dir: Path = DATA_DIR) -> list[dict]:
-    """The RTPD manifest entries that overlap `window` and start before the seal."""
+    """The RTPD manifest entries whose span overlaps `window`. A file whose span reaches past
+    the seal is never opened (not even hashed or listed): if the window needs one, this
+    refuses before any file is read (F8; review F3)."""
     man = json.loads((data_dir / MANIFEST).read_text())
     out = []
     for f in man["files"]:
         if not f["path"].startswith(PRICE_FILE_PREFIX) or f.get("status") != "ok":
             continue
-        s, e = _utc(f["start_utc"]), _utc(f["end_utc"])
-        if s < TEST_START and s < window[1] and e > window[0]:
-            out.append(f)
+        s, e = file_span(f)
+        if not (s < window[1] and e > window[0]):
+            continue
+        if e > TEST_START:
+            raise ValueError(f"{f['path']} spans [{s.isoformat()}, {e.isoformat()}), past the "
+                             f"seal at {TEST_START.isoformat()}: refused before reading (F8)")
+        out.append(f)
     return sorted(out, key=lambda f: f["path"])
 
 
@@ -324,10 +350,9 @@ def _ok(v, unit, ev, pid, reason=None):
     return env(v, unit, ev, pid, reason=reason if v is None else None)
 
 
-def build_artifact(main: dict, sens: dict | None = None) -> dict:
-    pid = "prices"
-    tot, dec, cov = main["totals"], main["decomp"], main["coverage"]
-    ok = cov["covered"]
+def _policies(main: dict, pid: str) -> dict:
+    """The per-policy records for one site → node mapping."""
+    tot, dec = main["totals"], main["decomp"]
     u = tot["U"]
     pols = {}
     for p, t in tot.items():
@@ -342,9 +367,9 @@ def build_artifact(main: dict, sens: dict | None = None) -> dict:
             "source": (f"{main['ext_run_id']}/ledger_{EXT_POLICY}" if ":" in p
                        else f"{main['run_id']}/ledger_{p}"),
             "cost_usd": env(t["usd"], "USD", "simulated", f"{q}:cost"),
-            "energy_priced_mwh": env(t["mwh"], "MWh", "modeled", f"{q}:mwh"),
-            "energy_all_mwh": env(t["mwh_all"], "MWh", "modeled", f"{q}:mwh_all"),
-            "excluded_energy_share": env(1 - t["mwh"] / t["mwh_all"], "fraction", "modeled",
+            "energy_priced_mwh": env(t["mwh"], "MWh", "simulated", f"{q}:mwh"),
+            "energy_all_mwh": env(t["mwh_all"], "MWh", "simulated", f"{q}:mwh_all"),
+            "excluded_energy_share": env(1 - t["mwh"] / t["mwh_all"], "fraction", "simulated",
                                          f"{q}:excluded_share"),
             "avg_price_paid_usd_mwh": env(t["usd"] / t["mwh"], "USD/MWh", "simulated",
                                           f"{q}:avg_price"),
@@ -352,7 +377,7 @@ def build_artifact(main: dict, sens: dict | None = None) -> dict:
             "co2_all_t": env(t["co2_all"] / 1000, "t_CO2", "simulated", f"{q}:co2_all"),
             "cost_by_site_usd": {s: env(v, "USD", "simulated", f"{q}:site:{s}")
                                  for s, v in t["site"]["usd"].items()},
-            "energy_by_site_mwh": {s: env(v, "MWh", "modeled", f"{q}:site_mwh:{s}")
+            "energy_by_site_mwh": {s: env(v, "MWh", "simulated", f"{q}:site_mwh:{s}")
                                    for s, v in t["site"]["mwh"].items()},
             "transfer_cost_usd": env(t["usd_transfer"], "USD", "simulated", f"{q}:transfer"),
             "delta_vs_U_usd": env(d["delta_usd"], "USD", "simulated", f"{q}:delta"),
@@ -367,8 +392,11 @@ def build_artifact(main: dict, sens: dict | None = None) -> dict:
         }
         if p in main["boot"]:
             rec["interval"] = {
-                "method": BOOTSTRAP_LABEL, "statistic": "U − policy, $ (positive = policy is "
-                "cheaper than U); weekly totals by arrival week",
+                "method": BOOTSTRAP_LABEL,
+                "statistic": "weekly totals by arrival week; saving_usd* = U − policy (positive = "
+                             "cheaper than U); delta_vs_U_usd_ci95 = policy − U, the sign of "
+                             "delta_vs_U_usd",
+                "covers": "week-to-week resampling only, not the price-node choice",
                 "primary_block": env(PRIMARY_BLOCK, "weeks", "assumed", f"{q}:primary_block"),
                 "reps": env(REPS, "replicates", "assumed", f"{q}:reps"),
                 "seed": env(SEED, "seed", "assumed", f"{q}:seed"),
@@ -378,6 +406,8 @@ def build_artifact(main: dict, sens: dict | None = None) -> dict:
                     "saving_usd": env(r["saving_usd"], "USD", "simulated", f"{q}:b{b}:saving"),
                     "saving_usd_ci95": env(r["saving_usd_ci"], "USD", "simulated",
                                            f"{q}:b{b}:saving_ci"),
+                    "delta_vs_U_usd_ci95": env([-r["saving_usd_ci"][1], -r["saving_usd_ci"][0]],
+                                               "USD", "simulated", f"{q}:b{b}:delta_ci"),
                     "saving_frac_ci95": _ok(r["saving_frac_ci"], "fraction", "simulated",
                                             f"{q}:b{b}:frac_ci", "a zero reference replicate"),
                     "cost_per_attributed_tonne_ci95": _ok(
@@ -386,6 +416,15 @@ def build_artifact(main: dict, sens: dict | None = None) -> dict:
                 } for b, r in main["boot"][p].items()},
             }
         pols[p] = rec
+    return pols
+
+
+def build_artifact(main: dict, alt: dict | None = None) -> dict:
+    """`main`: CISO at PG&E (shown); `alt`: CISO at SCE (the other load zone)."""
+    pid = "prices"
+    cov = main["coverage"]
+    ok = cov["covered"]
+    pols = _policies(main, pid)
     n_cov = int(ok.sum())
     out = {
         "schema_version": SCHEMA_VERSION,
@@ -410,7 +449,15 @@ def build_artifact(main: dict, sens: dict | None = None) -> dict:
                              "sealed window); real-time marks are used for every site",
             "nodes": {"evidence": "assumed", "map": dict(main["nodes"]),
                       "rule": "the load aggregation point a load at each site would settle at: "
-                              "WEIM ELAPs, and PG&E's DLAP for CISO (SCE's is the sensitivity)"},
+                              "the WEIM ELAPs; CISO has no location inside California, so it is "
+                              "computed at both large CAISO load zones (california_node)"},
+            "pricing_rule": "hourly means of the four 15-minute LMPs; a partial hour of a job "
+                            "is priced at that hour's mean",
+            "price_taker": {
+                "rule": "the cluster is assumed too small to move any price",
+                "mean_load_mw": env(main["totals"]["U"]["mwh_all"] / main["grid_hours"], "MW",
+                                    "simulated", f"{pid}:mean_load"),
+            },
             "mean_usd_mwh": {s: env(v, "USD/MWh", "observed", f"{pid}:mean:{s}")
                              for s, v in main["mean_price"].items()},
             "by_local_hour_usd_mwh": {
@@ -432,28 +479,46 @@ def build_artifact(main: dict, sens: dict | None = None) -> dict:
                                for k in ("complete", "partial", "missing")}}
                         for s, c in cov["sites"].items()},
         },
+        "transfer_rule": ("a moved job's transfer energy (5% of its IT energy, × PUE) is priced "
+                          "half at Utah and half at the destination, at the UTC hour of the "
+                          "job's arrival, as in the CO₂ accounting"),
         "decomposition_rule": ("Δcost vs U = level + timing; level = Σ_site MWh × the site's mean "
                                "price over the priced hours, minus U's; level = extra energy "
-                               "(ΔMWh × PACE mean price: transfer overhead) + location (MWh "
-                               "placed at a site whose mean price differs from PACE's); timing "
-                               "= the rest (when the energy is drawn vs each site's mean)"),
+                               "(ΔMWh × PACE mean price: the transfer energy valued at Utah's "
+                               "mean) + location (MWh placed at a site whose mean price differs "
+                               "from PACE's, including the destination half of the transfer "
+                               "energy); timing = the rest (when the energy is drawn vs each "
+                               "site's mean)"),
         "per_tonne_rule": ("cost per attributed tonne = (cost − cost_U) / (attributed CO₂_U − "
                            "CO₂) on the priced hours; negative = cheaper and lower-carbon; "
                            "attributed (average-intensity) CO₂, not a marginal abatement cost"),
         "policies": pols,
     }
-    if sens is not None:
-        out["sensitivity"] = {
-            "ciso_node": {
-                "rule": f"CISO priced at {CISO_SENS_NODE} instead of {NODES['CISO']}; the "
-                        "coverage rule re-applied to that node set",
-                "priced_hours": env(int(sens["coverage"]["covered"].sum()), "hours", "observed",
-                                    f"{pid}:sens:priced"),
-                "delta_vs_U_usd": {p: env(d["delta_usd"], "USD", "simulated",
-                                          f"{pid}:sens:{p}:delta")
-                                   for p, d in sens["decomp"].items()},
-                "delta_vs_U_frac": {p: env(d["delta_usd"] / sens["totals"]["U"]["usd"],
-                                           "fraction", "simulated", f"{pid}:sens:{p}:frac")
-                                    for p, d in sens["decomp"].items()},
-            }}
+    if alt is not None:
+        q = f"{pid}:sce"
+        alt_pols = _policies(alt, q)
+
+        def rng(k: str, p: str) -> list[float]:
+            a, b = pols[p][k]["value"], alt_pols[p][k]["value"]
+            return [min(a, b), max(a, b)]
+
+        out["california_node"] = {
+            "evidence": "assumed",
+            "rule": ("the simulated CISO site has no location inside California, so CISO is "
+                     "priced at both large CAISO load zones; `policies` shows PG&E, the range "
+                     "spans both; the bootstrap intervals cover week-to-week resampling only, "
+                     "not this choice"),
+            "shown": NODES["CISO"],
+            "alternative": CISO_SENS_NODE,
+            "alternative_mean_usd_mwh": env(alt["mean_price"]["CISO"], "USD/MWh", "observed",
+                                            f"{q}:mean:CISO"),
+            "alternative_priced_hours": env(int(alt["coverage"]["covered"].sum()), "hours",
+                                            "observed", f"{q}:cov:priced"),
+            "range": {p: {"delta_vs_U_usd": env(rng("delta_vs_U_usd", p), "USD", "simulated",
+                                                f"{pid}:range:{p}:delta"),
+                          "delta_vs_U_frac": env(rng("delta_vs_U_frac", p), "fraction",
+                                                 "simulated", f"{pid}:range:{p}:frac")}
+                      for p in pols if p != "U"},
+            "alternative_policies": alt_pols,
+        }
     return out

@@ -51,11 +51,11 @@ def main() -> None:
     manifest = DATA_DIR / lens.MANIFEST
     sha_before = _sha(manifest)
     main_ = lens.compute(a.registered_run, ext_dir)
-    sens = lens.compute(a.registered_run, ext_dir, with_bootstrap=False,
-                        nodes={**lens.NODES, "CISO": lens.CISO_SENS_NODE})
+    alt = lens.compute(a.registered_run, ext_dir,
+                       nodes={**lens.NODES, "CISO": lens.CISO_SENS_NODE})
     if _sha(manifest) != sha_before:
         raise SystemExit(f"{manifest} changed during the analysis: not a frozen snapshot")
-    art = lens.build_artifact(main_, sens)
+    art = lens.build_artifact(main_, alt)
     art["prices"]["manifest_sha256"] = sha_before
     art["export_git_sha"] = _git("rev-parse", "HEAD")
     art["export_git_clean"] = _git("status", "--porcelain") == ""
@@ -65,16 +65,25 @@ def main() -> None:
     print(lens.CAVEAT)
     print(f"priced hours {art['coverage']['priced_hours']['value']} of "
           f"{art['coverage']['window_hours']['value']}")
-    print(f"{'policy':<22}{'cost $':>12}{'Δ vs U $':>12}{'Δ %':>8}{'level $':>10}"
-          f"{'timing $':>10}{'$/t attr.':>11}  b=4 saving CI $")
-    for p, r in art["policies"].items():
-        pt = r["cost_per_attributed_tonne_usd_t"]["value"]
-        ci = r.get("interval", {}).get("blocks", {}).get("4", {}).get("saving_usd_ci95", {})
-        d = r["decomposition_vs_U_usd"]
-        print(f"{p:<22}{r['cost_usd']['value']:>12,.0f}{r['delta_vs_U_usd']['value']:>12,.0f}"
-              f"{r['delta_vs_U_frac']['value'] * 100:>8.2f}{d['level_usd']['value']:>10,.0f}"
-              f"{d['timing_usd']['value']:>10,.0f}"
-              f"{'—' if pt is None else f'{pt:,.1f}':>11}  {ci.get('value')}")
+    rows = [("PG&E (shown)", art["policies"])]
+    if "california_node" in art:
+        rows.append(("SCE", art["california_node"]["alternative_policies"]))
+    for label, pols in rows:
+        print(f"California load zone: {label}. All $ are policy − U (+ = costs more than U).")
+        print(f"{'policy':<22}{'cost $':>12}{'Δ vs U $':>12}{'Δ %':>8}{'level $':>10}"
+              f"{'timing $':>10}{'$/t attr.':>11}  95% interval of Δ, primary block")
+        for p, r in pols.items():
+            pt = r["cost_per_attributed_tonne_usd_t"]["value"]
+            iv = r.get("interval", {})
+            b = str(iv["primary_block"]["value"]) if iv else None
+            ci = iv["blocks"][b]["delta_vs_U_usd_ci95"]["value"] if iv else None
+            d = r["decomposition_vs_U_usd"]
+            civ = "—" if ci is None else f"[{ci[0]:+,.0f}, {ci[1]:+,.0f}] (b={b} weeks)"
+            print(f"{p:<22}{r['cost_usd']['value']:>12,.0f}"
+                  f"{r['delta_vs_U_usd']['value']:>+12,.0f}"
+                  f"{r['delta_vs_U_frac']['value'] * 100:>+8.2f}{d['level_usd']['value']:>+10,.0f}"
+                  f"{d['timing_usd']['value']:>+10,.0f}"
+                  f"{'—' if pt is None else f'{pt:+,.1f}':>11}  {civ}")
     print(f"wrote {a.out}")
 
 

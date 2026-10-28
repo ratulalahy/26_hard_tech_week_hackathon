@@ -52,8 +52,17 @@ export function priceFacts(o: Json) {
   const pol = ORDER.filter((p) => P[p]);
   const d = (p: string) => v(P[p]?.delta_vs_U_usd) ?? 0;
   const f = (p: string) => v(P[p]?.delta_vs_U_frac) ?? 0;
-  const ci = (p: string) => (P[p]?.interval?.blocks?.['4']?.saving_usd_ci95?.value ?? null) as [number, number] | null;
-  return { P, pol, d, f, ci, perT: (p: string) => v(P[p]?.cost_per_attributed_tonne_usd_t), u: v(P.U.cost_usd) ?? 0 };
+  // the primary bootstrap block, read from the artifact (b weeks)
+  const iv = P.W?.interval ?? P[pol[0]]?.interval;
+  const block = String(v(iv?.primary_block) ?? 4);
+  const weeks = v(iv?.blocks?.[block]?.n_weeks);
+  /** 95% interval of policy − U (the sign of d), at the primary block. */
+  const ci = (p: string) => (P[p]?.interval?.blocks?.[block]?.delta_vs_U_usd_ci95?.value ?? null) as [number, number] | null;
+  /** [low, high] of policy − U over the two California load zones. */
+  const range = (p: string) => (o.california_node?.range?.[p]?.delta_vs_U_usd?.value ?? null) as [number, number] | null;
+  const rangeF = (p: string) => (o.california_node?.range?.[p]?.delta_vs_U_frac?.value ?? null) as [number, number] | null;
+  const alt = (p: string) => v(o.california_node?.alternative_policies?.[p]?.delta_vs_U_usd);
+  return { P, pol, d, f, ci, range, rangeF, alt, block, weeks, perT: (p: string) => v(P[p]?.cost_per_attributed_tonne_usd_t), u: v(P.U.cost_usd) ?? 0 };
 }
 
 const Caveat = ({ compact }: { compact?: boolean }) => (
@@ -77,18 +86,29 @@ export function Prices() {
   );
 }
 
-function headline(o: Json) {
-  const { d, f, P } = priceFacts(o);
-  const w = d('W'), t = P.W_time ? d('W_time') : null;
-  const move = w > 0 ? `moving jobs out of Utah costs more: W adds ${usd(w)} (+${pct(f('W'), 1)}%) over the year`
-    : `moving jobs out of Utah saves money: W saves ${usd(-w)} (${pct(f('W'), 1)}%) over the year`;
-  const wait = t == null ? '' : t < 0 ? `; waiting in Utah for cheaper, cleaner hours saves ${usd(-t)} (${MINUS}${pct(-f('W_time'), 1)}%)`
-    : `; waiting in Utah also costs more (+${usd(t)})`;
-  return `At wholesale prices, ${move}${wait}`;
+const kRange = ([a, b]: [number, number]) => {
+  const k = (x: number) => fmt(Math.abs(x) / 1000, 0);
+  return k(a) === k(b) ? `$${k(a)}k` : `$${k(a)}–${k(b)}k`;
+};
+const pctRangeSigned = ([a, b]: [number, number]) => `${signed(a * 100, 1)}% to ${signed(b * 100, 1)}%`;
+
+/** The hero sentence: moving's cost as a range over the two California load zones, then waiting. */
+export function headline(o: Json) {
+  const { d, f, P, range, rangeF, weeks } = priceFacts(o);
+  const r = range('W') ?? [d('W'), d('W')], rf = rangeF('W') ?? [f('W'), f('W')];
+  const span = weeks ? `Over ${fmt(weeks)} weeks at wholesale prices` : 'At wholesale prices';
+  const zone = range('W') ? ', depending on the California load zone (PG&E shown)' : '';
+  const move = r[0] > 0 ? `moving jobs out of Utah costs more: W adds ${kRange(r)} (${pctRangeSigned(rf)})${zone}`
+    : r[1] < 0 ? `moving jobs out of Utah saves money: W saves ${kRange([-r[1], -r[0]])} (${pctRangeSigned(rf)})${zone}`
+      : `moving jobs out of Utah changes cost by ${usdSigned(r[0])} to ${usdSigned(r[1])}${zone}`;
+  const t = P.W_time ? d('W_time') : null;
+  const wait = t == null ? '' : t < 0 ? `. Waiting in Utah for cheaper, cleaner hours saves ${usd(-t)} (${MINUS}${pct(-f('W_time'), 1)}%)`
+    : `. Waiting in Utah also costs more (+${usd(t)})`;
+  return `${span}, ${move}${wait}.`;
 }
 
 function PricesBody({ o }: { o: Json }) {
-  const { perT, pol } = priceFacts(o);
+  const { perT, pol, block, alt } = priceFacts(o);
   const cov = o.coverage;
   const mp = o.prices.mean_usd_mwh;
   const pw = perT('W');
@@ -112,9 +132,12 @@ function PricesBody({ o }: { o: Json }) {
         <div className="panel" style={{ padding: '12px 8px 8px' }}>
           <div className="flex items-baseline justify-between flex-wrap gap-2" style={{ padding: '0 8px' }}>
             <h2 className="t-15" style={{ margin: 0 }}>Cost change vs keeping every job in Utah (U)</h2>
-            <span className="t-11 ink-3">right: costs more · left: saves · whisker: 95% block-bootstrap interval, 4-week blocks</span>
+            <span className="t-11 ink-3">right: costs more · left: saves · whisker: 95% block-bootstrap interval, {block}-week blocks</span>
           </div>
           <DeltaChart o={o} />
+          <p className="t-11 ink-2" style={{ margin: '0 8px' }} data-testid="prices-whisker-note">
+            Whiskers cover week-to-week resampling only, not the price-node choice. Bars price California at PG&amp;E's load zone; at SCE's, W's change is {usdSigned(alt('W') ?? 0)}.
+          </p>
         </div>
         <PriceCard o={o} />
       </div>
@@ -131,16 +154,21 @@ function PricesBody({ o }: { o: Json }) {
           <h2 className="t-15" style={{ margin: '0 0 8px' }}>Where the difference comes from</h2>
           <SplitTable o={o} pol={pol} />
           <p className="t-11 ink-3" style={{ margin: '8px 0 0' }}>
-            Location: energy placed at a site whose average price differs from Utah's. Extra energy: the 5% transfer overhead of a moved job, at Utah's average. Timing: when in the year the energy is drawn, against each site's average. The three add up to the change.
+            Location: energy placed at a site whose average price differs from Utah's, including the destination's share of transfer energy. Extra energy: the transfer energy of moved jobs (5% of their computing energy), valued at Utah's average price. Timing: when the energy is drawn, against each site's average. The three add up to the change.
+          </p>
+          <p className="t-11 ink-2" style={{ margin: '4px 0 0' }} data-testid="prices-per-tonne-note">
+            Per attributed tonne: the extra dollars per tonne of attributed CO₂ cut vs U. A negative value means the policy is both cheaper and lower-carbon; there is no cost per tonne to pay.
           </p>
         </div>
       </div>
 
       <p className="t-11 ink-3" style={{ margin: 0, maxWidth: '120ch' }} data-testid="prices-method">
-        Prices: CAISO OASIS fifteen-minute real-time LMPs, hourly means, at {SITES.map((s) => `${REGION[s].name} ${o.prices.nodes.map[s]}`).join(', ')} (node choice assumed).
+        Prices: CAISO OASIS fifteen-minute real-time LMPs at {SITES.map((s) => `${REGION[s].name} ${o.prices.nodes.map[s]}`).join(', ')} (node choice assumed; California is also computed at {o.california_node?.alternative ?? 'SCE'}).
+        Each hour is priced at the mean of its four 15-minute prices, including the partial hours at a job's start and end. The cluster (about {fmt(v(o.prices.price_taker?.mean_load_mw) ?? 1, 2)} MW on average) is assumed too small to move any price.
+        A moved job's transfer energy is priced half in Utah and half at the destination, at the hour the job arrives, as in the CO₂ accounting.
         Real-time marks everywhere, because Utah had no day-ahead price before EDAM. Coverage: {fmt(v(cov.priced_hours) ?? 0)} of {fmt(v(cov.window_hours) ?? 0)} hours priced at every site
         ({pct(v(cov.priced_share) ?? 0, 1)}%); an hour missing any site's price would be left out for every policy.
-        Cost per attributed tonne uses attributed (average-intensity) CO₂, not marginal emissions. Pricing California at SCE's load point instead changes W's difference to {usdSigned(v(o.sensitivity?.ciso_node?.delta_vs_U_usd?.W) ?? 0)}.
+        Cost per attributed tonne uses attributed (average-intensity) CO₂, not marginal emissions.
         Validation year only; registered run {o.registered_run_id}.
       </p>
     </div>
@@ -153,7 +181,7 @@ function DeltaChart({ o }: { o: Json }) {
   const narrow = useViewport().w < 700; // phone: shorter names column, no % in the bar labels
   const option = useMemo(() => {
     const ys = [...pol].reverse();
-    const rows = ys.map((p) => ({ p, d: d(p), lo: ci(p) ? -ci(p)![1] : null, hi: ci(p) ? -ci(p)![0] : null }));
+    const rows = ys.map((p) => ({ p, d: d(p), lo: ci(p)?.[0] ?? null, hi: ci(p)?.[1] ?? null }));
     const raw = Math.max(...rows.flatMap((r) => [Math.abs(r.d), Math.abs(r.lo ?? 0), Math.abs(r.hi ?? 0)])) * (narrow ? 2.2 : 1.45);
     const step = raw > 20000 ? 10000 : raw > 4000 ? 2000 : 500;
     const ext = Math.ceil(raw / step) * step;
@@ -207,7 +235,7 @@ function DeltaChart({ o }: { o: Json }) {
         <caption>Cost change vs U, wholesale scenario</caption>
         <thead><tr><th>Policy</th><th>Change, $</th><th>Change, %</th><th>95% interval, $</th></tr></thead>
         <tbody>{pol.map((p) => { const c = ci(p); return (
-          <tr key={p}><td>{name(p)}</td><td>{usdSigned(d(p))}</td><td>{signed(f(p) * 100, 2)}%</td><td>{c ? `${usdSigned(-c[1])} to ${usdSigned(-c[0])}` : 'none'}</td></tr>); })}</tbody>
+          <tr key={p}><td>{name(p)}</td><td>{usdSigned(d(p))}</td><td>{signed(f(p) * 100, 2)}%</td><td>{c ? `${usdSigned(c[0])} to ${usdSigned(c[1])}` : 'none'}</td></tr>); })}</tbody>
       </table>
     </>
   );
@@ -267,7 +295,7 @@ function SplitTable({ o, pol }: { o: Json; pol: string[] }) {
               <td>{cell(p, 'location_usd')}</td><td>{cell(p, 'extra_energy_usd')}</td><td>{cell(p, 'timing_usd')}</td>
               <td className="fw-600">{usdSigned(v(P[p].delta_vs_U_usd) ?? 0)}</td>
               <td style={{ paddingRight: 0 }} title={t == null ? P[p].cost_per_attributed_tonne_usd_t.reason : t < 0 ? 'negative: cheaper and lower-carbon' : 'positive: pays this much per tonne of attributed CO₂ cut'}>
-                {t == null ? '–' : `${usdSigned(t)}/t`}
+                {t == null ? '–' : t < 0 ? `cheaper and cleaner (${usdSigned(t)}/t)` : `${usdSigned(t)}/t`}
               </td>
             </tr>
           );
@@ -277,21 +305,23 @@ function SplitTable({ o, pol }: { o: Json; pol: string[] }) {
   );
 }
 
-/** A compact card for any view: the year's wholesale-scenario difference for moving (W) and waiting (W_time). */
+const spansZero = (c: [number, number] | null) => !!c && c[0] < 0 && c[1] > 0;
+
+/** A compact card for any view: the wholesale-scenario difference for moving (W) and waiting (W_time) over the validation weeks. */
 export function PriceCard({ o }: { o: Json }) {
-  const { d, f, perT, ci, u, P } = priceFacts(o);
-  const w = d('W'), ciW = ci('W');
+  const { d, f, perT, ci, u, P, range, weeks } = priceFacts(o);
+  const w = d('W'), ciW = ci('W'), rW = range('W');
   return (
     <aside className="panel flex flex-col" style={{ gap: 10 }} data-testid="prices-card" aria-label="Price lens summary">
       <div className="flex items-baseline justify-between gap-2"><h2 className="t-15" style={{ margin: 0 }}>Moving, in dollars</h2><Ev e="simulated" /></div>
       <div>
-        <div className="t-hero num" data-testid="prices-card-hero">{usdSigned(w)}<span className="unit">a year vs U</span></div>
-        <div className="t-12 ink-2">{w > 0 ? 'W costs more than keeping every job in Utah' : 'W costs less than keeping every job in Utah'} ({signed(f('W') * 100, 1)}% of U's {usd(u)}).
-          {ciW ? ` 95% interval ${usdSigned(-ciW[1])} to ${usdSigned(-ciW[0])}.` : ''}</div>
+        <div className="t-hero num" data-testid="prices-card-hero">{rW && rW[0] > 0 ? `+${kRange(rW)}` : rW && rW[1] < 0 ? `${MINUS}${kRange([-rW[1], -rW[0]])}` : usdSigned(w)}<span className="unit">{weeks ? `over ${fmt(weeks)} weeks` : ''} vs U</span></div>
+        <div className="t-12 ink-2">{w > 0 ? 'W costs more than keeping every job in Utah' : 'W costs less than keeping every job in Utah'}{rW ? `: ${usdSigned(rW[0])} to ${usdSigned(rW[1])} depending on the California load zone` : ''}.
+          {' '}At PG&amp;E's zone, {usdSigned(w)} ({signed(f('W') * 100, 1)}% of U's {usd(u)}){ciW ? `, 95% interval ${usdSigned(ciW[0])} to ${usdSigned(ciW[1])} (weekly resampling only)` : ''}.</div>
       </div>
       <dl className="t-12" style={{ margin: 0, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px' }}>
         {P.W_time && (<><dt className="ink-3">Wait only</dt><dd style={{ margin: 0 }} className="num">{usdSigned(d('W_time'))} ({signed(f('W_time') * 100, 1)}%)</dd></>)}
-        {P[MOB] && (<><dt className="ink-3">Only ≤ 8-GPU jobs move</dt><dd style={{ margin: 0 }} className="num">{usdSigned(d(MOB))} ({signed(f(MOB) * 100, 1)}%)</dd></>)}
+        {P[MOB] && (<><dt className="ink-3">Only ≤ 8-GPU jobs move</dt><dd style={{ margin: 0 }} className="num" data-testid="prices-card-mob">{usdSigned(d(MOB))} ({signed(f(MOB) * 100, 1)}%){spansZero(ci(MOB)) ? '; interval spans zero' : ''}</dd></>)}
         {perT('W') != null && (<><dt className="ink-3">W per attributed tonne</dt><dd style={{ margin: 0 }} className="num">{usdSigned(perT('W')!)}/t CO₂</dd></>)}
       </dl>
       <Caveat compact />
