@@ -14,6 +14,7 @@ import { MethodDrawer } from './views/MethodDrawer';
 import { Ribbon } from './views/Ribbon';
 import { Story } from './views/Story';
 import { Outlook } from './pages/Outlook';
+import { Prices } from './pages/Prices';
 import { useViewport } from './lib/useViewport';
 
 export function App() {
@@ -45,7 +46,8 @@ export function App() {
       <TopBar />
       <main>
         {/* T19 hook: the outlook is standalone (its own data), so it renders before the results load */}
-        {view === 'outlook' ? <Outlook /> : error ? <ErrorState msg={error} /> : !data ? <Loading /> : (
+        {/* T22 hook: the price lens is standalone (its own data), so it renders before the results load */}
+        {view === 'outlook' ? <Outlook /> : view === 'prices' ? <Prices /> : error ? <ErrorState msg={error} /> : !data ? <Loading /> : (
           <>
             {view === 'control' && <ControlRoom />}
             {view === 'cockpit' && <Cockpit />}
@@ -106,7 +108,7 @@ function TopBar() {
         ))}
       </nav>
       <div className="ml-auto flex items-center gap-2">
-        {view !== 'outlook' && <WindowSwitch />}{/* T19: the outlook reads its own file; the year switch does nothing there */}
+        {view !== 'outlook' && view !== 'prices' && <WindowSwitch />}{/* T19, T22: these pages read their own validation files; the year switch does nothing there */}
         <button className="btn whitespace-nowrap" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button>
       </div>
     </header>

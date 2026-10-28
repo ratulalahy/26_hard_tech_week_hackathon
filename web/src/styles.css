@@ -198,6 +198,13 @@ table.tbl-text th, table.tbl-text td { text-align: left; white-space: normal; li
 /* a neutral label chip (no evidence shape): "illustrative · not the registered result" (T10b) */
 .chip-neutral { display: inline-flex; align-items: center; font-size: 11px; line-height: 16px; font-weight: 500; color: var(--ink-2); padding: 2px 8px; border-radius: var(--r-8); box-shadow: inset 0 0 0 1px var(--hair-3); background: var(--surface-2); white-space: nowrap; }
 
+/* the price lens page (T22): two columns, one below 1100 px */
+.prices-grid { grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); }
+.prices-grid-2 { grid-template-columns: minmax(0, 1.3fr) minmax(460px, 1fr); }
+@media (max-width: 1100px) { .prices-grid, .prices-grid-2 { grid-template-columns: minmax(0, 1fr); } }
+.prices-delta { height: 240px; }
+.prices-profile { height: 260px; }
+
 /* tight tables below 1000 px of height (story 5) */
 .tight table.tbl td { padding-top: 3px; padding-bottom: 3px; }
 
