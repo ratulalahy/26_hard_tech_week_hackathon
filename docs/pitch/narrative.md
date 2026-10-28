@@ -142,7 +142,7 @@ c1–c5 save 45 spoken words (about 18 s); with c6, 50 (about 20 s). Never cut t
 
 *Notes:*
 - Not spoken (on screen): "Moving the small jobs and storing for the rest reaches 7.7 percent." <!-- results/test/extras.json storage.combined.move_and_store_cut_frac.A["4"] = 0.0774; .move_only_cut_frac = 0.0387 -->
-- 85% round trip and the connection cap are on screen and in the notes, not spoken. The rush here is the 14 test-year hours at or above the training years' top-1% net load (7,207 MW), not the 7–10 PM band of Beat 1.
+- 85% round trip and the connection cap are on screen and in the notes, not spoken. The rush here is the 14 test-year hours at or above the training years' top-1% net load (7,207 MW), not the evening rush band of Beat 1 (7–11 PM on the test year; the validation year's band was 7–10 PM).
 - Validation: carbon schedule 3.5%, and its rush draw fell only 1.12 → 1.04 MW; the peak schedule's rush effect was smaller on validation (1.12 → 0.90 MW). Say so if asked. <!-- results/extras-validation.json storage_peak.schedules.{carbon,peak}.cases.U["4"] -->
 - Torus is the audience: don't name its products as modeled. Never call the hindsight heuristic a "bound" or "optimal". Don't put a price on MW.
 

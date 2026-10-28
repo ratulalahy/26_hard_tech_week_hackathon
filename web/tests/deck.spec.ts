@@ -12,7 +12,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 const deck = resolve(here, '../../docs/pitch/deck/index.html');
 const shots = resolve(here, '../../docs/design/shots-build');
 const URL0 = pathToFileURL(deck).href;
-const LINKS: Record<string, string> = { '2': '#story-1', '4': '#story-2', '5': '#story-3', '6': '#story-4', '7': '#story-5', '8': '#control' };
+// slide order follows the narrative's beats: 2 = Beat 1, 3 = Beat 2, 4–5 = Beat 3, 6 = Beat 4, 7 = Beat 5, 8 = Beat 6
+const LINKS: Record<string, string> = { '2': '#story-1', '3': '#story-2', '5': '#story-3', '6': '#story-4', '7': '#story-5', '8': '#control' };
+const BEAT: Record<string, string> = { '2': 'Beat 1', '3': 'Beat 2', '4': 'Beat 3', '5': 'Beat 3', '6': 'Beat 4', '7': 'Beat 5', '8': 'Beat 6' };
 
 async function open(page: Page) {
   const errors: string[] = [];
@@ -77,15 +79,32 @@ for (const vp of [{ width: 1728, height: 1117 }, { width: 1440, height: 900 }]) 
         }).map((e) => `${e.tagName}.${(e as HTMLElement).className}: ${(e.textContent ?? '').slice(0, 40)}`);
       });
       expect(spill, `slide ${lab}`).toEqual([]);
+      // type floor on the 1600 stage: 20 px for HTML text (subscripts aside), 18 px for chart text
+      const small = await on.evaluate((s) => {
+        const bad: string[] = [];
+        for (const e of s.querySelectorAll<HTMLElement | SVGElement>('*')) {
+          if (e.closest('.notes') || e.tagName === 'SUB' || e.tagName === 'SUP' || !e.getClientRects().length) continue;
+          const own = [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent!.trim());
+          if (!own) continue;
+          const px = parseFloat(getComputedStyle(e).fontSize);
+          const min = e instanceof SVGElement ? 18 : 20;
+          if (px < min - 0.01) bad.push(`${px}px ${e.tagName}.${e.getAttribute('class') ?? ''}: ${(e.textContent ?? '').trim().slice(0, 40)}`);
+        }
+        return bad;
+      });
+      expect(small, `slide ${lab}`).toEqual([]);
       // beat slides carry their dashboard deep link
       const link = on.locator('a.dash');
-      if (LINKS[lab]) await expect(link).toHaveAttribute('href', `http://127.0.0.1:4173/${LINKS[lab]}`);
+      if (LINKS[lab]) {
+        await expect(link).toHaveAttribute('href', `http://127.0.0.1:4173/${LINKS[lab]}`);
+        await expect(link).toHaveAttribute('target', 'gridpilot'); // one tab, switched to Test year once
+      }
       else await expect(link).toHaveCount(0);
       // presenter notes: N shows this slide's lines, N hides them
       await page.keyboard.press('n');
       await expect(page.locator('#notes')).toBeVisible();
       if (process.env.DECK_SHOTS && lab === '5') await page.screenshot({ path: `${shots}/deck-05-notes-${vp.width}.png` });
-      if (lab.length === 1 && Number(lab) > 1) await expect(page.locator('#notes')).toContainText(/Beat \d/);
+      if (BEAT[lab]) await expect(page.locator('#notes')).toContainText(BEAT[lab]);
       await page.keyboard.press('n');
       await expect(page.locator('#notes')).toBeHidden();
       if (process.env.DECK_SHOTS) await page.screenshot({ path: `${shots}/deck-${lab.padStart(2, '0')}-${vp.width}.png` });
@@ -98,10 +117,22 @@ for (const vp of [{ width: 1728, height: 1117 }, { width: 1440, height: 900 }]) 
     await expect(page.locator('.slide.on')).toHaveAttribute('data-label', '1');
     await page.keyboard.press('5');
     await expect(page.locator('.slide.on')).toHaveAttribute('data-label', '5');
+    await page.keyboard.press('Shift+Space');
+    await expect(page.locator('.slide.on')).toHaveAttribute('data-label', '4');
+    await page.keyboard.press('ArrowRight');
     await page.keyboard.press('ArrowLeft');
     await expect(page.locator('.slide.on')).toHaveAttribute('data-label', '4');
     await page.keyboard.press('9');
     await expect(page.locator('.slide.on')).toHaveAttribute('data-label', 'A1');
+    // P opens the presenter view in its own window, synced to the deck; nothing shows on the audience screen
+    await expect(page.locator('#notes')).toBeHidden();
+    const [pv] = await Promise.all([page.waitForEvent('popup'), page.keyboard.press('p')]);
+    await expect(pv.locator('#pv')).toContainText('A1 · drift');
+    await page.keyboard.press('ArrowRight');
+    await expect(pv.locator('#pv')).toContainText('A2 · water');
+    await pv.keyboard.press('ArrowLeft');
+    await expect(page.locator('.slide.on')).toHaveAttribute('data-label', 'A1');
+    await pv.close();
     // a reload keeps the slide
     await page.reload();
     await expect(page.locator('.slide.on')).toHaveAttribute('data-label', 'A1');

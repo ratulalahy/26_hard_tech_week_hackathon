@@ -67,7 +67,28 @@ window.DECK_DATA = {
   "water_with": "174",
   "water_ex_val": "−20.5",
   "water_with_val": "145",
-  "excl_jobs": "8,003"
+  "excl_jobs": "8,003",
+  "excl_share": "3.1",
+  "excl_jobs_val": "1,203",
+  "excl_share_val": "3.9",
+  "arrivals_end": "Oct 15, 23:04",
+  "top1_val": "94",
+  "prod_val": "25.5",
+  "common_val": "22.5",
+  "top_k": "100",
+  "top_min": "10",
+  "rush_thr": "7,207",
+  "flat_g": "618",
+  "st_pk_peak_before": "1.64",
+  "st_pk_peak_after": "1.65",
+  "bat_e": "4",
+  "bat_p": "1",
+  "bat_eta": "0.85",
+  "job_wait_kg": "2,098",
+  "test_first": "2025-11-01",
+  "test_last": "2026-10-24",
+  "opened_mt": "19:22",
+  "opened_utc": "2026-10-28T01:22:53Z"
  },
  "july": {
   "month": "2026-07",
@@ -229,6 +250,11 @@ window.DECK_DATA = {
   ]
  },
  "top1": 0.9452044965460776,
+ "dumbbells": {
+  "before": 0.8789749285714286,
+  "carbon": 0.5524917285714286,
+  "peak": 0.31665316
+ },
  "drift": [
   [
    "Registered primary",

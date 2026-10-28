@@ -3,7 +3,7 @@
 **Status:** post-test rewrite, Tue 2026-10-27 night. Every number is from committed JSON and is on the numbers card, `docs/pitch/numbers.md`; each cites its JSON path in a comment here.
 
 - The live demo is the spine (`narrative.md`). The deck backs it up, or replaces it if WebGL or the laptop fails; it follows the same six beats.
-- Eight slides plus an appendix.
+- Eight slides plus an appendix, in the narrative's beat order: slide 2 is Beat 1, 3 Beat 2, 4–5 Beat 3, 6 Beat 4, 7 Beat 5, 8 Beat 6. Built as `docs/pitch/deck/index.html` (`make deck`).
 - Visuals: dashboard screenshots in `docs/design/shots-build/`, **all in the test-year window**. Test shots exist for the Control room, `#story-3`, `#story-4`, `#story-5`, the ribbon and two drawer sections (`test-*.png`). `#story-1` and `#story-2` still need test-window shots; the existing `story-1`/`story-2` shots are validation (July 2025, job #c3) and must not be used with test numbers (audit F3).
 
 ---
@@ -18,13 +18,21 @@
 ### 2. Utah's grid has a rush hour
 
 - **Message:** As solar fades, Utah's net load peaks in the evening; the clean hours aren't the rush hours.
-- **Visual:** the Story 1 load chart in the test window (to shoot), 7–10 PM rush band marked.
+- **Visual:** the Story 1 load chart in the test window (to shoot), the evening rush band marked: 7–11 PM on the test year (the hours holding at least 10 of the year's 100 highest net-load hours, as the dashboard draws it); the validation year's band was 7–10 PM.
 - **Number:** net-load peak at 8 PM, **6,182 MW** (mean of July 2026 weekdays, test year, observed). <!-- results/test/grid-profile.json pace_july_weekday.net_load_mw[20] -->
 - **Small print:** "In nine of ten US regions the rush hours are dirtier than average; Bonneville's are cleaner (validation year)." <!-- results/overview.json regions.*.alignment.rush_verdict, regions.BPAT.alignment.rush_vs_mean_pct −8.0 -->
 - **Speaker note:** "This is PACE, the balancing area serving much of Utah. Picture a hypothetical 2,300-GPU cluster here. Our goal is emissions first, with the same work done by the same deadlines."
 
-### 3. How it works
+### 3. One job: stay, wait or move
 
+- **Message:** For a big training job, waiting buys almost nothing; moving changes everything.
+- **Visual:** the Story 2 options table in the test window (to shoot): job 5930563#c5 (72 GPUs, 104 h).
+- **Number:** **2,098 kg** if it stays vs **362 kg** in the Northwest (one test-year job; option CO₂ modeled, placements simulated). <!-- results/test/job-replay.json illustrative_job.available_actions[*].co2_kg -->
+- **Speaker note:** "Six hours of allowed delay is nothing against a 104-hour run. Moving means placing a job before it starts at another site; nothing migrates mid-run. The job was chosen by a rule fixed before its outcome was seen."
+
+### 4. How it works
+
+- **Spoken with:** the opening of Beat 3 (1:14), right after the one job, so the slide order follows the spoken order (deck fix r1, M2). Narrative timings are unchanged.
 - **Message:** Forecast tomorrow, route each job, replay the year, count every kilowatt-hour.
 - **Visual:** a five-box pipeline:
   1. EIA-930 hourly data, plus the Acme GPU trace;
@@ -36,13 +44,6 @@
   Under the pipeline, a lock icon: "sealed test year: 358 days, opened once after a tagged freeze; 69 logged reads". <!-- results/test/manifest.json split.eval_start, split.F (358 days, D-074); results/test_reads.jsonl -->
 - **Method line on the slide (verbatim):** "AI agents helped build and review it. We froze the configuration before opening the holdout once; the routing policy remains a fixed ranking."
 - **Speaker note:** "Every number carries a label: observed, measured, modeled, forecast, assumed or simulated. The test year stayed sealed until the configuration was frozen; only completeness counts were taken before." (audit F1)
-
-### 4. One job: stay, wait or move
-
-- **Message:** For a big training job, waiting buys almost nothing; moving changes everything.
-- **Visual:** the Story 2 options table in the test window (to shoot): job 5930563#c5 (72 GPUs, 104 h).
-- **Number:** **2,098 kg** if it stays vs **362 kg** in the Northwest (one test-year job; option CO₂ modeled, placements simulated). <!-- results/test/job-replay.json illustrative_job.available_actions[*].co2_kg -->
-- **Speaker note:** "Six hours of allowed delay is nothing against a 104-hour run. Moving means placing a job before it starts at another site; nothing migrates mid-run. The job was chosen by a rule fixed before its outcome was seen."
 
 ### 5. Moving beats waiting
 

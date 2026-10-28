@@ -27,6 +27,7 @@ const tj = J('results/test/job-replay.json');
 const ov = J('results/overview.json');
 const pr = J('results/prices.json');
 const vw = J('results/water.json');
+const vst = J('results/storage.json');
 const reads = readFileSync(resolve(repo, 'results/test_reads.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l));
 
 const contrast = (m, c, r = 'U') => {
@@ -131,6 +132,23 @@ const N = {
   water_ex_val: minus(pct1(v(vw.policies.S.change_vs_U.ex_hydro_frac))),
   water_with_val: pct0(v(vw.policies.S.change_vs_U.with_hydro_frac)),
   excl_jobs: int(v(tm.cohort.n_excluded)),
+  excl_share: pct1(v(tm.cohort.excluded_gpu_h) / (v(tm.cohort.declared_gpu_h) + v(tm.cohort.excluded_gpu_h))),
+  excl_jobs_val: int(v(vm.cohort.n_excluded)),
+  excl_share_val: pct1(v(vm.cohort.excluded_gpu_h) / (v(vm.cohort.declared_gpu_h) + v(vm.cohort.excluded_gpu_h))),
+  arrivals_end: new Date(Math.round(Date.parse(tman.split.A) / 60_000) * 60_000).toISOString().replace(/^\d{4}-(\d\d)-(\d\d)T(\d\d):(\d\d).*/, (_, mo, d, h, mi) => `${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(mo) - 1]} ${Number(d)}, ${h}:${mi}`),
+  top1_val: pct0(v(vm.workload.top_1pct_jobs_by_declared_gpu_h.energy_share)),
+  prod_val: pct1(v(vx.repricing.by_policy.S.production.vs_U['4'].saving)),
+  common_val: pct1(v(vx.common_support.by_policy.S.vs_U['4'].saving)),
+  top_k: String(k), top_min: String(Math.ceil(0.1 * k)),
+  rush_thr: int(v(tx.storage.rush.threshold_mw)),
+  flat_g: String(v(tx.storage.flat_marginal_g_kwh)),
+  st_pk_peak_before: mw2(v(cu('peak').peak_import_before_mw)), st_pk_peak_after: mw2(v(cu('peak').peak_import_after_mw)),
+  bat_e: String(v(vst.headline.e_mwh)), bat_p: String(v(vst.headline.e_mwh) * v(vst.assumptions.p_over_e)), bat_eta: v(vst.assumptions.eta_default).toFixed(2),
+  job_wait_kg: int(v(job.placements.W_time.co2_kg)),
+  test_first: tman.split.eval_start.slice(0, 10),
+  test_last: new Date(Date.parse(tman.split.F) - 86_400_000).toISOString().slice(0, 10),
+  opened_mt: new Date(Date.parse(reads.find((r) => r.event === 'invocation').utc) - 6 * 3_600_000).toISOString().slice(11, 16),
+  opened_utc: reads.find((r) => r.event === 'invocation').utc.slice(0, 19) + 'Z',
 };
 
 const data = {
@@ -140,6 +158,7 @@ const data = {
   policies: pol,
   mobility: { S: v(mob.S['4'].saving), S_ci: v(mob.S['4'].saving_ci95), S_val: v(mobV.saving), S_val_ci: v(mobV.saving_ci95), all: v(S.saving), all_ci: v(S.saving_ci95), all_val: v(Sv.saving), all_val_ci: v(Sv.saving_ci95) },
   top1: v(tm.workload.top_1pct_jobs_by_declared_gpu_h.energy_share),
+  dumbbells: { before: v(cu('carbon').rush_import_before_mw), carbon: v(cu('carbon').rush_import_after_mw), peak: v(cu('peak').rush_import_after_mw) },
   drift: scen,
   claim_frame: tman.claim_frame,
 };
