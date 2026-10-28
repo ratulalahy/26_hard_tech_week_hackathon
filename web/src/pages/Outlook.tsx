@@ -58,6 +58,8 @@ function OutlookBody({ o }: { o: Json }) {
   const count = (iso: string) => starts.filter((x) => hourOf(x) === hourOf(iso)).length;
   const mode = [...starts].sort((a, b) => count(b) - count(a) || hourOf(a) - hourOf(b))[0];
   const span = `${timeLabel(mode)}–${timeLabel(new Date(Date.parse(mode) + 4 * 3600e3).toISOString())}`;
+  // merge-time fix (T19 re-review): hours read off the seasonal average are "typical", not forecast
+  const typical = days.some((d) => hourOf(d.home_cleanest_block.start_utc) === hourOf(mode) && d.regions.PACE.status !== 'forecast');
   const issued = fmtDate(o.issue_utc, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
   const first = days[0].date_local, last = days[days.length - 1].date_local;
   return (
@@ -71,7 +73,7 @@ function OutlookBody({ o }: { o: Json }) {
       <header className="flex items-end justify-between gap-6 flex-wrap">
         <div>
           <h1 className="t-20" style={{ margin: 0 }} data-testid="outlook-title">
-            {agree ? `Next ${days.length} days: ${REGION[pick].name} stays the cleanest place to run; in Utah, the cleanest hours are ${span}${count(mode) * 2 >= days.length ? ' on most days' : ''}`
+            {agree ? `Next ${days.length} days: ${REGION[pick].name} stays the cleanest place to run; in Utah, the ${typical ? 'typical ' : ''}cleanest hours are ${span}${count(mode) * 2 >= days.length ? ' on most days' : ''}`
               : `Next ${days.length} days: the forecast and the router's fixed ranking disagree on some days`}
           </h1>
           <p className="t-13 fw-500" style={{ margin: '6px 0 0', maxWidth: '100ch' }} data-testid="outlook-skill-line">{sk.line}</p>
@@ -105,7 +107,7 @@ function DayStrip({ o }: { o: Json }) {
   return (
     <ol className="grid" data-testid="outlook-days" aria-label="Router recommendation by day" style={{ gridTemplateColumns: `repeat(${o.days.length}, minmax(0, 1fr))`, gap: 8, listStyle: 'none', margin: 0, padding: 0 }}>
       {o.days.map((d: Json) => {
-        const b = d.home_cleanest_block, clim = d.status !== 'forecast';
+        const b = d.home_cleanest_block, clim = d.regions.PACE.status !== 'forecast';
         const mean = v(b.mean);
         return (
           <li key={d.day} className="panel flex flex-col" style={{ padding: 12, gap: 6, ...(clim ? hatch : {}) }} data-status={d.status}>
@@ -119,8 +121,7 @@ function DayStrip({ o }: { o: Json }) {
               <span className="t-13 fw-600 whitespace-nowrap">{timeLabel(b.start_utc)}–{timeLabel(new Date(Date.parse(b.start_utc) + 4 * 3600e3).toISOString())}</span>
             </div>
             <div className="t-11 ink-3">Utah's cleanest 4 h · <Num v={mean} unit="g/kWh" /></div>
-            <span className="t-11" style={{ color: clim ? C.ink2 : C.ink3 }}>{cardStatus(d.regions.PACE)}</span>
-            {clim ? <Ev e="modeled">seasonal average</Ev> : <Ev e="forecast" />}
+            {clim ? <Ev e="modeled">seasonal average</Ev> : <><span className="t-11 ink-3">{cardStatus(d.regions.PACE)}</span><Ev e="forecast" /></>}
           </li>
         );
       })}
@@ -146,11 +147,10 @@ function skillSummary(o: Json) {
   return { utahNone: false, line: `Utah's forecast beats its seasonal average by ${pct(Math.min(...uSk), 0)}–${pct(Math.max(...uSk), 0)}% on D+${utah.join(', D+')}; its other days show the average. ${destTxt[0].toUpperCase()}${destTxt.slice(1)}.` };
 }
 
-/** A day card's Utah status: a "better than average" claim only where the interval clears zero. */
+/** A day card's Utah status, only for a cell that passes the skill rule. A cell that fails it shows
+ *  "seasonal average" alone; its point estimate lives in the skill table (merge-time fix, T19 re-review). */
 function cardStatus(r: Json) {
-  const best = v(r.best_model_skill);
-  if (r.status === 'forecast') return `forecast · ${pct(v(r.skill_vs_climatology) ?? 0, 0)}% better than avg`;
-  return best != null && best > 0 ? `forecast +${pct(best, 0)}% vs avg, not distinguishable` : 'no forecast skill';
+  return `forecast · ${pct(v(r.skill_vs_climatology) ?? 0, 0)}% better than avg`;
 }
 
 const hatch = { backgroundImage: 'repeating-linear-gradient(135deg, rgba(74,58,48,.07) 0 2px, transparent 2px 7px)' } as const;
