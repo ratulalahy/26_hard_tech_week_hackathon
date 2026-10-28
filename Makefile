@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test notebooks profile slice need-run-dir ext-runs extensions storage web
+.PHONY: test notebooks profile slice need-run-dir ext-runs extensions storage prices web
 
 test:
 	cd lab && uv run pytest
@@ -57,6 +57,12 @@ extensions: need-run-dir
 # runs/ext next to it) holds the mobility <= 8 GPUs run that results/extensions.json names.
 storage: need-run-dir
 	cd lab && uv run python scripts/export_storage.py --registered-run $(RUN_DIR) --ext-root $(EXT_ROOT)
+
+# The price lens (Stage 3 T22; validation only, wholesale scenario): results/prices.json, the
+# registered ledgers (and the mobility <= 8 GPUs W run from EXT_ROOT) priced at CAISO/WEIM
+# real-time LMPs. RUN_DIR (required): the registered run.
+prices: need-run-dir
+	cd lab && uv run python scripts/export_prices.py --registered-run $(RUN_DIR) --ext-root $(EXT_ROOT)
 
 # The dashboard's validation-year grid context (Task 8): results/grid-profile.json.
 # RUN_DIR: the registered slice run (default runs/slice/<results/manifest.json run_id>).

@@ -12,6 +12,7 @@ import { ControlRoom, controlPadding } from './views/ControlRoom';
 import { MethodDrawer } from './views/MethodDrawer';
 import { Ribbon } from './views/Ribbon';
 import { Story } from './views/Story';
+import { Prices } from './pages/Prices';
 import { useViewport } from './lib/useViewport';
 
 export function App() {
@@ -42,7 +43,8 @@ export function App() {
       <SharedMap />
       <TopBar />
       <main>
-        {error ? <ErrorState msg={error} /> : !data ? <Loading /> : (
+        {/* T22 hook: the price lens is standalone (its own data), so it renders before the results load */}
+        {view === 'prices' ? <Prices /> : error ? <ErrorState msg={error} /> : !data ? <Loading /> : (
           <>
             {view === 'control' && <ControlRoom />}
             {view === 'cockpit' && <Cockpit />}

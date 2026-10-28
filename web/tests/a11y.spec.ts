@@ -10,6 +10,7 @@ const STATES: { name: string; hash: string; drawer?: boolean; testYear?: boolean
   { name: 'ribbon', hash: '#ribbon' },
   { name: 'story', hash: '#story' },
   { name: 'story-6', hash: '#story-6' }, // T10b: the storage beat (F18)
+  { name: 'prices', hash: '#prices' }, // T22: the price lens page
   { name: 'method', hash: '#control', drawer: true },
   { name: 'test-year control', hash: '#control', testYear: true },
   { name: 'test-year method', hash: '#control', testYear: true, drawer: true },
