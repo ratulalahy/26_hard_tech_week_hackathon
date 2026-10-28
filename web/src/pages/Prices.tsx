@@ -62,7 +62,9 @@ export function priceFacts(o: Json) {
   const range = (p: string) => (o.california_node?.range?.[p]?.delta_vs_U_usd?.value ?? null) as [number, number] | null;
   const rangeF = (p: string) => (o.california_node?.range?.[p]?.delta_vs_U_frac?.value ?? null) as [number, number] | null;
   const alt = (p: string) => v(o.california_node?.alternative_policies?.[p]?.delta_vs_U_usd);
-  return { P, pol, d, f, ci, range, rangeF, alt, block, weeks, perT: (p: string) => v(P[p]?.cost_per_attributed_tonne_usd_t), u: v(P.U.cost_usd) ?? 0 };
+  /** the same 95% interval with California priced at SCE's load zone (merge-time fix, T22 re-review). */
+  const altCi = (p: string) => (o.california_node?.alternative_policies?.[p]?.interval?.blocks?.[block]?.delta_vs_U_usd_ci95?.value ?? null) as [number, number] | null;
+  return { P, pol, d, f, ci, range, rangeF, alt, altCi, block, weeks, perT: (p: string) => v(P[p]?.cost_per_attributed_tonne_usd_t), u: v(P.U.cost_usd) ?? 0 };
 }
 
 const Caveat = ({ compact }: { compact?: boolean }) => (
@@ -108,7 +110,8 @@ export function headline(o: Json) {
 }
 
 function PricesBody({ o }: { o: Json }) {
-  const { perT, pol, block, alt } = priceFacts(o);
+  const { perT, pol, block, alt, altCi } = priceFacts(o);
+  const wSce = altCi('W');
   const cov = o.coverage;
   const mp = o.prices.mean_usd_mwh;
   const pw = perT('W');
@@ -136,7 +139,7 @@ function PricesBody({ o }: { o: Json }) {
           </div>
           <DeltaChart o={o} />
           <p className="t-11 ink-2" style={{ margin: '0 8px' }} data-testid="prices-whisker-note">
-            Whiskers cover week-to-week resampling only, not the price-node choice. Bars price California at PG&amp;E's load zone; at SCE's, W's change is {usdSigned(alt('W') ?? 0)}.
+            Whiskers cover week-to-week resampling only, not the price-node choice. Bars price California at PG&amp;E's load zone; at SCE's, W's change is {usdSigned(alt('W') ?? 0)}{wSce ? <>, with a 95% interval of {usdSigned(wSce[0])} to {usdSigned(wSce[1])}</> : null}.
           </p>
         </div>
         <PriceCard o={o} />

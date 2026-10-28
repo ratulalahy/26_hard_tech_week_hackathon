@@ -103,8 +103,8 @@ outlook:
 # percentile, against persistence and climatology), typical-day profiles, clean vs rush hours and
 # the median daily swing. Run directory: runs/overview/<UTC>/. About 10–15 minutes.
 overview:
-
 	cd lab && uv run python scripts/export_overview.py
+
 # The price lens (Stage 3 T22; validation only, wholesale scenario): results/prices.json, the
 # registered ledgers (and the mobility <= 8 GPUs W run from EXT_ROOT) priced at CAISO/WEIM
 # real-time LMPs. RUN_DIR (required): the registered run.
