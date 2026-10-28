@@ -5,8 +5,9 @@ import { CONSUMPTION_CHECKS, ExtensionsTable, PHRASE, extRows, listJoin, placeme
 import { ReliefTable, RushSensitivity, hourSpans, storageFacts } from '../components/storage';
 import { Ev, Icon, ScrollX } from '../components/ui';
 import { WaterPanel } from '../components/water';
+import { DriftView, ItemSection, TestStorage, TestTag, ValOnlyTag, checkLine, h3Sentence, testFacts } from '../components/testYear';
 import { useCopy } from '../lib/useCopy';
-import { DEADLINE_RULE, asNum, headline, plainLimitations, pname, stripCodes, type Json } from '../lib/data';
+import { DEADLINE_RULE, asNum, headline, plainLimitations, pname, resolveLimitations, stripCodes, type Json } from '../lib/data';
 import { fmt, fmtDate, pct, pctRange, sig2, signed } from '../lib/format';
 import { useApp } from '../lib/store';
 
@@ -32,6 +33,9 @@ export function MethodDrawer() {
   const w0 = [wait0?.cells.W?.v, wait0?.cells.L?.v].filter((v): v is number => typeof v === 'number');
   const allOnTime = xRun.every((r) => r.late == null || r.late === 0);
   const sto = data!.storage, sf = sto ? storageFacts(sto) : null;
+  // the sealed test year's pre-registered extras (D-071) and the drift table; null in validation mode
+  const x = data!.extras, tf = testFacts(x, m);
+  const lims = resolveLimitations(man, x);
   return (
     <Dialog.Root open={drawer} onOpenChange={(o) => set({ drawer: o })}>
       <Dialog.Portal>
@@ -79,6 +83,7 @@ export function MethodDrawer() {
                 The pre-registered forecast test, whether {pname('L')} beats {pname('W')}, is <b className="fw-600">{h2.direction === 'inconclusive' || h2.decided === false || h2.direction == null ? 'inconclusive' : h2.direction}</b>:
                 W − L = {signed(h2b4.diff_kg.value / 1000, 1)} t CO₂, 95% interval [{signed(h2b4.diff_kg_ci95.value[0] / 1000, 1)}, {signed(h2b4.diff_kg_ci95.value[1] / 1000, 1)}] t; {stripCodes(h2.reason ?? '')}. <Ev e="simulated" />
               </p>
+              {tf?.h3 ? <p className="t-13" style={{ margin: '8px 0 0' }} data-testid="method-h3">{h3Sentence(tf.h3)} Tonnes over the covered period, 95% intervals, 4-week blocks. <TestTag /> <Ev e="simulated" /></p> : null}
               {copy.validationReadings ? <p className="t-13" style={{ margin: '8px 0 0' }} data-testid="method-dynamic">We found no demonstrated aggregate benefit from dynamic search in this replay: the forecast-driven policies are not distinguishable from {pname('S')} in aggregate, and only part of the flexible energy has its whole decision window inside forecast coverage.</p> : null}
               <p className="t-13 ink-2" style={{ margin: '8px 0 0' }}>
                 Waiting in Utah alone saves {pctRange(hd.timing.lo, hd.timing.hi)}%{copy.validationReadings ? '; nearly all of the saving comes from moving work, mostly to the Northwest' : ''}. A per-job search, even with hindsight, is not a best plan for {copy.wholeYear}: holding scarce Northwest slots for cleaner hours can push later jobs to dirtier sites.
@@ -93,6 +98,11 @@ export function MethodDrawer() {
               </p>
               {span ? <p className="t-13" style={{ margin: '0 0 8px' }} data-testid="method-checks">We checked it {xRun.length} more ways. {listJoin(keptRun.map((r) => PHRASE[r.id] ?? r.label)).replace(/^./, (c) => c.toUpperCase())}, {pname('S')}, {pname('W')} and {pname('L')} still cut <b className="fw-600">{pctRange(span[0], span[1])}%</b>.{spanProd ? ` On production-basis carbon the cut is ${pctRange(spanProd[0], spanProd[1])}%; production basis flatters hydro-heavy destinations.` : ''}{spanBig ? ` Twice the room at the destinations raises it to ${pctRange(spanBig[0], spanBig[1])}%` : ''}{w0.length ? `; with no room there, waiting alone saves ${pctRange(Math.min(...w0), Math.max(...w0))}%` : ''}.{allOnTime ? ' No job was late in any run.' : ''}{xMiss.length ? ` ${xMiss.length} more check${xMiss.length > 1 ? 's' : ''} did not run (${xMiss[0].reason}).` : ''}</p> : null}
               <ExtensionsTable m={m} ext={data!.ext} testId="method-extensions" />
+            </Sec> : null}
+            {x ? <Sec title="Robustness and sensitivity checks, test year">
+              <p className="t-13" style={{ margin: '0 0 8px' }} data-testid="method-checks-test" data-valok="">{checkLine(tf)}{tf?.mob ? <> Letting only jobs of 8 GPUs or fewer move leaves {pctRange(tf.mob.lo, tf.mob.hi)}% (S, W and L): most of the saving sits in large multi-node jobs.</> : null} Each row: the validation year's scenario estimate beside the test year's, S, W and L vs U at 4-week blocks. <TestTag /></p>
+              <ItemSection x={x} item="1 extensions" />
+              <p className="t-12 ink-3" style={{ margin: '6px 0 0' }} data-valok="">Production-basis repricing and the published-values-only check were validation analyses; they were not pre-registered for the test year. <ValOnlyTag what="those two rows" /></p>
             </Sec> : null}
             <Sec title="A bound, not a target">
               <p className="t-13" style={{ margin: 0 }}>
@@ -112,10 +122,10 @@ export function MethodDrawer() {
                 <li>Colour midpoint: {fmt(asNum(g.reference?.us_avg_ci) ?? 0)} g/kWh, the 2024 US average (EIA). <Ev e="observed" /></li>
               </ul>
             </Sec>
-            {data!.assumptions ? <Sec title="Assumptions & what didn't work"><AssumptionsSection a={data!.assumptions} /></Sec> : null}
+            {data!.assumptions ? <Sec title="Assumptions & what didn't work">{copy.validationReadings ? <AssumptionsSection a={data!.assumptions} /> : <div data-valok=""><div style={{ marginBottom: 8 }}><ValOnlyTag what="this register" /></div><AssumptionsSection a={data!.assumptions} /></div>}</Sec> : null}
             <Sec title="Limitations">
               <ul className="t-13" style={{ margin: 0, paddingLeft: 16 }}>
-                {plainLimitations(man.limitations).map((l: string) => <li key={l} style={{ marginBottom: 4 }}>{l}</li>)}
+                {plainLimitations(lims).map((l: string) => <li key={l} style={{ marginBottom: 4 }}>{l}</li>)}
                 <li style={{ marginBottom: 4 }}>Jobs run exactly as long as declared; uncertain runtimes are untested.</li>
                 {man.not_run?.length ? <li>Some sensitivity runs were not run (each with its reason, in the source text).</li> : null}
               </ul>
@@ -123,7 +133,8 @@ export function MethodDrawer() {
                 <summary className="cursor-pointer fw-500">Source text</summary>
                 <div style={{ marginTop: 8 }}>
                   <div className="fw-500">Limitations, as written in the results manifest</div>
-                  <ul style={{ margin: '4px 0 0', paddingLeft: 16 }}>{man.limitations.map((l: string) => <li key={l} style={{ marginBottom: 4 }}>{l}</li>)}</ul>
+                  <ul style={{ margin: '4px 0 0', paddingLeft: 16 }}>{lims.map((l: string) => <li key={l} style={{ marginBottom: 4 }}>{l}</li>)}</ul>
+                  {x ? <p style={{ margin: '4px 0 0' }} className="ink-3" data-valok="">Two lines, written before the test-year extras ran, are restated from results/test/extras.json and the manifest's not-run list.</p> : null}
                   {man.not_run?.length ? <><div className="fw-500" style={{ marginTop: 8 }}>Not run</div><ul style={{ margin: '4px 0 0', paddingLeft: 16 }}>{man.not_run.map((x: { item: string; reason: string }) => <li key={x.item}>{x.item}: {x.reason}</li>)}</ul></> : null}
                   <div className="fw-500" style={{ marginTop: 8 }}>Framing, as written in the metrics</div>
                   {Object.values((m.framing ?? {}) as Record<string, string>).map((t) => <p key={t} style={{ margin: '4px 0 0' }}>{t}</p>)}
@@ -152,6 +163,24 @@ export function MethodDrawer() {
               <p className="t-12 ink-2" style={{ margin: '8px 0 6px' }}>The same relief at lower thresholds:</p>
               <ScrollX label="Peak relief at lower thresholds, table"><RushSensitivity s={sto} /></ScrollX>
             </Sec></div> : null}
+            {x ? <div className="well" style={{ padding: 12 }}><Sec title="Storage on the test year (illustrative, not the registered result)">
+              <TestStorage x={x} testId="method-storage-test" />
+              <div style={{ marginTop: 8 }}><ItemSection x={x} item="2 storage" /></div>
+              <div style={{ marginTop: 8 }}><ItemSection x={x} item="2b storage schedules" note="The carbon schedule against the peak-aimed one (D-073), validation beside test. The storage curve, the hindsight heuristic's break-even and the lower-threshold relief were not pre-registered for the test year; they stay on the validation view." /></div>
+            </Sec></div> : null}
+            {x ? <div className="well" style={{ padding: 12 }}><Sec title="Water on the test year (illustrative)">
+              <ItemSection x={x} item="4 water" strip={/ frac vs U$/} note={<>Change vs {pname('U')} in water consumed for generation, without and with hydro evaporation. {x.water?.claim ? `Claim: ${x.water.claim}.` : ''} <TestTag /></>} />
+            </Sec></div> : null}
+            {x ? <Sec title="By season, test year">
+              <ItemSection x={x} item="5 seasonal" note={<>Each arrival week belongs to the season of its Monday's month; S and W vs {pname('U')}, ratio of totals. <TestTag /></>} />
+            </Sec> : null}
+            {x ? <Sec title="Forecast skill and the frozen intervals, test year">
+              <ItemSection x={x} item="6 forecast skill" note={<>Mean absolute error of K, W and L per series, and how often the truth fell inside the p10–p90 interval frozen on validation (nominal 80%). <TestTag /> <Ev e="measured" /></>} />
+            </Sec> : null}
+            {x ? <Sec title="What the learned model leans on (permutation importance), test year">
+              <ItemSection x={x} item="6 permutation importance" note={<>MAE increase when one feature group of the frozen {pname('L')} is shuffled. <TestTag /> <Ev e="measured" /></>} />
+            </Sec> : null}
+            {x ? <div data-valok=""><Sec title="Validation → test drift"><DriftView x={x} /></Sec></div> : null}
             {data!.water ? <div className="well" style={{ padding: 12 }}><Sec title="Water footprint illustration (not the registered result)">
               <WaterPanel w={data!.water} />
             </Sec></div> : null}

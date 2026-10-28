@@ -1,6 +1,6 @@
 // Serve the synthetic results/test fixture (T11 B6) to the built dashboard through Playwright routes, so the
 // test-year state can be checked without ever putting the fixture under public/ or dist/.
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { FIXTURE_DIR, fixtureManifest } from './expected';
@@ -14,6 +14,8 @@ export async function serveTestFixture(page: Page) {
   });
   await page.context().route('**/data/results/test/*.json', (route) => {
     const name = new URL(route.request().url()).pathname.split('/').pop()!;
+    // the fixture carries no extras.json: answer 404, as a test run without the D-071 extras would
+    if (!existsSync(join(FIXTURE_DIR, name))) return route.fulfill({ status: 404, body: '' });
     return route.fulfill({ status: 200, contentType: 'application/json', body: readFileSync(join(FIXTURE_DIR, name), 'utf8') });
   });
 }

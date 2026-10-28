@@ -133,7 +133,7 @@ function WindowSwitch() {
       <button role="radio" aria-checked={evalWindow === 'validation'} onClick={pick('validation')}>Validation year</button>
       <button role="radio" aria-checked={evalWindow === 'test'} disabled={!testOn} onClick={pick('test')}
         title={testOn ? 'The sealed test year, evaluated once after the configuration freeze' : 'Sealed: the test year is evaluated once, after the configuration freeze, through the logged entry point'}>
-        <Lock />{testOptionLabel(testIndex?.frozen_at)}
+        <Lock />{testOptionLabel(testIndex?.frozen_at, testOn)}
       </button>
     </div>
   );

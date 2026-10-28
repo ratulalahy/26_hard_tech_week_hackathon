@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test';
 import { openTestYear, serveTestFixture } from './fixture-route';
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
-const STATES: { name: string; hash: string; drawer?: boolean; testYear?: boolean; toggle?: number; width?: number }[] = [
+const STATES: { name: string; hash: string; drawer?: boolean; testYear?: boolean; real?: boolean; toggle?: number; width?: number }[] = [
   { name: 'control', hash: '#control' },
   { name: 'cockpit', hash: '#cockpit' },
   { name: 'ribbon', hash: '#ribbon' },
@@ -19,11 +19,16 @@ const STATES: { name: string; hash: string; drawer?: boolean; testYear?: boolean
   { name: 'test-year control', hash: '#control', testYear: true },
   { name: 'test-year method', hash: '#control', testYear: true, drawer: true },
   { name: 'method-390', hash: '#control', drawer: true, width: 390 }, // T17: phone-width drawer
+  // the sealed test year as committed (results/test, opened once): extras, storage, toughest days, drift
+  { name: 'sealed control', hash: '#control', testYear: true, real: true },
+  { name: 'sealed ribbon', hash: '#ribbon', testYear: true, real: true },
+  { name: 'sealed story-5', hash: '#story-5', testYear: true, real: true },
+  { name: 'sealed method', hash: '#control', testYear: true, real: true, drawer: true },
 ];
 
 for (const s of STATES) {
   test(`axe ${s.name}`, async ({ page }) => {
-    if (s.testYear) await serveTestFixture(page);
+    if (s.testYear && !s.real) await serveTestFixture(page);
     if (s.width) await page.setViewportSize({ width: s.width, height: 844 });
     await page.goto('./' + s.hash);
     await page.locator('.mk-region').first().waitFor({ state: 'attached' });

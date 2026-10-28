@@ -48,9 +48,9 @@ test('every view renders registered values with zero non-localhost requests', as
   // I1: the remote line is on the execution basis, and remote + retimed + slips = the ledger's moved
   await expect(page.getByTestId('remote-line')).toContainText(`by execution energy, S static clean-region ranking ran ${sRemoteExec} outside Utah`);
   await expect(page.getByTestId('remote-line')).toContainText(`for the ledger's “moved” ${sMovedExec}`);
-  // T11: the window switch shows the validation year; the test year stays sealed (disabled) until results/test exists
+  // T11/T13: the window switch shows the validation year by default; results/test now holds the one opening, so the test option is enabled
   await expect(page.getByRole('radio', { name: 'Validation year' })).toHaveAttribute('aria-checked', 'true');
-  await expect(page.getByRole('radio', { name: 'Test year (sealed until the freeze)' })).toBeDisabled();
+  await expect(page.getByRole('radio', { name: 'Test year (sealed, opened once)' })).toBeEnabled();
   await expect(page.getByTestId('window-switch')).toHaveAccessibleDescription('Validation year (Nov 2024 – Oct 2025) · test year sealed');
   // the map is drawn locally: a WebGL canvas and the four core regions labelled on it
   await expect(page.locator('#map-main canvas.maplibregl-canvas')).toBeVisible();
@@ -153,7 +153,20 @@ test('every view renders registered values with zero non-localhost requests', as
   expect(g.seen.length).toBeGreaterThan(5);
 });
 
-test('the test-year state shows only test numbers and no validation wording (synthetic fixture)', async ({ page }) => {
+/** The text of a region minus every element marked data-valok: the places that show a validation number in
+ * test mode because the test year has no counterpart, each labelled as such (the drift table, val-only chips). */
+async function unlabelledText(loc: import('@playwright/test').Locator) {
+  return loc.evaluate((el) => {
+    const c = el.cloneNode(true) as HTMLElement;
+    c.querySelectorAll('[data-valok]').forEach((n) => n.remove());
+    document.body.appendChild(c);
+    const t = c.innerText;
+    c.remove();
+    return t;
+  });
+}
+
+test('the test-year state shows only test numbers and no unlabelled validation wording (synthetic fixture)', async ({ page }) => {
   const g = guard(page);
   await g.install();
   await serveTestFixture(page);
@@ -161,8 +174,8 @@ test('the test-year state shows only test numbers and no validation wording (syn
   page.on('pageerror', (e) => errors.push(String(e)));
   const noValidation = async (where: string) => {
     for (const loc of [page.locator('main'), page.locator('footer')]) {
-      const t = (await loc.innerText()).toLowerCase();
-      expect(t.includes('validation'), `${where}: validation wording on test numbers`).toBe(false);
+      const t = (await unlabelledText(loc)).toLowerCase();
+      expect(t.split('\n').filter((l) => l.includes('validation')), `${where}: validation wording on test numbers`).toEqual([]);
       // M14: the test year covers a period, not a full year
       expect(/all year|over the year|the year's|whole year/.test(t), `${where}: "year" wording on test numbers`).toBe(false);
     }
@@ -171,11 +184,11 @@ test('the test-year state shows only test numbers and no validation wording (syn
   await page.goto('./#control');
   await expect(page.getByTestId('hero-placement')).toContainText(sOwn);
   await openTestYear(page);
-  await expect(page.getByRole('radio', { name: 'Test year (sealed until Oct 27)' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('radio', { name: 'Test year (sealed, opened once)' })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByTestId('hero-placement')).toContainText(exact(testSOwn)); // F10: S's own estimate
   if (testPlacementRange.includes('–')) await expect(page.locator('main')).not.toContainText(testPlacementRange);
   await expect(page.getByTestId('hero-timing')).toContainText(testWaitPhrase);
-  await expect(page.getByTestId('scenario-toggle-off')).toHaveText('The mobility and capacity scenarios are not shown for this window.');
+  await expect(page.getByTestId('scenario-toggle-off')).toContainText('no test counterpart');
   await expect(page.getByRole('heading', { level: 1 })).toContainText(`moving Utah's AI jobs cut their CO₂ by ${testSOwn}`);
   await expect(page.getByTestId('window-switch')).toHaveAccessibleDescription(/^Test year \(Nov 2025 – Oct 2026\) · opened once, after the freeze of Oct 27, 2026$/);
   await noValidation('control');
@@ -195,7 +208,7 @@ test('the test-year state shows only test numbers and no validation wording (syn
   await expect(drawer.getByTestId('test-line')).toHaveText('These are sealed test-year results: the year was opened once, after the model and policy settings were frozen, and nothing was tuned on it.');
   await expect(drawer).toContainText('Every policy, the test cohort');
   await expect(drawer).toContainText(fixtureManifest.run_id);
-  expect((await drawer.innerText()).toLowerCase().includes('validation'), 'drawer: validation wording').toBe(false);
+  expect((await unlabelledText(drawer)).toLowerCase().includes('validation'), 'drawer: unlabelled validation wording').toBe(false);
   await page.keyboard.press('Escape');
 
   // back to the validation year: its numbers and wording return
@@ -240,7 +253,7 @@ test('the ten-region overview page renders results/overview.json offline (T18)',
   await expect(page.getByTestId('regions-detail')).toContainText('PJM Interconnection · PJM');
   // and the page hands back to the App shell
   await page.getByRole('link', { name: 'Back to the Utah dashboard' }).click();
-  await expect(page.getByTestId('hero-placement')).toContainText(placementRange);
+  await expect(page.getByTestId('hero-placement')).toContainText(sOwn); // the hero leads with S's own estimate (T15, F10)
   await page.waitForLoadState('networkidle');
   expect(errors, 'page errors').toEqual([]);
   expect(g.blocked, 'blocked non-localhost requests').toEqual([]);
@@ -303,4 +316,60 @@ test('reduced motion: the toggle swaps with no animation', async ({ page }) => {
   await page.getByTestId('scenario-toggle').getByRole('button').nth(1).click();
   const name = await page.getByTestId('work-rows').evaluate((el) => getComputedStyle(el).animationName);
   expect(name).toBe('none');
+});
+
+test('the sealed test year (results/test, opened once): extras, storage, drift; no "pending" phases', async ({ page }) => {
+  const { readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const rd = (f: string) => JSON.parse(readFileSync(join(process.cwd(), 'public', 'data', 'results', 'test', f), 'utf8'));
+  const m = rd('metrics.json'), x = rd('extras.json');
+  const f1 = (v: number) => (v * 100).toFixed(1);
+  const cs = (c: string, ref = 'U') => m.contrasts.find((y: { candidate: string; reference: string }) => y.candidate === c && y.reference === ref).blocks['4'];
+  const sU = cs('S');
+  const kS = cs('K', 'S');
+  const peak = x.storage.schedule_comparison.schedules.peak.cases.U['4'];
+  const mob = ['S', 'W', 'L'].map((p) => x.extensions.mobility_le_8gpus.vs_U[p]['4'].saving.value as number);
+  const g = guard(page);
+  await g.install();
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await page.goto('./#control');
+  await openTestYear(page);
+  await expect(page.getByRole('radio', { name: 'Test year (sealed, opened once)' })).toHaveAttribute('aria-checked', 'true');
+  // the registered b = 4 S interval, read from the JSON
+  await expect(page.getByTestId('hero-placement')).toContainText(`${f1(sU.saving.value)}%`);
+  await expect(page.getByTestId('hero-placement')).toContainText(`${f1(sU.saving_ci95.value[0])}–${f1(sU.saving_ci95.value[1])}%`);
+  await expect(page.getByTestId('hero-kind')).toContainText('test year (sealed, opened once)');
+  await expect(page.getByTestId('hero-mobility')).toContainText(`${f1(Math.min(...mob))}–${f1(Math.max(...mob))}%`);
+
+  await page.goto('./#story-3');
+  await expect(page.getByTestId('story-h3')).toContainText('H3 not supported');
+  await expect(page.getByTestId('story-h3')).toContainText(`K − S +${(-kS.diff_kg.value / 1000).toFixed(1)} t [${(-kS.diff_kg_ci95.value[1] / 1000).toFixed(1)}, ${(-kS.diff_kg_ci95.value[0] / 1000).toFixed(1)}]`);
+  await expect(page.getByTestId('story-result')).toContainText(`${(cs('W_time').saving.value * 100).toFixed(2)}%`);
+  await expect(page.getByTestId('story-storage-test')).toContainText(`${peak.rush_import_after_mw.value.toFixed(2)} MW`);
+  await expect(page.getByTestId('story-storage-test')).toContainText(`${peak.rush_hours_discharging.value} of ${x.storage.rush.n_hours.value} rush hours`);
+  await expect(page.locator('main')).not.toContainText(/pending/i);
+
+  await page.getByRole('navigation', { name: 'Views' }).getByRole('link', { name: 'Day ribbon' }).click();
+  await expect(page.getByTestId('test-tough-days').locator('tbody tr')).toHaveCount(x.toughest_days.days.length);
+
+  await page.getByRole('banner').getByRole('button', { name: 'Method & evidence' }).click();
+  const drawer = page.getByRole('dialog');
+  await expect(drawer.getByTestId('drift-view')).toBeVisible();
+  await expect(drawer.getByTestId('drift-table').locator('tbody tr')).toHaveCount(x.drift.rows.filter((r: { item: string }) => r.item === 'headline').length);
+  await drawer.getByTestId('drift-item').selectOption('5 seasonal');
+  await expect(drawer.getByTestId('drift-table').locator('tbody tr')).toHaveCount(x.drift.rows.filter((r: { item: string }) => r.item === '5 seasonal').length);
+  await expect(drawer.getByTestId('method-storage-test')).toContainText(`${peak.rush_import_after_mw.value.toFixed(2)}`);
+  await expect(drawer.getByTestId('test-item-6-permutation-importance')).toBeVisible();
+  await expect(drawer.getByTestId('test-item-6-forecast-skill')).toBeVisible();
+  await expect(drawer.getByTestId('method-h3')).toContainText('H3 not supported');
+  // the manifest's two pre-extras caveats are restated: phases 49 and 98 ran, shadow-U was cut (never "pending")
+  await expect(drawer).not.toContainText(/pending/i);
+  await expect(drawer).toContainText('offsets of 49 and 98 days ran on the test year');
+  await expect(drawer).toContainText('cut by owner (D-058)');
+  const lines = (await unlabelledText(drawer)).split('\n').filter((l) => /validation/i.test(l));
+  expect(lines, 'drawer: unlabelled validation wording').toEqual([]);
+  await page.waitForLoadState('networkidle');
+  expect(errors, 'page errors').toEqual([]);
+  expect(g.blocked, 'blocked non-localhost requests').toEqual([]);
 });

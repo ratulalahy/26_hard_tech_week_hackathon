@@ -53,8 +53,8 @@ export function freezeDate(man: Json | null | undefined): string | null {
 
 /** The switch's label for the test option: "Test year (sealed until <freeze>)". `frozenAt` is the
  * freeze time copy-data reads from results/test/manifest.json; null before the test run exists. */
-export const testOptionLabel = (frozenAt: string | null | undefined) =>
-  `Test year (sealed until ${frozenAt ? fmtDate(frozenAt, { month: 'short', day: 'numeric', timeZone: 'UTC' }) : 'the freeze'})`;
+export const testOptionLabel = (frozenAt: string | null | undefined, available = false) =>
+  available ? 'Test year (sealed, opened once)' : `Test year (sealed until ${frozenAt ? fmtDate(frozenAt, { month: 'short', day: 'numeric', timeZone: 'UTC' }) : 'the freeze'})`;
 
 export function windowCopy(window: EvalWindow, man: Json, metrics?: Json): WindowCopy {
   if (window === 'validation') {
