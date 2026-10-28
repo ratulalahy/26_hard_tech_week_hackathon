@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test data notebooks profile slice need-run-dir ext-runs extensions storage outlook overview prices flows water case-days extras-validation web freeze
+.PHONY: test data notebooks profile slice need-run-dir ext-runs extensions storage outlook overview prices flows water case-days extras-validation web freeze deck
 
 test:
 	cd lab && uv run pytest
@@ -121,6 +121,14 @@ profile:
 # Needs the web dependencies (cd web && npm ci). Without a data dir it keeps the committed map layers.
 web:
 	cd web && { [ -d node_modules ] || npm ci; } && npm run data && npm run build
+
+# The pitch deck (docs/pitch/deck/index.html, offline, opened from file://): rebuild data.js from
+# results/*.json (every slide number is checked against it), then step through every slide in Chromium
+# with the network blocked. SHOTS=1 also writes docs/design/shots-build/deck-*.png.
+deck:
+	cd web && { [ -d node_modules ] || npm ci; }
+	node docs/pitch/deck/tools/deck-data.mjs
+	cd web && $(if $(SHOTS),DECK_SHOTS=1,) npx playwright test -c playwright.deck.config.ts
 
 # The configuration freeze record (Stage 3 T12): config/freeze.json from HEAD, validated with the
 # seal, plus the lead's commit/tag/push commands. ARGS=--dry-run prints it instead; ARGS may add
