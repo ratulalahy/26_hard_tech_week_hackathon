@@ -3,6 +3,7 @@
   "assumptions.json",
   "case-days.json",
   "extensions.json",
+  "extras-validation.json",
   "flexibility-budget.json",
   "forecast-replay.json",
   "grid-profile.json",

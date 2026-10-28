@@ -127,6 +127,7 @@ from gridpilot.sim import (
     tail_climatology,
 )
 from gridpilot.sim.power import GPU_KW, PUE, TRANSFER_FRACTION
+from gridpilot.splits import TEST_START
 from gridpilot.workload import CYCLE_DAYS, cycle_stats, replay
 from gridpilot.workload_profile import top_share as _top_share
 
@@ -341,12 +342,50 @@ def run_pipeline(window: Window, scenario: Scenario, out_dir: Path | str | None 
         raise ValueError(f"scenario {scenario.name!r} is a sensitivity: it never exports "
                          f"into results/ (only the registered primary does)")
     if window.is_test:
-        ses = seal.require_active("run_pipeline(test)")
+        seal.require_active("run_pipeline(test)")
         if not scenario.is_primary:
             raise ValueError("the test window runs the registered primary scenario only")
         if forecast_run is not None:
             raise ValueError("the test run builds its own forecasts (frozen configuration); "
                              "--forecast-run cannot be pinned on test")
+    return _run_pipeline(window, scenario, out_dir, export=export, forecast_run=forecast_run)
+
+
+def run_test_extension(window: Window, scenario: Scenario, primary: RunResult) -> RunResult:
+    """D-071 item 1 (T20): one D-058 extension scenario on the test year, inside the same
+    test-mode session, after the primary test run has been exported, with that run's frozen
+    test forecasts. Never exports; its run directory is `runs/test/ext/<name>/<UTC>/`."""
+    ses = seal.require_active("run_test_extension")
+    if not window.is_test:
+        raise ValueError("run_test_extension needs the test window")
+    if EXTENSIONS.get(scenario.name) != scenario:
+        raise ValueError(f"{scenario.name!r} is not a registered D-058 extension scenario")
+    if not (primary.window.is_test and primary.scenario.is_primary and primary.rc == 0
+            and primary.exported and ses.exported and primary.run_dir in ses.run_dirs
+            and primary.objects):
+        raise ValueError("a test extension runs only after this session's exported primary "
+                         "test run")
+    return _run_pipeline(window, scenario, ses.auth.runs_root / "ext" / scenario.name,
+                         export=False, forecast_run=primary.objects["fc_dir"], extension=True,
+                         reuse_cohort=_reusable_cohort(scenario, primary))
+
+
+def _reusable_cohort(scenario: Scenario, primary: RunResult):
+    """The primary test run's cohort when `scenario` leaves the jobs, their deadlines and the
+    phase as the primary's (destination capacity, transfer time): `_cohort` then makes exactly
+    the primary's `prefix_cohort` call, so the extension reuses it instead of rebuilding the
+    same bookings (T20; about 4 minutes each on the test year). Otherwise None."""
+    if (_jobs_unchanged(scenario) and scenario.phase_days == Scenario.primary().phase_days
+            and primary.objects and primary.objects.get("coh") is not None):
+        return primary.objects["coh"]
+    return None
+
+
+def _run_pipeline(window: Window, scenario: Scenario, out_dir, *, export: bool, forecast_run,
+                  extension: bool = False, reuse_cohort=None) -> RunResult:
+    if window.is_test:
+        ses = seal.require_active("run_pipeline(test)")
+        prev_run_id = ses.run_id
     timer = Timer()
     run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     if window.is_test:
@@ -372,7 +411,8 @@ def run_pipeline(window: Window, scenario: Scenario, out_dir: Path | str | None 
         (tmp / "git.txt").write_text(f"sha {sha}\nstatus:\n{status}\n")
     fc = Path(forecast_run) if forecast_run else None
     try:
-        rc, info = _pipeline(window, scenario, fc, timer, tmp, run_id, sha, status)
+        rc, info = _pipeline(window, scenario, fc, timer, tmp, run_id, sha, status,
+                             reuse_cohort=reuse_cohort if extension else None)
         os.rename(tmp, final)
     except BaseException:
         failed = root / f"failed-{run_id}"
@@ -381,13 +421,23 @@ def run_pipeline(window: Window, scenario: Scenario, out_dir: Path | str | None 
         if window.is_test:
             ses.run_dirs.append(failed)
             ses.work_dir = None
+            if extension:
+                ses.run_id = prev_run_id
         raise
     print(f"run directory: {final}")
     exported = False
+    if info.get("objects"):  # the forecast run moved with its run directory
+        fc = Path(info["objects"]["fc_dir"])
+        if fc.is_relative_to(tmp):
+            info["objects"]["fc_dir"] = final / fc.relative_to(tmp)
     if window.is_test:
         ses.run_dirs.append(final)
         ses.work_dir = None
-        ses.rc = rc
+        if extension:
+            seal.log_event("extension_end", run_id=run_id, scenario=scenario.name, rc=rc)
+            ses.run_id = prev_run_id
+        else:
+            ses.rc = rc
     if rc == 0 and export:
         if window.is_test:
             dst = ses.auth.test_results_dir
@@ -495,7 +545,7 @@ def _jobs_unchanged(scenario: Scenario) -> bool:
 
 
 def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, timer, tmp, run_id,
-              sha, status) -> tuple[int, dict]:
+              sha, status, *, reuse_cohort=None) -> tuple[int, dict]:
     init, eval_start, F = window.init, window.eval_start, window.F
     primary = scenario.is_primary
     sites, t_sites = scenario.sites(), scenario.time_only_sites()
@@ -519,7 +569,9 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
     with timer("forecast_construction"):
         if test:
             carbon_test = build_carbon(window=window)
-            fc_dir = fcmod.run_test(window, out_root=tmp / "forecast")
+            # a D-071 extension (T20) reuses the primary test run's frozen forecasts
+            fc_dir = (Path(forecast_run) if forecast_run
+                      else fcmod.run_test(window, out_root=tmp / "forecast"))
         elif forecast_run:
             fc_dir = Path(forecast_run)
         else:
@@ -539,7 +591,10 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
     if test:
         file_sha[carbon_test.name] = _sha256(carbon_test)
         for rel, h in ses.auth.input_sha256.items():
-            file_sha[f"input:{rel}"] = h
+            # the pipeline's own inputs; the optional D-071 inputs (T20: archive files whose
+            # names carry dates past F) are logged with their reads, not in the run's hashes
+            if rel in seal.TEST_INPUTS:
+                file_sha[f"input:{rel}"] = h
     else:
         file_sha["carbon_hourly.parquet"] = _sha256(CARBON_PATH)
     file_sha[TRACE_PATH.name] = _sha256(TRACE_PATH)
@@ -552,7 +607,12 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
 
     # 2–3. Bookings and the common A.
     with timer("bookings"):
-        coh = _cohort(warm_jobs, stream, F, scenario)
+        if reuse_cohort is not None:  # a test extension with the primary's jobs (T20)
+            if not (_jobs_unchanged(scenario) and scenario.phase_days == PHASE_DAYS):
+                raise AssertionError(f"{scenario.name}: its jobs differ from the primary's")
+            coh = reuse_cohort
+        else:
+            coh = _cohort(warm_jobs, stream, F, scenario)
     cj, bookings, warm = coh.jobs, coh.bookings, coh.warm
     wl = warm.ledger
     cohort_record = {
@@ -573,6 +633,8 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
     }
     if not primary:
         cohort_record["scenario"] = scenario.name
+    if reuse_cohort is not None:
+        cohort_record["cohort_reused_from_primary_run"] = True  # T20: the same prefix_cohort call
     cohort_text = json.dumps(
         cohort_record | {"wallclock_written_at": datetime.now(UTC).isoformat()}, indent=1) + "\n"
     (tmp / "cohort.json").write_text(cohort_text)
@@ -687,7 +749,8 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
             summary = ext_summary(run_id=run_id, sha=sha, status=status, window=window,
                                   scenario=scenario, coh=coh, cj=cj, acct=acct,
                                   repro=repro, tiers=tiers)
-            text = write_json_atomic(tmp / "summary.json", summary)
+            text = write_json_atomic(tmp / "summary.json", summary,
+                                     **({"window": window} if test else {}))
             hashes["summary.json"] = hashlib.sha256(text.encode()).hexdigest()
             summary_canonical = canonical_hash(json.loads(text))  # serialized (M15)
             info["summary_canonical_sha256"] = summary_canonical
@@ -717,6 +780,10 @@ def _pipeline(window: Window, scenario: Scenario, forecast_run: Path | None, tim
     (tmp / "timing.json").write_text(json.dumps(
         {"run_id": run_id, "unit": "s", "evidence": "measured", "timing_s": timer.t},
         indent=1) + "\n")
+    if test:  # T20: what the D-071 extras reuse in memory (never re-read from the run dir)
+        info["objects"] = {"ledgers": ledgers, "cj": cj, "filled": filled, "mask": mask,
+                           "eval_start": eval_start, "A": coh.A, "fc_dir": fc_dir,
+                           "coh": coh if primary else None}
     if not acct["bound_all_ok"]:
         log.error("feasible >= bound FAILED")
         return 3, info
@@ -1312,6 +1379,12 @@ SCENARIO_KNOB_UNITS = {"dest_slots": "GPU_slots", "transfer_s": "s", "batch_dela
 EXT_EVIDENCE_NOTE = ("validation results of a sensitivity scenario (D-058); policy outcomes "
                      "simulated, bound modeled, scenario knobs assumed; never pooled with the "
                      "registered primary result")
+EXT_KIND_TEST = ("extension: one-axis sensitivity scenario on the test year, pre-registered "
+                 "secondary (D-071)")
+EXT_EVIDENCE_NOTE_TEST = ("test year, pre-registered secondary (D-071): a D-058 sensitivity "
+                          "scenario with the frozen test forecasts; policy outcomes simulated, "
+                          "bound modeled, scenario knobs assumed; never pooled with the "
+                          "registered primary result")
 
 
 def scenario_record(scenario: Scenario, pid: str) -> dict:
@@ -1342,8 +1415,9 @@ def ext_summary(*, run_id, sha, status, window: Window, scenario: Scenario, coh,
     return {
         "schema_version": SCHEMA_VERSION, "run_id": run_id, "git_sha": sha,
         "git_clean": status == "", "window": window.name,
-        "kind": "extension: one-axis sensitivity scenario (validation only; D-058)",
-        "evidence_note": EXT_EVIDENCE_NOTE,
+        "kind": (EXT_KIND_TEST if window.is_test
+                 else "extension: one-axis sensitivity scenario (validation only; D-058)"),
+        "evidence_note": EXT_EVIDENCE_NOTE_TEST if window.is_test else EXT_EVIDENCE_NOTE,
         "scenario": scenario_record(scenario, f"{run_id}:scenario"),
         "covered": {"arrivals": [iso(window.eval_start), iso(coh.A)],
                     "drain": [iso(coh.A), iso(window.F)]},
@@ -1796,7 +1870,244 @@ def run_test(*, rerun_reason: str | None = None, remote_tag_override: str | None
             ses.rc = int(pipeline(window))
             return ses.rc
         res = run_pipeline(window, Scenario.primary(), out_dir, export=True)
+        if res.rc == 0 and res.exported:
+            run_test_extras(window, res, extensions_root=Path(out_dir) / "ext" if out_dir else None)
     return res.rc
+
+
+# --------------------------------------------------------------------------- D-071 extras
+
+EXTRAS_ARTIFACT = "extras.json"
+
+
+def _read_committed(results_dir: Path, name: str) -> dict | None:
+    """A committed validation artifact the extras read (frozen numbers; never recomputed)."""
+    p = Path(results_dir) / name
+    return json.loads(p.read_text()) if p.exists() else None
+
+
+def _weather_slc(ses) -> tuple[pl.DataFrame | None, str | None]:
+    """The Salt Lake City archive over the test window, through `sealed_read` (only the files
+    the freeze record lists)."""
+    from gridpilot import test_extras as tx
+
+    rels = sorted(r for r in ses.auth.input_sha256 if r.startswith(seal.WEATHER_SLC_REL + "/"))
+    if not rels:
+        return None, "the freeze record lists no Salt Lake City archive file"
+    frames = [seal.sealed_read(ses.data_path(r), purpose="Salt Lake City temperature (archive)",
+                               columns=["ts_utc", "valid_time_utc", "temperature_2m"],
+                               time_range=(TEST_START, ses.F), reader=tx.read_weather_json)
+              for r in rels]
+    return pl.concat(frames).unique("ts_utc", keep="last").sort("ts_utc"), None
+
+
+def _net_load_test(window: Window) -> pl.DataFrame:
+    """PACE hourly net load on the test window: adjusted demand (spikes removed) minus wind and
+    solar, from the sealed series loader (as `storage.net_load` / `case_days`)."""
+    from gridpilot.data.eia930 import add_demand_clean
+
+    dem = add_demand_clean(fcmod.load_series("demand", window=window)
+                           .rename({"value": "demand_adj_mw"}))
+    w = fcmod.load_series("wind", window=window).select("ts_utc", pl.col("value").alias("wind"))
+    s = fcmod.load_series("solar", window=window).select("ts_utc",
+                                                          pl.col("value").alias("solar"))
+    f = dem.select("ts_utc", "demand_clean_mw").join(w, on="ts_utc", how="left").join(
+        s, on="ts_utc", how="left")
+    return f.select("ts_utc", (pl.col("demand_clean_mw") - pl.col("wind").fill_null(0.0)
+                               - pl.col("solar").fill_null(0.0)).alias("value")).sort("ts_utc")
+
+
+def _item(sections: dict, timing: dict, key: str, fn) -> None:
+    """Run one D-071 item; a failure is reported as not_run with its reason (every item is
+    reported whatever happens); a seal refusal is never swallowed."""
+    t0 = time.perf_counter()
+    try:
+        sections[key] = fn()
+    except seal.SealError:
+        raise
+    except Exception as e:
+        log.exception("D-071 %s failed", key)
+        sections[key] = {"status": "not_run", "reason": f"{type(e).__name__}: {e}"[:500],
+                         "provenance_id": f"extras:{key}"}
+    timing[key] = time.perf_counter() - t0
+
+
+def run_test_extras(window: Window, primary: RunResult, *,
+                    extensions_root: Path | None = None) -> Path:
+    """The pre-registered D-071 extras (T20), in the same test-mode session as the primary
+    run, after its export: item 1 runs the seven extension scenarios (one after another: the
+    session is bound to this process and thread); items 2–7 compute from the primary's
+    in-memory ledgers and truth plus sealed reads, each inside a `seal.purpose_scope` naming
+    the item. Writes `runs/test/extras/<UTC>/extras.json`, copies it to results/test/ and logs
+    an export line listing every test artifact."""
+    from gridpilot import test_extras as tx
+
+    ses = seal.require_active("run_test_extras")
+    if not (window.is_test and primary.rc == 0 and primary.exported and primary.objects):
+        raise ValueError("the D-071 extras run only after this session's exported primary run")
+    timing: dict[str, float] = {}
+    t_all = time.perf_counter()
+    seal.log_event("extras_start", run_id=primary.run_id, items=list(range(1, 8)))
+    obj = primary.objects
+    ext_runs: dict[str, RunResult] = {}
+    sections: dict = {}
+    ext_sections = {}
+    for name, sc in EXTENSIONS.items():
+        t0 = time.perf_counter()
+        summary, err = None, None
+        with seal.purpose_scope(f"D-071 item 1 (extension scenario {name})"):
+            try:
+                r = (run_test_extension(window, sc, primary) if extensions_root is None
+                     else _run_pipeline(window, sc, extensions_root / name, export=False,
+                                        forecast_run=obj["fc_dir"], extension=True,
+                                        reuse_cohort=_reusable_cohort(sc, primary)))
+                if r.rc == 0:
+                    ext_runs[name] = r
+                    summary = json.loads((r.run_dir / "summary.json").read_text())
+                else:
+                    err = f"rc={r.rc}"
+            except seal.SealError:
+                raise
+            except Exception as e:
+                log.exception("D-071 item 1: %s failed", name)
+                err = f"{type(e).__name__}: {e}"[:500]
+        ext_sections[name] = tx.extension_section(name, summary, err, f"extras:ext:{name}")
+        timing[f"item1_{name}"] = time.perf_counter() - t0
+    sections["extensions"] = {"label": tx.LABEL, "rule": "the seven D-058 scenarios on the test "
+                              "year with the frozen test forecasts; the policies and the paired "
+                              "block bootstrap of the extension runner", **ext_sections}
+    root = (extensions_root.parent if extensions_root is not None else ses.auth.runs_root) / "extras"
+    root.mkdir(parents=True, exist_ok=True)
+    run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    tmp, final = root / f".tmp-{run_id}-{os.getpid()}", root / run_id
+    tmp.mkdir()
+    ses.work_dir = tmp
+    results = ses.auth.results_dir
+    committed = {n: _read_committed(results, f) for n, f in (
+        ("metrics", "metrics.json"), ("extensions", "extensions.json"),
+        ("storage", "storage.json"), ("case_days", "case-days.json"), ("water", "water.json"),
+        ("extras", "extras-validation.json"))}
+    try:
+        with seal.purpose_scope("D-071 items 2-6 (the test carbon table for the series)"):
+            build_carbon(window=window)
+        mob = ext_runs.get("mobility_le_8gpus")
+        mob_w = mob.objects["ledgers"]["W"] if mob is not None else None
+        net: dict = {}
+
+        def get_net():
+            if "net" not in net:
+                net["net"] = _net_load_test(window)
+            return net["net"]
+
+        def item2():
+            ps = (committed["extras"] or {}).get("storage_peak", {}).get("peak_schedule")
+            peak = None if ps is None else {
+                "charge_hours": ps["charge_hours"]["value"],
+                "discharge_hours": ps["discharge_hours"]["value"],
+                "from": "results/extras-validation.json (D-073, training years)"}
+            with seal.purpose_scope("D-071 item 2 (storage, and 2b: the D-073 peak schedule)"):
+                return tx.storage_section(ledgers=obj["ledgers"], mob_w=mob_w,
+                                          filled=obj["filled"], eval_start=obj["eval_start"],
+                                          net=get_net(), committed=committed["storage"],
+                                          pid="extras:storage", peak=peak)
+
+        def item3():
+            with seal.purpose_scope("D-071 item 3 (toughest days)"):
+                wx, why = _weather_slc(ses)
+                return tx.toughest_days_section(ledgers=obj["ledgers"], cj=obj["cj"],
+                                                filled=obj["filled"],
+                                                eval_start=obj["eval_start"], F=window.F,
+                                                net=get_net(), weather=wx, weather_reason=why,
+                                                pid="extras:days")
+
+        def item4():
+            from gridpilot import storage as st
+            from gridpilot import water as wa
+
+            led = obj["ledgers"]
+            win = st.cohort_window(obj["eval_start"],
+                                   max(led[p]["end_ts"].max() for p in tx.WATER_POLICIES))
+            with seal.purpose_scope("D-071 item 4 (water)"):
+                bal = seal.sealed_read(
+                    ses.data_path(seal.BALANCE_REL), purpose="fuel mix by BA (water intensity)",
+                    columns=tx.water_balance_columns(), time_range=(win[0] - wa.MARGIN, win[1]),
+                    where=pl.col("ba").cast(pl.Utf8).is_in(list(SITES)))
+            return tx.water_section(ledgers=led, balance=bal, win=win, pid="extras:water")
+
+        def item5():
+            led = obj["ledgers"]
+            jobs = led["U"].select(
+                "job_uid", pl.col("job_uid").str.split("#").list.first().alias("source_id"),
+                "arrival_ts", "gpus", "duration_s")
+            tt = TruthTable(obj["filled"], obj["mask"], window=window)
+            return tx.seasonal_section(ledgers=led, cj=jobs, tt=tt,
+                                       window=(obj["eval_start"], obj["A"]),
+                                       pid="extras:seasonal")
+
+        def item6():
+            fz = ses.freeze
+            iv = (committed["extras"] or {}).get("forecast_skill", {}).get("frozen_intervals")
+            intervals = ({ba: {t: {m: e["value"] for m, e in by_m.items()
+                                   if e.get("value") is not None}
+                               for t, by_m in by.items()} for ba, by in iv.items()}
+                         if iv else {})
+            with seal.purpose_scope("D-071 item 6 (forecast skill and L permutation "
+                                    "importance)"):
+                bal = seal.sealed_read(
+                    ses.data_path(seal.BALANCE_REL), purpose="EIA day-ahead demand forecast",
+                    columns=["ba", "ts_utc", tx.EIA_DF_COL], time_range=(TEST_START, window.F),
+                    where=pl.col("ba").cast(pl.Utf8) == "PACE")
+                out = tx.forecast_skill(
+                    fc_dir=obj["fc_dir"], fit_at=fz.test_fit_at,
+                    history_start=fz.test_history_start, leaves=fz.l_max_leaf_nodes,
+                    issues=fcmod.issues_for_window(window), scored=(TEST_START, window.F),
+                    load=lambda t: fcmod.load_series(t, window=window),
+                    eia_df=tx.eia_day_ahead(bal), intervals=intervals, pid="extras:skill",
+                    label=tx.LABEL)
+            out["frozen_intervals_from"] = ("results/extras-validation.json" if iv else
+                                            "unavailable: results/extras-validation.json absent")
+            return out
+
+        for key, fn in (("storage", item2), ("toughest_days", item3), ("water", item4),
+                        ("seasonal", item5), ("forecast_skill", item6)):
+            _item(sections, timing, key, fn)
+        test_metrics = json.loads((ses.auth.test_results_dir / "metrics.json").read_text())
+        _item(sections, timing, "drift", lambda: tx.drift_table(
+            val=committed, test={"metrics": test_metrics, "extras": sections},
+            extension_names=list(EXTENSIONS)))
+        timing["total"] = time.perf_counter() - t_all
+        art = {"schema_version": SCHEMA_VERSION, "artifact": "extras", "window": "test",
+               "run_id": primary.run_id, "extras_run_id": run_id, "label": tx.LABEL,
+               "note": ("secondary and descriptive; pre-registered in D-071 before the seal "
+                        "opened; reported whatever it shows; it never replaces the headline, the "
+                        "deployed policy or any frozen decision field"),
+               "freeze": _freeze_record(ses),
+               "items": {"1": "extensions", "2": "storage", "3": "toughest_days", "4": "water",
+                         "5": "seasonal", "6": "forecast_skill", "7": "drift"},
+               **sections,
+               "extension_runs": {n: r.run_id for n, r in ext_runs.items()},
+               "timing_s": {k: env(v, "s", "measured", f"extras:timing:{k}")
+                            for k, v in timing.items()}}
+        write_json_atomic(tmp / EXTRAS_ARTIFACT, art, window=window)
+        os.rename(tmp, final)
+    except BaseException:
+        failed = root / f"failed-{run_id}"
+        os.rename(tmp, failed)
+        ses.run_dirs.append(failed)
+        ses.work_dir = None
+        raise
+    ses.run_dirs.append(final)
+    ses.work_dir = None
+    dst = ses.auth.test_results_dir
+    export_results(final, dst, (EXTRAS_ARTIFACT,))
+    names = [*ARTIFACTS_TEST, EXTRAS_ARTIFACT]
+    seal.log_event("export", run_id=primary.run_id, results=str(dst), artifacts=names,
+                   artifacts_sha256={a: _sha256(dst / a) for a in names},
+                   extras_run=str(final), extension_runs={n: str(r.run_dir)
+                                                          for n, r in ext_runs.items()})
+    print(f"D-071 extras: {final} ({timing['total']:.0f} s); "
+          + ", ".join(f"{k} {v:.0f} s" for k, v in timing.items()))
+    return final
 
 
 

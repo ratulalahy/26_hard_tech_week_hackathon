@@ -42,6 +42,7 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 
+from gridpilot import seal
 from gridpilot.data import water_factors as wf
 from gridpilot.data.truth_fill import BALANCE_PATH
 from gridpilot.results import SCHEMA_VERSION, env, iso
@@ -92,7 +93,7 @@ def load_balance(start: datetime, end: datetime, bas=tuple(SITES)) -> pl.DataFra
 
 def intensity(balance: pl.DataFrame) -> pl.DataFrame:
     """ba, ts_utc, gen_mw (the shares' generation), ex_hydro, hydro (gal/MWh), missing."""
-    if balance.height and balance["ts_utc"].max() >= TEST_START:
+    if balance.height and balance["ts_utc"].max() >= seal.read_end():  # T20: F_test in test mode
         raise ValueError("the balance frame holds a row at or after the seal (F8)")
     w = wf.fuel_factors_gal_mwh()
     share_fuels = [f for f in FUEL_COLS if f in w]
@@ -137,11 +138,13 @@ def fill(fr: pl.DataFrame, start: datetime | None = None, end: datetime | None =
     return pl.concat(out).sort("ba", "ts_utc")
 
 
-def truth_tables(filled: pl.DataFrame) -> dict:
-    """{"ex_hydro", "hydro"}: accounting TruthTables of the filled intensities (gal/MWh)."""
+def truth_tables(filled: pl.DataFrame, window=None) -> dict:
+    """{"ex_hydro", "hydro"}: accounting TruthTables of the filled intensities (gal/MWh).
+    `window`: the accounting window (default validation; T20 passes the test window)."""
     from gridpilot.eval.accounting import TruthTable
 
-    return {k: TruthTable(filled.select("ba", "ts_utc", pl.col(k).alias("ci_g_kwh"), "tier"))
+    return {k: TruthTable(filled.select("ba", "ts_utc", pl.col(k).alias("ci_g_kwh"), "tier"),
+                          window=window)
             for k in ("ex_hydro", "hydro")}
 
 

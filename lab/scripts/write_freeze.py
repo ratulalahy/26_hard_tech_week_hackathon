@@ -27,7 +27,8 @@ Fields (spec §5, §8; T12 step 4):
   (rows published by fit_at, 96 h envelope), ordered by (mean, BA);
 - `scenario_catalog`: the primary scenario only (no extensions on test);
 - `snapshot_id`: the committed data/manifests/snapshot.json;
-- `input_sha256`: every `seal.TEST_INPUTS` file in the data dir;
+- `input_sha256`: every `seal.TEST_INPUTS` file in the data dir, plus `seal.extra_inputs` (the
+  Salt Lake City archive files the D-071 toughest-days context reads; T20);
 - `validation_run`: `seal.validation_reference(repo)` at HEAD.
 """
 
@@ -299,7 +300,8 @@ def build_record(root: Path, data: Path, registered_run: Path | None, *,
         "s_ranking": s_ranking(carbon),
         "scenario_catalog": {"primary": json.loads(json.dumps(Scenario.primary().config()))},
         "snapshot_id": snap["snapshot_id"],
-        "input_sha256": inputs,
+        # the required test inputs, plus the optional ones present (D-071 item 3, T20)
+        "input_sha256": {**inputs, **{rel: _sha256(data / rel) for rel in seal.extra_inputs(data)}},
         "validation_run": vref,
     }
     return record, {"head": head, "lab_tree": lab_tree}

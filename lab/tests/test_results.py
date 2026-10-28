@@ -28,7 +28,7 @@ from gridpilot.results import (
 ARTIFACTS = ("manifest.json", "metrics.json", "forecast-replay.json", "job-replay.json",
              "grid-profile.json", "workload-profile.json", "extensions.json", "storage.json",
              "scenario-flows.json", "flexibility-budget.json", "case-days.json",
-             "assumptions.json")
+             "assumptions.json", "extras-validation.json")
 
 
 # --------------------------------------------------------------------------- env()

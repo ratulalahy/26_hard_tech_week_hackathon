@@ -5,7 +5,7 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test data notebooks profile slice need-run-dir ext-runs extensions storage flows water case-days web freeze
+.PHONY: test data notebooks profile slice need-run-dir ext-runs extensions storage flows water case-days extras-validation web freeze
 
 test:
 	cd lab && uv run pytest
@@ -84,6 +84,12 @@ water: need-run-dir
 # validation days by PACE daily maximum net load, day-sliced from RUN_DIR's ledgers.
 case-days: need-run-dir
 	cd lab && uv run python scripts/export_case_days.py --registered-run $(RUN_DIR)
+
+# The validation counterparts of the pre-registered test-year extras (Stage 3 T20, D-071):
+# results/extras-validation.json (the seasonal split, forecast skill, the frozen p10/p90 intervals
+# and the L permutation importance on validation). The test run reads it; it never recomputes it.
+extras-validation: need-run-dir
+	cd lab && uv run python scripts/export_extras_validation.py --registered-run $(RUN_DIR)
 
 # The dashboard's validation-year grid context (Task 8): results/grid-profile.json.
 # RUN_DIR: the registered slice run (default runs/slice/<results/manifest.json run_id>).
