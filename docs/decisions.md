@@ -580,3 +580,17 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
   - The configuration freeze moves from about 18:00 to about 22:00, and the test opening follows it.
   - The live outlook (T19) reads data inside the sealed window, so it runs only after the opening, as a logged read.
 - **Also corrected:** the T12 test cutoff uses value completeness, as spec §5 requires (T12r finding 1). This reverses the lead's earlier row-presence ruling and gives F_test 2026-10-25T00Z, 358 days.
+
+## D-072 · 2026-10-27 18:10 MT · Disclosures for the validation extras: outlook reads, price node, a seal metadata touch
+- **Decided by:** the lead, ruling on review findings (T19r, T22r).
+- **Live outlook reads (T19).**
+  - After the single test opening, `make outlook LIVE=1` downloads fresh public EIA BA workbooks into `runs/outlook/<UTC>/raw/`, never `data/raw`, so the frozen inputs are untouched.
+  - Every read goes through `outlook.live_read`, which reads the bytes once, computes the sha256 and appends an fsynced line with the purpose to `results/outlook_reads.jsonl`.
+  - It refuses unless the test run is complete, `test_reads.jsonl` is non-empty and the `config-freeze` tag exists.
+  - This is a deployment read after the opening, not an evaluation. `seal.sealed_read` only works inside the test entry point. Registering `live_read` in the F8 guard is deferred until after T13, because the guard sits in the frozen tree.
+- **Forecast skill uses week-block intervals (T19, T18).** iid intervals overstated Utah's skill. Under 7-day circular block bootstrap intervals, Utah is not reliably better than its seasonal average on any day from D+1 to D+7, while every destination day is (10–23%).
+- **California price node (T22).** California is priced at PG&E's load point (`DLAP_PGAE-APND`). This is an unregistered choice, made during the build. SCE's load point is shown as a sensitivity: moving under W adds +$16.4k at SCE against +$21.6k at PG&E. Results are shown as a range. The block-bootstrap whiskers do not cover the node choice.
+- **Seal metadata touch (T22 setup).** While exploring, the T22 agent printed the column names and the node list of one raw price file dated after 2025-11-01. It printed no values.
+  - Prices are not a test input.
+  - The shipped code refuses files that start after the seal, and after the T22 fix it also refuses files that straddle the seal.
+  - Recorded so the audit can weigh it.
