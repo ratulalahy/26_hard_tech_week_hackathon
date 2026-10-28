@@ -17,6 +17,13 @@
    - Run the headline 4 MWh / 1 MW battery and the 8 MWh plateau on the test U ledger and on the test mobility ≤ 8 W ledger.
    - Use the same fixed training-year schedule and the same daily hindsight heuristic.
    - Report "move small + store", the flat-marginal skeptic line (618 g/kWh, labelled as the associational slope), and peak relief.
+2b. **Peak-aimed storage schedule (added 18:40, before the opening; D-073).** The Q&A drill found that the fixed carbon schedule discharges at 21:00–02:00 and 06:00 local, missing 11 of the 12 net-load rush hours.
+   - Add a second fixed schedule, derived from the **training year only**:
+     - discharge in the 4 local hours that were most often among the day's top 4 net-load hours;
+     - charge in the 4 hours that were most often the day's lowest net load.
+   - Use the same battery, the same efficiency and the same site cap.
+   - Run it on validation **and** the test year. Report rush-hour import, peak import, attributed CO₂ and the flat-marginal skeptic line, side by side with the carbon schedule.
+   - It is reported as a design comparison, not a replacement for the carbon headline.
 3. **Toughest days.** Apply the D-066 rule to the test window: the top 3 PACE days by daily max net load in [TEST_START, F).
    - Report U/S/W CO₂ by day, including transfer, with the execution, transfer and total checks.
    - Add the archived temperature context, labelled "Salt Lake City only".
