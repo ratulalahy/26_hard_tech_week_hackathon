@@ -27,7 +27,7 @@ export function Ribbon() {
   const night = curve.slice(0, 7) as number[];
   const k: number = g.pace_top100_net_load.k.value;
   return (
-    <section aria-label="Day ribbon" className="fixed z-10 grid" style={{ top: 72, left: 16, right: 16, bottom: 32, gridTemplateRows: 'auto minmax(0,1.15fr) minmax(0,1fr)', gap: 16 }}>
+    <section aria-label="Day ribbon" className="fixed z-10 grid" style={{ top: 'var(--top)', left: 16, right: 16, bottom: 32, gridTemplateRows: 'auto minmax(0,1.15fr) minmax(0,1fr)', gap: 16 }}>
       <div className="flex items-end justify-between gap-6" style={{ padding: '0 8px' }}>
         <div>
           <h1 className="t-20" style={{ margin: 0 }}>In Utah, the clean hours aren't the rush hours</h1>

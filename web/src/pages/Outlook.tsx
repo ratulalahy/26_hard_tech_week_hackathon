@@ -42,7 +42,7 @@ const v = (e: Env | undefined) => (e && e.status === 'ok' ? (e.value as number) 
 export function Outlook() {
   const { o, err } = useOutlook();
   return (
-    <section aria-label="Grid outlook" data-testid="outlook" tabIndex={0} className="fixed z-10 overflow-y-auto" style={{ top: 72, left: 16, right: 16, bottom: 32 }}>
+    <section aria-label="Grid outlook" data-testid="outlook" tabIndex={0} className="page-scroll">
       {err ? <OutlookError msg={err} /> : !o ? <OutlookSkeleton /> : <OutlookBody o={o} />}
     </section>
   );

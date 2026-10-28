@@ -82,7 +82,7 @@ const Caveat = ({ compact }: { compact?: boolean }) => (
 export function Prices() {
   const { o, err } = usePrices();
   return (
-    <section aria-label="Price lens" data-testid="prices" tabIndex={0} className="fixed z-10 overflow-y-auto" style={{ top: 72, left: 16, right: 16, bottom: 32 }}>
+    <section aria-label="Price lens" data-testid="prices" tabIndex={0} className="page-scroll">
       {err ? <PricesError msg={err} /> : !o ? <PricesSkeleton /> : <PricesBody o={o} />}
     </section>
   );
@@ -287,7 +287,7 @@ function SplitTable({ o, pol }: { o: Json; pol: string[] }) {
   const P = o.policies;
   const cell = (p: string, k: string) => usdSigned(v(P[p].decomposition_vs_U_usd[k]) ?? 0);
   return (
-    <div style={{ overflowX: "auto" }}><table className="tbl" data-testid="prices-split">
+    <div style={{ overflowX: "auto" }} tabIndex={0} role="region" aria-label="Where the difference comes from, table"><table className="tbl" data-testid="prices-split">
       <thead><tr><th>Policy</th><th>Location</th><th>Extra energy</th><th>Timing</th><th>Total</th><th style={{ paddingRight: 0 }}>Per attributed<br />tonne CO₂</th></tr></thead>
       <tbody>
         {pol.map((p) => {

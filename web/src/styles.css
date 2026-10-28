@@ -208,8 +208,7 @@ table.tbl-text th, table.tbl-text td { text-align: left; white-space: normal; li
 /* tight tables below 1000 px of height (story 5) */
 .tight table.tbl td { padding-top: 3px; padding-bottom: 3px; }
 
-/* ── the ten-region overview page (T18; web/src/pages/Regions.tsx): full width, scrolls on its own ── */
-.regions-page { position: fixed; inset: 0; overflow-y: auto; padding: 16px 24px 24px; }
+/* ── the ten-region overview page (T18; web/src/pages/Regions.tsx): full width, scrolls on its own (.page-scroll) ── */
 .ov-top { grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr); }
 @media (max-width: 1100px) { .ov-top { grid-template-columns: minmax(0, 1fr); } }
 .ov-mult { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
@@ -233,3 +232,57 @@ table.ov-tbl th { white-space: normal; max-width: 150px; }
 .mk-ov { font-size: 11px; color: var(--ink); background: rgba(255, 255, 255, 0.92); padding: 1px 6px; border-radius: 6px; box-shadow: 0 0 0 1px var(--hair); }
 .mk-ov .ov-v { color: var(--ink-2); }
 .mk-ov.sel { box-shadow: 0 0 0 1.5px var(--route); }
+
+/* ── the nav shell (T21): one top bar; below 1100 px it wraps to two rows and each nav scrolls sideways ── */
+.topbar { position: fixed; z-index: 30; top: 12px; left: 16px; right: 16px; min-height: 48px; padding: 0 8px 0 12px; border-radius: var(--r-16);
+  display: flex; align-items: center; gap: 12px; }
+.topbar-brand { display: flex; align-items: center; gap: 8px; color: inherit; text-decoration: none; flex: none; border-radius: var(--r-8); }
+.topbar-pages, .topbar-views { flex: none; }
+.topbar-end { margin-left: auto; display: flex; align-items: center; gap: 8px; flex: none; }
+.tabs.tabs-sub { background: none; box-shadow: inset 0 0 0 1px var(--hair-2); }
+.tabs.tabs-sub a { font-size: 12px; height: 28px; padding: 0 10px; margin: 2px 0; }
+.tabs.tabs-sub a[aria-current='page'] { box-shadow: 0 0 0 1px var(--hair), inset 0 -2px 0 var(--route); }
+@media (max-width: 1599px) { .topbar-tag { display: none; } }
+@media (max-width: 1439px) { .topbar-btn-text { display: none; } .topbar .btn { padding: 0 8px; } }
+@media (max-width: 1279px) {
+  .topbar { flex-wrap: wrap; row-gap: 4px; padding: 6px 8px; }
+  .topbar-pages, .topbar-views { order: 3; flex: 1 1 100%; overflow-x: auto; scrollbar-width: none; }
+  .topbar-views { order: 4; }
+  .topbar-pages::-webkit-scrollbar, .topbar-views::-webkit-scrollbar { display: none; }
+}
+@media (max-width: 520px) {
+  .topbar .seg button { padding: 0 8px; }
+}
+
+/* the story (scrollytelling): visual left and sticky, beats right; one column on a phone, the visual on top */
+.story-grid { grid-template-columns: minmax(0, 1.6fr) minmax(340px, 1fr); }
+.story-visual { height: calc(100vh - var(--top) - 28px - 16px); }
+@media (max-width: 800px) {
+  .story-grid { grid-template-columns: minmax(0, 1fr); }
+  .story-visual { height: 300px; z-index: 1; background: var(--sky-1); padding-bottom: 8px; }
+}
+
+/* a standalone page under the top bar: full width, scrolls on its own */
+.page-scroll { position: fixed; z-index: 10; top: var(--top); left: 16px; right: 16px; bottom: 32px; overflow-y: auto; border-radius: var(--r-12); }
+.evidence-col { max-width: 880px; margin: 0 auto; padding-bottom: 16px; }
+
+/* ── the Monitor page (T21; web/src/pages/Monitor.tsx) ── */
+.monitor-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(340px, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 1100px) { .monitor-grid { grid-template-columns: minmax(0, 1fr); } }
+.monitor-transport { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 12px; }
+.monitor-scrub { flex: 1 1 240px; display: flex; align-items: center; min-width: 160px; }
+.monitor-scrub input { width: 100%; accent-color: var(--route); height: 24px; cursor: pointer; }
+.monitor-lane { margin-top: 6px; }
+.monitor-lane-label { position: absolute; left: 0; top: 4px; width: 140px; pointer-events: none; }
+.monitor-feed { max-height: 360px; overflow-y: auto; margin: 0 -4px; padding: 0 4px; border-radius: var(--r-8); }
+.monitor-entry { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 8px; padding: 6px 4px; border-top: 1px solid var(--hair-2); line-height: 1.35; }
+.monitor-entry:first-child { border-top: 0; }
+.monitor-entry.now { background: var(--route-wash); border-radius: var(--r-8); }
+.monitor-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; box-sizing: border-box; }
+.monitor-dot[data-kind='placed'] { background: var(--route); }
+.monitor-dot[data-kind='finished'] { border: 1.5px solid var(--route); }
+.monitor-dot[data-kind='week'] { background: var(--ink-2); border-radius: 1.5px; }
+.monitor-head { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(340px, 1fr); gap: 16px; align-items: end; }
+@media (max-width: 1100px) { .monitor-head { grid-template-columns: minmax(0, 1fr); } }
+.monitor-narrow { display: flex; flex-direction: column; gap: 4px; }
+.monitor-narrow .monitor-lane-label { position: static; width: auto !important; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }

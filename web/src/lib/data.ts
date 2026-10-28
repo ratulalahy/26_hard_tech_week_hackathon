@@ -45,7 +45,7 @@ export interface Results {
 const base = import.meta.env?.BASE_URL ?? './'; // './' (relative deployment base)
 /** results/*.json (validation) or results/test/*.json (the sealed test year, once it is run). */
 const dir = (w: EvalWindow) => (w === 'test' ? 'data/results/test/' : 'data/results/');
-async function get(name: string, w: EvalWindow = 'validation'): Promise<Json> {
+export async function get(name: string, w: EvalWindow = 'validation'): Promise<Json> {
   const url = `${base}${dir(w)}${name}`;
   const r = await fetch(url);
   if (!r.ok) throw new Error(`${name}: HTTP ${r.status}`);

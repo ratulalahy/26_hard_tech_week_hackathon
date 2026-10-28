@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { setMid } from './lib/color';
 import { Icon } from './components/ui';
 import { testOptionLabel, windowCopy, type EvalWindow } from './lib/copy';
@@ -6,7 +6,7 @@ import { asNum, dayCurve, type Core } from './lib/data';
 import { arcsOf, flowOf } from './components/flows';
 import { loadIndex, loadResults } from './lib/data';
 import { fmtHour, monthLabel } from './lib/format';
-import { VIEWS, useApp } from './lib/store';
+import { PAGES, VIEWS, WINDOWED, useApp, type Page } from './lib/store';
 import { WestMap, type ArcSpec } from './map/WestMap';
 import { Cockpit } from './views/Cockpit';
 import { ControlRoom, controlPadding } from './views/ControlRoom';
@@ -15,12 +15,25 @@ import { Ribbon } from './views/Ribbon';
 import { Story } from './views/Story';
 import { Outlook } from './pages/Outlook';
 import { Prices } from './pages/Prices';
+import { Regions } from './pages/Regions';
+import { Monitor } from './pages/Monitor';
+import { Evidence } from './pages/Evidence';
 import { useViewport } from './lib/useViewport';
 
+const TITLE: Record<Page, string> = {
+  story: "GridPilot: Utah's grid, for AI jobs", monitor: 'GridPilot · Monitor', outlook: 'GridPilot · Outlook',
+  regions: 'GridPilot · Ten regions', prices: 'GridPilot · Prices', evidence: 'GridPilot · Method and evidence',
+};
+
+/** The nav shell (T21): one top bar, one page at a time. Story is the dashboard (its four views and the
+ * #story-N beats); the other pages are standalone and load their own files, except Evidence, which shows
+ * the method content for the window the year switch selects. */
 export function App() {
-  const { data, error, view, evalWindow, set } = useApp();
+  const { data, error, view, page, evalWindow, set } = useApp();
+  useEffect(() => { document.title = TITLE[page]; }, [page]);
   useEffect(() => {
-    loadIndex().then((idx) => set({ testIndex: idx.test ?? null }));
+    // a test year asked for by ?year=test or remembered, but absent from this build, falls back to validation
+    loadIndex().then((idx) => set({ testIndex: idx.test ?? null, ...(!idx.test?.available && useApp.getState().evalWindow === 'test' ? { evalWindow: 'validation' } : {}) }));
   }, [set]);
   useEffect(() => {
     // One window's results at a time (T11 B6): validation, or the sealed test year once it is run.
@@ -42,20 +55,19 @@ export function App() {
 
   return (
     <>
-      <SharedMap />
+      {page !== 'regions' && <SharedMap />}{/* Regions draws its own full-colour map */}
       <TopBar />
       <main>
-        {/* T19 hook: the outlook is standalone (its own data), so it renders before the results load */}
-        {/* T22 hook: the price lens is standalone (its own data), so it renders before the results load */}
-        {view === 'outlook' ? <Outlook /> : view === 'prices' ? <Prices /> : error ? <ErrorState msg={error} /> : !data ? <Loading /> : (
-          <>
-            {view === 'control' && <ControlRoom />}
-            {view === 'cockpit' && <Cockpit />}
-            {view === 'ribbon' && <Ribbon />}
-            {view === 'story' && <Story />}
-            <MethodDrawer />
-          </>
-        )}
+        {page === 'outlook' ? <Outlook /> : page === 'prices' ? <Prices /> : page === 'regions' ? <Regions /> : page === 'monitor' ? <Monitor />
+          : error ? <ErrorState msg={error} /> : !data ? <Loading /> : page === 'evidence' ? <Evidence /> : (
+            <>
+              {view === 'control' && <ControlRoom />}
+              {view === 'cockpit' && <Cockpit />}
+              {view === 'ribbon' && <Ribbon />}
+              {view === 'story' && <Story />}
+              <MethodDrawer />
+            </>
+          )}
       </main>
       <Footer />
     </>
@@ -64,9 +76,9 @@ export function App() {
 
 /** The one shared map: full colour on the Control room, a faint watermark everywhere else. */
 function SharedMap() {
-  const { data, view, hour, month, arcPolicy, dest, scenario, set } = useApp();
+  const { data, view, page, hour, month, arcPolicy, dest, scenario, set } = useApp();
   const vp = useViewport();
-  const on = view === 'control';
+  const on = page === 'story' && view === 'control';
   const ci = useMemo(() => {
     if (!data) return {} as Record<string, number | null>;
     return Object.fromEntries((['PACE', 'BPAT', 'CISO', 'NEVP'] as Core[]).map((c) => [c, dayCurve(data.grid, c, month)[hour]]));
@@ -93,23 +105,45 @@ function SharedMap() {
   );
 }
 
+/** The one top bar: the pages, the Story page's views, and the year switch where it applies. Below 1100 px
+ * it wraps to two rows and each nav scrolls sideways on its own (no overlap at phone width). */
 function TopBar() {
-  const { view, set } = useApp();
+  const { view, page, set } = useApp();
+  const story = page === 'story';
+  // every page sits below the bar: --top follows the bar's height (48 px on one row → 72 px, as before; more
+  // when it wraps at narrow widths), so nothing slides under it
+  const ref = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const put = () => document.documentElement.style.setProperty('--top', `${Math.round(el.getBoundingClientRect().height) + 24}px`);
+    put();
+    const ro = new ResizeObserver(put);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   return (
-    <header className="panel over-map fixed z-30 flex items-center" style={{ top: 12, left: 16, right: 16, height: 48, padding: '0 8px 0 12px', borderRadius: 16 }}>
-      <a href="#control" className="flex items-center gap-2" style={{ color: 'inherit', textDecoration: 'none' }}>
+    <header ref={ref} className="panel over-map topbar">
+      <a href="#control" className="topbar-brand">
         <Mark />
         <span className="t-15" style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}>GridPilot</span>
-        <span className="t-12 ink-3 whitespace-nowrap" style={{ marginLeft: 4 }}>Utah's grid, for AI jobs</span>
+        <span className="t-12 ink-3 whitespace-nowrap topbar-tag">Utah's grid, for AI jobs</span>
       </a>
-      <nav className="tabs absolute" style={{ left: '50%', transform: 'translateX(-50%)' }} aria-label="Views">
-        {VIEWS.map((v) => (
-          <a key={v.id} href={`#${v.id}`} aria-current={view === v.id ? 'page' : undefined}>{v.label}</a>
+      <nav className="tabs topbar-pages" aria-label="Pages">
+        {PAGES.map((p) => (
+          <a key={p.id} href={p.id === 'story' ? `#${view}` : `#${p.id}`} aria-current={page === p.id ? 'page' : undefined}>{p.label}</a>
         ))}
       </nav>
-      <div className="ml-auto flex items-center gap-2">
-        {view !== 'outlook' && view !== 'prices' && <WindowSwitch />}{/* T19, T22: these pages read their own validation files; the year switch does nothing there */}
-        <button className="btn whitespace-nowrap" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button>
+      {story && (
+        <nav className="tabs tabs-sub topbar-views" aria-label="Views">
+          {VIEWS.map((v) => (
+            <a key={v.id} href={`#${v.id}`} aria-current={view === v.id ? 'page' : undefined}>{v.label}</a>
+          ))}
+        </nav>
+      )}
+      <div className="topbar-end">
+        {WINDOWED.includes(page) && <WindowSwitch />}{/* the other pages read their own files; the year switch does nothing there */}
+        {story && <button className="btn whitespace-nowrap" onClick={() => set({ drawer: true })} aria-label="Method & evidence"><Icon name="doc" /><span className="topbar-btn-text">Method &amp; evidence</span></button>}
       </div>
     </header>
   );
@@ -151,13 +185,23 @@ function Mark() {
   );
 }
 
+/** The data line follows the page: the year switch's window on Story and Evidence, the sealed test year on
+ * the Monitor, and each standalone page's own window (stated on the page) elsewhere. */
+const FOOT: Partial<Record<Page, { short: string; long: string }>> = {
+  monitor: { short: 'Hours in America/Denver time. Sealed test year, simulated replay.', long: 'EIA consumption-basis CO₂ and a simulated replay of a measured GPU-cluster trace, sealed test year (opened once).' },
+  outlook: { short: 'Hours in America/Denver time. The data window is stated on the page.', long: 'EIA-930 and EIA consumption-basis CO₂; the issue date and data window are stated on the page.' },
+  regions: { short: 'Hours in each region\'s own clock. Validation data.', long: 'EIA-930 and EIA consumption-basis CO₂, validation profiles and forecasts (the test year stays sealed here).' },
+  prices: { short: 'Hours in America/Denver time. Validation year data.', long: 'CAISO/WEIM real-time LMP on the registered validation ledgers; a wholesale scenario, not a bill.' },
+};
 function Footer() {
-  const { data, evalWindow } = useApp();
-  const c = windowCopy(data ? evalWindow : 'validation', data?.manifest);
+  const { data, evalWindow, page } = useApp();
+  const w = windowCopy(data ? evalWindow : 'validation', data?.manifest);
+  const f = FOOT[page];
+  const c = f ? { footShort: f.short, footLong: f.long } : w;
   return (
     <footer className="fixed z-20 flex gap-4 t-11 ink-3 whitespace-nowrap overflow-hidden" style={{ left: 24, right: 24, bottom: 4, height: 16 }}>
       <span className="min-[1600px]:hidden">{c.footShort}</span>
-      <span className="hidden min-[1600px]:inline"><b className="fw-500 ink-2">Data:</b> {c.footLong} Jobs: simulated replay of a measured trace. Hours are America/Denver.</span>
+      <span className="hidden min-[1600px]:inline"><b className="fw-500 ink-2">Data:</b> {c.footLong}{f ? '' : ' Jobs: simulated replay of a measured trace.'} Hours are America/Denver{page === 'regions' ? ' unless a region\'s clock is named' : ''}.</span>
       <span className="ml-auto">BA boundaries © Electricity Maps contributors (AGPL-3.0). BA codes: U.S. EIA Form EIA-930. Basemap: Natural Earth.</span>
     </footer>
   );
@@ -165,7 +209,7 @@ function Footer() {
 
 function Loading() {
   return (
-    <div className="fixed z-10" style={{ top: 'var(--top)', left: 16, width: 360, bottom: 40 }} aria-busy="true" aria-label="Loading results">
+    <div className="fixed z-10" style={{ top: 'var(--top)', left: 16, width: 'min(360px, calc(100vw - 32px))', bottom: 40 }} aria-busy="true" aria-label="Loading results">
       <div className="panel flex flex-col gap-3" style={{ height: '100%' }}>
         <span className="skel" style={{ width: '70%', height: 20 }} />
         <span className="skel" style={{ width: '45%', height: 32 }} />

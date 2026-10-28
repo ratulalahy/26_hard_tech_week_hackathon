@@ -259,7 +259,7 @@ test('the ten-region overview page renders results/overview.json offline (T18)',
   await page.getByTestId('regions-table').getByRole('button', { name: /PJM/ }).click();
   await expect(page.getByTestId('regions-detail')).toContainText('PJM Interconnection · PJM');
   // and the page hands back to the App shell
-  await page.getByRole('link', { name: 'Back to the Utah dashboard' }).click();
+  await page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: 'Story' }).click(); // T21: the shell's nav hands back to the dashboard
   await expect(page.getByTestId('hero-placement')).toContainText(sOwn); // the hero leads with S's own estimate (T15, F10)
   await page.waitForLoadState('networkidle');
   expect(errors, 'page errors').toEqual([]);
