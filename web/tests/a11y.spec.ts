@@ -34,6 +34,9 @@ for (const s of STATES) {
     await page.locator('.mk-region').first().waitFor({ state: 'attached' });
     if (s.testYear) { await openTestYear(page); await page.locator('.mk-region').first().waitFor({ state: 'attached' }); }
     await page.waitForTimeout(800);
+    // a story beat is dimmed until it is the step in view; after the window switch remounts the story, wait for it
+    const beat = /^#story-(\d)$/.exec(s.hash);
+    if (beat) await expect(page.locator(`#story-${beat[1]} > section`).first()).toHaveCSS('opacity', '1');
     if ('toggle' in s && s.toggle) { await page.getByTestId('scenario-toggle').getByRole('button').nth(s.toggle).click(); await page.waitForTimeout(400); }
     if (s.drawer) {
       // at phone width the banner button can sit outside the viewport, so it is clicked in the DOM
