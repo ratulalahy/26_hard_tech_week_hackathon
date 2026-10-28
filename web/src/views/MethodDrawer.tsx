@@ -13,9 +13,43 @@ import { useApp } from '../lib/store';
 
 const iso = (s: string) => fmtDate(s, { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }) + ' UTC';
 
-/** Method & evidence: reachable from every view. The claim frame is shown verbatim from manifest.json. */
+/** Method & evidence: the Story page's drawer (the Evidence page shows the same body). The claim frame is shown verbatim from manifest.json. */
 export function MethodDrawer() {
   const { data, drawer, set } = useApp();
+  const man = data!.manifest;
+  const copy = useCopy();
+  return (
+    <Dialog.Root open={drawer} onOpenChange={(o) => set({ drawer: o })}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-40" style={{ background: 'rgba(45,29,20,.18)' }} />
+        <Dialog.Content className="panel fixed z-50 flex flex-col" style={{ top: 12, right: 12, bottom: 12, width: 'min(760px, calc(100vw - 24px))', padding: 0, overflow: 'hidden', background: 'var(--surface)' }} aria-describedby="method-desc">
+          <div className="flex items-start justify-between gap-4" style={{ padding: 16, borderBottom: '1px solid var(--hair-2)' }}>
+            <div>
+              <Dialog.Title className="t-20" style={{ margin: 0 }}>Method and evidence</Dialog.Title>
+              <Dialog.Description id="method-desc" className="t-12 ink-2" style={{ margin: '4px 0 0' }}>
+                {runLine(copy, man)}
+              </Dialog.Description>
+            </div>
+            <Dialog.Close className="iconbtn" aria-label="Close method and evidence"><Icon name="close" /></Dialog.Close>
+          </div>
+          <div className="flex flex-col gap-4" style={{ padding: 16, overflow: 'auto' }} tabIndex={0} role="region" aria-label="Method and evidence details">
+            <MethodBody />
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+/** The run line under the title: window, run, commit, snapshot. */
+export function runLine(copy: { chip: string }, man: Json) {
+  return `${copy.chip}. Run ${man.run_id}, commit ${String(man.git_sha).slice(0, 7)}${man.git_clean ? ' (clean)' : ' (dirty tree)'}, snapshot ${man.snapshot_id}.`;
+}
+
+/** Every method and evidence section: the claim frame, the policy table, the checks, the assumptions register,
+ * the limitations, the test-year extras and the validation → test drift (test window only), the evidence labels. */
+export function MethodBody() {
+  const { data } = useApp();
   const m = data!.metrics, man = data!.manifest, fr = data!.forecast, g = data!.grid;
   const hd = headline(m);
   const copy = useCopy();
@@ -37,20 +71,7 @@ export function MethodDrawer() {
   const x = data!.extras, tf = testFacts(x, m);
   const lims = resolveLimitations(man, x);
   return (
-    <Dialog.Root open={drawer} onOpenChange={(o) => set({ drawer: o })}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40" style={{ background: 'rgba(45,29,20,.18)' }} />
-        <Dialog.Content className="panel fixed z-50 flex flex-col" style={{ top: 12, right: 12, bottom: 12, width: 'min(760px, calc(100vw - 24px))', padding: 0, overflow: 'hidden', background: 'var(--surface)' }} aria-describedby="method-desc">
-          <div className="flex items-start justify-between gap-4" style={{ padding: 16, borderBottom: '1px solid var(--hair-2)' }}>
-            <div>
-              <Dialog.Title className="t-20" style={{ margin: 0 }}>Method and evidence</Dialog.Title>
-              <Dialog.Description id="method-desc" className="t-12 ink-2" style={{ margin: '4px 0 0' }}>
-                {copy.chip}. Run {man.run_id}, commit {String(man.git_sha).slice(0, 7)}{man.git_clean ? ' (clean)' : ' (dirty tree)'}, snapshot {man.snapshot_id}.
-              </Dialog.Description>
-            </div>
-            <Dialog.Close className="iconbtn" aria-label="Close method and evidence"><Icon name="close" /></Dialog.Close>
-          </div>
-          <div className="flex flex-col gap-4" style={{ padding: 16, overflow: 'auto' }} tabIndex={0} role="region" aria-label="Method and evidence details">
+    <>
             <Sec title="What this result is">
               <p className="t-13" style={{ margin: 0 }}><span className="ink-3">Claim frame, verbatim:</span> “{man.claim_frame}”.</p>
               <p className="t-13 ink-2" style={{ margin: '8px 0 0' }}>
@@ -195,13 +216,9 @@ export function MethodDrawer() {
               {copy.validationReadings ? <code className="t-12 block" style={{ padding: 8, borderRadius: 8, background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--hair-2)', marginTop: 4 }}>make storage RUN_DIR=…  # results/storage.json (illustrative)</code> : null}
               {copy.validationReadings ? <code className="t-12 block" style={{ padding: 8, borderRadius: 8, background: 'var(--surface-2)', boxShadow: 'inset 0 0 0 1px var(--hair-2)', marginTop: 4 }}>make water RUN_DIR=…  # results/water.json (illustrative)</code> : null}
             </Sec>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+    </>
   );
 }
-
 const VS_LIST = (e: { value: number[] }) => e.value.join(', ');
 
 function Sec({ title, children, valok }: { title: string; children: React.ReactNode; valok?: boolean }) {

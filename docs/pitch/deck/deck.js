@@ -2,8 +2,8 @@
 (() => {
   'use strict';
   const D = window.DECK_DATA;
-  const DASH = 'http://127.0.0.1:4173/';
-  const DASH_WINDOW = 'gridpilot'; // one named tab: switch it to Test year once, every later link reuses it
+  const DASH = 'http://127.0.0.1:4173/?year=test'; // ?year=test opens the dashboard on the sealed test year (T21)
+  const DASH_WINDOW = 'gridpilot'; // one named tab: every link reuses it
   const W = 1600, H = 900;
   const stage = document.getElementById('stage');
   const slides = [...document.querySelectorAll('.slide')];
@@ -42,7 +42,7 @@
     a.href = DASH + s.dataset.link;
     a.target = DASH_WINDOW;
     a.innerHTML = `Open in dashboard: ${s.dataset.linkLabel} ${icon}`;
-    a.title = `${DASH}${s.dataset.link}: opens in the "gridpilot" tab; set it to Test year on the first click`;
+    a.title = `${DASH}${s.dataset.link}: opens on the test year, in the "gridpilot" tab`;
     s.appendChild(a);
   }
 

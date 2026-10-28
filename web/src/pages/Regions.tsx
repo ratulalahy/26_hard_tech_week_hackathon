@@ -1,6 +1,6 @@
 // The ten-region overview (T18): the traffic report beyond Utah. A standalone, full-width page that reads
 // results/overview.json (validation year only) and grid-profile.json (the colour scale's midpoint). It does
-// not depend on the App shell; main.tsx mounts it on #regions until the shared nav (T21) takes it over.
+// not depend on the rest of the App; the nav shell (T21) mounts it on #regions, under the shared top bar.
 // Every count in the copy follows the artifact's verdicts: a forecast "beats" a baseline, and net-load rush
 // hours are "dirtier", only when the 90% block-bootstrap interval (7-day blocks) clears zero.
 import { useEffect, useMemo, useState } from 'react';
@@ -62,7 +62,6 @@ export function Regions() {
   const [sort, setSort] = useState<SortKey>('swing');
   const [sel, setSel] = useState<string | null>('PACE');
   useEffect(() => {
-    document.title = 'GridPilot · Ten regions';
     Promise.all([get('overview.json'), get('grid-profile.json').catch(() => null)])
       .then(([o, g]) => { setMid(asNum(g?.reference?.us_avg_ci)); setOv(o); })
       .catch((e) => setErr(String(e)));
@@ -81,19 +80,14 @@ export function Regions() {
   }, [ov, sort]);
 
   return (
-    <div className="regions-page" data-testid="regions-page">
-      <header className="flex items-center gap-3" style={{ marginBottom: 16 }}>
-        <a href="#control" className="btn" aria-label="Back to the Utah dashboard">← Utah dashboard</a>
-        <span className="t-15" style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}>GridPilot</span>
-        <span className="t-12 ink-3">Ten-region overview of the traffic report</span>
-      </header>
-      <main>
+    <section className="page-scroll" data-testid="regions-page" aria-label="Ten-region overview" tabIndex={0}>
+      <div>
         {err ? <div className="panel t-13" role="alert"><b className="fw-600">The overview did not load.</b> <span className="ink-2">{err}. Run <code>make overview</code>, then <code>make web</code>.</span></div>
           : !ov ? <Loading />
             : rows.length === 0 ? <div className="panel t-13">No region has enough validation data for the overview.</div>
               : <Content ov={ov} rows={rows} sort={sort} setSort={setSort} sel={sel} setSel={setSel} />}
-      </main>
-    </div>
+      </div>
+    </section>
   );
 }
 

@@ -200,7 +200,7 @@ test('the test-year state shows only test numbers and no unlabelled validation w
   await expect(page.getByTestId('window-switch')).toHaveAccessibleDescription(/^Test year \(Nov 2025 – Oct 2026\) · opened once, after the freeze of Oct 27, 2026$/);
   await noValidation('control');
 
-  for (const [tab, id, want] of [['Decision cockpit', 'cockpit-registered', testSOwn], ['Day ribbon', 'ribbon-own-W_time', testOwn('W_time')], ['Story', 'story-result', testSOwn]] as const) {
+  for (const [tab, id, want] of [['Decision cockpit', 'cockpit-registered', testSOwn], ['Day ribbon', 'ribbon-own-W_time', testOwn('W_time')], ['Walkthrough', 'story-result', testSOwn]] as const) {
     await page.getByRole('navigation', { name: 'Views' }).getByRole('link', { name: tab }).click();
     await expect(page.getByTestId(id)).toContainText(want);
     await noValidation(tab);
@@ -259,7 +259,7 @@ test('the ten-region overview page renders results/overview.json offline (T18)',
   await page.getByTestId('regions-table').getByRole('button', { name: /PJM/ }).click();
   await expect(page.getByTestId('regions-detail')).toContainText('PJM Interconnection · PJM');
   // and the page hands back to the App shell
-  await page.getByRole('link', { name: 'Back to the Utah dashboard' }).click();
+  await page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: 'Story' }).click(); // T21: the shell's nav hands back to the dashboard
   await expect(page.getByTestId('hero-placement')).toContainText(sOwn); // the hero leads with S's own estimate (T15, F10)
   await page.waitForLoadState('networkidle');
   expect(errors, 'page errors').toEqual([]);

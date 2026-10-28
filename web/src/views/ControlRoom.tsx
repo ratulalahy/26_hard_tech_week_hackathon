@@ -28,10 +28,10 @@ export function ControlRoom() {
   const d = dims(vp);
   return (
     <section aria-label="Control room" className="fixed inset-0 z-10 pointer-events-none">
-      <div className="pointer-events-auto absolute" style={{ top: 72, left: 16, width: d.left, bottom: 40 + d.tl + 16 }}><ResultDock compact={vp.h < 1000} /></div>
-      <div className="pointer-events-auto absolute" style={{ top: 72, right: 16, width: d.right, bottom: 40 + d.tl + 16 }}><RouterDock compact={vp.h < 1000} /></div>
+      <div className="pointer-events-auto absolute" style={{ top: 'var(--top)', left: 16, width: d.left, bottom: 40 + d.tl + 16 }}><ResultDock compact={vp.h < 1000} /></div>
+      <div className="pointer-events-auto absolute" style={{ top: 'var(--top)', right: 16, width: d.right, bottom: 40 + d.tl + 16 }}><RouterDock compact={vp.h < 1000} /></div>
       <div className="pointer-events-auto absolute" style={{ left: 16, right: 16, bottom: 40, height: d.tl }}><Timeline /></div>
-      <div className="pointer-events-none absolute flex justify-center" style={{ top: 72, left: 16 + d.left + 16, right: 16 + d.right + 16 }}>
+      <div className="pointer-events-none absolute flex justify-center" style={{ top: 'var(--top)', left: 16 + d.left + 16, right: 16 + d.right + 16 }}>
         <div data-map-avoid className="pointer-events-auto panel over-map" style={{ padding: '8px 12px', borderRadius: 14 }}><ScenarioToggle /></div>
       </div>
       <MapCaption left={16 + d.left + 16} bottom={40 + d.tl + 16} />

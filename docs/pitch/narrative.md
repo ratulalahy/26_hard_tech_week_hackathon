@@ -5,7 +5,7 @@
 - **Window:** the whole demo runs with the switch on **Test year (sealed, opened once)**. Every on-screen number listed below is the test-mode value (audit F3). Where a beat speaks a validation number, the script says "validation" aloud.
 - **Screen copy** is the dashboard's test view on `main`. Re-check each "on screen" line at the first rehearsal; if the screen changed, change the script, never the other way round.
 - **Timing:** six beats, 598 spoken words (numerals counted as spoken: "22.3 percent" is 4 words), about 4:00 at 150 words a minute; with clicks it lands about 4:15, inside the 4:30 slot.
-- **Setup:** Chrome, full screen, the offline build at `http://127.0.0.1:4173/`. Deep links: `#story-1` … `#story-6`, `#control`. Switch to Test year first and check the switch reads "Test year (sealed, opened once)".
+- **Setup:** Chrome, full screen, the offline build at `http://127.0.0.1:4173/?year=test` (`?year=test` opens the test year; the deck's buttons use it). Deep links: `#story-1` … `#story-6`, `#control`. Check the switch reads "Test year (sealed, opened once)".
 
 | Beat | Time | Screen | Spoken words |
 |---|---|---|---|

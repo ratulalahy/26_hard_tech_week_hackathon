@@ -96,8 +96,8 @@ for (const vp of [{ width: 1728, height: 1117 }, { width: 1440, height: 900 }]) 
       // beat slides carry their dashboard deep link
       const link = on.locator('a.dash');
       if (LINKS[lab]) {
-        await expect(link).toHaveAttribute('href', `http://127.0.0.1:4173/${LINKS[lab]}`);
-        await expect(link).toHaveAttribute('target', 'gridpilot'); // one tab, switched to Test year once
+        await expect(link).toHaveAttribute('href', `http://127.0.0.1:4173/?year=test${LINKS[lab]}`); // T21: opens on the test year
+        await expect(link).toHaveAttribute('target', 'gridpilot'); // one tab, reused by every link
       }
       else await expect(link).toHaveCount(0);
       // presenter notes: N shows this slide's lines, N hides them

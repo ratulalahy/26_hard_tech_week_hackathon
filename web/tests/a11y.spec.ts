@@ -75,3 +75,29 @@ test('axe regions', async ({ page }) => {
   for (const line of summary) console.log('  ' + line);
   expect(summary).toEqual([]);
 });
+
+// T21: every page of the nav shell at 1440 and 390 px, the top bar included (0 violations).
+const T21: { name: string; hash: string; ready: string }[] = [
+  { name: 'story', hash: '#control', ready: '.mk-region' },
+  { name: 'story-beat', hash: '#story-3', ready: '.mk-region' },
+  { name: 'monitor', hash: '#monitor', ready: '[data-testid="monitor-feed"] li' },
+  { name: 'outlook', hash: '#outlook', ready: '[data-testid="outlook-days"] li' },
+  { name: 'regions', hash: '#regions', ready: '.mk-ov' },
+  { name: 'prices', hash: '#prices', ready: '[data-testid="prices-title"]' },
+  { name: 'evidence', hash: '#evidence', ready: '[data-testid="assumptions-register"]' },
+];
+for (const w of [1440, 390]) {
+  for (const s of T21) {
+    test(`axe t21 ${s.name} ${w}`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: w === 390 ? 844 : 900 });
+      await page.goto('./' + s.hash);
+      await page.locator(s.ready).first().waitFor({ state: 'attached' });
+      await page.waitForTimeout(800);
+      const r = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+      const summary = r.violations.map((v) => `${v.id} [${v.impact}] ×${v.nodes.length}: ${v.help} — ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`);
+      console.log(`axe t21 ${s.name} ${w}: ${r.violations.length} violations, ${r.passes.length} passes, ${r.incomplete.length} incomplete`);
+      for (const line of summary) console.log('  ' + line);
+      expect(summary).toEqual([]);
+    });
+  }
+}

@@ -161,6 +161,7 @@ export function PolicyTable({ m, compact = false, testId }: { m: Json; compact?:
   );
 }
 
-export function Panel({ children, className, style, over }: { children: ReactNode; className?: string; style?: React.CSSProperties; over?: boolean }) {
-  return <section className={`panel ${over ? 'over-map' : ''} ${className ?? ''}`} style={style}>{children}</section>;
+/** A panel; `scrollLabel` names it and makes it keyboard-focusable when its content may scroll (axe scrollable-region-focusable). */
+export function Panel({ children, className, style, over, scrollLabel }: { children: ReactNode; className?: string; style?: React.CSSProperties; over?: boolean; scrollLabel?: string }) {
+  return <section className={`panel ${over ? 'over-map' : ''} ${className ?? ''}`} style={style} {...(scrollLabel ? { tabIndex: 0, 'aria-label': scrollLabel } : {})}>{children}</section>;
 }

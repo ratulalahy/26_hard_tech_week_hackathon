@@ -62,7 +62,7 @@ export function Cockpit() {
   const kw = asNum(data!.manifest.assumptions.kw_per_gpu), pue = asNum(data!.manifest.assumptions.pue);
 
   return (
-    <section aria-label="Decision cockpit" className="fixed z-10 grid" style={{ top: 72, left: 16, right: 16, bottom: 32, gridTemplateColumns: 'minmax(0,1fr) clamp(400px, 30vw, 520px)', gap: 16 }}>
+    <section aria-label="Decision cockpit" className="fixed z-10 grid" style={{ top: 'var(--top)', left: 16, right: 16, bottom: 32, gridTemplateColumns: 'minmax(0,1fr) clamp(400px, 30vw, 520px)', gap: 16 }}>
       <div className="grid min-h-0" style={{ gridTemplateRows: 'auto minmax(0,1fr) auto', gap: 16 }}>
         <Panel>
           <div className="flex items-start justify-between gap-4">

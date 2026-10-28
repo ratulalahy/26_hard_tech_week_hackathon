@@ -15,7 +15,7 @@ import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, loadMonth, o
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
 import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange, sig2 } from '../lib/format';
 import { useViewport } from '../lib/useViewport';
-import { initialStep, useApp } from '../lib/store';
+import { parseStep, useApp } from '../lib/store';
 import { WestMap, type ArcSpec } from '../map/WestMap';
 import { CarbonRibbon, LoadChart, YearHeat } from './Ribbon';
 
@@ -48,13 +48,26 @@ export function Story() {
   const lit: Json = data!.jobs.illustrative_job_literal;
   const dur = (sec: number) => (sec < 3600 ? `${fmt(sec / 60, 1)} minutes` : `${fmt(sec / 3600, 1)} hours`);
   useEffect(() => {
-    const st = initialStep ?? null;
-    if (st && box.current) { const el = box.current.querySelector<HTMLElement>(`[data-step="${st}"]`); if (el) box.current.scrollTop = el.offsetTop - (box.current.clientHeight - el.offsetHeight) / 2; }
+    // #story-N lands on beat N: on load, when the story mounts from another page or view (T21 shell), and
+    // on a hash change while it is open
+    const goto = (smooth: boolean) => {
+      const st = parseStep(), b = box.current;
+      const el = st && b ? b.querySelector<HTMLElement>(`[data-step="${st}"]`) : null;
+      if (!b || !el) return;
+      // one column (phone): the sticky visual sits above the beats, so the beat lands just below it
+      const vis = b.querySelector<HTMLElement>('.story-visual');
+      const stacked = !!vis && vis.offsetWidth > b.clientWidth * 0.8;
+      const top = stacked ? el.offsetTop - vis!.offsetHeight - 8 : el.offsetTop - Math.max(0, (b.clientHeight - el.offsetHeight) / 2);
+      b.scrollTo({ top, behavior: smooth ? 'smooth' : 'instant' });
+    };
+    goto(false);
+    const onHash = () => goto(true);
+    addEventListener('hashchange', onHash);
     const io = new IntersectionObserver((es) => {
       for (const e of es) if (e.isIntersecting) set({ step: Number((e.target as HTMLElement).dataset.step) });
     }, { root: box.current, rootMargin: '-45% 0px -45% 0px' });
     box.current?.querySelectorAll('[data-step]').forEach((s) => io.observe(s));
-    return () => io.disconnect();
+    return () => { io.disconnect(); removeEventListener('hashchange', onHash); };
   }, [set]);
 
   const sOwn = own(m, 'S')!;
@@ -105,10 +118,11 @@ export function Story() {
     },
   ];
   return (
-    <section aria-label="Story" className="fixed z-10" style={{ top: 72, left: 0, right: 0, bottom: 28 }}>
+    <section aria-label="Story" className="fixed z-10" style={{ top: 'var(--top)', left: 0, right: 0, bottom: 28 }}>
       <div ref={box} className="h-full overflow-y-auto" style={{ scrollBehavior: 'smooth' }}>
-        <div className="grid" style={{ gridTemplateColumns: 'minmax(0,1.6fr) minmax(340px,1fr)', gap: 16, padding: '0 16px 0 16px' }}>
-          <div className="sticky" style={{ top: 0, height: 'calc(100vh - 72px - 28px - 16px)' }}>
+        <div className="grid story-grid" style={{ gap: 16, padding: '0 16px 0 16px' }}>
+          <p className="story-narrow-note panel t-12 ink-2" style={{ display: 'none', margin: 0 }} data-testid="story-narrow-note">Each beat's chart is laid out for a laptop screen (1280 px or wider); on a phone the text carries the story.</p>
+          <div className="sticky story-visual" style={{ top: 0 }}>
             <Visual step={step} rush={rush} clean={clean} curve={curve} />
           </div>
           <div style={{ paddingBottom: '20vh' }}>
@@ -271,7 +285,7 @@ function Count() {
   const m = data!.metrics;
   const tight = useViewport().h < 1000;
   return (
-    <Panel className={`flex flex-col ${tight ? 'tight' : ''}`} style={{ gap: tight ? 8 : 12, maxHeight: '100%', overflow: 'auto' }}>
+    <Panel className={`flex flex-col ${tight ? 'tight' : ''}`} style={{ gap: tight ? 8 : 12, maxHeight: '100%', overflow: 'auto' }} scrollLabel="Saving by policy, with intervals">
       <span className="t-15">Saving in attributed CO₂ vs U local (stay in Utah), each policy's own 95% interval</span>
       <IntervalChart m={m} rows={['S', 'K', 'W', 'L', 'G', 'H', 'W_time', 'L_time']} rowH={tight ? 26 : 34} />
       <div className="t-12 ink-3">Filled dots: the four placement policies, {pname('S')} first. Open dot: {pname('G')}; dashed: {pname('H')}. The two wait-only runs, at about 1%, are given as text with their intervals. The full policy table is in the method drawer. <Ev e="simulated" /></div>

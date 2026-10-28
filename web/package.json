@@ -11,7 +11,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 4173 --strictPort",
-    "test": "playwright test tests/offline.spec.ts tests/plan.spec.ts tests/copy-data.spec.ts tests/outlook.spec.ts tests/prices.spec.ts",
+    "test": "npm run build && playwright test tests/offline.spec.ts tests/plan.spec.ts tests/copy-data.spec.ts tests/outlook.spec.ts tests/prices.spec.ts tests/nav.spec.ts tests/a11y.spec.ts",
     "shots": "playwright test tests/shots.spec.ts",
     "deck": "playwright test -c playwright.deck.config.ts"
   },
