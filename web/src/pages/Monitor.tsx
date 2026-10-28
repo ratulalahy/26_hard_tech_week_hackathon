@@ -298,7 +298,7 @@ function Feed({ m, t }: { m: MonitorModel; t: number }) {
       <p className="t-12 ink-2" style={{ margin: '0 0 8px' }} data-testid="monitor-feed-note">
         <b className="fw-600">Hour means of busy GPUs, not individual jobs.</b> Consecutive hours that change the same way are one line; hourly changes under {fmt(MIN_CHANGE_GPUS)} GPUs (one node) are left out. Every moved job follows the {sRule(m.rankingText)}.
       </p>
-      <div className="monitor-feed" tabIndex={0} role="region" aria-label="Decision feed entries">
+      <div className="monitor-feed" tabIndex={0} role="region" aria-label="Load changes at the destinations">
         <ol data-testid="monitor-feed" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {shown.map((e, i) => <FeedItem key={`${e.h}-${e.site}-${i}`} e={e} m={m} now={t >= e.h && t <= e.h1} />)}
           {shown.length === 0 ? <li className="t-12 ink-3">No load change at the destinations before this hour.</li> : null}
@@ -347,7 +347,7 @@ function Week({ m, movedJobs, movedGpuH }: { m: MonitorModel; movedJobs: number;
   const wk = uKg != null && sKg != null && uKg > 0 ? (uKg - sKg) / uKg : null;
   // why one week can show far less than the year (metrics.json: the S contrast and the top-1% workload field)
   const quiet = wk != null && m.yearSaving != null && m.top1
-    ? `A quiet week for moving: ${pct(wk, 1)}% less CO₂ this week against ${pct(m.yearSaving, 1)}% over the test year. The year's saving comes mostly from a few very large jobs: the top 1% of jobs (${fmt(m.top1.nJobs)}) carry ${pct(m.top1.share, 0)}% of the energy, so a single week can show much less.`
+    ? `A quiet week for moving: ${pct(wk, 1)}% less CO₂ this week against ${pct(m.yearSaving, 1)}% over the test year. The year's saving rests on a few very large jobs being able to move: the top 1% of jobs (${fmt(m.top1.nJobs)}) carry ${pct(m.top1.share, 0)}% of the energy, so a single week can show much less.`
     : null;
   return (
     <div className="panel" data-testid="monitor-week">
