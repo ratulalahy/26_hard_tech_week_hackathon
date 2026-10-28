@@ -29,16 +29,6 @@
 
 c1–c5 save 45 spoken words (about 18 s); with c6, 50 (about 20 s). Never cut the mobility caveat (Beats 3, 4, 6), "attributed, not avoided", "simulated replay", the deadline caveat or the agent sentence.
 
----|---|---|---|
-| 1 Utah's evening rush | 0:00–0:37 | `#story-1` | 97 |
-| 2 One job: stay, wait or move | 0:37–1:14 | `#story-2` | 93 |
-| 3 The whole test year | 1:14–2:17 | `#story-3` | 159 |
-| 4 The condition: mobility | 2:17–2:59 | `#story-4` | 104 |
-| 5 Store for what can't move | 2:59–3:59 | `#story-5` | 145 |
-| 6 Close | 3:59–4:30 | `#control` | 78 |
-
-The spoken text is 676 words: 4:30 at 150 words a minute, with no slack for clicks. Rehearse at about 155 words a minute; if a rehearsal still runs long, cut in this order (about 35 words, 14 seconds): the ten-region sentence (Beat 1), "Both years agree" (Beat 4), "Carbon is storage's weak case here" (Beat 5).
-
 ---
 
 ## Beat 1 · 0:00–0:40 · Utah's evening rush
@@ -173,7 +163,7 @@ The spoken text is 676 words: 4:30 at 150 words a minute, with no slack for clic
 
 - Keep: "simulated replay"; "attributed, not avoided"; "deadlines met by construction (baseline bookings)"; "exact declared runtimes"; "358 days" at the first "sealed test year"; "PACE, which serves much of Utah"; "baseline to pilot"; "forecast-based search showed no demonstrated aggregate routing benefit over the fixed ranking in this replay".
 - Never: "30×"; "proves" or "confirms"; "avoided" except in "not avoided"; "deploy"; "simple rules beat AI"; "a full year"; any Torus partnership or program claim (removed pending an owner source, audit F25).
-- The headline is S's own number and interval; the validation 22.6% is said beside it.
+- The headline is S's own number and interval; the validation 22.6% is said beside it, unless cut c6 is used.
 - The headline sentence ends "…if the big jobs can move", the mobility number follows within the minute (Beat 4), and both are said together in Beat 6.
 - One click away for Q&A: the full policy table (Control room right panel), the method drawer's test-year sections (checks, storage, water, seasons, forecast skill, the validation → test drift table), the Outlook page (live, issued Oct 27 10:00 MT for Oct 28 – Nov 3; Utah shown at its seasonal average because its forecast doesn't beat it), the Prices page (validation, wholesale scenario) and the Regions page (validation).
 
