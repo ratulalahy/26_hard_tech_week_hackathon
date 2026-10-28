@@ -2,7 +2,7 @@
 // committed outputs already hold (results/test/job-replay.json, metrics.json, forecast-replay.json and the
 // test manifest's frozen ranking and assumptions). Nothing is generated: every feed line is a template whose
 // slots are filled from those fields, and anything the files do not carry is left out (see `missing`).
-import { CORE, REGION, asNum, get, type Core, type Json } from './data';
+import { CORE, REGION, asNum, contrast, get, type Core, type Json } from './data';
 import { fmt, fmtDate } from './format';
 
 export interface MonitorFiles { job: Json; metrics: Json; forecast: Json; manifest: Json }
@@ -27,9 +27,11 @@ export interface SiteSeries {
 }
 
 export interface FeedEntry {
-  /** index of the replay hour the entry belongs to */
+  /** index of the replay hour the entry belongs to (a ramp's first hour) */
   h: number;
-  kind: 'placed' | 'finished' | 'week';
+  /** a ramp's last hour (same as h for a one-hour change) */
+  h1: number;
+  kind: 'rise' | 'fall' | 'week';
   site?: Core;
   text: string;
 }
@@ -74,6 +76,9 @@ export interface MonitorModel {
   lateS: number | null;
   feed: FeedEntry[];
   traced: TracedJob[];
+  /** the whole test year's S saving vs U (b = 4) and the top 1% of jobs' share of energy, from metrics.json */
+  yearSaving: number | null;
+  top1: { nJobs: number; share: number } | null;
 }
 
 const num = (e: Json): number | null => asNum(e);
@@ -91,25 +96,42 @@ export function rankingSentence(r: { site: string; ci: number }[]) {
 /** The S rule, as a template on the frozen ranking. Never "forecast", never "lowest actual emissions". */
 export const sRule = (rankingText: string) => `S rule: first feasible site in the frozen ranking (${rankingText})`;
 
-/** Feed lines from S's hourly load at each move destination: a rise is work S placed there, a fall is work
- * that finished. Changes under half a GPU (hour-mean rounding) are not entries. */
-export function feedFrom(sites: SiteSeries[], hours: string[], rankingText: string, transferMin: number, nJobs: number | null): FeedEntry[] {
+/** A change smaller than this, in hour-mean busy GPUs per hour (one 8-GPU node), is not an entry. */
+export const MIN_CHANGE_GPUS = 8;
+
+/** Entries from S's hour-mean busy GPUs at each move destination. These are site load changes, not jobs:
+ * consecutive hours that change the same way merge into one ramp, and hourly changes under
+ * MIN_CHANGE_GPUS are left out. */
+export function feedFrom(sites: SiteSeries[], hours: string[], nJobs: number | null): FeedEntry[] {
   const out: FeedEntry[] = [];
-  out.push({ h: 0, kind: 'week', text: `Replay week opens · ${nJobs == null ? 'cohort' : fmt(nJobs)} cohort jobs arrive this week · every job holds its Utah booking as a fallback` });
+  out.push({ h: 0, h1: 0, kind: 'week', text: `Replay week opens · ${nJobs == null ? 'the cohort\'s' : fmt(nJobs)} jobs arrive this week · every job holds its Utah booking as a fallback` });
   for (const s of sites) {
     if (s.site === 'PACE') continue;
+    let run: { dir: 1 | -1; h: number; h1: number; from: number; to: number } | null = null;
+    const flush = () => {
+      if (!run) return;
+      const span = run.h1 > run.h ? ` over ${run.h1 - run.h + 1} h` : '';
+      out.push({
+        h: run.h, h1: run.h1, kind: run.dir > 0 ? 'rise' : 'fall', site: s.site,
+        text: run.dir > 0 ? `${s.site} ${gpuTxt(run.from)} → ${gpuTxt(run.to)} GPUs${span} · moved work running` : `${s.site} ${gpuTxt(run.from)} → ${gpuTxt(run.to)} GPUs${span} · moved work finishing`,
+      });
+      run = null;
+    };
     for (let h = 0; h < hours.length; h++) {
-      const a = h ? s.s[h - 1] : 0, b = s.s[h];
-      if (Math.abs(b - a) < 0.5) continue;
-      if (b > a) out.push({ h, kind: 'placed', site: s.site, text: `${s.site} load ${gpuTxt(a)} → ${gpuTxt(b)} GPUs · work placed by S · ${sRule(rankingText)} · runs after the ${fmt(transferMin)} min transfer` });
-      else out.push({ h, kind: 'finished', site: s.site, text: `${s.site} load ${gpuTxt(a)} → ${gpuTxt(b)} GPUs · moved work finished` });
+      const a = h ? s.s[h - 1] : 0, b = s.s[h], d = b - a;
+      const dir = Math.abs(d) < MIN_CHANGE_GPUS ? 0 : d > 0 ? 1 : -1;
+      if (dir === 0) { flush(); continue; }
+      if (run && run.dir === dir && run.h1 === h - 1) { run.h1 = h; run.to = b; continue; }
+      flush();
+      run = { dir, h, h1: h, from: a, to: b };
     }
+    flush();
   }
   return out.sort((p, q) => p.h - q.h || (p.kind === 'week' ? -1 : 0));
 }
 
 /** A job the test run traced (job-replay's illustrative jobs), as a feed line from its own fields. */
-export function tracedJob(j: Json, rankingText: string, transferMin: number): TracedJob | null {
+export function tracedJob(j: Json, transferMin: number): TracedJob | null {
   const pS = j?.placements?.S, pU = j?.placements?.U;
   if (!pS || !j.deadline) return null;
   const waitS = (Date.parse(pS.start) - Date.parse(j.arrival)) / 1000;
@@ -119,7 +141,7 @@ export function tracedJob(j: Json, rankingText: string, transferMin: number): Tr
   const where = moved ? `→ ${pS.site}` : 'stays at PACE';
   const parts = [
     `Job ${j.job_uid} (${j.job_type}, ${fmt(gpus)} GPUs, ${fmt(gpuH, gpuH < 10 ? 3 : 0)} GPU-h) ${where}`,
-    sRule(rankingText),
+    moved ? 'first feasible site in the frozen ranking' : 'no feasible site ahead of PACE in the frozen ranking',
     moved ? `transfer ${fmt(transferMin)} min (starts ${fmt(waitS / 60)} min after arrival)` : `starts ${fmt(waitS / 60)} min after arrival`,
     met ? `deadline met (ends ${dayStamp(pS.end)}, deadline ${dayStamp(j.deadline)})` : `deadline missed (ends ${dayStamp(pS.end)}, deadline ${dayStamp(j.deadline)})`,
   ];
@@ -152,15 +174,17 @@ export function buildMonitor({ job, metrics, forecast, manifest }: MonitorFiles)
   const wi = wl ? (wl.week_start_local as string[]).findIndex((t) => Date.parse(t) === Date.parse(wk.start)) : -1;
   const at = (p: string): number | null => (wi < 0 ? null : (wl.co2_kg?.[p]?.value?.[wi] ?? null));
   const nJobs = wi < 0 ? (num(wk.policies.S?.n_arrivals) ?? null) : (wl.n_jobs?.value?.[wi] ?? null);
-  const traced = [job.illustrative_job, job.illustrative_job_literal].map((j) => tracedJob(j, rankingText, transferMin)).filter((x): x is TracedJob => !!x);
+  const traced = [job.illustrative_job, job.illustrative_job_literal].map((j) => tracedJob(j, transferMin)).filter((x): x is TracedJob => !!x);
   return {
     runId: job.run_id, hours, start: wk.start, end: wk.end, sites, ciPace,
     rateS: rate(pace.s), rateU: rate(pace.u), kwPerGpu, pue, transferMin,
     ranking, rankingWindow: r?.window ?? null, rankingText, arcs,
     week: { nJobs, uKg: at('U'), sKg: at('S') },
     lateS: num(metrics.policies?.S?.metrics?.late_jobs),
-    feed: feedFrom(sites, hours, rankingText, transferMin, nJobs),
+    feed: feedFrom(sites, hours, nJobs),
     traced,
+    yearSaving: num(contrast(metrics, 'S')?.saving),
+    top1: (() => { const t = metrics.workload?.top_1pct_jobs_by_declared_gpu_h; const n = num(t?.n_jobs), sh = num(t?.energy_share); return n != null && sh != null ? { nJobs: n, share: sh } : null; })(),
   };
 }
 

@@ -200,7 +200,7 @@ test('the test-year state shows only test numbers and no unlabelled validation w
   await expect(page.getByTestId('window-switch')).toHaveAccessibleDescription(/^Test year \(Nov 2025 – Oct 2026\) · opened once, after the freeze of Oct 27, 2026$/);
   await noValidation('control');
 
-  for (const [tab, id, want] of [['Decision cockpit', 'cockpit-registered', testSOwn], ['Day ribbon', 'ribbon-own-W_time', testOwn('W_time')], ['Story', 'story-result', testSOwn]] as const) {
+  for (const [tab, id, want] of [['Decision cockpit', 'cockpit-registered', testSOwn], ['Day ribbon', 'ribbon-own-W_time', testOwn('W_time')], ['Walkthrough', 'story-result', testSOwn]] as const) {
     await page.getByRole('navigation', { name: 'Views' }).getByRole('link', { name: tab }).click();
     await expect(page.getByTestId(id)).toContainText(want);
     await noValidation(tab);

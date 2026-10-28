@@ -254,12 +254,13 @@ table.ov-tbl th { white-space: normal; max-width: 150px; }
   .topbar .seg button { padding: 0 8px; }
 }
 
-/* the story (scrollytelling): visual left and sticky, beats right; one column on a phone, the visual on top */
+/* the story (scrollytelling): visual left and sticky, beats right; on a phone the beats alone, with a note */
 .story-grid { grid-template-columns: minmax(0, 1.6fr) minmax(340px, 1fr); }
 .story-visual { height: calc(100vh - var(--top) - 28px - 16px); }
 @media (max-width: 800px) {
   .story-grid { grid-template-columns: minmax(0, 1fr); }
-  .story-visual { height: 300px; z-index: 1; background: var(--sky-1); padding-bottom: 8px; }
+  .story-visual { display: none; }
+  .story-narrow-note { display: block !important; }
 }
 
 /* a standalone page under the top bar: full width, scrolls on its own */
@@ -279,8 +280,8 @@ table.ov-tbl th { white-space: normal; max-width: 150px; }
 .monitor-entry:first-child { border-top: 0; }
 .monitor-entry.now { background: var(--route-wash); border-radius: var(--r-8); }
 .monitor-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; box-sizing: border-box; }
-.monitor-dot[data-kind='placed'] { background: var(--route); }
-.monitor-dot[data-kind='finished'] { border: 1.5px solid var(--route); }
+.monitor-dot[data-kind='placed'], .monitor-dot[data-kind='rise'] { background: var(--route); }
+.monitor-dot[data-kind='fall'] { border: 1.5px solid var(--route); }
 .monitor-dot[data-kind='week'] { background: var(--ink-2); border-radius: 1.5px; }
 .monitor-head { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(340px, 1fr); gap: 16px; align-items: end; }
 @media (max-width: 1100px) { .monitor-head { grid-template-columns: minmax(0, 1fr); } }

@@ -121,6 +121,7 @@ export function Story() {
     <section aria-label="Story" className="fixed z-10" style={{ top: 'var(--top)', left: 0, right: 0, bottom: 28 }}>
       <div ref={box} className="h-full overflow-y-auto" style={{ scrollBehavior: 'smooth' }}>
         <div className="grid story-grid" style={{ gap: 16, padding: '0 16px 0 16px' }}>
+          <p className="story-narrow-note panel t-12 ink-2" style={{ display: 'none', margin: 0 }} data-testid="story-narrow-note">Each beat's chart is laid out for a laptop screen (1280 px or wider); on a phone the text carries the story.</p>
           <div className="sticky story-visual" style={{ top: 0 }}>
             <Visual step={step} rush={rush} clean={clean} curve={curve} />
           </div>

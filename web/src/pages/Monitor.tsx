@@ -9,7 +9,7 @@ import { Ev, EvCI, Icon, Skel } from '../components/ui';
 import { C, ci2c, setMid } from '../lib/color';
 import { get } from '../lib/data';
 import { fmt, fmtDate, pct } from '../lib/format';
-import { MISSING, buildMonitor, hourLabel, loadMonitorFiles, siteName, stampLabel, type FeedEntry, type MonitorModel, type SiteSeries } from '../lib/monitor';
+import { MIN_CHANGE_GPUS, MISSING, buildMonitor, hourLabel, loadMonitorFiles, sRule, siteName, stampLabel, type FeedEntry, type MonitorModel, type SiteSeries } from '../lib/monitor';
 
 export const MONITOR_LABEL = 'simulated replay · test year (sealed, opened once)';
 const SPEEDS = [2, 6, 24] as const; // replay hours per second
@@ -47,7 +47,7 @@ function MonitorSkeleton() {
 
 function MonitorBody({ m }: { m: MonitorModel }) {
   const N = m.hours.length;
-  const firstPlaced = m.feed.find((e) => e.kind === 'placed')?.h ?? 0;
+  const firstPlaced = m.feed.find((e) => e.kind === 'rise')?.h ?? 0;
   const [t, setT] = useState(firstPlaced);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(6);
@@ -71,16 +71,13 @@ function MonitorBody({ m }: { m: MonitorModel }) {
     : `In the replay week, S kept every arriving job in Utah`;
   return (
     <div className="flex flex-col gap-4" data-testid="monitor-body">
-      <div className="monitor-head">
-      <header className="flex flex-col gap-2">
+      <header className="flex flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2"><span className="chip-neutral" data-testid="monitor-label">{MONITOR_LABEL}</span><Ev e="simulated">jobs and placements</Ev><EvCI extra="carbon" /></div>
-        <h1 className="t-20" style={{ margin: 0, maxWidth: '72ch' }} data-testid="monitor-title">{title}</h1>
-        <p className="t-13 ink-2" style={{ margin: 0, maxWidth: '96ch' }}>
-          The router, policy S, replayed hour by hour over {range} (America/Denver), run {m.runId}. S takes the first feasible site in a ranking frozen from the training years’ mean consumed carbon ({m.rankingText}; {m.rankingWindow ? `${fmtDate(m.rankingWindow[0], { month: 'short', year: 'numeric', timeZone: 'UTC' })} to ${fmtDate(m.rankingWindow[1], { month: 'short', year: 'numeric', timeZone: 'UTC' })}` : 'training years'}); it reads no grid data while it runs. Load is the hour’s mean busy GPUs, warm-up jobs included.
+        <h1 className="t-20" style={{ margin: 0 }} data-testid="monitor-title">{title}</h1>
+        <p className="t-13 ink-2" style={{ margin: 0 }}>
+          Policy S replayed hour by hour over {range} (America/Denver), run {m.runId}. S takes the first feasible site in a ranking frozen from the training years’ mean consumed carbon ({m.rankingWindow ? `${fmtDate(m.rankingWindow[0], { month: 'short', year: 'numeric', timeZone: 'UTC' })} to ${fmtDate(m.rankingWindow[1], { month: 'short', year: 'numeric', timeZone: 'UTC' })}` : 'training years'}) and reads no grid data while it runs.
         </p>
       </header>
-        <Week m={m} movedJobs={movedJobs} movedGpuH={movedGpuH} />
-      </div>
 
       <Transport t={t} setT={(x) => { setT(x); }} N={N} playing={playing} toggle={toggle} speed={speed} setSpeed={setSpeed} label={stampLabel(m.hours[t])}
         prev={prev} next={next} />
@@ -90,7 +87,7 @@ function MonitorBody({ m }: { m: MonitorModel }) {
           <div className="panel" data-testid="monitor-sites">
             <div className="flex items-baseline justify-between gap-2 flex-wrap" style={{ marginBottom: 8 }}>
               <h2 className="t-15" style={{ margin: 0 }}>GPU load by site</h2>
-              <span className="t-11 ink-3">each lane scaled to its site’s GPU slots · hover to read, click to move the playhead</span>
+              <span className="t-11 ink-3">hour means of busy GPUs, warm-up jobs included; each lane scaled to its site’s slots · hover to read, click to move the playhead</span>
             </div>
             <DayAxis hours={m.hours} />
             {m.sites.map((s) => <Lane key={s.site} s={s} m={m} t={t} at={at} setHover={setHover} setT={setT} />)}
@@ -99,6 +96,7 @@ function MonitorBody({ m }: { m: MonitorModel }) {
           <RatePanel m={m} t={t} at={at} setHover={setHover} setT={setT} />
         </div>
         <div className="flex flex-col gap-4" style={{ minWidth: 0 }}>
+          <Week m={m} movedJobs={movedJobs} movedGpuH={movedGpuH} />
           <Feed m={m} t={t} />
           <Traced m={m} />
         </div>
@@ -176,7 +174,7 @@ function Playhead({ x, h, hoverX }: { x: number; h: number; hoverX: number | nul
 function Lane({ s, m, t, at, setHover, setT }: { s: SiteSeries; m: MonitorModel; t: number; at: number; setHover: (h: number | null) => void; setT: (h: number) => void }) {
   const [ref, w] = useWidth<HTMLDivElement>();
   const LABEL_W = labelW(w), narrow = w < NARROW;
-  const n = m.hours.length, H = 44, X = useX(w, n), cw = Math.max(0, w - LABEL_W) / n;
+  const n = m.hours.length, H = 34, X = useX(w, n), cw = Math.max(0, w - LABEL_W) / n;
   const Y = (v: number) => H - 2 - (Math.min(v, s.slots) / Math.max(1, s.slots)) * (H - 6);
   const home = s.site === 'PACE';
   const area = s.s.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)} L${(X(i) + cw).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
@@ -187,7 +185,7 @@ function Lane({ s, m, t, at, setHover, setT }: { s: SiteSeries; m: MonitorModel;
   const now = s.s[at];
   const arc = m.arcs.find((a) => a.to === s.site);
   const jobsLine = home
-    ? (m.week.nJobs != null ? `${fmt(m.week.nJobs - m.arcs.reduce((x, a) => x + a.jobs, 0))} of the week’s arrivals stayed` : '')
+    ? (m.week.nJobs != null ? `${fmt(m.week.nJobs - m.arcs.reduce((x, a) => x + a.jobs, 0))} jobs of the week’s ${fmt(m.week.nJobs)} arrivals stayed in Utah` : '')
     : arc ? `${fmt(arc.jobs)} job${arc.jobs === 1 ? '' : 's'} moved here this week${arc.jobs ? ` · ${fmt(arc.gpuH)} GPU-h` : ''}` : '';
   const label = `${siteName(s.site)} (${s.site}): ${fmt(Math.round(now))} of ${fmt(s.slots)} GPUs busy at ${hourLabel(m.hours[at])}`;
   const laneLabel = (
@@ -243,14 +241,13 @@ function CiStrip({ m, t, at, setHover, setT }: { m: MonitorModel; t: number; at:
 function RatePanel({ m, t, at, setHover, setT }: { m: MonitorModel; t: number; at: number; setHover: (h: number | null) => void; setT: (h: number) => void }) {
   const [ref, w] = useWidth<HTMLDivElement>();
   const LABEL_W = labelW(w, 44), narrow = w < NARROW;
-  const n = m.hours.length, H = 150, padT = 8, padB = 18, X = useX(w, n, LABEL_W), cw = Math.max(0, w - LABEL_W) / n;
+  const n = m.hours.length, H = 120, padT = 8, padB = 18, X = useX(w, n, LABEL_W), cw = Math.max(0, w - LABEL_W) / n;
   const vals = [...m.rateS, ...m.rateU].filter((v): v is number => v != null);
   const step = 500, max = Math.max(step, Math.ceil((Math.max(...vals, 0) * 1.05) / step) * step);
   const Y = (v: number) => padT + (1 - v / max) * (H - padT - padB);
   const line = (a: (number | null)[]) => a.map((v, i) => (v == null ? '' : `${i && a[i - 1] != null ? 'L' : 'M'}${(X(i) + cw / 2).toFixed(1)},${Y(v).toFixed(1)}`)).join(' ');
   const sc = useScrub(w, n, setHover, setT, LABEL_W);
   const s = m.rateS[at], u = m.rateU[at];
-  const totS = m.rateS.reduce<number>((a, v) => a + (v ?? 0), 0), totU = m.rateU.reduce<number>((a, v) => a + (v ?? 0), 0);
   const readout = (
     <div className="monitor-lane-label" style={{ top: 4, width: 100 }}>
       <div className="t-12 num"><span className="ink-3">S </span><b className="fw-600">{s == null ? '–' : fmt(s)}</b></div>
@@ -266,7 +263,7 @@ function RatePanel({ m, t, at, setHover, setT }: { m: MonitorModel; t: number; a
         <span className="chip-neutral" data-testid="monitor-retro">retrospective, scored on realized truth</span>
       </div>
       <p className="t-12 ink-2" style={{ margin: '4px 0 8px' }}>
-        kg CO₂ per hour = busy GPUs × {fmt(m.kwPerGpu, 1)} kW × PUE {fmt(m.pue, 1)} × Utah’s realized carbon. The moved work’s emissions at {m.arcs.filter((a) => a.jobs > 0).map((a) => a.to).join(', ') || 'the destinations'} are not in this line: the files carry no hourly carbon there. <Ev e="simulated">load</Ev> <Ev e="assumed">kW, PUE</Ev> <EvCI />
+        kg CO₂ per hour = busy GPUs × {fmt(m.kwPerGpu, 1)} kW × PUE {fmt(m.pue, 1)} × Utah’s realized carbon. The moved work’s emissions at {m.arcs.filter((a) => a.jobs > 0).map((a) => a.to).join(', ') || 'the destinations'} are not in this line (the files carry no hourly carbon there), so the gap between the lines is not the saving. <Ev e="simulated">load</Ev> <Ev e="assumed">kW, PUE</Ev> <EvCI />
       </p>
       <div className="flex flex-wrap gap-4 t-12" style={{ marginBottom: 4 }} aria-hidden="true">
         <span className="flex items-center gap-2"><svg width="18" height="8"><line x1="0" x2="18" y1="4" y2="4" stroke={C.route} strokeWidth="2" /></svg>S, the replay</span>
@@ -286,23 +283,25 @@ function RatePanel({ m, t, at, setHover, setT }: { m: MonitorModel; t: number; a
         )}
         {narrow ? null : readout}
       </div>
-      <div className="t-12 ink-2" style={{ marginTop: 4 }} data-testid="monitor-rate-total">Over the week at the Utah site: S {fmt(totS / 1000, 1)} t, U {fmt(totU / 1000, 1)} t (retrospective, scored on realized truth; Utah site only).</div>
     </div>
   );
 }
 
 function Feed({ m, t }: { m: MonitorModel; t: number }) {
-  const shown = m.feed.filter((e) => e.h <= t).reverse();
+  const shown = m.feed.filter((e) => e.h <= t).reverse(); // a ramp shows from its first hour
   return (
     <div className="panel flex flex-col" style={{ minHeight: 0 }}>
       <div className="flex items-baseline justify-between gap-2 flex-wrap" style={{ marginBottom: 8 }}>
-        <h2 className="t-15" style={{ margin: 0 }}>Decision feed</h2>
+        <h2 className="t-15" style={{ margin: 0 }}>Load changes at the destinations</h2>
         <span className="t-11 ink-3">{fmt(shown.length)} of {fmt(m.feed.length)} entries · newest first</span>
       </div>
+      <p className="t-12 ink-2" style={{ margin: '0 0 8px' }} data-testid="monitor-feed-note">
+        <b className="fw-600">Hour means of busy GPUs, not individual jobs.</b> Consecutive hours that change the same way are one line; hourly changes under {fmt(MIN_CHANGE_GPUS)} GPUs (one node) are left out. Every moved job follows the {sRule(m.rankingText)}.
+      </p>
       <div className="monitor-feed" tabIndex={0} role="region" aria-label="Decision feed entries">
         <ol data-testid="monitor-feed" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-          {shown.map((e, i) => <FeedItem key={`${e.h}-${e.site}-${i}`} e={e} m={m} now={e.h === t} />)}
-          {shown.length === 0 ? <li className="t-12 ink-3">No entries yet: S has placed nothing outside Utah before this hour.</li> : null}
+          {shown.map((e, i) => <FeedItem key={`${e.h}-${e.site}-${i}`} e={e} m={m} now={t >= e.h && t <= e.h1} />)}
+          {shown.length === 0 ? <li className="t-12 ink-3">No load change at the destinations before this hour.</li> : null}
         </ol>
       </div>
     </div>
@@ -314,7 +313,7 @@ function FeedItem({ e, m, now }: { e: FeedEntry; m: MonitorModel; now: boolean }
     <li className={`monitor-entry ${now ? 'now' : ''}`} data-kind={e.kind}>
       <span className="monitor-dot" data-kind={e.kind} aria-hidden="true" />
       <div style={{ minWidth: 0 }}>
-        <div className="t-11 ink-3 num">{stampLabel(m.hours[e.h])}</div>
+        <div className="t-11 ink-3 num">{stampLabel(m.hours[e.h])}{e.h1 > e.h ? ` to ${hourLabel(m.hours[e.h1])}` : ''}</div>
         <div className="t-12">{e.text}</div>
       </div>
     </li>
@@ -326,7 +325,7 @@ function Traced({ m }: { m: MonitorModel }) {
   return (
     <div className="panel" data-testid="monitor-traced">
       <h2 className="t-15" style={{ margin: '0 0 4px' }}>Two jobs the test run traced</h2>
-      <p className="t-12 ink-3" style={{ margin: '0 0 8px' }}>The run's only per-job records (job-replay.json), both outside the replay week. <Ev e="measured">size</Ev> <Ev e="simulated">placement</Ev></p>
+      <p className="t-12 ink-3" style={{ margin: '0 0 8px' }}>The run's only per-job records (job-replay.json), both outside the replay week; the frozen ranking is the one above. <Ev e="measured">size</Ev> <Ev e="simulated">placement</Ev></p>
       <ol data-testid="monitor-traced-feed" style={{ listStyle: 'none', margin: 0, padding: 0 }} className="flex flex-col gap-2">
         {m.traced.map((j) => (
           <li key={j.id} className="monitor-entry" data-kind="traced">
@@ -345,9 +344,15 @@ function Traced({ m }: { m: MonitorModel }) {
 
 function Week({ m, movedJobs, movedGpuH }: { m: MonitorModel; movedJobs: number; movedGpuH: number }) {
   const { uKg, sKg, nJobs } = m.week;
+  const wk = uKg != null && sKg != null && uKg > 0 ? (uKg - sKg) / uKg : null;
+  // why one week can show far less than the year (metrics.json: the S contrast and the top-1% workload field)
+  const quiet = wk != null && m.yearSaving != null && m.top1
+    ? `A quiet week for moving: ${pct(wk, 1)}% less CO₂ this week against ${pct(m.yearSaving, 1)}% over the test year. The year's saving comes mostly from a few very large jobs: the top 1% of jobs (${fmt(m.top1.nJobs)}) carry ${pct(m.top1.share, 0)}% of the energy, so a single week can show much less.`
+    : null;
   return (
     <div className="panel" data-testid="monitor-week">
       <h2 className="t-15" style={{ margin: '0 0 8px' }}>The week, all sites</h2>
+      {quiet ? <p className="t-12" style={{ margin: '0 0 8px' }} data-testid="monitor-quiet">{quiet}</p> : null}
       <dl className="ov-dl t-12">
         <dt>Arrivals</dt><dd className="num">{nJobs == null ? '–' : fmt(nJobs)} jobs <Ev e="simulated" /></dd>
         <dt>Moved by S</dt><dd className="num">{fmt(movedJobs)} jobs, {fmt(movedGpuH)} GPU-h <Ev e="simulated" /></dd>

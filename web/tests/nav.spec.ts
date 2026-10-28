@@ -19,6 +19,7 @@ async function offline(page: Page) {
   return { blocked, errors };
 }
 const pages = (page: Page) => page.getByRole('navigation', { name: 'Pages' });
+const yearChecked = (page: Page, name: RegExp) => expect(page.getByRole('radio', { name }).and(page.locator('[aria-checked="true"]'))).toHaveCount(1);
 
 const ROUTES: { hash: string; page: string; ready: string; windowSwitch: boolean; views: boolean }[] = [
   { hash: '#control', page: 'Story', ready: '[data-testid="hero-placement"]', windowSwitch: true, views: true },
@@ -53,7 +54,7 @@ test('the pitch deep links land where they did: #story-1…5 and #control', asyn
     await expect(beat).toHaveCSS('opacity', '1'); // the beat in view is the one the hash names
     await expect(beat).toBeInViewport();
     await expect(pages(page).getByRole('link', { name: 'Story' })).toHaveAttribute('aria-current', 'page');
-    await expect(page.getByRole('navigation', { name: 'Views' }).getByRole('link', { name: 'Story' })).toHaveAttribute('aria-current', 'page');
+    await expect(page.getByRole('navigation', { name: 'Views' }).getByRole('link', { name: 'Walkthrough' })).toHaveAttribute('aria-current', 'page');
   }
   await page.goto('./#control');
   await expect(page.getByTestId('hero-placement')).toBeVisible();
@@ -110,7 +111,7 @@ test('the Monitor replays committed test outputs: label, playback, template reas
   // the frozen ranking, as the S rule states it, comes from the test manifest
   const order: string[] = testMan.s_ranking.order;
   const ranking = order.map((s) => `${s} ${Math.round(testMan.s_ranking.mean_consumed_ci[s].value)}`).join(' < ');
-  await expect(feed).toContainText(`S rule: first feasible site in the frozen ranking (${ranking} g/kWh)`);
+  await expect(page.getByTestId('monitor-feed-note')).toContainText(`S rule: first feasible site in the frozen ranking (${ranking} g/kWh)`);
   // scrub, step and play
   const clock = page.getByTestId('monitor-clock');
   const scrub = page.getByTestId('monitor-scrub');
@@ -119,9 +120,8 @@ test('the Monitor replays committed test outputs: label, playback, template reas
   await scrub.focus();
   await page.keyboard.press('End');
   await expect(clock).toContainText('hour 168 of 168');
-  const all = await feed.locator('li').count();
   await page.getByRole('button', { name: 'Previous feed entry' }).click();
-  await expect.poll(() => feed.locator('li').count()).toBeLessThan(all);
+  await expect(clock).not.toContainText('hour 168 of 168'); // back to the last entry's first hour
   await scrub.fill('0');
   await page.getByRole('radio', { name: '24 h/s' }).click();
   await page.getByRole('button', { name: 'Play replay' }).click();
@@ -141,7 +141,7 @@ test('the Monitor never says S forecast or predicted, or chose the lowest actual
   await page.goto('./#monitor');
   await page.getByTestId('monitor-feed').locator('li').first().waitFor();
   await page.getByTestId('monitor-scrub').fill(String(testJob.week.hours.length - 1)); // every entry shown
-  const text = [await page.getByTestId('monitor-feed').innerText(), await page.getByTestId('monitor-traced-feed').innerText()].join('\n');
+  const text = [await page.getByTestId('monitor-feed-note').innerText(), await page.getByTestId('monitor-feed').innerText(), await page.getByTestId('monitor-traced-feed').innerText()].join('\n');
   expect(text.length).toBeGreaterThan(200);
   expect(text).not.toMatch(/forecast|predict/i);
   expect(text).not.toMatch(/lowest[- ]?(actual|real|realized)?[- ]?(co2|co₂|carbon|emission)/i);
@@ -150,9 +150,59 @@ test('the Monitor never says S forecast or predicted, or chose the lowest actual
   expect(body).not.toMatch(/S (forecast|chose the lowest)/i);
 });
 
+// r1 review (M1, M2, lead): load changes are not presented as placements; no Utah-only totals; a quiet week
+test('the Monitor shows hour-mean load ramps, not placements, and says why one week shows less than the year', async ({ page }) => {
+  const metrics = JSON.parse(readFileSync(new URL('../public/data/results/test/metrics.json', import.meta.url), 'utf8'));
+  await page.goto('./#monitor');
+  const feed = page.getByTestId('monitor-feed');
+  await feed.locator('li').first().waitFor();
+  await expect(page.getByRole('heading', { name: 'Load changes at the destinations' })).toBeVisible();
+  await expect(page.getByTestId('monitor-feed-note')).toContainText('Hour means of busy GPUs, not individual jobs.');
+  await page.getByTestId('monitor-scrub').fill(String(testJob.week.hours.length - 1));
+  const lines = await feed.locator('li').allInnerTexts();
+  // the S rule is stated once, above the list; no line claims a placement
+  for (const l of lines) { expect(l).not.toMatch(/placed by S|S rule|decision/i); }
+  // a ramp over consecutive hours is one line: BPAT's Saturday ramp (5 rising hours in the file) is a single entry
+  const bpat: number[] = testJob.week.policies.S.mean_busy_gpus_by_hour.BPAT.value;
+  let ramps = 0;
+  for (let h = 0, prev = 0; h < bpat.length; h++) { const d = bpat[h] - (h ? bpat[h - 1] : 0); const dir = Math.abs(d) < 8 ? 0 : Math.sign(d); if (dir !== 0 && dir !== prev) ramps++; prev = dir; }
+  expect(lines.length).toBe(ramps + 1); // + the week's opening line
+  expect(lines.some((l) => /over \d+ h · moved work running/.test(l))).toBe(true);
+  // M2: no Utah-site week totals; the rate panel says its gap is not the saving
+  await expect(page.getByTestId('monitor-rate-total')).toHaveCount(0);
+  await expect(page.getByTestId('monitor-rate')).toContainText('the gap between the lines is not the saving');
+  // lead: the quiet-week line, from metrics.json
+  const sYear = metrics.contrasts.find((c: { candidate: string; reference: string }) => c.candidate === 'S' && c.reference === 'U').blocks['4'].saving.value;
+  const top1 = metrics.workload.top_1pct_jobs_by_declared_gpu_h;
+  const q = page.getByTestId('monitor-quiet');
+  await expect(q).toContainText(`against ${(sYear * 100).toFixed(1)}% over the test year`);
+  await expect(q).toContainText(`the top 1% of jobs (${top1.n_jobs.value.toLocaleString('en-US')}) carry ${Math.round(top1.energy_share.value * 100)}% of the energy`);
+  // m1: the PACE lane's job count says jobs
+  await expect(page.getByTestId('lane-PACE')).toContainText('jobs of the week’s');
+});
+
+test('?year= is dropped from the URL once applied, so a later switch wins on reload', async ({ page }) => {
+  await page.goto('./?year=test#story-3');
+  await yearChecked(page, /^Test year/);
+  await expect(page).toHaveURL(/\/#story-3$/);
+  await page.getByRole('radio', { name: 'Validation year' }).click();
+  await yearChecked(page, /^Validation year/);
+  await page.reload();
+  await yearChecked(page, /^Validation year/);
+  await expect(page.locator('#story-3 > section').first()).toHaveCSS('opacity', '1');
+});
+
+test('on a phone the story keeps its beats and says the charts need a laptop', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('./#story-1');
+  await expect(page.getByTestId('story-narrow-note')).toBeVisible();
+  await expect(page.locator('#story-1 > section').first()).toBeInViewport();
+  const [sw, cw] = await page.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.clientWidth]);
+  expect(sw).toBeLessThanOrEqual(cw);
+});
+
 // Lead addition: the pitch deck opens deep links in one window; ?year=test starts in the sealed test year, and
 // the year last chosen is remembered. A fresh visitor with no parameter still starts in the validation year.
-const yearChecked = (page: Page, name: RegExp) => expect(page.getByRole('radio', { name }).and(page.locator('[aria-checked="true"]'))).toHaveCount(1);
 
 test('?year=test opens a deep link in the test year; a fresh visit stays on validation', async ({ page }) => {
   await page.goto('./?year=test#story-3');
@@ -163,7 +213,7 @@ test('?year=test opens a deep link in the test year; a fresh visit stays on vali
   await yearChecked(page, /^Test year/);
   await expect(page.getByTestId('hero-placement')).toBeVisible();
   await page.evaluate(() => localStorage.clear());
-  await page.goto('./#control');
+  await page.reload(); // the URL is already /#control (?year= was dropped), so reload rather than a hash-only goto
   await yearChecked(page, /^Validation year/);
 });
 
@@ -178,7 +228,7 @@ test('the year last chosen is remembered; ?year=validation overrides it', async 
   await expect(page.locator('#story-2 > section').first()).toHaveCSS('opacity', '1');
   await page.goto('./?year=validation#control');
   await yearChecked(page, /^Validation year/);
-  await page.goto('./#control'); // the override is itself remembered
+  await page.reload(); // the override is itself remembered (the URL no longer carries it)
   await yearChecked(page, /^Validation year/);
 });
 

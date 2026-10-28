@@ -23,7 +23,7 @@ export const VIEWS: { id: View; label: string }[] = [
   { id: 'control', label: 'Control room' },
   { id: 'cockpit', label: 'Decision cockpit' },
   { id: 'ribbon', label: 'Day ribbon' },
-  { id: 'story', label: 'Story' },
+  { id: 'story', label: 'Walkthrough' }, // the #story beats; the page tab is "Story"
 ];
 
 interface State {
@@ -99,6 +99,11 @@ export const useApp = create<State>((set) => ({
 /** The story beat a #story-N hash names (1–6), or null. */
 export const parseStep = (): number | null => { const m = /^#story-(\d)$/.exec(location.hash); return m ? Math.min(6, Math.max(1, Number(m[1]))) : null; };
 export const initialStep = parseStep();
+// ?year= has been applied (and remembered): drop it from the URL so a later switch, not the link, wins on reload
+try {
+  const u = new URL(location.href);
+  if (u.searchParams.has('year')) { u.searchParams.delete('year'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); }
+} catch { /* history unavailable: the parameter stays, harmlessly */ }
 // remember the year switch's choice for the next visit (and the next deep link)
 useApp.subscribe((s, prev) => { if (s.evalWindow !== prev.evalWindow) rememberWindow(s.evalWindow); });
 if (initialStep) useApp.setState({ step: initialStep });
