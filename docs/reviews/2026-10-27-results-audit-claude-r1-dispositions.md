@@ -1,0 +1,97 @@
+# Dispositions: results audit r1 (Claude, substituting for Astra)
+
+- **Audit:** `.superpowers/sdd/2026-10-27-stage3-freeze-test/results-audit-claude-r1.md` (main checkout, untracked). 31 findings: 0 critical, 5 major (F1–F5), 26 minor (F6–F31). Verdict: `not_ready`, with "ready_with_minor_fixes" once F1–F5 are fixed and the placeholders filled.
+- **Why Claude, not Astra:** the planned independent Codex (Astra) results audit could not run because the Codex credits are exhausted. A fresh Claude session ran the same prompt (`origin/review/results-audit:docs/reviews/prompts/2026-10-27-results-audit-astra-r1.md`) read-only, with the packet (`origin/review/results-audit:docs/reviews/2026-10-27-results-audit-packet.md`) as a map only. This is a substitution, not an independent cross-model review; the owner should weigh it that way.
+- **Audited:** origin/main `605e845` (the sealed test-year run 20261028T012253Z and its read log).
+- **Dispositions by:** the pitch rewrite task (P2), Tue 2026-10-27 night, on branch `pitch/post-test`. Nothing in `results/`, `config/` or `lab/` was changed, and nothing reopened the sealed window.
+- **"Fixed" means fixed in commit `5d4187f`** on `pitch/post-test` (`9390c48` before the rebase onto main), refined in fix round r1 (see the end of this file) (PR "pitch: post-test rewrite + results-audit dispositions"); the file and the change are named in each row.
+
+## Counts
+
+| Disposition | Count | Findings |
+|---|---|---|
+| fixed | 26 | F1–F16, F19–F25, F29–F31 |
+| rejected | 1 | F17 |
+| deferred | 4 | F18, F26, F27, F28 |
+
+Three fixed rows keep a follow-up for the lead: F16 (the frozen manifest text itself), F21 (the decision-log entry, drafted below as D-075) and F29 (the wind/solar null count, which needs a logged read).
+
+## One row per finding
+
+| # | Sev. | Finding (short) | Disposition | Where / why |
+|---|---|---|---|---|
+| F1 | major | QA10 "No" to "did you peek?" is absolute; DK3 same | **fixed** | `qa.md` #19: the audit's wording verbatim ("No values. The test year was opened once, at 19:22 MT on Oct 27, …"; the audit's 19:23 corrected to the read log's 01:22:53Z in fix round r1), with D-052/D-060/D-071/D-072/D-074 as sources. `deck-outline.md` slide 3 note: "…only completeness counts were taken before." Appendix A4 lists the disclosures. |
+| F2 | major | Mobility caveat "not rerun on the test year", but it was | **fixed** | `one-pager.md` findings table: test 3.2% [1.9, 4.7] beside validation 3.2% [2.1, 4.5]. `narrative.md` Beat 4 speaks the test value; the "not rerun" note is gone. `qa.md` #4, `deck-outline.md` slides 5–6. |
+| F3 | major | Demo runs in the test window but speaks validation numbers | **fixed** (option b) | `narrative.md`: every beat runs in the test window and lists its test-mode on-screen values: July 2026 weekdays 6,182 MW (Beat 1), job 5930563#c5 2,098 vs 362 kg (Beat 2), 22.3% [17.3–27.2] (Beat 3), 95% / 3.2–3.9% (Beat 4), the two-schedule storage table (Beat 5), the test hero (Beat 6). Validation numbers are said only with "validation" aloud. Deep links corrected (job `#story-2`, aggregate `#story-3`). Screen copy was read from `origin/s3/post-test` (PR #93, still changing): the script tells the owner to re-check each "on screen" line at the first rehearsal. `deck-outline.md`: all visuals in the test window; `#story-1`/`#story-2` test shots still to take. |
+| F4 | major | "Forecasts follow Utah's daily swing" has no supporting field | **fixed** | `narrative.md` Beat 3 drops the claim (the forecast-skill sentence was later cut for time in fix round r1 and lives in `qa.md` #13 and #16: "beat a seasonal average at the destinations, not reliably in Utah") (validation, `results/outlook.json` on PR #93, D-072). `qa.md` #16 gives the test MAE ratios (W 0.84, L 0.92; no interval) and band coverage 0.69–0.77, and lists the old line under "Don't say". |
+| F5 | major | Storage peak and rush claims not supported as worded | **fixed** | `one-pager.md`, `narrative.md` Beat 5, `qa.md` #34–#36, `deck-outline.md` slide 7: carbon schedule −4.0% but +107 t flat-marginal; peak-aimed schedule rush draw 0.88 → 0.32 MW but CO₂ only 1.0%; yearly peak draw 1.64 → 1.65 MW under both ("peak import does not fall"); validation contrast stated (carbon schedule 1.12 → 1.04 MW, 1 of 12 hours). Labelled test year, pre-registered (D-071, D-073). "Covers" is gone; the line is "aim the battery at carbon or at the rush, not both". |
+| F6 | minor | "Top 1% = 94%" is the validation value | **fixed** | 95% on the test year (94% validation) in `one-pager.md`, `narrative.md` Beat 4, `qa.md` #4, `deck-outline.md` slide 6. |
+| F7 | minor | QA14 "580 vs 90 g/kWh" doesn't match the frozen ranking | **fixed** | `qa.md` #11 and #33: about 573 vs 96 (`config/freeze.json` `s_ranking`, 572.8 vs 95.5); `numbers.md` Q-d gives both rankings. |
+| F8 | minor | "6,654 MW on a July 2025 weekday" describes an average as a day | **fixed** | Now "averaging … over July 2026 weekdays" (test; 6,182 MW) with "6,654 MW over July 2025 weekdays (validation)" in `one-pager.md`, `qa.md` #33, `deck-outline.md` slide 2. |
+| F9 | minor | Scenario numbers are validation-only; test values exist | **fixed** | Test values with validation beside them: `qa.md` #7, #10, #27, #28; `narrative.md` Beat 4 ("about 20 … 35 … both years agree"); `deck-outline.md` slide 6 and A1; `numbers.md` N13–N16, Q-e, Q-g. |
+| F10 | minor | QA6 ranges off by a rounding step; one check not run on test | **fixed** | `qa.md` #7: test 19.9–23.3% (S, W, L over the four rerun checks; the audit's "20.0" rounds 19.946 up, the screen shows 19.9), validation 20.2–23.2% including observed-hours-only; production basis 25.1–25.5% across the movers, S 25.5%, validation only. |
+| F11 | minor | "Best wait-only" placeholder: L_time's upper end exceeds 1% | **fixed** | "under 1% (0.8%)": W_time 0.77% [0.58, 1.00], L_time 0.79% [0.58, 1.02] in `numbers.md` N2; "under 1%" refers to the point estimates. |
+| F12 | minor | Sign convention of the K/W/L − S placeholder | **fixed** | Filled as "candidate minus S, positive = more CO₂ than S": K +9.9 t [+0.8, +19.5], W +3.9 [−4.7, +13.8], L +6.6 [−2.0, +16.7] (`qa.md` #15, `one-pager.md`, `numbers.md` Q-b, which states the field is reference − candidate). |
+| F13 | minor | K − S "excludes zero" is unadjusted; validation's is selection-biased | **fixed** | `qa.md` #15 and #21: "(unadjusted for the three comparisons; borderline)". The H3 wording "no demonstrated aggregate benefit" is kept everywhere. |
+| F14 | minor | Under limited mobility the dynamic policies beat S | **fixed** | `qa.md` #4 bullet: "adding waiting to the ranking is worth about 0.7 points (3.9% vs 3.2%) … because S never waits"; `narrative.md` Beat 4 says the forecast policies reach about 3.9. |
+| F15 | minor | "Sealed test year" covers 358 days | **fixed** | First mention says 358 days in `narrative.md` Beat 3, `one-pager.md` header, `qa.md` header and #1, `deck-outline.md` slides 3 and 5; "never 'a full year'" is a spoken-route rule. |
+| F16 | minor | Two stale test-manifest limitations; DK A3 shows them verbatim | **fixed** (pitch); results text **deferred** | `deck-outline.md` A3 no longer shows the raw list and gives the two corrected lines plus an erratum footnote. The dashboard already restates both lines from `extras.json` (`resolveLimitations`, `origin/s3/post-test` `web/src/lib/data.ts`). `results/test/manifest.json` stays frozen; owner: lead, only if a results erratum file is wanted. |
+| F17 | minor | Stale `common_support.reason` in validation metrics | **rejected** | No action needed: `results/` is frozen, and the dashboard never shows this string; it reads `results/extensions.json` `common_support` (`origin/s3/post-test` `web/src/components/extensions.tsx:41`). No pitch text quotes it. |
+| F18 | minor | Validation run id changed (122317Z → 160656Z) without a decision entry | **deferred**, then done by the lead: D-075 and the `AGENTS.md` `make profile` example are on main (#98, 44b5a6a) | Re-checked for this disposition: `results/metrics.json` at 2e6b6fc (run 20261027T122317Z) and at d186fd0 (run 20261027T160656Z) have bitwise-identical `co2_kg` for all 9 policies and identical saving, saving interval and kg interval in all 72 contrast blocks (24 contrasts × 3 block lengths); current `results/metrics.json` (160656Z) matches too. Draft text below. |
+| F19 | minor | QA17 η sweep has no test field | **fixed** | `qa.md` #34: "4.0% … (validation 3.5%; 2.0–4.2% across 75–90% efficiency)", the sweep labelled validation; `numbers.md` Q-u. |
+| F20 | minor | QA20 water labelled validation-only; it also ran on test | **fixed** | `qa.md` #41 and `deck-outline.md` A2: both years; −18.6% without hydro evaporation, +174% (about 2.7×) with it, test; no water-saving claim (`extras.json` `water.claim`). |
+| F21 | minor | Cohort exclusion not disclosed | **fixed** (pitch); decision entry **deferred**, then done by the lead (D-075, #98) | `one-pager.md` Limits: "Arrivals after Oct 15, 2026, 23:04 UTC (8,003 jobs, 3.1% of GPU-hours) are excluded … the same jobs for every policy (validation: 1,203 jobs, 3.9%)". `qa.md` #23, `deck-outline.md` A4, `numbers.md` Q-m. Method note drafted below. |
+| F22 | minor | Publication-delay wording drops "assumed" and "revised snapshot" | **fixed** | `one-pager.md` Approach: "under assumed EIA publication delays (2 h demand, 48 h wind and solar, 96 h carbon)" (the forecasts' envelopes, `results/overview.json` `forecast_issues.envelope_h`; wind and solar are the fuel-mix series the audit calls "48 h fuel mix"); Limits: "on a revised EIA snapshot; real-time data vintages are not reconstructed, and the publication delays are assumptions". `deck-outline.md` slide 3 box 2. |
+| F23 | minor | Cost statements depend on the unmerged price lens | **fixed** | The price lens is pitched as a validation-year **wholesale scenario** with its source `results/prices.json` (merged in #93): $16–22k more a year, +7–9%, about $21 per attributed tonne for S, PG&E node unregistered with SCE alongside (`qa.md` #29–#31, `one-pager.md`, `deck-outline.md` slide 8). "Cost was not evaluated" is gone. |
+| F24 | minor | QA13 data sources incomplete | **fixed** | `qa.md` #46 and `deck-outline.md` A5 add Open-Meteo (toughest days), NREL/LBNL water factors and CAISO/WEIM prices. |
+| F25 | minor | Torus / RMP / "Operation Gigawatt" claim has no source | **fixed: removed pending owner source** | Removed from every pitch doc: `grep -i "gigawatt\|MOU\|rocky mountain" docs/pitch` now finds only the "removed pending an owner source" note in `qa.md` #33 and "scales to gigawatts" under a Don't-say line. `qa.md` #33 keeps only "Utah is Torus's home grid", resting on "Based in South Salt Lake, Utah" in `docs/brief.md`. The owner may restore the claim with a public source (the brief lists torus.co news, 2025-02-07, without a URL). |
+| F26 | minor | Packet inaccuracies (log path, input count, prices.json, 0.7 kWh) | **deferred** (lead, only if the packet is reused) | The packet lives on `origin/review/results-audit` and is not reused by the pitch. The pitch uses 0.72 kWh per GPU-hour (`numbers.md` Q-af). |
+| F27 | minor | AGENTS.md says the completeness tool never reads sealed values | **deferred** (lead; rules file) | Proposed wording for `AGENTS.md` (`make freeze` bullet): "…which inspects value validity (present, finite, non-negative) and returns counts and timestamps only; no value is printed or stored, and every call is logged." The pitch's QA wording says "we only counted which test hours were present". |
+| F28 | minor | S and W have identical PACE rush and peak load on test | **deferred** (lead: one-line check of the S and W ledgers in `runs/test/` for the 14 rush hours) | Plausible (almost all mobile jobs leave PACE under both, and validation S/W differ: −0.263 vs −0.255 MW). The pitch quotes S only, so no pitch change unless the check fails. |
+| F29 | minor | Missing wind/solar count as zero in net load | **fixed** (caveat); the data check stays open | `one-pager.md` Limits: "missing wind or solar hours count as zero in net load". The null count for the 14 test rush hours needs a logged read and was not done here. |
+| F30 | minor | QA16 "residual Utah rush-hour load" ambiguous | **fixed** | `qa.md` #32 names the case: "if only jobs of ≤ 8 GPUs move, the cluster still draws 0.83 MW from Utah in the 14 tightest test-year hours" (validation 1.04 MW); `deck-outline.md` slide 8. |
+| F31 | minor | BPAT share must use S's own share | **fixed** | 70% (70.5%, from `policies.S.metrics.execution_kwh_by_site`), validation 69%, in `narrative.md` Beat 3, `one-pager.md`, `deck-outline.md` slide 5. The `framing` text's 67% is L's share and is not quoted. |
+
+## Draft decision text for the lead (D-075)
+
+The lead commits this to `docs/decisions.md`; this PR does not edit the decision log.
+
+```markdown
+## D-075 · 2026-10-27 <time> MT · Reference validation run is 20261027T160656Z; the cohort exclusion, disclosed
+- **Decided by:** the lead, on the results audit (Claude r1, substituting for Astra), findings F18 and F21.
+- **Reference validation run (F18).**
+  - D-056 recorded run 20261027T122317Z (canonical metrics f45821c0…). The T9 re-run 20261027T160656Z (commit d186fd0, PR #40; canonical metrics e6ad2635…) superseded it as the reference: `results/metrics.json`, `config/freeze.json` `validation_run` and D-074 all name 160656Z.
+  - The numbers did not change: `results/metrics.json` at 2e6b6fc (122317Z) and at d186fd0 (160656Z) have bitwise-identical `co2_kg` for all nine policies and identical savings, saving intervals and kg intervals in all 72 contrast blocks (24 contrasts × blocks 2, 4, 8). Strings, keys and the A9 count changed. So S's selection (D-074) is unaffected.
+  - The independent rebuild of the final lab tree reproduced 160656Z exactly (D-074, `docs/evidence/rebuild-20261027.json`).
+  - 122317Z stays preserved as recorded in D-057. The `AGENTS.md` `make profile` example now points at 160656Z.
+- **Cohort exclusion (F21), a method note.**
+  - Rule (spec F13.2 step 2, F14.1 scenario set; `lab/src/gridpilot/cohort.py:prefix_cohort`): for each of six workload-only scenarios (primary, batch delay 0 h and 24 h, no flexible jobs, all candidates flexible, 1.25× home capacity), find the first arrival whose deadline exceeds the cutoff F; A is the earliest of these; every arrival in [A, F) is excluded for every policy. Grid values play no part (`recorded_before_grid_scoring: true`).
+  - Test: A = 2026-10-15T23:03:57Z, F = 2026-10-25T00Z; 8,003 of 896,227 jobs excluded (382,074 GPU-h, 3.1% of the stream's GPU-hours); cohort 888,224. Validation: A = 2025-10-16T07:49:42Z, F = 2025-10-24T00Z; 1,203 jobs (460,606 GPU-h, 3.9%); cohort 917,909. Sources: `results/test/manifest.json` and `results/manifest.json` `cohort_record`; `metrics.json` `cohort`.
+  - Why the count rose: the workload repeats one 161-day trace cycle, so each window's tail lands 43 days later in the cycle; the validation tail fell in the trace's quietest stretch, the test tail in a busy one. By GPU-hours the exclusion fell. It is the same rule and code on both windows, fixed before either was scored.
+  - Effect: none between policies (every contrast is paired on the same cohort). The headline covers arrivals 2025-11-01 → 2026-10-15T23:04Z, executed to F.
+  - Disclosure (spec: "excluded arrivals are counted and disclosed"): the one-pager's Limits and the Q&A carry it from the pitch rewrite (PR "pitch: post-test rewrite + results-audit dispositions").
+- **Evidence:** the audit, `.superpowers/sdd/2026-10-27-stage3-freeze-test/results-audit-claude-r1.md` (F18, F21, "The cohort exclusion"); its dispositions, `docs/reviews/2026-10-27-results-audit-claude-r1-dispositions.md`.
+```
+
+## Other inputs adopted in the same rewrite
+
+- **Sol's agent-angle review** (`agent-angle-sol-r1.md`, scratchpad; verdict `not_ready` for the agent angle): no product agent. One sentence on the agent-built process, verbatim, on the method slide (`deck-outline.md` slide 3), in Beat 3 and in `qa.md` #49. "Baseline to pilot" replaces "the one to deploy". "Forecast-based search showed no demonstrated aggregate routing benefit over the fixed ranking in this replay" is the only wording of the null result; "simple rules beat AI" is under "Don't say". Its finding 1 (the 26.4 endpoint) is moot: every doc uses 22.3% [17.3, 27.2] at b = 4.
+- **The adversarial Q&A drill** (PR #89): its useful answers are folded into `qa.md` with test-year numbers (#2, #3, #8–#13, #15–#18, #20–#30, #34–#47). Its proposed `qa.md` edits are all applied (cost, mobility W, production-basis range, Utah forecast skill, the seal answer, the unsourced MOU, the storage fills, the fast-swings wording, the ten-region scope). Its Q51 and Q14 placeholders are filled from `extras.json` (toughest days, seasons).
+
+## Fix round r1 (pitch review, `ready_with_minor_fixes`)
+
+Review: `.superpowers/sdd/2026-10-27-stage3-freeze-test/pitch-review.md` (main checkout), on PR #94 at 8ee9200. Branch rebased onto main (44b5a6a: #93, #97 live outlook, #98 D-075 merged). All 11 findings fixed:
+
+| # | Finding | Fix |
+|---|---|---|
+| M1 | Timing has no slack; cut list not real | `narrative.md`: 598 spoken words with numerals counted as spoken (was 676 written, about 727 spoken), about 4:00 at 150 wpm, about 4:15 with clicks. Cuts c1–c6 are pre-marked in the script with a table of spoken word counts (45 words, about 18 s; 50 with c6). Header and beat table updated. The mobility caveat, "attributed, not avoided", the deadline caveat and the agent sentence stay. |
+| m1 | QA #1 lacks the mobility caveat | `qa.md` #1 adds "…if large jobs can move, and 3.2% if only jobs of ≤ 8 GPUs can"; Beat 3 now ends "…if the big jobs can move". |
+| m2 | Stale PR #93 / branch labels; outlook now live | Every "(PR #93)" and branch label removed from `docs/pitch/`. `numbers.md` and `narrative.md` describe `results/outlook.json` as the live outlook issued Oct 27 10:00 MT with Utah at its seasonal average; `qa.md` #16 says so and adds a judging-day line. |
+| m3 | Beat 4 note misdescribes the test map | The map shows the test-year replay week; only the toggle and flexibility budget are validation-only. |
+| m4 | Citations for delay, transfer, fully-busy power | `illustrative_job.max_delay_s`, `assumptions.allowed_delay_s.Pretrain`, `assumptions.transfer_time_s`; fully busy = 2,288 × 0.6 × 1.2 = 1.647 MW (narrative Beat 1–2 comments, `numbers.md` N8, N10). |
+| m5 | Opening time inconsistent | 19:22 MT everywhere (`qa.md` #19, `deck-outline.md` A4, `numbers.md` Q-ae, F1 row above). |
+| m6 | Seal disclosures incomplete | `deck-outline.md` A4 adds the empty `data/.wtest` (D-074) and says "column names and node list"; `qa.md` #19 uses the same words. |
+| m7 | "With Torus" reads as an agreement | Now "what we'd want to test with a storage partner (such as Torus)" in `one-pager.md` Next steps, `qa.md` #40 and #51, `deck-outline.md` slides 7–8. |
+| m8 | QA #24 accepts a false premise | Opens with "Inside the scored window, Utah has 1 filled hour and California 87; the 50-hour gap sits after the cutoff" (D-074). |
+| m9 | QA #47 generalises waiting | "time-shifting this workload in Utah, with up to 6 hours' delay, is under 1% (1.5–1.6% with 24 hours)". |
+| m10 | First "sealed test year" lacks 358 days | Beat 1 now says "our sealed, 358-day test year". |
