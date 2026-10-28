@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GridPilot deck</title>
+<meta name="description" content="GridPilot pitch deck: compute follows cleaner power. Offline, self-contained; numbers from the committed results JSON (docs/pitch/numbers.md).">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<!-- Keys: ← → space / PageUp PageDown, Home End, 1–8 for the slides, 9 for the appendix, N notes, F full screen.
+     Every number tagged data-n is checked against data.js, which tools/deck-data.mjs builds from results/. -->
+<div id="viewport"><div id="stage" role="region" aria-roledescription="slide deck" aria-label="GridPilot pitch">
+
+<!-- 1 · Title -->
+<section class="slide s-title" data-label="1" data-title="Title">
+  <div>
+    <h1 class="h">GridPilot: compute follows cleaner power</h1>
+    <p class="lede">When and where should a Utah AI job run? We measured which lever matters.</p>
+    <p class="what">A day-ahead traffic report for the grid, plus a router for AI jobs, tested in a simulated replay on real Utah grid data and a real GPU-cluster trace.</p>
+  </div>
+  <figure style="margin:0">
+    <div class="crop card" data-crop="500 150 770 620" data-src-w="1728"><img src="img/test-control-1728.png" alt="The GridPilot Control room on the test year: the four sites coloured by carbon at 7 PM, Utah orange and the Northwest green, with the router's arc from Utah to the Northwest."></div>
+    <figcaption>The Control room, test year: the router's work leaving Utah for the Northwest in one replay week.</figcaption>
+  </figure>
+  <p class="event">Hard Tech Week 2026, Torus bounty: Energy × AI infrastructure</p>
+  <div class="notes">
+    <h2>Opening</h2>
+    <p>GridPilot is a day-ahead traffic report for the grid, plus a router for AI jobs, tested in a simulated replay on real Utah grid data and a real GPU-cluster trace.</p>
+    <p class="meta">Before you start: dashboard at http://127.0.0.1:4173/ (<code>npm run preview</code>), switch set to "Test year (sealed, opened once)".</p>
+  </div>
+</section>
+
+<!-- 2 · Rush hour (Beat 1) -->
+<section class="slide" data-label="2" data-title="Utah's grid has a rush hour" data-link="#story-1" data-link-label="Story, step 1">
+  <h1 class="h">Utah's grid has a rush hour</h1>
+  <p class="lede">As solar fades, Utah's net load peaks in the evening; the clean hours aren't the rush hours.</p>
+  <div class="rush-grid">
+    <div class="stat">
+      <span class="num"><span data-n="net_peak">6,182</span><span class="unit">MW</span></span>
+      <p class="lab">net-load peak at <span data-n="net_peak_h">8 PM</span>, mean of July 2026 weekdays in PACE, the balancing area serving much of Utah. Demand itself peaks at <span data-n="dem_peak_h">5 PM</span>.</p>
+      <p class="small" style="margin-top:28px">In <span data-n="regions_dirtier">9</span> of <span data-n="regions_n">10</span> US regions we profiled, the rush hours are dirtier than average; Bonneville's are cleaner (<span data-n="bpat_rush">−8.0</span>%). Validation year.</p>
+    </div>
+    <div class="chart-wrap">
+      <div class="legend" aria-hidden="true"><span><i style="border-color:#a8988b"></i>Demand</span><span><i style="border-color:var(--ink);border-top-width:3px"></i>Net load (demand − wind − solar)</span><span><i class="area" style="background:var(--solar)"></i>Solar</span><span><i class="hatch"></i>Rush <span data-n="rush">7–11 PM</span></span></div>
+      <svg id="ch-july" width="1000" height="470" role="img" aria-label="Utah, July 2026 weekdays: demand, net load and solar by hour"></svg>
+      <div class="tip" id="tip-july"></div>
+    </div>
+  </div>
+  <div class="foot"><span class="chip k">test year (sealed, opened once, <span data-n="days">358</span> days)</span><span class="chip">observed · EIA-930</span><span class="sp"></span></div>
+  <div class="notes">
+    <h2>Beat 1 · 0:00–0:40 · show #story-1</h2>
+    <p>This is Utah's grid, PACE, which serves much of Utah, on an average July weekday of our sealed, 358-day test year. Demand peaks around five. As solar fades, net load, what the rest of the fleet must carry, climbs to about sixty-two hundred megawatts at 8 PM: the grid's rush hour. <span class="cut" data-c="c1">In our validation year, nine of ten US regions had dirtier rush hours; Bonneville was the exception.</span></p>
+    <p>Picture a hypothetical 2,300-GPU AI cluster here. Our goal: cut the CO₂ attributed to its work, same work, same deadlines.</p>
+    <p class="meta">"As solar fades", never "after sunset". The cluster size (2,288 GPUs, about 1.6 MW fully busy) is assumed.</p>
+  </div>
+</section>
+
+<!-- 3 · How it works -->
+<section class="slide" data-label="3" data-title="How it works">
+  <h1 class="h">How it works</h1>
+  <p class="lede">Forecast tomorrow, route each job, replay the year, count every kilowatt-hour.</p>
+  <ol class="pipe" style="padding:0">
+    <li class="card"><h3>Data</h3><p>EIA-930 hourly grid data and EIA hourly CO<sub>2</sub> estimates, plus the Acme GPU-cluster trace.</p></li>
+    <li class="card"><h3>10 AM day-ahead forecast</h3><p>Only data published under assumed EIA delays: 2 h demand, 48 h wind and solar, 96 h carbon.</p></li>
+    <li class="card router"><h3>The router</h3><p>Stay, wait or move. Every site has finite spare GPUs; every move pays a transfer delay and energy.</p></li>
+    <li class="card"><h3>Exact replay</h3><p>A gang-job simulator runs every policy on identical work, with Utah's slot kept as each job's fallback.</p></li>
+    <li class="card"><h3>Labelled results</h3><p>Every number is observed, measured, modeled, forecast, assumed or simulated, and traces to a run. Then the dashboard.</p></li>
+  </ol>
+  <p class="seal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg><span>Sealed test year: <span data-n="days">358</span> days, opened once after a tagged freeze; <span data-n="reads">69</span> logged reads. <span data-n="jobs">888,224</span> jobs replayed.</span></p>
+  <p class="agent">AI agents helped build and review it. We froze the configuration before opening the holdout once; the routing policy remains a fixed ranking.</p>
+  <div class="foot"><span class="chip">simulated replay</span><span class="chip">attributed, not avoided</span><span class="sp"></span></div>
+  <div class="notes">
+    <h2>Beat 3, first part · 1:14 · stay on this slide or show #story-3</h2>
+    <p>We replayed 888 thousand jobs against hourly EIA carbon data, in a simulated replay. AI agents helped build and review it. We froze the configuration before opening the holdout once; the routing policy remains a fixed ranking.</p>
+    <p class="meta">If asked: every number carries a label: observed, measured, modeled, forecast, assumed or simulated. The test year stayed sealed until the configuration was frozen; only completeness counts were taken before.</p>
+  </div>
+</section>
+
+<!-- 4 · One job (Beat 2) -->
+<section class="slide" data-label="4" data-title="One job: stay, wait or move" data-link="#story-2" data-link-label="Story, step 2">
+  <h1 class="h">One job: stay, wait or move</h1>
+  <p class="lede">For a big training job, waiting buys almost nothing; moving changes everything.</p>
+  <p class="job-meta">Job 5930563#c5 from a public GPU-cluster trace, replayed onto Utah: <span data-n="job_gpus">72</span> GPUs, <span data-n="job_h">104</span> hours of pre-training.</p>
+  <div class="opts">
+    <div class="opt card"><h3>Stay</h3><div class="where">Utah, PACE</div>
+      <div class="num"><span data-n="job_stay">2,098</span><span class="unit">kg CO<sub>2</sub></span></div>
+      <div class="bar" style="width:100%;background:var(--dirty)"></div>
+      <p class="note">Runs as booked, on Utah's grid.</p></div>
+    <div class="opt card wait"><h3>Wait</h3><div class="where">Utah, up to <span data-n="job_delay_h">6</span> hours late</div>
+      <div class="num" style="font-size:48px;margin-top:44px">almost nothing</div>
+      <p class="note">Six hours of allowed delay against a 104-hour run: the job still runs through Utah's days and evenings.</p></div>
+    <div class="opt card move"><h3>Move</h3><div class="where">the Northwest, Bonneville hydro</div>
+      <div class="num"><span data-n="job_nw">362</span><span class="unit">kg CO<sub>2</sub></span></div>
+      <div class="bar" id="bar-nw" style="background:var(--clean)"></div>
+      <p class="note">Half an hour (<span data-n="transfer_min">30</span> min) of transfer, then a hydro-heavy grid. Placed before it starts; nothing migrates mid-run.</p></div>
+  </div>
+  <div class="foot"><span class="chip k">test year (sealed, opened once, <span data-n="days">358</span> days)</span><span class="chip">option CO<sub>2</sub> modeled</span><span class="chip">placements simulated</span><span class="chip">transfer and delay assumed</span><span class="sp"></span></div>
+  <div class="notes">
+    <h2>Beat 2 · 0:40–1:14 · show #story-2</h2>
+    <p>One real job from a public GPU-cluster trace, replayed onto Utah: 72 GPUs, 104 hours of pre-training.</p>
+    <p>Stay: about twenty-one hundred kilograms of attributed CO₂.</p>
+    <p>Wait: it may start up to six hours late, which buys almost nothing against a 104-hour run.</p>
+    <p>Move: half an hour of transfer, then the Northwest's hydro-heavy grid, about 360 kilograms. Moving means placing a job before it starts; nothing migrates mid-run.</p>
+    <p class="meta">Picked by a rule fixed before its outcome was seen (GPU-hour-weighted median, D-054); on the test year that is #c5, not the validation #c3. Don't quote the Decision cockpit's typical-day number.</p>
+  </div>
+</section>
+
+<!-- 5 · Moving beats waiting (Beat 3) -->
+<section class="slide" data-label="5" data-title="Moving beats waiting" data-link="#story-3" data-link-label="Story, step 3">
+  <h1 class="h">Moving beats waiting</h1>
+  <div class="hl-grid">
+    <div class="hero">
+      <span class="num"><span data-n="s">22.3</span><span class="unit">%</span></span>
+      <p class="what">less attributed CO<sub>2</sub> on the sealed test year: policy S, the fixed clean-region ranking, against every job staying in Utah.</p>
+      <p class="ci">Its own 95% interval <b><span data-n="s_lo">17.3</span>–<span data-n="s_hi">27.2</span>%</b> <span class="val">· validation <span data-n="s_val">22.6</span>%</span></p>
+      <p class="caveat">If only jobs of ≤ 8 GPUs may move:<br><span style="white-space:nowrap"><span class="num"><span data-n="mob_s">3.2</span>%</span> [<span data-n="mob_lo">1.9</span>, <span data-n="mob_hi">4.7</span>]</span> <span class="val" style="color:var(--ink-3);font-size:17px;margin-left:8px">test year; validation <span data-n="mob_val">3.2</span>%</span></p>
+    </div>
+    <div>
+      <p class="fig-title">Saving vs every job staying in Utah, each policy's own 95% interval</p>
+      <p class="fig-sub">Test year, 4-week blocks. Waiting in Utah alone: under 1% (<span data-n="wait">0.8</span>%). <span data-n="nw_share">70</span>% of the work S ran outside Utah ran in the Northwest.</p>
+      <div class="chart-wrap"><svg id="ch-int" width="740" height="380" role="img" aria-label="Saving in attributed CO2 by policy with 95% intervals"></svg><div class="tip" id="tip-int"></div></div>
+    </div>
+  </div>
+  <p class="footline">Simulated replay · <span data-n="days">358</span> days · attributed (EIA consumption-basis) emissions, not avoided · deadlines met by construction (baseline bookings) · exact declared runtimes; runtime uncertainty untested.</p>
+  <div class="foot"><span class="chip k">test year (sealed, opened once, 358 days)</span><span class="chip">simulated</span><span class="chip">baseline to pilot</span><span class="sp"></span></div>
+  <div class="notes">
+    <h2>Beat 3 · 1:14–2:12 · show #story-3</h2>
+    <p>That fixed clean-region ranking, policy S, cut attributed emissions 22.3 percent, interval 17.3 to 27.2. <span class="cut" data-c="c6">Validation was 22.6.</span> Waiting in Utah alone: under 1 percent. 70 percent of the work that left Utah ran in the Northwest.</p>
+    <p>These are attributed emissions, not avoided. Deadlines are met by construction, through baseline bookings, with exact declared runtimes.</p>
+    <p>Forecast-based search showed no demonstrated aggregate routing benefit over the fixed ranking in this replay. So the ranking is the baseline to pilot, if the big jobs can move.</p>
+    <p class="meta">The interval is S's own estimate, never a span across policies. Never "a full year", "30×", "deploy", "simple rules beat AI". "Isn't 3.9 better than 3.2?": qa.md #4.</p>
+  </div>
+</section>
+
+<!-- 6 · Mobility (Beat 4) -->
+<section class="slide" data-label="6" data-title="The condition: can the big jobs move?" data-link="#story-4" data-link-label="Story, step 4">
+  <h1 class="h">The condition: can the big jobs move?</h1>
+  <p class="lede">The saving lives in a few large jobs. If they can't move, most of it goes.</p>
+  <div class="mob-grid">
+    <div>
+      <p class="fig-title">The largest 1% of jobs use <span data-n="top1">95</span>% of the energy</p>
+      <p class="fig-sub">Test year, jobs ranked by declared GPU-hours (validation 94%).</p>
+      <svg id="ch-top1" width="560" height="200" role="img" aria-label="The largest 1% of jobs are 1% of jobs and 95% of the energy"></svg>
+      <p class="body" style="margin-top:26px">Other changes move the result much less: a two-hour transfer still gives about <span data-n="tr120">20</span>%; twice the spare capacity, <span data-n="cap1024">35</span>%. Both years agree.</p>
+    </div>
+    <div>
+      <p class="fig-title">S's saving vs every job staying in Utah, by which jobs may move</p>
+      <p class="fig-sub">Bars: test year with its 95% interval; grey: validation. The forecast policies, which can also wait, reach <span data-n="mob_w">3.9</span>% when only small jobs move.</p>
+      <div class="chart-wrap"><svg id="ch-mob" width="760" height="300" role="img" aria-label="S saving when all flexible jobs may move vs only jobs of 8 GPUs or fewer"></svg><div class="tip" id="tip-mob"></div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="chip k">test year (sealed, opened once, 358 days)</span><span class="chip">mobility assumed, not measured</span><span class="chip">scenario estimates</span><span class="sp"></span></div>
+  <div class="notes">
+    <h2>Beat 4 · 2:12–2:53 · show #story-4</h2>
+    <p>In this workload, the largest 1 percent of jobs use 95 percent of the energy.</p>
+    <p>If only jobs of 8 GPUs or fewer may move, S's saving falls from 22.3 percent to 3.2; the forecast policies, which can also wait, reach 3.9. <span class="cut" data-c="c2">Our 72-GPU job would stay home.</span></p>
+    <p>Other changes matter much less: a two-hour transfer still gives about 20 percent; twice the spare capacity, 35. <span class="cut" data-c="c3">Both years agree.</span></p>
+    <p>So whether large training jobs can move is the lever. Here it's an assumption, not a measurement.</p>
+    <p class="meta">Say "ran outside Utah", not "moved". Validation was 22.6 → 3.2 [2.1–4.5]; only if asked.</p>
+  </div>
+</section>
+
+<!-- 7 · Storage (Beat 5) -->
+<section class="slide" data-label="7" data-title="Move what you can, store for what you can't" data-link="#story-5" data-link-label="Story, step 5">
+  <h1 class="h">Move what you can, store for what you can't</h1>
+  <p class="lede">Aim the battery at carbon or at the rush, not both. An illustrative 4 MWh / 1 MW battery at the Utah site, on two fixed schedules registered before the test year was opened.</p>
+  <table class="st">
+    <thead><tr><th>Test year, every job in Utah</th><th>Aimed at carbon<span>the headline schedule</span></th><th>Aimed at the rush<span>peak-aimed schedule (D-073)</span></th></tr></thead>
+    <tbody>
+      <tr><th>Cut in the cluster's attributed CO<sub>2</sub></th><td class="good"><span class="num"><span data-n="st_c_cut">4.0</span>%</span></td><td><span class="num"><span data-n="st_p_cut">1.0</span>%</span></td></tr>
+      <tr><th>On a flat marginal basis, storage losses</th><td class="adds">add about <b class="adds"><span data-n="st_c_flat">107</span> t</b> CO<sub>2</sub></td><td class="adds">add about <b class="adds"><span data-n="st_p_flat">77</span> t</b> CO<sub>2</sub></td></tr>
+      <tr><th>Average draw in Utah's <span data-n="st_rush_n">14</span> tightest hours</th><td><span data-n="st_rush_before">0.88</span> → <b><span data-n="st_c_rush_after">0.55</span> MW</b><svg class="dumb" data-from="0.879" data-to="0.552" width="200" height="22"></svg><br><span class="small"><span data-n="st_c_hours">6</span> of 14 rush hours discharging</span></td><td><span data-n="st_rush_before">0.88</span> → <b><span data-n="st_p_rush_after">0.32</span> MW</b><svg class="dumb" data-from="0.879" data-to="0.317" width="200" height="22"></svg><br><span class="small"><span data-n="st_p_hours">10</span> of 14 rush hours discharging</span></td></tr>
+      <tr><th>The site's yearly peak draw</th><td><span data-n="st_peak_before">1.64</span> → <span data-n="st_peak_after">1.65</span> MW: charging fills the connection</td><td>1.64 → 1.65 MW: the same</td></tr>
+    </tbody>
+  </table>
+  <p class="relief">Moving the router's work also adds <span data-n="relief_bpat">0.20</span> MW in Bonneville and <span data-n="relief_ciso">0.04</span> MW in California during Utah's rush.</p>
+  <div class="foot"><span class="chip k">test year (sealed, opened once, 358 days)</span><span class="chip">illustrative hourly model</span><span class="chip">dispatch simulated</span><span class="chip">battery and η 0.85 assumed</span><span class="sp"></span></div>
+  <div class="notes">
+    <h2>Beat 5 · 2:53–3:45 · show #story-5</h2>
+    <p>What about the work that can't move? We put an illustrative 4 megawatt-hour, 1 megawatt battery at the Utah site, with two fixed schedules registered before we opened the test year.</p>
+    <p>Aimed at carbon, it cuts the cluster's attributed CO₂ about 4 percent, but on a flat marginal factor its losses add about 107 tonnes.</p>
+    <p>Aimed at the rush, Utah's 14 tightest hours, it cuts the cluster's average draw from 0.88 to 0.32 megawatts, but CO₂ by only 1 percent. Neither lowers the site's yearly peak: charging fills the connection.</p>
+    <p>So aim the battery at carbon or at the rush, not both. <span class="cut" data-c="c4">Seconds-scale buffering is outside our hourly model; that's the next interface.</span></p>
+    <p class="meta">The rush here is the 14 test-year hours at or above the training years' top-1% net load (7,207 MW), not the evening band of slide 2. Validation: carbon schedule 3.5%. Never call the hindsight heuristic a bound; don't name Torus products as modeled; no price on MW.</p>
+  </div>
+</section>
+
+<!-- 8 · Close (Beat 6) -->
+<section class="slide" data-label="8" data-title="What an operator does tomorrow" data-link="#control" data-link-label="Control room">
+  <p class="small" style="margin:0 0 14px;font-size:18px">What an operator does tomorrow</p>
+  <h1 class="close-line">First identify what work can move. Then size storage for the Utah load that can't, aimed at carbon or at the rush.</h1>
+  <ol class="steps" style="padding:0">
+    <li class="card"><h3>Tag movable jobs</h3><p>Measure which real jobs can move: checkpointing, data size, residency. Mobility decides the result.</p></li>
+    <li class="card"><h3>Pilot the fixed ranking</h3><p>The fixed clean-region ranking is the baseline to pilot: <span data-n="s">22.3</span>% on the test year, <span data-n="mob_s">3.2</span>% if only small jobs move.</p></li>
+    <li class="card"><h3>Size storage for the rest</h3><p>For the residual Utah load: <span data-n="residual_rush">0.83</span> MW in the rush if only ≤ 8-GPU jobs move.</p></li>
+  </ol>
+  <p class="ln"><b>Limits</b><span>Simulated replay; mobility assumed; no reservation-free or runtime-overrun test; cost only as a wholesale scenario (validation: +<span data-n="price_lo">7</span>–<span data-n="price_hi">9</span>%, about $<span data-n="price_t">21</span> per attributed tonne).</span></p>
+  <p class="ln"><b>Next</b><span>Measure which real jobs can move, with an operator; couple the router's residual Utah load to storage dispatch; with a storage partner, test seconds-scale buffering on measured cluster power.</span></p>
+  <p class="thanks">Thank you</p>
+  <div class="foot"><span class="chip k">test year (sealed, opened once, 358 days)</span><span class="chip">simulated replay</span><span class="chip">attributed, not avoided</span><span class="sp"></span></div>
+  <div class="notes">
+    <h2>Beat 6 · 3:45–4:15 · show #control</h2>
+    <p>In a simulated replay of a sealed test year, a fixed clean-region ranking cut the attributed emissions of the same work 22.3 percent, and 3.2 if only small jobs can move. <span class="cut" data-c="c5">Every assumption is one click away.</span></p>
+    <p>For an operator: first find which work can move. Then size storage for the Utah load that can't, aimed at carbon or at the rush. The fixed ranking is the baseline to pilot. Thank you.</p>
+    <p class="meta">Q&amp;A: appendix slides follow (key 9). One click away: the Control room's policy table, the method drawer's test-year sections, Outlook, Prices (validation, wholesale scenario), Regions (validation).</p>
+  </div>
+</section>
+
+<!-- A1 · drift -->
+<section class="slide appx" data-label="A1" data-title="Does it hold?">
+  <p class="tag">Appendix, for Q&amp;A</p>
+  <h1 class="h">Does it hold? Validation beside the sealed test year</h1>
+  <table class="tbl" id="tbl-drift">
+    <thead><tr><th>S vs every job in Utah, 4-week blocks</th><th>Validation</th><th>Test (sealed)</th></tr></thead>
+    <tbody></tbody>
+    <tbody><tr><td>Production-basis repricing</td><td>25.5%</td><td class="na">validation only</td></tr><tr><td>Observed hours only (common support)</td><td>22.5%</td><td class="na">validation only</td></tr></tbody>
+  </table>
+  <p class="small" style="margin-top:18px;max-width:1200px">One-axis scenarios, each a pre-registered secondary run on the test year (D-071). Scenario estimates, not a confidence interval. Sources: results/test/extras.json drift table; results/extensions.json.</p>
+  <div class="foot"><span class="chip">simulated</span><span class="chip">scenario estimates</span><span class="sp"></span></div>
+  <div class="notes"><h2>A1 · drift</h2><p class="meta">Phases 49/98, 2 h transfer, 24 h delay, capacity 0 and 1,024, mobility ≤ 8 GPUs. Production-basis and observed-hours-only rows are validation only.</p></div>
+</section>
+
+<!-- A2 · water -->
+<section class="slide appx" data-label="A2" data-title="Water, illustrative">
+  <p class="tag">Appendix, for Q&amp;A</p>
+  <h1 class="h">Water, illustrative: no water-saving claim</h1>
+  <table class="tbl">
+    <thead><tr><th>S vs every job in Utah, generation-associated water</th><th>Validation</th><th>Test (sealed)</th></tr></thead>
+    <tbody>
+      <tr><td>Without hydro evaporation</td><td><span data-n="water_ex_val">−20.5</span>%</td><td><span data-n="water_ex">−18.6</span>%</td></tr>
+      <tr><td>With hydro evaporation</td><td>+<span data-n="water_with_val">145</span>%</td><td>+<span data-n="water_with">174</span>%</td></tr>
+    </tbody>
+  </table>
+  <ul class="list" style="margin-top:26px;max-width:1100px">
+    <li>Moving to the Northwest's hydro trades thermal-plant water for reservoir evaporation; the sign depends on whether evaporation counts.</li>
+    <li>Consumption is not withdrawal; production-side weighting; PACE is not the Great Salt Lake watershed.</li>
+    <li>Factors: NREL/TP-6A20-50900 median consumption; direct cooling from the LBNL 2024 WUE range.</li>
+  </ul>
+  <div class="foot"><span class="chip">simulated</span><span class="chip">illustrative</span><span class="sp"></span></div>
+  <div class="notes"><h2>A2 · water</h2><p class="meta">No water-saving claim. Source: results/test/extras.json water.policies.S.change_vs_U; results/water.json.</p></div>
+</section>
+
+<!-- A3 · claim frame and limits -->
+<section class="slide appx" data-label="A3" data-title="The claim frame and the limitations">
+  <p class="tag">Appendix, for Q&amp;A</p>
+  <h1 class="h">The claim frame and the limitations</h1>
+  <p class="frame" id="claim-frame"></p>
+  <ul class="list" style="margin-top:20px;font-size:16px;max-width:1400px">
+    <li>Publication-lagged replay of a revised historical snapshot; real-time vintages are not reconstructed. Publication delays are assumed availability rules.</li>
+    <li>EIA's consumption-basis intensity assigns imports from Canada and Mexico the average US emissions rate.</li>
+    <li>Zero deadline misses hold by construction under baseline bookings; they are not evidence of production reliability. The bookings' effect on realized savings is not signed.</li>
+    <li><span class="errata">Shadow-U ("possible without advance reservations"): cut (D-058).</span><sup>*</sup></li>
+    <li><span class="errata">Phases 49 and 98: run as pre-registered secondary scenarios (results/test/extras.json).</span><sup>*</sup></li>
+    <li>The sealed test year was opened once, through the logged entry point, after the configuration was frozen; nothing was selected or refitted on it. It covers the days up to the snapshot's availability cutoff, not a full twelve months.</li>
+    <li>EIA's 2025–26 emission factors may be a provisional vintage. Baseline bookings are an assumed advance-reservation calendar; not a historical online-router claim. Missing truth hours are filled by pre-registered tiers.</li>
+  </ul>
+  <p class="small" style="margin-top:14px">* Errata: the frozen results/test/manifest.json still reads "pending" for these two lines, written before the extras ran (audit F16). The results file is not edited.</p>
+  <div class="foot"><span class="chip">verbatim claim frame: results/test/manifest.json</span><span class="sp"></span></div>
+  <div class="notes"><h2>A3 · claim frame</h2><p class="meta">The claim frame is verbatim; limitations are restated as the dashboard does, with the two errata.</p></div>
+</section>
+
+<!-- A4 · the seal -->
+<section class="slide appx" data-label="A4" data-title="The seal">
+  <p class="tag">Appendix, for Q&amp;A</p>
+  <h1 class="h">The seal: one opening, logged</h1>
+  <div class="cols">
+    <ul class="list">
+      <li>One opening at 19:22 MT on Tue Oct 27 (2026-10-28T01:22:53Z), after the tag <b>config-freeze</b>; <span data-n="reads">69</span> logged reads.</li>
+      <li>Test year: 2025-11-01 to 2026-10-25, <span data-n="days">358</span> days, to the snapshot's last complete day.</li>
+      <li>Excluded tail: arrivals after Oct 15 2026, 23:04 UTC, <span data-n="excl_jobs">8,003</span> jobs (3.1% of GPU-hours), the same for every policy, so every deadline falls before the cutoff (validation: 1,203 jobs, 3.9%).</li>
+    </ul>
+    <ul class="list">
+      <li>Disclosed before the opening: counts-only completeness checks (D-052, D-074).</li>
+      <li>A blocked early attempt (D-060).</li>
+      <li>The column names and node list of one post-seal price file printed, with no values (D-072).</li>
+      <li>An empty <code>data/.wtest</code> file created and deleted by a reviewer, changing only the directory's mtime (D-074).</li>
+    </ul>
+  </div>
+  <div class="foot"><span class="chip">results/test_reads.jsonl</span><span class="chip">config/freeze.json</span><span class="sp"></span></div>
+  <div class="notes"><h2>A4 · seal</h2><p class="meta">Every read is logged with its input, code and config hashes and its purpose.</p></div>
+</section>
+
+<!-- A5 · sources -->
+<section class="slide appx" data-label="A5" data-title="Data sources and licences">
+  <p class="tag">Appendix, for Q&amp;A</p>
+  <h1 class="h">Data sources and licences</h1>
+  <div class="cols">
+    <ul class="list">
+      <li>EIA-930 hourly balance and EIA hourly CO<sub>2</sub> estimates (consumption basis)</li>
+      <li>Acme GPU-cluster trace, Seren cluster (CC-BY-4.0)</li>
+      <li>Open-Meteo archived forecasts (toughest-days case study)</li>
+      <li>NREL and LBNL water factors</li>
+    </ul>
+    <ul class="list">
+      <li>CAISO/WEIM real-time LMPs (wholesale scenario, not a bill)</li>
+      <li>Electricity Maps boundaries (AGPL-3.0)</li>
+      <li>Natural Earth</li>
+      <li>Funnel Sans and Funnel Display (SIL Open Font License 1.1), embedded in this deck</li>
+    </ul>
+  </div>
+  <p class="small" style="margin-top:30px">Every download is recorded with its URL, retrieval time, sha256 and licence in data/manifests/. No partnership with Torus is implied.</p>
+  <div class="foot"><span class="chip">data/manifests/</span><span class="sp"></span></div>
+  <div class="notes"><h2>A5 · sources</h2></div>
+</section>
+
+</div></div>
+<div id="notes" aria-live="polite"></div>
+<div id="counter" aria-live="polite"></div>
+<div id="help">← → space · 1–8, 9 appendix · N notes · F full screen</div>
+<script src="data.js"></script>
+<script src="deck.js"></script>
+</body>
+</html>

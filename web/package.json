@@ -12,7 +12,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 4173 --strictPort",
     "test": "playwright test tests/offline.spec.ts tests/plan.spec.ts tests/copy-data.spec.ts tests/outlook.spec.ts tests/prices.spec.ts",
-    "shots": "playwright test tests/shots.spec.ts"
+    "shots": "playwright test tests/shots.spec.ts",
+    "deck": "playwright test -c playwright.deck.config.ts"
   },
   "dependencies": {
     "@fontsource/funnel-display": "5.3.0",
