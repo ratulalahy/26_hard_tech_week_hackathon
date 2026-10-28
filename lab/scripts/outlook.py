@@ -92,7 +92,8 @@ def _live_series(issue: datetime, run_dir: Path) -> tuple[pl.DataFrame, list[dic
     lo = issue - timedelta(hours=fc.WINDOW_H + ol.ENV_H + 100)
     for ba in ol.SITES:
         e = download_file(f"{ba}.xlsx", raw, url=BA_WORKBOOK_URL.format(ba=ba))
-        entries.append(e)
+        # lineage metadata, not a result: the artifact contract allows no bare numbers
+        entries.append({k: (f"{v} bytes" if k == "bytes" else v) for k, v in e.items()})
         f = ol.live_read(raw / f"{ba}.xlsx", live=True,
                          purpose=f"live outlook: {ba} consumed CI, issue-time features",
                          columns=["ba", "ts_utc", "ci_consumed_g_kwh"], time_range=(lo, issue),
