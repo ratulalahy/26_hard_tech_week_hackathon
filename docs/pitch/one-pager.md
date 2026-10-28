@@ -4,11 +4,11 @@
 
 ## Problem
 
-An AI cluster in Utah draws power around the clock on PACE, the balancing area serving much of Utah. That grid has an evening rush: as solar fades, net load climbs to its peak around 8 PM, averaging about 6,200 MW at 8 PM over July 2026 weekdays (6,654 MW over July 2025 weekdays, validation). <!-- results/test/grid-profile.json pace_july_weekday.net_load_mw[20] 6182; results/grid-profile.json same field 6654 --> In nine of ten US regions we profiled, the rush hours are dirtier than average (validation). <!-- results/overview.json (PR #93) regions.*.alignment.rush_verdict --> Utah is also far more carbon-intensive than its neighbours. An operator can change two things: **when** a job runs and **where** it runs. Which matters, and by how much?
+An AI cluster in Utah draws power around the clock on PACE, the balancing area serving much of Utah. That grid has an evening rush: as solar fades, net load climbs to its peak around 8 PM, averaging about 6,200 MW at 8 PM over July 2026 weekdays (6,654 MW over July 2025 weekdays, validation). <!-- results/test/grid-profile.json pace_july_weekday.net_load_mw[20] 6182; results/grid-profile.json same field 6654 --> In nine of ten US regions we profiled, the rush hours are dirtier than average (validation). <!-- results/overview.json regions.*.alignment.rush_verdict --> Utah is also far more carbon-intensive than its neighbours. An operator can change two things: **when** a job runs and **where** it runs. Which matters, and by how much?
 
 ## Approach
 
-- **A day-ahead traffic report.** Each morning, three forecasts predict tomorrow's hourly carbon intensity in Utah and at three destinations, under assumed EIA publication delays (2 h demand, 48 h wind and solar, 96 h carbon). <!-- results/overview.json (PR #93) forecast_issues.envelope_h {demand 2, wind 48, solar 48, ci_consumed 96}; spec §5 -->
+- **A day-ahead traffic report.** Each morning, three forecasts predict tomorrow's hourly carbon intensity in Utah and at three destinations, under assumed EIA publication delays (2 h demand, 48 h wind and solar, 96 h carbon). <!-- results/overview.json forecast_issues.envelope_h {demand 2, wind 48, solar 48, ci_consumed 96}; spec §5 -->
 - **A router.** It places each AI job in Utah, California, the Northwest (Bonneville) or Nevada, at a feasible start time. Every site has finite spare GPUs, and every move pays a transfer delay and transfer energy.
 - **A simulated replay.** A public, measured GPU-cluster trace (Acme, Seren cluster; 888,224 jobs on the test year) is replayed against hourly EIA data. An exact gang-job simulator runs U (stay in Utah) and eight alternatives, one of them a hindsight diagnostic, on identical work. <!-- results/test/metrics.json cohort.n_jobs -->
 - **A sealed test year,** opened once after a tagged configuration freeze, through a logged entry point (69 logged reads). <!-- results/test_reads.jsonl -->
@@ -28,13 +28,13 @@ An AI cluster in Utah draws power around the clock on PACE, the balancing area s
 - **Compute follows cleaner power,** mostly to Northwest hydro: 70% of the energy S ran outside Utah ran in Bonneville (69% on validation). <!-- derived: policies.S.metrics.execution_kwh_by_site BPAT / (BPAT + CISO + NEVP), 0.705 test, 0.690 validation -->
 - **A few big jobs carry it.** The largest 1% of jobs use 95% of the energy (94% on validation), so whether they can move is the lever. <!-- workload.top_1pct_jobs_by_declared_gpu_h.energy_share 0.9452 / 0.9409 -->
 - **It holds under other one-axis changes:** 19.9–23.3% on the test year with a 2-hour transfer, a 24-hour delay or a shifted workload; 35% with twice the spare capacity. Scenario estimates, not a confidence interval. <!-- results/test/extras.json extensions.{transfer_120min,batch_delay_24h,phase_49,phase_98,dest_slots_1024}.vs_U.*["4"] -->
-- **Forecasts:** better than a seasonal average by 10–23% at the destinations, but not reliably in Utah (validation). The router doesn't need them: the fixed ranking is the baseline to pilot. <!-- results/outlook.json (PR #93) skill_by_horizon -->
+- **Forecasts:** better than a seasonal average by 10–23% at the destinations, but not reliably in Utah (validation). The router doesn't need them: the fixed ranking is the baseline to pilot. <!-- results/outlook.json skill_by_horizon -->
 - **Storage is a partial complement for what can't move: aim it at carbon or at the rush, not both.** An illustrative 4 MWh / 1 MW battery at the Utah site (η 0.85, assumed), on fixed schedules registered before the opening:
   - aimed at carbon, it cuts the cluster's attributed CO₂ by about 4.0% (validation 3.5%), but adds about 107 t on a flat marginal basis;
   - aimed at the rush (Utah's 14 tightest test-year hours), it cuts the cluster's average rush-hour draw from 0.88 to 0.32 MW, but CO₂ by only 1.0%;
   - neither lowers the site's yearly peak draw, which charging pushes from 1.64 to the 1.65 MW connection.
   <!-- results/test/extras.json storage.schedule_comparison.schedules.{carbon,peak}.cases.U["4"].cut_frac 0.0395 / 0.0097, .flat_marginal_cut_t −107.1, .rush_import_before_mw 0.879, .rush_import_after_mw 0.317 (peak), .peak_import_before_mw 1.639, .peak_import_after_mw 1.647; storage.rush.n_hours 14 -->
-- **Cost, as a wholesale scenario (validation):** moving costs $16–22k more a year (+7–9%) at real-time wholesale prices, about $21 per attributed tonne for S. Data centers pay retail; this is not a bill. <!-- results/prices.json (PR #93) california_node.range.{S,W,L}.delta_vs_U_usd, .delta_vs_U_frac; policies.S.cost_per_attributed_tonne_usd_t 21.2 -->
+- **Cost, as a wholesale scenario (validation):** moving costs $16–22k more a year (+7–9%) at real-time wholesale prices, about $21 per attributed tonne for S. Data centers pay retail; this is not a bill. <!-- results/prices.json california_node.range.{S,W,L}.delta_vs_U_usd, .delta_vs_U_frac; policies.S.cost_per_attributed_tonne_usd_t 21.2 -->
 
 ## What's unique
 
@@ -59,6 +59,6 @@ An AI cluster in Utah draws power around the clock on PACE, the balancing area s
 
 - **With an operator:** measure which real jobs can move (checkpointing, data size, residency).
 - **The two missing tests:** run without advance reservations, and with runtime overruns.
-- **With Torus:** couple the router's residual Utah load to storage dispatch, and add the seconds-scale buffering that our hourly model leaves out.
+- **What we'd want to test with a storage partner such as Torus:** coupling the router's residual Utah load to storage dispatch, and the seconds-scale buffering that our hourly model leaves out.
 
 **First identify what work can move. Then size storage for the Utah load that can't, aimed at carbon or at the rush.**

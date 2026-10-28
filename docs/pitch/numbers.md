@@ -6,7 +6,7 @@ Every number said aloud in the talk or in Q&A, with its source. Keep this open d
 - **Validation** = Nov 2024 – Oct 2025 (run 20261027T160656Z).
 - Savings are vs U (every job stays in Utah), policy S, 4-week blocks (b = 4), 95% intervals. Notation: `contrasts[S/U]` is the `contrasts` element with `candidate` S and `reference` U; values are `.blocks["4"].saving` and `.saving_ci95`.
 - "derived" marks a plain ratio or difference of two copied fields; no interval is ever computed from kilograms.
-- Files marked **(PR #93)** are on `origin/s3/post-test` and reach `results/` when PR #93 merges: `results/prices.json`, `results/outlook.json`, `results/overview.json`. All three are validation-year only.
+- `results/overview.json` and `results/prices.json` are validation-year. `results/outlook.json` is the live outlook issued 2026-10-27 10:00 MT (for Oct 28 – Nov 3), with Utah shown at its seasonal average; its skill by horizon is measured on the validation issues.
 
 ## Said in the talk
 
@@ -18,11 +18,11 @@ Every number said aloud in the talk or in Q&A, with its source. Keep this open d
 | N4 | **888,224** jobs replayed | 888,224 | 917,909 | `cohort.n_jobs` |
 | N5 | **70%** of the work S ran outside Utah ran in the Northwest | 70.5% | 69.0% | derived: `policies.S.metrics.execution_kwh_by_site.BPAT` ÷ (BPAT + CISO + NEVP) |
 | N6 | Net-load peak **about 6,200 MW at 8 PM**, July weekdays (demand peaks at 5 PM) | 6,182 MW, July 2026 (mean of weekdays) | 6,654 MW, July 2025 | `results/test/grid-profile.json`, `results/grid-profile.json` `pace_july_weekday.net_load_mw[20]`; peak of `.demand_mw` at index 17 |
-| N7 | Nine of ten regions have dirtier rush hours; Bonneville's are cleaner | n/a | 9 of 10 `dirtier`; BPAT −8.0% [−9.5, −6.4] (90%) | `results/overview.json` (PR #93) `regions.*.alignment.rush_verdict`, `.rush_vs_mean_pct` |
-| N8 | Cluster of **about 2,300 GPUs**, about 1.6 MW at most (assumed) | 2,288 GPUs; 1.64 MW | same | `results/test/manifest.json` `assumptions.home_slots`; `results/test/extras.json` `storage.schedule_comparison.schedules.carbon.cases.U["4"].peak_import_before_mw` |
+| N7 | Nine of ten regions have dirtier rush hours; Bonneville's are cleaner (cut c1) | n/a | 9 of 10 `dirtier`; BPAT −8.0% [−9.5, −6.4] (90%) | `results/overview.json` `regions.*.alignment.rush_verdict`, `.rush_vs_mean_pct` |
+| N8 | Cluster of **about 2,300 GPUs**, about 1.6 MW when fully busy (assumed) | 2,288 GPUs; 1.647 MW | same | derived: `results/test/manifest.json` `assumptions.home_slots` × `kw_per_gpu` × `pue` (2,288 × 0.6 × 1.2); the U load's yearly peak draw is 1.639 MW (`storage.schedule_comparison.schedules.carbon.cases.U["4"].peak_import_before_mw`) |
 | N9 | Job: 72 GPUs, 104 h pre-train; **about 2,100 kg** if it stays, **about 360 kg** in the Northwest | 5930563#c5: 2,098 kg vs 362 kg (S placed it in BPAT) | 5930563#c3: 2,728 kg vs 336 kg | `results/test/job-replay.json`, `results/job-replay.json` `illustrative_job.available_actions[*].co2_kg`, `.placements` |
-| N10 | Six hours of allowed delay; half an hour of transfer (assumed) | 6 h; 30 min | same | `results/test/extras.json` `extensions.mobility_le_8gpus.knobs.batch_delay_s`, `.transfer_s`; `results/test/manifest.json` `assumptions.transfer_time_s` |
-| N11 | Forecasts beat a seasonal average by **10–23%** at the destinations, not reliably in Utah | no intervals on test skill (see Q&A) | destinations 9.9–23.4% (90% intervals exclude zero, D+1…D+7); Utah 3.0–4.8%, every interval crosses zero | `results/outlook.json` (PR #93) `skill_by_horizon.{BPAT,CISO,NEVP,PACE}.*.skill`, `.skill_ci90`; D-072 |
+| N10 | Six hours of allowed delay; half an hour of transfer (assumed) | 6 h; 30 min | same | `results/test/job-replay.json` `illustrative_job.max_delay_s` (21600); `results/test/manifest.json` `assumptions.allowed_delay_s.Pretrain`, `assumptions.transfer_time_s` (1800) |
+| N11 | (Q&A since fix round r1) Forecasts beat a seasonal average by **10–23%** at the destinations, not reliably in Utah | no intervals on test skill (see Q&A) | destinations 9.9–23.4% (90% intervals exclude zero, D+1…D+7); Utah 3.0–4.8%, every interval crosses zero | `results/outlook.json` `skill_by_horizon.{BPAT,CISO,NEVP,PACE}.*.skill`, `.skill_ci90`; D-072 |
 | N12 | The largest 1% of jobs use **95%** of the energy | 94.5% | 94.1% | `workload.top_1pct_jobs_by_declared_gpu_h.energy_share` |
 | N13 | Only jobs of ≤ 8 GPUs may move: S **22.3 → 3.2%** | 3.15% [1.89, 4.67] | 3.24% [2.07, 4.53] | test: `results/test/extras.json` `extensions.mobility_le_8gpus.vs_U.S["4"]`; val: `results/extensions.json` `sensitivities.mobility_le_8gpus.policies.S.vs_U["4"]` |
 | N14 | …and the forecast policies, which can also wait, **about 3.9%** | W 3.87% [2.49, 5.51]; L 3.88% | W 3.90%; L 3.94% | same paths, `.W["4"]`, `.L["4"]` |
@@ -68,9 +68,9 @@ Every number said aloud in the talk or in Q&A, with its source. Keep this open d
 | Q-x | Residual Utah rush draw if only ≤ 8-GPU jobs move (W) | 0.83 MW | 1.04 MW | test `storage.schedule_comparison.schedules.carbon.cases.mobility_le_8gpus_W["4"].rush_import_before_mw`; val `results/storage.json` `cases.mobility_le_8gpus_W.import_at_headline.A.rush_before_mw` |
 | Q-y | Router's rush-hour load shift, S | PACE −0.22 MW; BPAT +0.20, CISO +0.04, NEVP +0.001 | PACE −0.26; BPAT +0.22, CISO +0.03 | `storage.peak_relief.S.*.rush_change_vs_U_mw` (test); `results/storage.json` `peak_relief.policies.S` |
 | Q-z | Water, S vs U, generation-associated | ex-hydro −18.6%; with hydro evaporation +174% | −20.5%; +145% | `results/test/extras.json` `water.policies.S.change_vs_U.ex_hydro_frac`, `.with_hydro_frac`; `results/water.json` `policies.S.change_vs_U` |
-| Q-aa | Wholesale price scenario (validation only) | n/a | moving costs **$16–22k** more a year (**+7–9%**) on a $240k bill; S **about $21** per attributed tonne; waiting alone −0.8% | `results/prices.json` (PR #93) `california_node.range.{S,W,L}.delta_vs_U_usd`, `.delta_vs_U_frac`; `policies.S.cost_per_attributed_tonne_usd_t`; `policies.U.cost_usd`; `policies.W_time.delta_vs_U_frac` |
-| Q-ab | Prices: Utah vs Bonneville mean | n/a | $28.7 vs $34.7 /MWh | `results/prices.json` (PR #93) `prices.mean_usd_mwh` |
-| Q-ac | Ten regions: rush vs average, examples | n/a | PACE +19.7%, PSCO +18.3%, ERCO +17.2%, CISO +1.9%, BPAT −8.0% | `results/overview.json` (PR #93) `regions.*.alignment.rush_vs_mean_pct` |
+| Q-aa | Wholesale price scenario (validation only) | n/a | moving costs **$16–22k** more a year (**+7–9%**) on a $240k bill; S **about $21** per attributed tonne; waiting alone −0.8% | `results/prices.json` `california_node.range.{S,W,L}.delta_vs_U_usd`, `.delta_vs_U_frac`; `policies.S.cost_per_attributed_tonne_usd_t`; `policies.U.cost_usd`; `policies.W_time.delta_vs_U_frac` |
+| Q-ab | Prices: Utah vs Bonneville mean | n/a | $28.7 vs $34.7 /MWh | `results/prices.json` `prices.mean_usd_mwh` |
+| Q-ac | Ten regions: rush vs average, examples | n/a | PACE +19.7%, PSCO +18.3%, ERCO +17.2%, CISO +1.9%, BPAT −8.0% | `results/overview.json` `regions.*.alignment.rush_vs_mean_pct` |
 | Q-ad | Reads in the one opening | 69 logged reads | n/a | `results/test_reads.jsonl` (`event: read`) |
-| Q-ae | Opening time | 2026-10-28T01:22:53Z = 19:22 MT, Tue Oct 27 | n/a | `results/test_reads.jsonl` (invocation event); audit packet §(a) |
+| Q-ae | Opening time | 2026-10-28T01:22:53Z = **19:22 MT**, Tue Oct 27 | n/a | `results/test_reads.jsonl` (invocation event); audit packet §(a) |
 | Q-af | Energy per GPU-hour at the meter (assumed) | 0.72 kWh (0.6 kW × PUE 1.2) | same | `results/test/manifest.json` `assumptions.kw_per_gpu`, `.pue` |

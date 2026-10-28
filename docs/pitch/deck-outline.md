@@ -4,7 +4,7 @@
 
 - The live demo is the spine (`narrative.md`). The deck backs it up, or replaces it if WebGL or the laptop fails; it follows the same six beats.
 - Eight slides plus an appendix.
-- Visuals: dashboard screenshots in `docs/design/shots-build/`, **all in the test-year window**. Test shots exist on `origin/s3/post-test` (PR #93) for the Control room, `#story-3`, `#story-4`, `#story-5`, the ribbon and two drawer sections (`test-*.png`). `#story-1` and `#story-2` still need test-window shots; the existing `story-1`/`story-2` shots are validation (July 2025, job #c3) and must not be used with test numbers (audit F3).
+- Visuals: dashboard screenshots in `docs/design/shots-build/`, **all in the test-year window**. Test shots exist for the Control room, `#story-3`, `#story-4`, `#story-5`, the ribbon and two drawer sections (`test-*.png`). `#story-1` and `#story-2` still need test-window shots; the existing `story-1`/`story-2` shots are validation (July 2025, job #c3) and must not be used with test numbers (audit F3).
 
 ---
 
@@ -20,7 +20,7 @@
 - **Message:** As solar fades, Utah's net load peaks in the evening; the clean hours aren't the rush hours.
 - **Visual:** the Story 1 load chart in the test window (to shoot), 7–10 PM rush band marked.
 - **Number:** net-load peak at 8 PM, **6,182 MW** (mean of July 2026 weekdays, test year, observed). <!-- results/test/grid-profile.json pace_july_weekday.net_load_mw[20] -->
-- **Small print:** "In nine of ten US regions the rush hours are dirtier than average; Bonneville's are cleaner (validation year)." <!-- results/overview.json (PR #93) regions.*.alignment.rush_verdict, regions.BPAT.alignment.rush_vs_mean_pct −8.0 -->
+- **Small print:** "In nine of ten US regions the rush hours are dirtier than average; Bonneville's are cleaner (validation year)." <!-- results/overview.json regions.*.alignment.rush_verdict, regions.BPAT.alignment.rush_vs_mean_pct −8.0 -->
 - **Speaker note:** "This is PACE, the balancing area serving much of Utah. Picture a hypothetical 2,300-GPU cluster here. Our goal is emissions first, with the same work done by the same deadlines."
 
 ### 3. How it works
@@ -70,7 +70,7 @@
   - peak-aimed schedule: rush draw **0.88 → 0.32 MW** (10 of 14), but CO₂ only **−1.0%**;
   - both: the site's yearly peak draw goes 1.64 → **1.65 MW** (charging fills the connection);
   - moving the router's work also adds 0.20 MW in Bonneville and 0.04 MW in California during Utah's rush. <!-- storage.peak_relief.S.{BPAT,CISO}.rush_change_vs_U_mw -->
-- **Speaker note:** "An illustrative hourly model with simulated dispatch and an assumed efficiency. On validation the carbon schedule cut 3.5% and barely touched the rush. Fast buffering on a scale of seconds is outside the model; that's the interface to build with Torus." <!-- results/extras-validation.json storage_peak.schedules.carbon.cases.U["4"] -->
+- **Speaker note:** "An illustrative hourly model with simulated dispatch and an assumed efficiency. On validation the carbon schedule cut 3.5% and barely touched the rush. Fast buffering on a scale of seconds is outside the model; that's the interface we'd want to test with a storage partner." <!-- results/extras-validation.json storage_peak.schedules.carbon.cases.U["4"] -->
 
 ### 8. What an operator does tomorrow
 
@@ -81,11 +81,11 @@
   3. size storage for the residual Utah load (0.83 MW in the rush if only ≤ 8-GPU jobs move). <!-- results/test/extras.json storage.schedule_comparison.schedules.carbon.cases.mobility_le_8gpus_W["4"].rush_import_before_mw -->
 
   Below, a short "Limits" line and a "Next" line.
-- **Limits:** simulated replay; mobility assumed; no reservation-free or runtime-overrun test; cost only as a wholesale scenario (validation: +7–9%, about $21 per attributed tonne). <!-- results/prices.json (PR #93) california_node.range.*.delta_vs_U_frac; policies.S.cost_per_attributed_tonne_usd_t -->
+- **Limits:** simulated replay; mobility assumed; no reservation-free or runtime-overrun test; cost only as a wholesale scenario (validation: +7–9%, about $21 per attributed tonne). <!-- results/prices.json california_node.range.*.delta_vs_U_frac; policies.S.cost_per_attributed_tonne_usd_t -->
 - **Next:**
   - measure which real jobs can move, with an operator;
-  - couple the router to storage dispatch;
-  - add seconds-scale buffering with Torus.
+  - couple the router's residual Utah load to storage dispatch;
+  - what we'd want to test with a storage partner: seconds-scale buffering on measured cluster power.
 - **Speaker note:** close on the bold line, then "Thank you."
 
 ---
@@ -95,7 +95,7 @@
 - **A1. Does it hold?** The validation → test drift table for the scenarios (`test-method-drift-1728.png` or a table): phases 49/98, 2 h transfer, 24 h delay, capacity 0 and 1,024, mobility ≤ 8 GPUs, each test beside validation. Production-basis repricing (25.5%) and observed-hours-only scoring (22.5%) are validation-only rows. Labelled "scenario estimates, not a confidence interval".
 - **A2. Water, illustrative.** S vs U, generation-associated water: −18.6% without hydro evaporation, +174% with it (test); −20.5% / +145% (validation). No water-saving claim. Caveats: consumption ≠ withdrawal; production-side weighting; PACE is not the Great Salt Lake watershed. <!-- results/test/extras.json water.policies.S.change_vs_U.ex_hydro_frac, .with_hydro_frac; results/water.json policies.S.change_vs_U -->
 - **A3. The claim frame and the limitations.** Show the manifest's claim frame verbatim and the limitations as the dashboard restates them, not the raw test-manifest list: two of its lines were written before the extras ran (audit F16). Replace "The shadow-U sensitivity … is pending" with "shadow-U: cut (D-058)" and "phases 49 and 98 are pending" with "phases 49 and 98: run as pre-registered secondary scenarios (`results/test/extras.json`)", with a footnote that the results file is frozen and these two lines are errata.
-- **A4. The seal.** One opening at 19:23 MT on Oct 27 (2026-10-28T01:22:53Z), tag `config-freeze`, 69 logged reads; the disclosures: counts-only completeness checks (D-052, D-074), a blocked early attempt (D-060), a printed post-seal price-file header with no values (D-072). The excluded tail: 8,003 jobs (3.1% of GPU-hours), the same for every policy (validation: 1,203, 3.9%).
+- **A4. The seal.** One opening at 19:22 MT on Oct 27 (2026-10-28T01:22:53Z), tag `config-freeze`, 69 logged reads; the disclosures: counts-only completeness checks (D-052, D-074), a blocked early attempt (D-060), the column names and node list of one post-seal price file printed with no values (D-072), and an empty `data/.wtest` file created and deleted by a reviewer, changing only the directory's mtime (D-074). The excluded tail: 8,003 jobs (3.1% of GPU-hours), the same for every policy (validation: 1,203, 3.9%).
 - **A5. Data sources and licences:**
   - EIA-930 and EIA hourly CO₂ estimates;
   - Acme trace (CC-BY-4.0);

@@ -11,7 +11,7 @@
 ### A. The result
 
 **1. "What exactly did you find?"**
-In a simulated replay of 358 days of a sealed test year, a fixed clean-region ranking cut the attributed CO₂ of identical work by 22.3% [17.3, 27.2]; waiting in Utah alone cut under 1%. Validation was 22.6%. <!-- results/test/metrics.json contrasts[S/U].blocks["4"].saving 0.2226, .saving_ci95 [0.1734, 0.2720]; contrasts[W_time/U] 0.0077, contrasts[L_time/U] 0.0079; results/metrics.json contrasts[S/U].blocks["4"].saving 0.2262 -->
+In a simulated replay of 358 days of a sealed test year, a fixed clean-region ranking cut the attributed CO₂ of identical work by 22.3% [17.3, 27.2] if large jobs can move, and 3.2% if only jobs of ≤ 8 GPUs can; waiting in Utah alone cut under 1%. Validation was 22.6%. <!-- results/test/extras.json extensions.mobility_le_8gpus.vs_U.S["4"].saving 0.0315;  results/test/metrics.json contrasts[S/U].blocks["4"].saving 0.2226, .saving_ci95 [0.1734, 0.2720]; contrasts[W_time/U] 0.0077, contrasts[L_time/U] 0.0079; results/metrics.json contrasts[S/U].blocks["4"].saving 0.2262 -->
 
 **2. "Attributed, not avoided: did a single tonne leave the atmosphere?"** *(critical)*
 We didn't model how dispatch responds, so we don't claim avoided tonnes. Attributed is the hourly, location-based accounting an operator reports; we cut it 22.3% for identical work. Avoided tonnes need a dispatch model. <!-- results/test/metrics.json contrasts[S/U].blocks["4"].saving 0.2226; results/test/manifest.json claim_frame -->
@@ -53,12 +53,12 @@ Siting is the bigger lever, and our numbers agree: the frozen ranking's training
 - Don't say: "routing beats siting".
 
 **12. "You picked the dirtiest home region you could. Doesn't that inflate the saving?"**
-A coal-heavy home next to a hydro neighbour is the best case for moving, and we say so. From Colorado or MISO the number would differ; we didn't run other home regions. <!-- results/overview.json (PR #93) regions.{PACE,PSCO,MISO,BPAT}.alignment.mean_ci 564, 391, 441, 101 (validation) -->
+A coal-heavy home next to a hydro neighbour is the best case for moving, and we say so. From Colorado or MISO the number would differ; we didn't run other home regions. <!-- results/overview.json regions.{PACE,PSCO,MISO,BPAT}.alignment.mean_ci 564, 391, 441, 101 (validation) -->
 
 ### C. Forecasts
 
 **13. "Hindsight ties the fixed ranking. So your day-ahead traffic report is useless for the result?"** *(critical)*
-For the router, yes, and we say it: forecast-based search showed no demonstrated aggregate routing benefit over the fixed ranking in this replay, and perfect hindsight ties S (+1.6 t [−7.1, +11.8]). The forecasts earn their keep elsewhere: 10–23% better than a seasonal average at the destinations (validation). <!-- results/test/metrics.json contrasts[H/S].blocks["4"].diff_kg −1631 [−11803, 7051] (reference − candidate; H emits 1.6 t more); results/outlook.json (PR #93) skill_by_horizon.{BPAT,CISO,NEVP} -->
+For the router, yes, and we say it: forecast-based search showed no demonstrated aggregate routing benefit over the fixed ranking in this replay, and perfect hindsight ties S (+1.6 t [−7.1, +11.8]). The forecasts earn their keep elsewhere: 10–23% better than a seasonal average at the destinations (validation). <!-- results/test/metrics.json contrasts[H/S].blocks["4"].diff_kg −1631 [−11803, 7051] (reference − candidate; H emits 1.6 t more); results/outlook.json skill_by_horizon.{BPAT,CISO,NEVP} -->
 - Don't say: "our ML drives the savings"; "simple rules beat AI" (no LLM or other scheduler was tested; this is one replay).
 
 **14. "Why does a fixed ranking match machine learning?"**
@@ -68,8 +68,9 @@ The gap between regions is far larger than the hour-to-hour swing a forecast can
 Yes: K emitted 9.9 t more than S, interval +0.8 to +19.5 t (unadjusted for the three comparisons; borderline). Holding scarce clean slots for forecast-cleaner hours pushes later jobs to dirtier sites. W and L are not distinguishable from S (+3.9 t [−4.7, +13.8]; +6.6 t [−2.0, +16.7]). <!-- results/test/metrics.json framing.placement_vs_timing; contrasts[{K,W,L}/S].blocks["4"].diff_kg, .diff_kg_ci95 (field is S − candidate; signs flipped here) -->
 
 **16. "Is your Utah forecast any good?"**
-Not reliably better than a seasonal average: on validation, the 7-day-block interval crosses zero on every day from D+1 to D+7. On the test year its error is 16% below the seasonal average for W and 8% for L, with no interval, and the frozen 80% bands covered only 69–77%. So the outlook shows Utah's seasonal average, flagged as such. <!-- results/outlook.json (PR #93) skill_by_horizon.PACE.*.skill_ci90; days_with_skill_home 0; results/test/extras.json forecast_skill.series.PACE.ci_consumed.models.{W,L}.mae_vs_climatology 0.842, 0.921; .models.{K,W,L}.interval.coverage 0.703, 0.768, 0.688 -->
+Not reliably better than a seasonal average: on validation, the 7-day-block interval crosses zero on every day from D+1 to D+7. On the test year its error is 16% below the seasonal average for W and 8% for L, with no interval, and the frozen 80% bands covered only 69–77%. So the live outlook, issued Oct 27 at 10:00 MT for Oct 28 – Nov 3, shows Utah at its seasonal average, flagged as such; the three destinations get model forecasts. <!-- results/outlook.json window "live", issue_denver 2026-10-27T10:00-06:00, days[*].regions.PACE.status "climatology_only";  results/outlook.json skill_by_horizon.PACE.*.skill_ci90; days_with_skill_home 0; results/test/extras.json forecast_skill.series.PACE.ci_consumed.models.{W,L}.mae_vs_climatology 0.842, 0.921; .models.{K,W,L}.interval.coverage 0.703, 0.768, 0.688 -->
 - Don't say: "our forecasts follow Utah's daily swing" (audit F4).
+- If asked about judging day: the live outlook (Outlook page) is today's real forecast, issued Oct 27 10:00 MT after the test opening; it shows each day's cleanest destination and S's pick, with Utah at its seasonal average. It's a deployment demo, not part of the evaluation.
 
 **17. "No weather inputs? Of course your forecast loses."**
 The frozen models use no weather, on purpose (D-066). Hindsight with perfect carbon foresight ties S, so no forecast, weather or not, can lift the routing result in this replay. Weather would help the outlook, not the headline.
@@ -80,7 +81,7 @@ The change made our result weaker: review found iid intervals overstated Utah's 
 ### D. The seal and the statistics
 
 **19. "Did you peek at the test year?"** *(critical; audit F1 wording)*
-No values. The test year was opened once, at 19:23 MT on Oct 27, after a tagged configuration freeze, through a logged entry point; all 69 reads are in `results/test_reads.jsonl`. Before that, by design, we only counted which test hours were present, to set the cutoff and the fill rule for missing hours. One blocked early attempt and one printed price-file header (no values; prices aren't a test input) are disclosed in our decision log. Forecasts and the ranking only use data EIA would already have published under our assumed lags (96 h for carbon).
+No values. The test year was opened once, at 19:22 MT on Oct 27, after a tagged configuration freeze, through a logged entry point; all 69 reads are in `results/test_reads.jsonl`. Before that, by design, we only counted which test hours were present, to set the cutoff and the fill rule for missing hours. One blocked early attempt and one printed price file's column names and node list (no values; prices aren't a test input) are disclosed in our decision log. Forecasts and the ranking only use data EIA would already have published under our assumed lags (96 h for carbon).
 - Sources: D-052, D-060, D-071, D-072, D-074; `results/test_reads.jsonl` (69 `read` events; invocation 2026-10-28T01:22:53Z).
 - Don't say: "nobody ever touched the test data"; "impossible to cheat".
 
@@ -98,7 +99,7 @@ Week-to-week variation of grid and workload within this one replay, resampled in
 The data snapshot's last complete day is Oct 24, 2026. Arrivals after Oct 15, 23:04 UTC are excluded so every job's deadline falls before that cutoff: 8,003 jobs, 3.1% of GPU-hours, the same jobs for every policy (validation: 1,203 jobs, 3.9%). The rule was fixed before scoring. <!-- results/test/metrics.json cohort.n_excluded 8003, cohort.excluded_gpu_h 382,074, covered.arrivals[1] 2026-10-15T23:03:57Z; results/metrics.json cohort.n_excluded 1203 -->
 
 **24. "About 50 hours of the window have no EIA carbon. Could the fill drive the result?"**
-The four-tier fill was pre-registered (D-052), and on the test year only 0.12–0.13% of the movers' energy is priced on filled hours. On validation, dropping every job that touches a filled hour gave 22.5% against 22.6%; that check wasn't rerun on test. <!-- results/test/metrics.json policies.*.metrics.kwh_share_tier_ge2; results/extensions.json common_support.by_policy.S.vs_U["4"].saving 0.2246 -->
+Inside the scored window, Utah has 1 filled hour and California 87; the 50-hour gap sits after the cutoff, which is why the test year ends Oct 24 (D-074). The four-tier fill was pre-registered (D-052), and on the test year only 0.12–0.13% of the movers' energy is priced on filled hours. On validation, dropping every job that touches a filled hour gave 22.5% against 22.6%; that check wasn't rerun on test. <!-- results/test/metrics.json policies.*.metrics.kwh_share_tier_ge2; results/extensions.json common_support.by_policy.S.vs_U["4"].saving 0.2246 -->
 
 ### E. Replay vs reality
 
@@ -118,14 +119,14 @@ The 30 minutes and 5% transfer energy are assumptions. At a 2-hour transfer S st
 ### F. Cost
 
 **29. "Moving costs more. Who pays a premium to look green?"** *(critical)*
-In a wholesale scenario on the validation year, moving costs $16–22k more a year (+7–9%) on a $240k energy bill, about $21 per attributed tonne for S, because Utah is a cheap node ($28.7/MWh against $34.7 in Bonneville). Data centers pay retail, so this is a scenario, not a bill. <!-- results/prices.json (PR #93) california_node.range.{S,W,L}.delta_vs_U_usd [16.2k, 22.4k], .delta_vs_U_frac [0.068, 0.093]; policies.S.cost_per_attributed_tonne_usd_t 21.2; policies.U.cost_usd 240,420; prices.mean_usd_mwh.PACE 28.7, .BPAT 34.7 -->
+In a wholesale scenario on the validation year, moving costs $16–22k more a year (+7–9%) on a $240k energy bill, about $21 per attributed tonne for S, because Utah is a cheap node ($28.7/MWh against $34.7 in Bonneville). Data centers pay retail, so this is a scenario, not a bill. <!-- results/prices.json california_node.range.{S,W,L}.delta_vs_U_usd [16.2k, 22.4k], .delta_vs_U_frac [0.068, 0.093]; policies.S.cost_per_attributed_tonne_usd_t 21.2; policies.U.cost_usd 240,420; prices.mean_usd_mwh.PACE 28.7, .BPAT 34.7 -->
 - Don't say: "it's cheaper", "cost-neutral", "marginal abatement cost".
 
 **30. "Waiting is cheaper and cleaner. Wouldn't a rational operator just wait?"**
-Waiting saves about 0.8% on cost and under 1% on CO₂, both small. Moving buys 22% for about $21 an attributed tonne. Whether that's worth it is the operator's call; we make the trade explicit. <!-- results/prices.json (PR #93) policies.W_time.delta_vs_U_frac −0.0079 -->
+Waiting saves about 0.8% on cost and under 1% on CO₂, both small. Moving buys 22% for about $21 an attributed tonne. Whether that's worth it is the operator's call; we make the trade explicit. <!-- results/prices.json policies.W_time.delta_vs_U_frac −0.0079 -->
 
 **31. "Why price California at PG&E?"**
-It was an unregistered choice made during the build (D-072), so we show SCE too: +7.1% against +9.3% for S. The range is the answer; the bootstrap doesn't cover the node choice. The router never saw a price. <!-- results/prices.json (PR #93) california_node.range.S.delta_vs_U_frac [0.0709, 0.0930]; note -->
+It was an unregistered choice made during the build (D-072), so we show SCE too: +7.1% against +9.3% for S. The range is the answer; the bootstrap doesn't cover the node choice. The router never saw a price. <!-- results/prices.json california_node.range.S.delta_vs_U_frac [0.0709, 0.0930]; note -->
 
 ### G. Torus and storage
 
@@ -150,7 +151,7 @@ Slightly, in this illustration: under either schedule the site's highest hourly 
 - Don't say: "reduces peak demand".
 
 **37. "Your router adds load in Bonneville during Utah's rush. Aren't you exporting your peak?"**
-We count it. In Utah's 14 rush hours, S lowers the cluster's Utah load by 0.22 MW and adds 0.20 MW in Bonneville and 0.04 MW in California. Bonneville's own rush hours are its cleaner ones (validation), but someone still serves that load. <!-- results/test/extras.json storage.peak_relief.S.{PACE,BPAT,CISO}.rush_change_vs_U_mw −0.222, +0.204, +0.040; results/overview.json (PR #93) regions.BPAT.alignment.rush_vs_mean_pct −8.0 -->
+We count it. In Utah's 14 rush hours, S lowers the cluster's Utah load by 0.22 MW and adds 0.20 MW in Bonneville and 0.04 MW in California. Bonneville's own rush hours are its cleaner ones (validation), but someone still serves that load. <!-- results/test/extras.json storage.peak_relief.S.{PACE,BPAT,CISO}.rush_change_vs_U_mw −0.222, +0.204, +0.040; results/overview.json regions.BPAT.alignment.rush_vs_mean_pct −8.0 -->
 
 **38. "Move and store together: what's the best if big jobs stay home?"**
 Move the small jobs and store for the rest: 7.7% at 4 MWh, against 3.9% for moving alone, as a ratio of totals rather than our interval method. <!-- results/test/extras.json storage.combined.move_and_store_cut_frac.A["4"] 0.0774, .move_only_cut_frac 0.0387 -->
@@ -159,7 +160,7 @@ Move the small jobs and store for the rest: 7.7% at 4 MWh, against 3.9% for movi
 Yes, after validation, and it's labelled that way: sized to the charging room the connection leaves free, not an optimum. 8 MWh adds little (4.2% on test). No degradation, capex or self-discharge: an hourly illustration, not a business case. <!-- results/test/extras.json storage.cases.U.A["8"].cut_frac 0.0419; D-067 -->
 
 **40. "What about fast swings: AI training power spikes, frequency?"**
-Outside our hourly model. That needs measured, sub-second cluster power; it's the interface we'd build next, with Torus.
+Outside our hourly model. That needs measured, sub-second cluster power; it's what we'd want to test with a storage partner.
 
 **41. "What about water?"**
 An illustration on both years, and we make no water-saving claim. Moving work lowers generation water if hydro evaporation is excluded (−19%, test year) and raises it about 2.7× if it's included. It's consumption, not withdrawal, production-side weighting, and PACE isn't the Great Salt Lake watershed. <!-- results/test/extras.json water.policies.S.change_vs_U.ex_hydro_frac −0.186, .with_hydro_frac +1.741; water.claim "none" (validation results/water.json policies.S.change_vs_U −20.5%, +145%) -->
@@ -167,10 +168,10 @@ An illustration on both years, and we make no water-saving claim. Moving work lo
 ### H. Grid context
 
 **42. "Nine of ten regions have dirtier rush hours, yet waiting buys under 1%. Contradiction?"**
-No. The rush hours are dirtier, but 63% of the energy is in jobs longer than a day, and jobs may wait at most 6 hours. Even with a 24-hour allowance, waiting alone reaches only 1.5%. The swing is there; this workload can't use it. <!-- results/test/extras.json extensions.batch_delay_24h.vs_U.W_time["4"] 0.0148; results/overview.json (PR #93) rush_verdict -->
+No. The rush hours are dirtier, but 63% of the energy is in jobs longer than a day, and jobs may wait at most 6 hours. Even with a 24-hour allowance, waiting alone reaches only 1.5%. The swing is there; this workload can't use it. <!-- results/test/extras.json extensions.batch_delay_24h.vs_U.W_time["4"] 0.0148; results/overview.json rush_verdict -->
 
 **43. "Is '9 of 10' meaningful? Some margins are tiny."**
-The margins vary: Utah +20%, Colorado +18%, Texas +17%; California +2%, Arizona and PJM +3–4%; Bonneville −8%. It's a validation-year pattern across regions, not a test. <!-- results/overview.json (PR #93) regions.*.alignment.rush_vs_mean_pct -->
+The margins vary: Utah +20%, Colorado +18%, Texas +17%; California +2%, Arizona and PJM +3–4%; Bonneville −8%. It's a validation-year pattern across regions, not a test. <!-- results/overview.json regions.*.alignment.rush_vs_mean_pct -->
 
 **44. "Does the result hold across seasons?"**
 Pre-registered seasonal split on the test year, S vs U: winter 26%, spring 21%, summer 28%, autumn 13%. Autumn's weeks join the window's two ends, Nov 2025 and Sep–Oct 2026. <!-- results/test/extras.json seasonal.seasons.{DJF,MAM,JJA,SON}.policies.S.blocks["4"].saving 0.261, 0.215, 0.285, 0.133 -->
@@ -191,7 +192,7 @@ Rule fixed in advance: the 3 days with the highest peak net load (D-066). On the
 All free and open; every number on screen is labelled observed, measured, modeled, forecast, assumed or simulated.
 
 **47. "WattTime, Electricity Maps, Google's carbon-intelligent computing already do this. What's new?"**
-They publish signals, or shift work inside one fleet. We add an open, sealed-test comparison of time against place on identical work, with capacity and deadlines: time-shifting in Utah is under 1%, and job mobility, not forecast quality, decides the result.
+They publish signals, or shift work inside one fleet. We add an open, sealed-test comparison of time against place on identical work, with capacity and deadlines: time-shifting this workload in Utah, with up to 6 hours' delay, is under 1% (1.5–1.6% with 24 hours), and job mobility, not forecast quality, decides the result. <!-- results/test/extras.json extensions.batch_delay_24h.vs_U.{W_time,L_time}["4"].saving 0.0148, 0.0158 -->
 - Don't say: "first ever"; claims about those companies' internals.
 
 **48. "Who buys this?"**
@@ -207,4 +208,4 @@ An NVIDIA DGX Spark.
 **51. "What would you do next?"**
 - **With an operator:** tag which real jobs can move (checkpointing, data size, residency). That's the number that decides the saving.
 - **The two cut tests:** run without advance reservations, and with runtime overruns.
-- **With Torus:** couple the router's residual Utah load to storage dispatch, and add fast-timescale buffering from measured cluster power.
+- **What we'd want to test with a storage partner such as Torus:** coupling the router's residual Utah load to storage dispatch, and fast-timescale buffering on measured cluster power.
