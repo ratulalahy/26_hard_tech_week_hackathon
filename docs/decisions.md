@@ -630,3 +630,22 @@ Entries D-022 to D-037 are the design consequences of the three data profiles, r
 - **Disclosures:**
   - the T20r reviewer created and deleted an empty `data/.wtest` file, which changed only the directory's mtime;
   - item 3's net-load reads are logged under item 2's purpose label, because they share a cache.
+
+## D-075 · 2026-10-27 21:52 MT · Reference validation run is 20261027T160656Z; the cohort exclusion, disclosed
+- **Decided by:** the lead, on the results audit (Claude r1, substituting for Astra), findings F18 and F21.
+- **Reference validation run (F18).**
+  - D-056 recorded run 20261027T122317Z (canonical metrics f45821c0…). The T9 re-run 20261027T160656Z (commit d186fd0, PR #40; canonical metrics e6ad2635…) superseded it as the reference: `results/metrics.json`, `config/freeze.json` `validation_run` and D-074 all name 160656Z.
+  - The numbers did not change: `results/metrics.json` at 2e6b6fc (122317Z) and at d186fd0 (160656Z) have bitwise-identical `co2_kg` for all nine policies and identical savings, saving intervals and kg intervals in all 72 contrast blocks (24 contrasts × blocks 2, 4, 8). Strings, keys and the A9 count changed. So S's selection (D-074) is unaffected.
+  - The independent rebuild of the final lab tree reproduced 160656Z exactly (D-074, `docs/evidence/rebuild-20261027.json`).
+  - 122317Z stays preserved as recorded in D-057. The `AGENTS.md` `make profile` example now points at 160656Z.
+- **Cohort exclusion (F21), a method note.**
+  - Rule (spec F13.2 step 2, F14.1 scenario set; `lab/src/gridpilot/cohort.py:prefix_cohort`): for each of six workload-only scenarios (primary, batch delay 0 h and 24 h, no flexible jobs, all candidates flexible, 1.25× home capacity), find the first arrival whose deadline exceeds the cutoff F; A is the earliest of these; every arrival in [A, F) is excluded for every policy. Grid values play no part (`recorded_before_grid_scoring: true`).
+  - Test: A = 2026-10-15T23:03:57Z, F = 2026-10-25T00Z; 8,003 of 896,227 jobs excluded (382,074 GPU-h, 3.1% of the stream's GPU-hours); cohort 888,224. Validation: A = 2025-10-16T07:49:42Z, F = 2025-10-24T00Z; 1,203 jobs (460,606 GPU-h, 3.9%); cohort 917,909. Sources: `results/test/manifest.json` and `results/manifest.json` `cohort_record`; `metrics.json` `cohort`.
+  - Why the count rose: the workload repeats one 161-day trace cycle, so each window's tail lands 43 days later in the cycle; the validation tail fell in the trace's quietest stretch, the test tail in a busy one. By GPU-hours the exclusion fell. It is the same rule and code on both windows, fixed before either was scored.
+  - Effect: none between policies (every contrast is paired on the same cohort). The headline covers arrivals 2025-11-01 → 2026-10-15T23:04Z, executed to F.
+  - Disclosure (spec: "excluded arrivals are counted and disclosed"): the one-pager's Limits and the Q&A carry it from the pitch rewrite (PR "pitch: post-test rewrite + results-audit dispositions").
+- **Evidence:** the audit, `.superpowers/sdd/2026-10-27-stage3-freeze-test/results-audit-claude-r1.md` (F18, F21, "The cohort exclusion"); its dispositions, `docs/reviews/2026-10-27-results-audit-claude-r1-dispositions.md`.
+- **Also recorded:**
+  - **The results audit was run by a fresh-context Claude auditor, not Astra.** The Codex workspace ran out of credits at 21:13 MT, so no Astra review was written. An earlier launch went out on the xhigh profile by mistake and was stopped within about two minutes.
+  - **The live outlook** (`results/outlook.json`, issued 2026-10-27 10:00 MT) records `git_clean: false`. The tree was clean at f92d669; the run appends its own read log before it records lineage. Two earlier live attempts are logged in `results/outlook_reads.jsonl`: one refused to write (lineage byte counts, fixed in #95) and one ran on a dirty tree and was discarded.
+  - **The Torus / "Operation Gigawatt" 70 MW claim** is removed from the pitch until the owner gives a public source.
