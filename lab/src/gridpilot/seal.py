@@ -102,7 +102,7 @@ GITHUB_ORIGIN = "https://github.com/ratulalahy/26_hard_tech_week_hackathon.git" 
 RERUN_MUTABLE = frozenset({"freeze_commit", "frozen_at", "validation_run"})
 # ... and must keep these identical.
 DECISION_FIELDS = ("deployed_policy", "L_max_leaf_nodes", "s_ranking", "test_F",
-                   "scenario_catalog", "input_sha256", "snapshot_id")
+                   "test_F_basis", "scenario_catalog", "input_sha256", "snapshot_id")
 COMPLETED_MARKER = "manifest.json"  # results/test/manifest.json = a completed test run
 # Paths that later commits may add or modify (never rename or delete) without reopening (a).
 POST_FREEZE_PATHS = (FREEZE_REL, f"{TEST_RESULTS_REL}/", READ_LOG_REL)
@@ -118,6 +118,11 @@ WORKBOOK_REL = "raw/eia930/ba_workbooks/{ba}.xlsx"
 BALANCE_REL = "interim/eia930/balance.parquet"
 TRACE_REL = "raw/traces/acme/trace_seren.csv"
 TEST_INPUTS = tuple(WORKBOOK_REL.format(ba=ba) for ba in CORE_BAS) + (BALANCE_REL, TRACE_REL)
+# D-071 item 3 (T20): the Salt Lake City forecast-archive files whose span reaches the test year,
+# read on test only for the toughest days' temperature context. Optional inputs: write_freeze
+# records those present in the data dir, (c) then checks them like every recorded input, I5
+# checks them against the committed openmeteo manifest, and `sealed_read` accepts nothing else.
+WEATHER_SLC_REL = "raw/openmeteo/historical-forecast/best_match/PACE_SLC"
 # Where an earlier version wrote the test carbon table (shared, unguarded); its existence is a
 # prior opening (I1). The table now lives in the test run directory (I6).
 LEGACY_CARBON_TEST_REL = "processed/carbon/carbon_hourly_test.parquet"
@@ -141,6 +146,9 @@ _UTC = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 _KEYS = ("schema", "freeze_commit", "frozen_at", "deployed_policy", "L_max_leaf_nodes", "test_F",
          "test_fit_at", "test_history_start", "s_ranking", "scenario_catalog", "snapshot_id",
          "input_sha256", "validation_run")
+# Optional keys (T12): how test_F was derived from the completeness counts (final review B4).
+_OPTIONAL_KEYS = ("test_F_basis",)
+_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 class SealError(PermissionError):
@@ -252,7 +260,7 @@ def freeze_errors(d: Any) -> list[str]:
         return ["the record is not a JSON object"]
     errs = _schema_errors(d)
     errs += [f"missing key {k!r}" for k in _KEYS if k not in d]
-    errs += [f"unknown key {k!r}" for k in d if k not in _KEYS]
+    errs += [f"unknown key {k!r}" for k in d if k not in _KEYS + _OPTIONAL_KEYS]
     if any(k not in d for k in _KEYS):
         return errs
 
@@ -289,6 +297,16 @@ def freeze_errors(d: Any) -> list[str]:
             errs.append(f"test_F {d['test_F']} must lie in ({iso(TEST_START)}, {iso(TEST_END)}]")
         if F.hour or F.minute or F.second:
             errs.append("test_F must be a UTC midnight (the last complete day ends there)")
+        basis = d.get("test_F_basis")
+        if basis is not None:
+            D = basis.get("D") if isinstance(basis, dict) else None
+            if not isinstance(D, str) or not _DATE.match(D):
+                errs.append("test_F_basis.D must be a UTC day 'YYYY-MM-DD'")
+            else:
+                Dt = datetime.strptime(D, "%Y-%m-%d").replace(tzinfo=UTC)
+                if F != min(Dt + timedelta(days=1), TEST_END):
+                    errs.append(f"test_F {d['test_F']} must be min(D + 1 day, TEST_END) for "
+                                f"test_F_basis.D {D}")
     fit = t("test_fit_at")
     if fit is not None and fit != TEST_FIT_AT:
         errs.append(f"test_fit_at must be {iso(TEST_FIT_AT)} (spec §5)")
@@ -386,6 +404,16 @@ def _git_out(root: Path, *args: str) -> str:
     if r.returncode:
         raise SealError(f"git {' '.join(args)} failed: {r.stderr.strip()}")
     return r.stdout.strip()
+
+
+def extra_inputs(data_dir: Path) -> tuple[str, ...]:
+    """The optional test inputs present in `data_dir` (data-dir-relative paths): the Salt Lake
+    City archive files from 2025 on (D-071 item 3)."""
+    d = Path(data_dir) / WEATHER_SLC_REL
+    if not d.is_dir():
+        return ()
+    return tuple(sorted(f"{WEATHER_SLC_REL}/{p.name}" for p in d.glob("*.json")
+                        if p.name[:4].isdigit() and int(p.name[:4]) >= TEST_START.year))
 
 
 def committed_bytes(root: Path, rel: str, rev: str = "HEAD") -> bytes | None:
@@ -766,7 +794,8 @@ def _check_manifest_inputs(root: Path, freeze: Freeze) -> tuple[str, ...]:
     table matches its committed derivation record. Returns the logged exceptions."""
     entries = manifest_entries(root)
     rec = freeze.input_sha256
-    for rel in TEST_INPUTS:
+    extra = [r for r in rec if r.startswith(WEATHER_SLC_REL + "/")]
+    for rel in (*TEST_INPUTS, *extra):
         if rel in entries and rec.get(rel) != entries[rel][1]:
             raise SealError(f"(I5) the freeze record's sha256 for {rel} differs from the "
                             f"committed manifest {entries[rel][0]} ({entries[rel][1][:12]})")
@@ -998,6 +1027,7 @@ class Session:
     n_reads: int = 0
     built: dict[str, str] = field(default_factory=dict)
     closed: bool = False  # N6: a captured context cannot revive a closed session
+    scopes: list[str] = field(default_factory=list)  # purpose labels (`purpose_scope`, T20)
 
     @property
     def F(self) -> datetime:
@@ -1188,6 +1218,28 @@ def test_mode(auth: Authorization) -> Iterator[Session]:
             lock.unlink(missing_ok=True)
 
 
+@contextmanager
+def purpose_scope(label: str) -> Iterator[None]:
+    """Label every sealed read inside the block with `label` (T20: the pre-registered D-071
+    item it serves). The logged purpose becomes '<label>: <purpose>' and the line carries
+    `scope`. Needs the active session; it changes no check and no refusal."""
+    s = require_active("purpose_scope")
+    if not isinstance(label, str) or not label.strip():
+        raise SealError("purpose_scope needs a label")
+    s.scopes.append(label.strip())
+    try:
+        yield
+    finally:
+        s.scopes.pop()
+
+
+def read_end() -> datetime:
+    """The exclusive bound a value may reach: F_test inside the active test-mode session (where
+    sealed rows arrive only through `sealed_read`), TEST_START otherwise (T20)."""
+    s = active()
+    return s.F if s is not None else TEST_START
+
+
 def _caller() -> str:
     """module:function:line of the first frame outside this module."""
     f = sys._getframe(1)
@@ -1234,8 +1286,10 @@ def sealed_read(path: Path | str, *, purpose: str, columns: Sequence[str],
     buf = path.read_bytes()
     sha = hashlib.sha256(buf).hexdigest()
     s._check_input(path, sha)
+    scope = " · ".join(s.scopes) or None
     _append(s.log_path, _base_record(s, "read") | {
-        "purpose": purpose.strip(), "path": str(path), "sha256": sha, "columns": cols,
+        "purpose": f"{scope}: {purpose.strip()}" if scope else purpose.strip(), "scope": scope,
+        "path": str(path), "sha256": sha, "columns": cols,
         "ts_col": ts_col, "time_range": [iso(start), iso(end)],
         "filter": None if where is None else str(where), "caller": _caller(),
         "run_id": s.run_id})
@@ -1299,6 +1353,8 @@ __all__ = [
     "load_freeze",
     "log_event",
     "prior_openings",
+    "purpose_scope",
+    "read_end",
     "require_active",
     "sealed_read",
     "test_mode",

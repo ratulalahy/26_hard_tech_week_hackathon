@@ -1,0 +1,2039 @@
+{
+ "schema_version": "gridpilot.results.v1",
+ "artifact": "assumptions",
+ "kind": "register",
+ "run_id": "20261027T160656Z",
+ "note": "assumptions register and negative results (D-068); built only from committed results files by notebooks/40_assumptions_and_reality.ipynb; no simulation, no grid data; every number is read from the file and JSON pointer in its provenance_id",
+ "evidence_scope": "validation (selection) results; the sealed test window [2025-11-01, 2026-11-01) is never read",
+ "sources": {
+  "manifest.json": {
+   "from": "manifest.json",
+   "sha256": "53d88aaee3444d20149ad72173c45ea7b99e113f5596ee23ee5e8cc733e24ee5"
+  },
+  "metrics.json": {
+   "from": "metrics.json",
+   "sha256": "9ae02c9c55bc27b1d5e389c2e371da9b8b93f18537af02054628c320b6af97bd"
+  },
+  "extensions.json": {
+   "from": "extensions.json",
+   "sha256": "340c80a8ff1789b86952c317ef352a04177889d6fbb97b330b27600287df9b98"
+  },
+  "storage.json": {
+   "from": "storage.json",
+   "sha256": "189369663a6f0fb595d27c7f03c2c2a2e298ef368f16f07422bb2c86a6d1572a"
+  },
+  "job-replay.json": {
+   "from": "job-replay.json",
+   "sha256": "8f05c8b7d8e9a9618908ff6845151179207c65f6bc2852aa2fa21a3cec57520b"
+  },
+  "grid-profile.json": {
+   "from": "grid-profile.json",
+   "sha256": "3dae16572f586a4f7baea6b8157c1725eac350307105361a07e95c7266743bdf"
+  },
+  "water.json": {
+   "from": "results/water.json",
+   "sha256": "5a7d54f2d05a39f9e485a405f2b3b53bfaf1076e0a2c7bab91b2d2a02fd4dc58"
+  }
+ },
+ "register": [
+  {
+   "id": "flexible_mobile",
+   "assumption": "Flexible-job share, and every flexible job may move",
+   "value_text": "41.8% of jobs and 46.1% of GPU-hours are flexible (half of the Pretrain/SFT/MLLM/Eval candidates, by a seeded hash); mobile = flexible",
+   "values": {
+    "by_jobs": {
+     "value": 0.4183279606148322,
+     "unit": "fraction",
+     "evidence": "assumed",
+     "provenance_id": "metrics.json#/cohort/flex_shares/flexible/by_jobs",
+     "status": "ok",
+     "reason": null
+    },
+    "by_gpu_h": {
+     "value": 0.4612534983698892,
+     "unit": "fraction",
+     "evidence": "assumed",
+     "provenance_id": "metrics.json#/cohort/flex_shares/flexible/by_gpu_h",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "used_in": "every policy: which jobs may wait or move",
+   "evidence": "assumed",
+   "reality": "Large multi-node jobs are tied to their site by data, checkpoints and interconnect (data gravity); few real fleets could move them freely.",
+   "tested": true,
+   "result_text": "Mobility ≤ 8 GPUs: W saves 3.9% [2.6, 5.4] against the primary 22.5% [18.4, 26.7]. The no-flexible and all-candidates-flexible runs were cut (D-058).",
+   "results": {
+    "mobility_le_8gpus_W": {
+     "saving": {
+      "value": 0.03903996472267946,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/mobility_le_8gpus/policies/W/vs_U/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.026029124592568034,
+       0.05353811687842312
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/mobility_le_8gpus/policies/W/vs_U/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "primary_W": {
+     "saving": {
+      "value": 0.225137842411205,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/3/blocks/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.18362251961715767,
+       0.26670166379456123
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/3/blocks/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg": {
+      "value": 1051323.0585411876,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/3/blocks/4/diff_kg",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg_ci95": {
+      "value": [
+       908080.0433666729,
+       1187002.2808083168
+      ],
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/3/blocks/4/diff_kg_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "decision_ids": [
+    "D-058",
+    "D-064"
+   ]
+  },
+  {
+   "id": "dest_slots",
+   "assumption": "Spare GPU slots at each destination (CISO, BPAT, NEVP)",
+   "value_text": "512 slots each, always available",
+   "values": {
+    "slots": {
+     "value": 512,
+     "unit": "GPU_slots",
+     "evidence": "assumed",
+     "provenance_id": "manifest.json#/assumptions/destination_slots/BPAT",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "used_in": "every moving policy (S, K, W, L, H)",
+   "evidence": "assumed",
+   "reality": "Spare remote capacity is not a standing reservation: it varies by hour, and the cleanest sites are the ones everyone else wants too.",
+   "tested": true,
+   "result_text": "0 slots: S saves 0.0% [0.0, 0.0] and W 0.7% [0.5, 0.9] (time-only). 1,024 slots: S saves 35.0% [32.7, 37.6] (primary S 22.6% [18.4, 26.8]).",
+   "results": {
+    "dest_slots_0_S": {
+     "saving": {
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/dest_slots_0/policies/S/vs_U/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.0,
+       0.0
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/dest_slots_0/policies/S/vs_U/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "dest_slots_0_W": {
+     "saving": {
+      "value": 0.007217618950137973,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/dest_slots_0/policies/W/vs_U/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.005153193082846444,
+       0.009456153043836736
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/dest_slots_0/policies/W/vs_U/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "dest_slots_1024_S": {
+     "saving": {
+      "value": 0.35024833954557627,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/dest_slots_1024/policies/S/vs_U/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.32720914434402626,
+       0.37578580381479365
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/dest_slots_1024/policies/S/vs_U/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "primary_S": {
+     "saving": {
+      "value": 0.22619570751542967,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.1836214692017572,
+       0.2682126090185966
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg": {
+      "value": 1056262.956538727,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/diff_kg",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg_ci95": {
+      "value": [
+       910438.3027177769,
+       1195249.603215583
+      ],
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/diff_kg_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "id": "transfer",
+   "assumption": "Transfer before a remote run: time and energy",
+   "value_text": "30 min and 5% of the job's IT energy",
+   "values": {
+    "time_s": {
+     "value": 1800.0,
+     "unit": "s",
+     "evidence": "assumed",
+     "provenance_id": "manifest.json#/assumptions/transfer_time_s",
+     "status": "ok",
+     "reason": null
+    },
+    "energy_fraction": {
+     "value": 0.05,
+     "unit": "fraction",
+     "evidence": "assumed",
+     "provenance_id": "manifest.json#/assumptions/transfer_energy_fraction",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "used_in": "every remote run: deadline slack and transfer CO₂",
+   "evidence": "assumed",
+   "reality": "Staging a multi-terabyte dataset or checkpoint can take hours; no dataset size or network power was measured.",
+   "tested": true,
+   "result_text": "120 min: S saves 20.2% [16.6, 23.7] (primary S 22.6% [18.4, 26.8]). Transfer energy 0% and 20% was cut (D-058).",
+   "results": {
+    "transfer_120min_S": {
+     "saving": {
+      "value": 0.20193946636222498,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/transfer_120min/policies/S/vs_U/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.1658679133457639,
+       0.23719624110010032
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/transfer_120min/policies/S/vs_U/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "primary_S": {
+     "saving": {
+      "value": 0.22619570751542967,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.1836214692017572,
+       0.2682126090185966
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg": {
+      "value": 1056262.956538727,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/diff_kg",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg_ci95": {
+      "value": [
+       910438.3027177769,
+       1195249.603215583
+      ],
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/diff_kg_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "id": "kw_per_gpu",
+   "assumption": "Active IT power per GPU slot",
+   "value_text": "0.6 kW, constant",
+   "values": {
+    "kw_per_gpu": {
+     "value": 0.6,
+     "unit": "kW",
+     "evidence": "assumed",
+     "provenance_id": "manifest.json#/assumptions/kw_per_gpu",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "used_in": "all energy and CO₂; the storage site connection",
+   "evidence": "assumed",
+   "reality": "Real draw varies with the GPU generation and with utilisation; it was not measured.",
+   "tested": false,
+   "result_text": "Not run: the 0.40 and 0.80 kW runs were cut (D-058). Every kWh and tonne scales with it, so the saving fractions do not change in this model; the storage connection limit (2,288 slots × kW × PUE) does.",
+   "results": {
+    "home_slots": {
+     "value": 2288,
+     "unit": "GPU_slots",
+     "evidence": "assumed",
+     "provenance_id": "manifest.json#/assumptions/home_slots",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "id": "pue",
+   "assumption": "Power usage effectiveness (PUE)",
+   "value_text": "1.2 at every site",
+   "values": {
+    "pue": {
+     "value": 1.2,
+     "unit": "ratio",
+     "evidence": "assumed",
+     "provenance_id": "manifest.json#/assumptions/pue",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "used_in": "all energy and CO₂",
+   "evidence": "assumed",
+   "reality": "PUE differs by site and climate and rises in hot weather; one value for all sites is a simplification.",
+   "tested": false,
+   "result_text": "Not run: remote PUE 1.10 and 1.56 was cut (D-058); temperature-dependent PUE is future work (D-063).",
+   "results": {},
+   "decision_ids": [
+    "D-058",
+    "D-063"
+   ]
+  },
+  {
+   "id": "bookings",
+   "assumption": "Advance bookings",
+   "value_text": "every job holds its U booking as a fallback (F11; assumed)",
+   "values": {},
+   "used_in": "every policy: what a job may displace",
+   "evidence": "assumed",
+   "reality": "A real router does not know future jobs' bookings; the result is an advance-reservation scenario, not an online router, and zero deadline misses hold by construction.",
+   "tested": false,
+   "result_text": "Not run: the 'possible without advance reservations' sensitivity (shadow U) was cut by the owner (D-058). The bookings' effect on the saving is not signed.",
+   "results": {},
+   "decision_ids": [
+    "D-048",
+    "D-050",
+    "D-058"
+   ]
+  },
+  {
+   "id": "exact_runtimes",
+   "assumption": "Exact runtimes",
+   "value_text": "realized runtime = declared runtime (known at arrival)",
+   "values": {},
+   "used_in": "deadlines, capacity checks, every schedule",
+   "evidence": "assumed",
+   "reality": "Jobs overrun or end early, and declared budgets are rarely exact.",
+   "tested": false,
+   "result_text": "Not run: the +25% runtime-overrun stress was cut (D-058).",
+   "results": {},
+   "decision_ids": [
+    "D-050",
+    "D-058"
+   ]
+  },
+  {
+   "id": "replay_utah",
+   "assumption": "Workload replay mapped to Utah",
+   "value_text": "Seren 161-day cycle at phase 0 (simulated arrivals; measured durations and GPU counts): 435,833 source attempts, 5.4 M GPU-hours per cycle",
+   "values": {
+    "unique_attempts": {
+     "value": 435833,
+     "unit": "attempts",
+     "evidence": "measured",
+     "provenance_id": "manifest.json#/workload/unique_attempts",
+     "status": "ok",
+     "reason": null
+    },
+    "gpu_hours": {
+     "value": 5396200.904722223,
+     "unit": "GPU_h",
+     "evidence": "measured",
+     "provenance_id": "manifest.json#/workload/gpu_hours",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "used_in": "the whole experiment: arrivals, sizes, durations",
+   "evidence": "simulated",
+   "reality": "Seren is one AI lab's trace on another continent's clock; a Utah cluster's job mix, sizes and timing would differ.",
+   "tested": true,
+   "result_text": "Phase 49 days: S saves 23.2% [18.9, 27.6]; phase 98: 22.0% [18.1, 26.5] (primary S 22.6% [18.4, 26.8]). Civil-time (DST) alignment was cut (D-058).",
+   "results": {
+    "phase_49_S": {
+     "saving": {
+      "value": 0.2315714187052705,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/phases/phase_49/policies/S/vs_U/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.18920048685991248,
+       0.27579305180665814
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/phases/phase_49/policies/S/vs_U/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "phase_98_S": {
+     "saving": {
+      "value": 0.2196808246884476,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/phases/phase_98/policies/S/vs_U/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.1806909035225627,
+       0.2651391113863363
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/phases/phase_98/policies/S/vs_U/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "primary_S": {
+     "saving": {
+      "value": 0.22619570751542967,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.1836214692017572,
+       0.2682126090185966
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg": {
+      "value": 1056262.956538727,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/diff_kg",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg_ci95": {
+      "value": [
+       910438.3027177769,
+       1195249.603215583
+      ],
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/diff_kg_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "decision_ids": [
+    "D-033",
+    "D-058"
+   ]
+  },
+  {
+   "id": "consumption_basis",
+   "assumption": "Consumption-basis attributed emissions",
+   "value_text": "EIA's estimated hourly consumption-basis CO₂ intensity (an average, attributed)",
+   "values": {},
+   "used_in": "every CO₂ number",
+   "evidence": "modeled",
+   "reality": "Attributed average intensity is not the CO₂ a moved job physically changes; on the margin the gain can be far smaller (notebook 05).",
+   "tested": true,
+   "result_text": "Production basis (same schedules): S saves 25.5% [20.8, 30.1], against 22.6% [18.4, 26.8] on the consumption basis. A flat marginal factor is tested on storage (§2).",
+   "results": {
+    "production_S": {
+     "saving": {
+      "value": 0.2548623710365882,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/repricing/by_policy/S/production/vs_U/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.20808406750387093,
+       0.3013376172830136
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/repricing/by_policy/S/production/vs_U/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "consumption_S": {
+     "saving": {
+      "value": 0.22619570751542967,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.1836214692017572,
+       0.2682126090185966
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg": {
+      "value": 1056262.956538727,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/diff_kg",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg_ci95": {
+      "value": [
+       910438.3027177769,
+       1195249.603215583
+      ],
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/diff_kg_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "decision_ids": [
+    "D-027",
+    "D-028",
+    "D-055"
+   ]
+  },
+  {
+   "id": "color_midpoint",
+   "assumption": "Colour-scale midpoint",
+   "value_text": "356 g/kWh (US average 2024, EIA)",
+   "values": {
+    "midpoint": {
+     "value": 356.06972,
+     "unit": "g/kWh",
+     "evidence": "observed",
+     "provenance_id": "grid-profile.json#/reference/us_avg_ci",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "used_in": "the dashboard's carbon colour scale only",
+   "evidence": "observed",
+   "reality": "It is a national, annual, generation-basis average; the hourly consumption-basis values it colours are on a different basis.",
+   "tested": false,
+   "result_text": "Not tested: a display reference only; no result depends on it (D-055).",
+   "results": {},
+   "decision_ids": [
+    "D-053",
+    "D-055"
+   ]
+  },
+  {
+   "id": "storage",
+   "assumption": "Storage round-trip efficiency and the site connection limit",
+   "value_text": "η 0.85; charging limited by a 1.65 MW connection",
+   "values": {
+    "eta": {
+     "value": 0.85,
+     "unit": "fraction",
+     "evidence": "assumed",
+     "provenance_id": "storage.json#/assumptions/eta_default",
+     "status": "ok",
+     "reason": null
+    },
+    "connection_mw": {
+     "value": 1.64736,
+     "unit": "MW",
+     "evidence": "assumed",
+     "provenance_id": "storage.json#/assumptions/connection_mw",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "used_in": "the illustrative storage piece only (not the scheduler)",
+   "evidence": "assumed",
+   "reality": "Real batteries also lose energy to self-discharge, auxiliaries and ageing (ignored here), and a site connection can be upgraded.",
+   "tested": true,
+   "result_text": "At 4 MWh, fixed schedule: cut 2.0% at η 0.75, 3.5% at η 0.85, 4.2% at η 0.9; connection +25%: 4.5%. Average basis; on a flat marginal factor it adds CO₂ (§2).",
+   "results": {
+    "eta_0.75": {
+     "value": 0.019860318972354175,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "storage.json#/cases/U/strategies/A/0.75/cut_frac/value/3",
+     "status": "ok",
+     "reason": null
+    },
+    "eta_0.85": {
+     "value": 0.035119743924815545,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "storage.json#/cases/U/strategies/A/0.85/cut_frac/value/3",
+     "status": "ok",
+     "reason": null
+    },
+    "eta_0.9": {
+     "value": 0.042022493405350116,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "storage.json#/cases/U/strategies/A/0.90/cut_frac/value/3",
+     "status": "ok",
+     "reason": null
+    },
+    "connection_plus_25": {
+     "value": 0.044819313605828484,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "storage.json#/sensitivity/connection_plus_25/A/cut_frac/value/3",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "decision_ids": [
+    "D-061",
+    "D-067"
+   ]
+  },
+  {
+   "id": "rush_threshold",
+   "assumption": "Rush-hour (grid stress) threshold",
+   "value_text": "PACE net load ≥ the training years' 99% quantile (7,207 MW): 12 validation hours",
+   "values": {
+    "threshold_mw": {
+     "value": 7207.329999999998,
+     "unit": "MW",
+     "evidence": "observed",
+     "provenance_id": "storage.json#/rush/threshold_mw",
+     "status": "ok",
+     "reason": null
+    },
+    "n_hours": {
+     "value": 12,
+     "unit": "hours",
+     "evidence": "measured",
+     "provenance_id": "storage.json#/rush/n_hours",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "used_in": "peak relief and the storage rush view",
+   "evidence": "assumed",
+   "reality": "Stress is not one net-load threshold; operators' tight hours depend on reserves, imports and outages.",
+   "tested": true,
+   "result_text": "Quantile sweep: 95% → 269 hours, W changes the cluster's PACE load by −0.29 MW; 98% → 67 hours, W changes the cluster's PACE load by −0.29 MW; 99% → 12 hours, W changes the cluster's PACE load by −0.25 MW, against a PACE net-load peak of 8,173 MW.",
+   "results": {
+    "q0": {
+     "quantile": {
+      "value": 0.95,
+      "unit": "fraction",
+      "evidence": "assumed",
+      "provenance_id": "storage.json#/rush/sensitivity/0/quantile",
+      "status": "ok",
+      "reason": null
+     },
+     "n_hours": {
+      "value": 269,
+      "unit": "hours",
+      "evidence": "measured",
+      "provenance_id": "storage.json#/rush/sensitivity/0/n_hours",
+      "status": "ok",
+      "reason": null
+     },
+     "W_PACE_relief_mw": {
+      "value": -0.28670702973977713,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage.json#/rush/sensitivity/0/relief/W/PACE",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "q1": {
+     "quantile": {
+      "value": 0.98,
+      "unit": "fraction",
+      "evidence": "assumed",
+      "provenance_id": "storage.json#/rush/sensitivity/1/quantile",
+      "status": "ok",
+      "reason": null
+     },
+     "n_hours": {
+      "value": 67,
+      "unit": "hours",
+      "evidence": "measured",
+      "provenance_id": "storage.json#/rush/sensitivity/1/n_hours",
+      "status": "ok",
+      "reason": null
+     },
+     "W_PACE_relief_mw": {
+      "value": -0.28978913134328343,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage.json#/rush/sensitivity/1/relief/W/PACE",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "q2": {
+     "quantile": {
+      "value": 0.99,
+      "unit": "fraction",
+      "evidence": "assumed",
+      "provenance_id": "storage.json#/rush/sensitivity/2/quantile",
+      "status": "ok",
+      "reason": null
+     },
+     "n_hours": {
+      "value": 12,
+      "unit": "hours",
+      "evidence": "measured",
+      "provenance_id": "storage.json#/rush/sensitivity/2/n_hours",
+      "status": "ok",
+      "reason": null
+     },
+     "W_PACE_relief_mw": {
+      "value": -0.25478636666666665,
+      "unit": "MW",
+      "evidence": "simulated",
+      "provenance_id": "storage.json#/rush/sensitivity/2/relief/W/PACE",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "decision_ids": [
+    "D-031",
+    "D-061"
+   ]
+  },
+  {
+   "id": "water_hydro",
+   "assumption": "Water: whether hydro reservoir evaporation counts",
+   "value_text": "generation water from NREL median factors × the EIA-930 fuel mix, without and with hydro evaporation (illustrative)",
+   "values": {
+    "hydro_factor_span": {
+     "value": 12.631578947368421,
+     "unit": "ratio",
+     "evidence": "observed",
+     "provenance_id": "derived:ratio(water.json#/factors/hydro/max,water.json#/factors/hydro/min)",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "used_in": "the water illustration only",
+   "evidence": "assumed",
+   "reality": "Evaporation from a reservoir serves many uses, and NREL's hydro range spans 13×; allocating it to power is a choice, and it decides the sign.",
+   "tested": true,
+   "result_text": "S without hydro: −20.5%; with hydro evaporation: +145.4% against U (§2).",
+   "results": {
+    "ex_hydro_frac": {
+     "value": -0.20469396690855554,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "water.json#/policies/S/change_vs_U/ex_hydro_frac",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_frac": {
+     "value": 1.4537137618746951,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "water.json#/policies/S/change_vs_U/with_hydro_frac",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "decision_ids": [
+    "D-063"
+   ]
+  }
+ ],
+ "negative_results": [
+  {
+   "id": "waiting_in_utah",
+   "title": "Waiting in Utah barely helps",
+   "statement": "Time-only routers that may only wait in PACE save 0.7% [0.5, 0.9] (W_time) and 0.7% [0.6, 1.0] (L_time); moving saves 22.5% [18.3, 26.6] (L).",
+   "values": {
+    "W_time": {
+     "saving": {
+      "value": 0.007217618950137973,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/6/blocks/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.005153193082846444,
+       0.009456153043836736
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/6/blocks/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg": {
+      "value": 33704.01505485084,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/6/blocks/4/diff_kg",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg_ci95": {
+      "value": [
+       25953.038487138692,
+       40726.11595469979
+      ],
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/6/blocks/4/diff_kg_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "L_time": {
+     "saving": {
+      "value": 0.0074548224586865885,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/7/blocks/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.005538327801153361,
+       0.009594824061182177
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/7/blocks/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg": {
+      "value": 34811.68098712247,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/7/blocks/4/diff_kg",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg_ci95": {
+      "value": [
+       27909.875234935596,
+       41369.68095468571
+      ],
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/7/blocks/4/diff_kg_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "L": {
+     "saving": {
+      "value": 0.22510272886716834,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/4/blocks/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.18316984436427652,
+       0.26626769380714277
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/4/blocks/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg": {
+      "value": 1051159.089311859,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/4/blocks/4/diff_kg",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg_ci95": {
+      "value": [
+       908120.1343859029,
+       1187518.4699711646
+      ],
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/4/blocks/4/diff_kg_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "decision_ids": [
+    "D-056"
+   ]
+  },
+  {
+   "id": "g_zero",
+   "title": "A carbon-blind router saves about nothing",
+   "statement": "G (earliest finish across sites, no carbon input) saves 0.010% [0.000, 0.022].",
+   "values": {
+    "G": {
+     "saving": {
+      "value": 9.941063107160529e-05,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/0/blocks/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       2.7840360044173697e-06,
+       0.00022478842759698813
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/0/blocks/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg": {
+      "value": 464.21644442528486,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/0/blocks/4/diff_kg",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg_ci95": {
+      "value": [
+       12.84562861463055,
+       1127.0088712061056
+      ],
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/0/blocks/4/diff_kg_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "decision_ids": [
+    "D-056"
+   ]
+  },
+  {
+   "id": "h2_inconclusive",
+   "title": "H2 inconclusive: the learned forecast does not beat the weekly one",
+   "statement": "W − L = −0.16 t [−8.8, +7.2] (positive = L emits less); direction: inconclusive.",
+   "values": {
+    "W_minus_L": {
+     "diff_kg": {
+      "value": -163.9692293284461,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/h2/intervals/4/diff_kg",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg_ci95": {
+      "value": [
+       -8769.972298563982,
+       7160.565784699421
+      ],
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/h2/intervals/4/diff_kg_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "decision_ids": [
+    "D-056"
+   ]
+  },
+  {
+   "id": "h3_not_supported",
+   "title": "H3 not supported: no dynamic search beats the fixed ranking",
+   "statement": "S − K = −10.0 t [−19.3, −1.5]: K emits more than S, and the interval excludes zero. S − W = −4.9 t [−14.8, +3.6] and S − L = −5.1 t [−15.3, +4.2]: not distinguishable from S.",
+   "values": {
+    "K_vs_S": {
+     "saving": {
+      "value": -0.00276945156151342,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/10/blocks/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       -0.005898021666313345,
+       -0.00037171397288909125
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/10/blocks/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg": {
+      "value": -10007.20043164352,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/10/blocks/4/diff_kg",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg_ci95": {
+      "value": [
+       -19330.03812382475,
+       -1521.6369953281858
+      ],
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/10/blocks/4/diff_kg_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "W_vs_S": {
+     "saving": {
+      "value": -0.001367096453843676,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/11/blocks/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       -0.004385230422917936,
+       0.0010288816778728142
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/11/blocks/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg": {
+      "value": -4939.8979975394905,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/11/blocks/4/diff_kg",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg_ci95": {
+      "value": [
+       -14832.211404296313,
+       3641.9935981908134
+      ],
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/11/blocks/4/diff_kg_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "L_vs_S": {
+     "saving": {
+      "value": -0.0014124742636822702,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/12/blocks/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       -0.004316567001236729,
+       0.00110961035673881
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/12/blocks/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg": {
+      "value": -5103.867226867937,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/12/blocks/4/diff_kg",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg_ci95": {
+      "value": [
+       -15294.081363086367,
+       4152.154192998783
+      ],
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/12/blocks/4/diff_kg_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "decision_ids": [
+    "D-056"
+   ]
+  },
+  {
+   "id": "mobility_le_8",
+   "title": "If only small jobs can move, most of the saving is gone",
+   "statement": "With moves limited to jobs of 8 GPUs or fewer, W saves 3.9% [2.6, 5.4], against 22.5% [18.4, 26.7] when every flexible job may move.",
+   "values": {
+    "mobility_le_8gpus_W": {
+     "saving": {
+      "value": 0.03903996472267946,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/mobility_le_8gpus/policies/W/vs_U/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.026029124592568034,
+       0.05353811687842312
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/mobility_le_8gpus/policies/W/vs_U/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "primary_W": {
+     "saving": {
+      "value": 0.225137842411205,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/3/blocks/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.18362251961715767,
+       0.26670166379456123
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/3/blocks/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg": {
+      "value": 1051323.0585411876,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/3/blocks/4/diff_kg",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg_ci95": {
+      "value": [
+       908080.0433666729,
+       1187002.2808083168
+      ],
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/3/blocks/4/diff_kg_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "decision_ids": [
+    "D-058",
+    "D-064"
+   ]
+  },
+  {
+   "id": "dest_capacity_0",
+   "title": "No remote capacity: S does nothing",
+   "statement": "With 0 destination slots, S saves 0.0% [0.0, 0.0]; the best router left is a time-only one (W 0.7% [0.5, 0.9]).",
+   "values": {
+    "dest_slots_0_S": {
+     "saving": {
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/dest_slots_0/policies/S/vs_U/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.0,
+       0.0
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/dest_slots_0/policies/S/vs_U/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "dest_slots_0_W": {
+     "saving": {
+      "value": 0.007217618950137973,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/dest_slots_0/policies/W/vs_U/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.005153193082846444,
+       0.009456153043836736
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/sensitivities/dest_slots_0/policies/W/vs_U/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "id": "storage_flat_marginal",
+   "title": "Storage adds CO₂ on a flat marginal factor",
+   "statement": "At 4 MWh, η 0.85, fixed schedule: storage cuts 164 t on hourly average intensity, but on a flat 618 g/kWh marginal factor (an associational regression slope, R² 0.47) it changes CO₂ by +109 t (its losses).",
+   "values": {
+    "average_cut_t": {
+     "value": 163.99818086016643,
+     "unit": "t_CO2",
+     "evidence": "simulated",
+     "provenance_id": "storage.json#/cases/U/strategies/A/0.85/cut_t/value/3",
+     "status": "ok",
+     "reason": null
+    },
+    "flat_marginal_cut_t": {
+     "value": -108.5405856906035,
+     "unit": "t_CO2",
+     "evidence": "simulated",
+     "provenance_id": "storage.json#/cases/U/strategies/A/0.85/flat_marginal_cut_t/value/3",
+     "status": "ok",
+     "reason": null
+    },
+    "flat_g_kwh": {
+     "value": 618.0,
+     "unit": "g/kWh",
+     "evidence": "modeled",
+     "provenance_id": "storage.json#/break_even/marginal_threshold/flat_g_kwh",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "decision_ids": [
+    "D-061",
+    "D-067"
+   ]
+  },
+  {
+   "id": "peak_relief_scale",
+   "title": "Peak relief is tiny at Utah's scale",
+   "statement": "In the rush hours, W lowers the cluster's PACE load by 0.25 MW against U; PACE's net-load peak is 8,173 MW, so the relief is 0.0031% of it.",
+   "values": {
+    "rush_change_vs_U_mw": {
+     "value": -0.25478636666666665,
+     "unit": "MW",
+     "evidence": "simulated",
+     "provenance_id": "storage.json#/peak_relief/policies/W/PACE/rush_change_vs_U_mw",
+     "status": "ok",
+     "reason": null
+    },
+    "peak_net_load_mw": {
+     "value": 8173.0,
+     "unit": "MW",
+     "evidence": "observed",
+     "provenance_id": "storage.json#/rush/peak_net_load_mw",
+     "status": "ok",
+     "reason": null
+    },
+    "share_of_peak": {
+     "value": 3.1174154737142624e-05,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "derived:abs_ratio(storage.json#/peak_relief/policies/W/PACE/rush_change_vs_U_mw,storage.json#/rush/peak_net_load_mw)",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "decision_ids": [
+    "D-061"
+   ]
+  },
+  {
+   "id": "production_flatters_hydro",
+   "title": "The production basis would flatter hydro",
+   "statement": "Priced on production-basis intensity, the same S schedules save 25.5% [20.8, 30.1], more than the 22.6% [18.4, 26.8] on the consumption basis we report: hydro-heavy BPAT generates cleaner power than its loads consume.",
+   "values": {
+    "production_S": {
+     "saving": {
+      "value": 0.2548623710365882,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/repricing/by_policy/S/production/vs_U/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.20808406750387093,
+       0.3013376172830136
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "extensions.json#/repricing/by_policy/S/production/vs_U/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "consumption_S": {
+     "saving": {
+      "value": 0.22619570751542967,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_ci95": {
+      "value": [
+       0.1836214692017572,
+       0.2682126090185966
+      ],
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/saving_ci95",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg": {
+      "value": 1056262.956538727,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/diff_kg",
+      "status": "ok",
+      "reason": null
+     },
+     "diff_kg_ci95": {
+      "value": [
+       910438.3027177769,
+       1195249.603215583
+      ],
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "metrics.json#/contrasts/1/blocks/4/diff_kg_ci95",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "decision_ids": [
+    "D-027",
+    "D-055"
+   ]
+  },
+  {
+   "id": "illustrative_literal",
+   "title": "The literal illustrative-job rule picks a 3-minute job",
+   "statement": "The §11 rule (nearest the median GPU-hours) picks a 1-GPU, 203 s job, because short jobs dominate the trace; the story shows the GPU-hour-weighted median job instead.",
+   "values": {
+    "declared_duration_s": {
+     "value": 203.0,
+     "unit": "s",
+     "evidence": "measured",
+     "provenance_id": "job-replay.json#/illustrative_job_literal/declared_duration_s",
+     "status": "ok",
+     "reason": null
+    },
+    "gpus": {
+     "value": 1,
+     "unit": "GPUs",
+     "evidence": "measured",
+     "provenance_id": "job-replay.json#/illustrative_job_literal/gpus",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "decision_ids": [
+    "D-054"
+   ]
+  },
+  {
+   "id": "water_sign",
+   "title": "Water: an assumption decides the sign (illustrative)",
+   "statement": "Counting only power-plant cooling water, S changes generation water by −0.6 M gal (−20%) against U. Counting hydro reservoir evaporation, S, W and L use 2.4–2.5× as much as U (+5.2 to +5.5 M gal), and NREL's hydro factor spans 13×.",
+   "values": {
+    "ex_hydro_gal": {
+     "value": -608309.223408543,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water.json#/policies/S/change_vs_U/ex_hydro_gal",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_gal": {
+     "value": 5504425.84854424,
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water.json#/policies/S/change_vs_U/with_hydro_gal",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_S_over_U": {
+     "value": 2.453713761874695,
+     "unit": "ratio",
+     "evidence": "simulated",
+     "provenance_id": "derived:ratio(water.json#/policies/S/generation_gal/with_hydro,water.json#/policies/U/generation_gal/with_hydro)",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_W_over_U": {
+     "value": 2.387303557865554,
+     "unit": "ratio",
+     "evidence": "simulated",
+     "provenance_id": "derived:ratio(water.json#/policies/W/generation_gal/with_hydro,water.json#/policies/U/generation_gal/with_hydro)",
+     "status": "ok",
+     "reason": null
+    },
+    "with_hydro_L_over_U": {
+     "value": 2.3824076841390855,
+     "unit": "ratio",
+     "evidence": "simulated",
+     "provenance_id": "derived:ratio(water.json#/policies/L/generation_gal/with_hydro,water.json#/policies/U/generation_gal/with_hydro)",
+     "status": "ok",
+     "reason": null
+    },
+    "headline_with_hydro_gal": {
+     "value": [
+      5234428.392552607,
+      5504425.84854424
+     ],
+     "unit": "gal",
+     "evidence": "simulated",
+     "provenance_id": "water.json#/headline/change_with_hydro_gal",
+     "status": "ok",
+     "reason": null
+    },
+    "hydro_factor_span": {
+     "value": 12.631578947368421,
+     "unit": "ratio",
+     "evidence": "observed",
+     "provenance_id": "derived:ratio(water.json#/factors/hydro/max,water.json#/factors/hydro/min)",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "decision_ids": [
+    "D-063",
+    "D-064"
+   ]
+  }
+ ],
+ "weather": {
+  "statement": "H is the same reservation search as K, W and L, given the realised carbon instead of a forecast. It is what a perfect forecast would give this router, not an upper bound: a greedy search is not a cohort optimum. Perfect carbon foresight (H) saves 22.6% [18.4, 26.8] against U; the fixed clean-region ranking S saves 22.6% [18.4, 26.8]. S − H = −0.5 t [−9.9, +8.0]: H does not beat S. H does beat the weekly forecast W, by W − H = +4.5 t [+2.3, +6.9] (0.12% of W's CO₂), that is what a perfect forecast adds to this search, and S, with no forecast at all, is not distinguishable from H. Only 29% of flexible energy has its deadline inside issued forecast coverage at every legal site, so most decisions rest on the tail climatology, not on the forecast.",
+  "conclusion": "In this setup even perfect carbon foresight does not beat a fixed ranking, so weather-informed forecasts are unlikely to change the routing result. They may matter for peak-stress forecasting, which we did not evaluate; the most a perfect forecast adds here is about 0.1% of W's CO₂.",
+  "values": {
+   "H_vs_U": {
+    "saving": {
+     "value": 0.22609157475232047,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/5/blocks/4/saving",
+     "status": "ok",
+     "reason": null
+    },
+    "saving_ci95": {
+     "value": [
+      0.1842791937237424,
+      0.2677789893025273
+     ],
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/5/blocks/4/saving_ci95",
+     "status": "ok",
+     "reason": null
+    },
+    "diff_kg": {
+     "value": 1055776.6892198534,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/5/blocks/4/diff_kg",
+     "status": "ok",
+     "reason": null
+    },
+    "diff_kg_ci95": {
+     "value": [
+      911708.4983031447,
+      1192553.0545545905
+     ],
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/5/blocks/4/diff_kg_ci95",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "S_vs_U": {
+    "saving": {
+     "value": 0.22619570751542967,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/1/blocks/4/saving",
+     "status": "ok",
+     "reason": null
+    },
+    "saving_ci95": {
+     "value": [
+      0.1836214692017572,
+      0.2682126090185966
+     ],
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/1/blocks/4/saving_ci95",
+     "status": "ok",
+     "reason": null
+    },
+    "diff_kg": {
+     "value": 1056262.956538727,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/1/blocks/4/diff_kg",
+     "status": "ok",
+     "reason": null
+    },
+    "diff_kg_ci95": {
+     "value": [
+      910438.3027177769,
+      1195249.603215583
+     ],
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/1/blocks/4/diff_kg_ci95",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "W_vs_U": {
+    "saving": {
+     "value": 0.225137842411205,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/3/blocks/4/saving",
+     "status": "ok",
+     "reason": null
+    },
+    "saving_ci95": {
+     "value": [
+      0.18362251961715767,
+      0.26670166379456123
+     ],
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/3/blocks/4/saving_ci95",
+     "status": "ok",
+     "reason": null
+    },
+    "diff_kg": {
+     "value": 1051323.0585411876,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/3/blocks/4/diff_kg",
+     "status": "ok",
+     "reason": null
+    },
+    "diff_kg_ci95": {
+     "value": [
+      908080.0433666729,
+      1187002.2808083168
+     ],
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/3/blocks/4/diff_kg_ci95",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "L_vs_U": {
+    "saving": {
+     "value": 0.22510272886716834,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/4/blocks/4/saving",
+     "status": "ok",
+     "reason": null
+    },
+    "saving_ci95": {
+     "value": [
+      0.18316984436427652,
+      0.26626769380714277
+     ],
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/4/blocks/4/saving_ci95",
+     "status": "ok",
+     "reason": null
+    },
+    "diff_kg": {
+     "value": 1051159.089311859,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/4/blocks/4/diff_kg",
+     "status": "ok",
+     "reason": null
+    },
+    "diff_kg_ci95": {
+     "value": [
+      908120.1343859029,
+      1187518.4699711646
+     ],
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/4/blocks/4/diff_kg_ci95",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "H_vs_S": {
+    "saving": {
+     "value": -0.00013457248056202335,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/13/blocks/4/saving",
+     "status": "ok",
+     "reason": null
+    },
+    "saving_ci95": {
+     "value": [
+      -0.0029065131788347924,
+      0.0021484591609288767
+     ],
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/13/blocks/4/saving_ci95",
+     "status": "ok",
+     "reason": null
+    },
+    "diff_kg": {
+     "value": -486.2673188736662,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/13/blocks/4/diff_kg",
+     "status": "ok",
+     "reason": null
+    },
+    "diff_kg_ci95": {
+     "value": [
+      -9947.884585312266,
+      8035.020471365645
+     ],
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/13/blocks/4/diff_kg_ci95",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "H_vs_W": {
+    "saving": {
+     "value": 0.00123084129451268,
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/21/blocks/4/saving",
+     "status": "ok",
+     "reason": null
+    },
+    "saving_ci95": {
+     "value": [
+      0.0006585479996425388,
+      0.001847901920209119
+     ],
+     "unit": "fraction",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/21/blocks/4/saving_ci95",
+     "status": "ok",
+     "reason": null
+    },
+    "diff_kg": {
+     "value": 4453.630678665824,
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/21/blocks/4/diff_kg",
+     "status": "ok",
+     "reason": null
+    },
+    "diff_kg_ci95": {
+     "value": [
+      2255.800314881583,
+      6887.298072421874
+     ],
+     "unit": "kg_CO2",
+     "evidence": "simulated",
+     "provenance_id": "metrics.json#/contrasts/21/blocks/4/diff_kg_ci95",
+     "status": "ok",
+     "reason": null
+    }
+   },
+   "share_flexible_energy_in_coverage": {
+    "value": 0.29020651714728724,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "metrics.json#/coverage_stratum/share_flexible_energy_in_coverage",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  "decision_ids": [
+   "D-066",
+   "D-068"
+  ]
+ },
+ "not_done": [
+  {
+   "item": "shadow-U (no advance booking) sensitivity (F12.7)",
+   "reason": "cut by owner (D-058)",
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "item": "missingness-blind scheduling sensitivity (F12.1, F13.6)",
+   "reason": "cut by owner (D-058)",
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "item": "batch delay 0 h (§7)",
+   "reason": "cut by owner (D-058)",
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "item": "remote transfer time 0 min (§7)",
+   "reason": "cut by owner (D-058)",
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "item": "remote transfer energy 0% and 20% (§7)",
+   "reason": "cut by owner (D-058)",
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "item": "active IT power 0.40 and 0.80 kW per GPU slot (§7)",
+   "reason": "cut by owner (D-058)",
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "item": "remote PUE 1.10 and 1.56 with home fixed (§7)",
+   "reason": "cut by owner (D-058)",
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "item": "idle IT power 0 and 0.30 kW per slot (§7)",
+   "reason": "cut by owner (D-058)",
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "item": "no flexible jobs (§7 flexibility share)",
+   "reason": "cut by owner (D-058)",
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "item": "all candidates flexible (§7 flexibility share)",
+   "reason": "cut by owner (D-058)",
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "item": "1.25x home capacity runs (§7)",
+   "reason": "cut by owner (D-058)",
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "item": "civil-time (DST) alignment of the replay clock (§7)",
+   "reason": "cut by owner (D-058): remaining §7 sensitivities",
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "item": "+25% runtime-overrun stress with fixed deadlines (§7)",
+   "reason": "cut by owner (D-058): remaining §7 sensitivities",
+   "decision_ids": [
+    "D-058"
+   ]
+  },
+  {
+   "item": "weather-driven (weather-aware) forecasts",
+   "reason": "deferred at the spec gate (the weather manifest was still growing, F8), then not added by the owner: forecast quality barely affects the routing result (§3) and it would disturb the freeze",
+   "decision_ids": [
+    "D-044",
+    "D-066"
+   ]
+  },
+  {
+   "item": "zero-shot time-series foundation-model forecasts (R4a)",
+   "reason": "deferred or cut in the minimal honest core (F9); if revived, it needs independence from the validation period used for selection and an audit of republished target sources (F12.9)",
+   "decision_ids": [
+    "D-045",
+    "D-049"
+   ]
+  },
+  {
+   "item": "temperature-dependent PUE, curtailment coincidence, wholesale cost, health",
+   "reason": "future-work appendix",
+   "decision_ids": [
+    "D-063"
+   ]
+  }
+ ],
+ "questions": [
+  {
+   "question": "Would real jobs really move like this?",
+   "answered_by": [
+    "flexible_mobile",
+    "mobility_le_8"
+   ]
+  },
+  {
+   "question": "What if the remote region has no spare GPUs?",
+   "answered_by": [
+    "dest_slots",
+    "dest_capacity_0"
+   ]
+  },
+  {
+   "question": "Why not just wait for Utah's sunny hours?",
+   "answered_by": [
+    "waiting_in_utah"
+   ]
+  },
+  {
+   "question": "Is the saving real, or an accounting choice?",
+   "answered_by": [
+    "consumption_basis",
+    "production_flatters_hydro"
+   ]
+  },
+  {
+   "question": "Would better or weather-aware forecasts help?",
+   "answered_by": [
+    "weather"
+   ]
+  },
+  {
+   "question": "Does it relieve Utah's grid peak?",
+   "answered_by": [
+    "peak_relief_scale"
+   ]
+  },
+  {
+   "question": "Does a battery help?",
+   "answered_by": [
+    "storage",
+    "storage_flat_marginal"
+   ]
+  },
+  {
+   "question": "Is it better for water too?",
+   "answered_by": [
+    "water_hydro",
+    "water_sign"
+   ]
+  },
+  {
+   "question": "Are zero deadline misses evidence of reliability?",
+   "answered_by": [
+    "bookings",
+    "exact_runtimes"
+   ]
+  },
+  {
+   "question": "Is the illustrative job cherry-picked?",
+   "answered_by": [
+    "illustrative_literal"
+   ]
+  },
+  {
+   "question": "What did you not run?",
+   "answered_by": [
+    "not_done"
+   ]
+  }
+ ]
+}

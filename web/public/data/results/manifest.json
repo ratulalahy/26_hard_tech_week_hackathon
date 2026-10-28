@@ -953,5 +953,17 @@
   "kind": "illustrative",
   "sha256": "189369663a6f0fb595d27c7f03c2c2a2e298ef368f16f07422bb2c86a6d1572a",
   "canonical_sha256": "f6c8064598a1c516674ca7007de8140245442a63ac93d679487564246b0f0d16"
+ },
+ "water": {
+  "artifact": "water.json",
+  "kind": "illustrative",
+  "sha256": "5a7d54f2d05a39f9e485a405f2b3b53bfaf1076e0a2c7bab91b2d2a02fd4dc58",
+  "canonical_sha256": "ea56bb56f1710bd932fd0ea7cdbf68dffcc8a26fb9df3d37cfc84f752b5a4abc"
+ },
+ "case_days": {
+  "artifact": "case-days.json",
+  "kind": "illustrative",
+  "sha256": "ea120e0456a2c28c66ac22ea9890f138453e1b693815ceab2eed5a799c4cc85f",
+  "canonical_sha256": "d8c48bf27e8d252329336330d9fdb3792a04a3e822ca9d8c6e185629bf79f464"
  }
 }

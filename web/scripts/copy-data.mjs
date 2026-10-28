@@ -27,6 +27,12 @@ const kb = (p) => (statSync(p).size / 1024).toFixed(0) + ' KB';
 // ---------------------------------------------------------------- results
 mkdirSync(join(out, 'results'), { recursive: true });
 const results = readdirSync(join(repo, 'results')).filter((f) => f.endsWith('.json')).sort();
+// every artifact the dashboard reads must be there (T15 adds the scenario flows and the flexibility budget)
+const REQUIRED = ['metrics.json', 'manifest.json', 'forecast-replay.json', 'job-replay.json', 'grid-profile.json', 'workload-profile.json',
+  'extensions.json', 'scenario-flows.json', 'flexibility-budget.json'];
+const missing = REQUIRED.filter((f) => !results.includes(f));
+// (a COPY_DATA_REPO test checkout carries only what its test needs)
+if (missing.length && !process.env.COPY_DATA_REPO) { console.error('results/ is missing ' + missing.join(', ') + ' (make slice / profile / extensions / flows)'); process.exit(1); }
 for (const f of results) {
   copyFileSync(join(repo, 'results', f), join(out, 'results', f));
   console.log('results/' + f, kb(join(out, 'results', f)));

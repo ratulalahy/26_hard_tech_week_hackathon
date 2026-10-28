@@ -65,6 +65,7 @@ import polars as pl
 from scipy import sparse
 from scipy.optimize import linprog
 
+from gridpilot import seal
 from gridpilot.forecast import VAL_FIT_AT, VAL_HISTORY_START
 from gridpilot.results import SCHEMA_VERSION, env, iso
 from gridpilot.sim import HOME, SITES
@@ -130,8 +131,8 @@ def hourly_load_kwh(ledger: pl.DataFrame, site: str, t0_us: int, n_hours: int) -
     if t0_us % H_US:
         raise ValueError("t0 must be a UTC hour start")
     t1_us = t0_us + n_hours * H_US
-    if t1_us > TEST_START_US:
-        raise ValueError(f"load window reaches the seal at {TEST_START.isoformat()} (F8)")
+    if t1_us > _us(seal.read_end()):  # TEST_START outside the test-mode session (T20: F_test in it)
+        raise ValueError(f"load window reaches the seal at {seal.read_end().isoformat()} (F8)")
     f = ledger.filter(pl.col("site") == site)
     s = f["start_ts"].dt.epoch("us").to_numpy().astype(np.int64)
     e = f["end_ts"].dt.epoch("us").to_numpy().astype(np.int64)
@@ -162,8 +163,9 @@ def cohort_window(start: datetime, last_end: datetime) -> tuple[datetime, dateti
     if s_us % H_US:
         raise ValueError("the window must start on a UTC hour")
     e_us = -(-_us(last_end) // H_US) * H_US
-    if e_us > TEST_START_US:
-        raise ValueError(f"window [{start}, {last_end}) reaches the seal at {TEST_START} (F8)")
+    if e_us > _us(seal.read_end()):  # TEST_START outside the test-mode session (T20)
+        raise ValueError(f"window [{start}, {last_end}) reaches the seal at {seal.read_end()} "
+                         f"(F8)")
     return _dt(s_us), _dt(e_us)
 
 

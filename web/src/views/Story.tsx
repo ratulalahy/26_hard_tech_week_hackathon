@@ -1,26 +1,28 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { IntervalChart, Panel, PolicyTable } from '../components/charts';
-import { extRows, placementSpan } from '../components/extensions';
+import { IntervalChart, Panel } from '../components/charts';
+import { CONSUMPTION_CHECKS, PHRASE, extRows, listJoin, placementSpan } from '../components/extensions';
+import { BudgetBar, BudgetHeadline, NoChangeNote, ScenarioToggle, arcsOf, budgetFacts, flowOf, kindOf, savingOf, scenarioOf } from '../components/flows';
 import { ImportChart, StorageCurve, hourSpans, storageFacts } from '../components/storage';
 import { Ev, EvCI, Icon } from '../components/ui';
+import { WaterLine } from '../components/water';
 import { cap } from '../lib/copy';
 import { useCopy } from '../lib/useCopy';
-import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, headline, loadMonth, pname, type Core, type Json } from '../lib/data';
+import { DEADLINES_MET, DESTS, FRAME_LINE, REGION, asNum, dayCurve, loadMonth, own, plainLimitations, pname, waitPhrase, type Core, type Json } from '../lib/data';
 import { argmax, cleanest, rushHours, spanLabel } from '../lib/derive';
 import { fmt, fmtDate, fmtHour, monthLabel, pct, pctRange, sig2 } from '../lib/format';
 import { useViewport } from '../lib/useViewport';
 import { initialStep, useApp } from '../lib/store';
 import { WestMap, type ArcSpec } from '../map/WestMap';
-import { CarbonRibbon, ForecastPanel, LoadChart, YearHeat } from './Ribbon';
+import { CarbonRibbon, LoadChart, YearHeat } from './Ribbon';
 
-/** Six beats, about 45 s each (lead ruling R8; F18): the rush, tomorrow's report, one job, place
- * the work, the count, and "move what you can, store for what you can't" (T10b: the storage
- * illustration and router peak relief; the robustness table lives in the method drawer). The
- * visual on the left follows the step in view; #story-N deep-links. */
+/** Six beats in the D-064 demo order, about 45 s each, matching the spoken script (docs/pitch/narrative.md):
+ * one job (in Utah's evening rush), stay, wait or move, the aggregate, lock large jobs to Utah (the
+ * control-room toggle), move what you can and store for what you can't (T10b: storage and the site-power
+ * curve), and the evidence. Tables, policy letters and
+ * long prose live in the method drawer (F18). The visual on the left follows the step in view; #story-N deep-links. */
 export function Story() {
-  const { data, step, month, set } = useApp();
+  const { data, step, month, scenario, arcPolicy, set } = useApp();
   const m = data!.metrics, g = data!.grid, wl = data!.workload;
-  const h = headline(m);
   const copy = useCopy();
   const curve = dayCurve(g, 'PACE', month);
   const rush = rushHours(g), clean = cleanest(curve);
@@ -31,8 +33,8 @@ export function Story() {
   const hotMonths = g.months.filter((_: string, i: number) => cm[i].some((c) => c > 0));
   const mName = (ym: string) => monthLabel(ym, true).split(' ')[0];
   const monthSpan = hotMonths.length ? (hotMonths.length === 1 ? mName(hotMonths[0]) : `${mName(hotMonths[0])}–${mName(hotMonths[hotMonths.length - 1])}`) : '';
-  // N2: where W's moved (remote) execution energy went over the year
-  const byS = m.policies.W.metrics.execution_kwh_by_site as Record<string, { value: number }>;
+  // F16: where S's remote execution energy ran over the year
+  const byS = m.policies.S.metrics.execution_kwh_by_site as Record<string, { value: number }>;
   const remote = DESTS.map((d) => [d, byS?.[d]?.value ?? 0] as const);
   const remoteTot = remote.reduce((a, [, v]) => a + v, 0) || 1;
   const topDest = [...remote].sort((a, b) => b[1] - a[1])[0];
@@ -40,10 +42,7 @@ export function Story() {
   const box = useRef<HTMLDivElement>(null);
   const ij: Json = data!.jobs.illustrative_job;
   const lit: Json = data!.jobs.illustrative_job_literal;
-  const litDur = lit.declared_duration_s.value < 3600 ? `${fmt(lit.declared_duration_s.value / 60, 1)} minutes` : `${fmt(lit.declared_duration_s.value / 3600, 1)} hours`;
-  const w = data!.jobs.week.policies.W;
-  const wyear = m.policies.W.metrics;
-  const weekTop = [...w.arcs].sort((a: Json, b: Json) => b.gpu_h.value - a.gpu_h.value)[0];
+  const dur = (sec: number) => (sec < 3600 ? `${fmt(sec / 60, 1)} minutes` : `${fmt(sec / 3600, 1)} hours`);
   useEffect(() => {
     const st = initialStep ?? null;
     if (st && box.current) { const el = box.current.querySelector<HTMLElement>(`[data-step="${st}"]`); if (el) box.current.scrollTop = el.offsetTop - (box.current.clientHeight - el.offsetHeight) / 2; }
@@ -54,40 +53,49 @@ export function Story() {
     return () => io.disconnect();
   }, [set]);
 
+  const sOwn = own(m, 'S')!;
   const top1 = wl.top.find((t: Json) => Math.abs(t.fraction.value - 0.01) < 1e-9) ?? wl.top[1];
-  const xr = extRows(m, data!.ext);
-  const spanMob = placementSpan(xr, ['mobility_le_8gpus']);
+  const xr = extRows(m, data!.ext), span = placementSpan(xr, CONSUMPTION_CHECKS);
+  const spanProd = placementSpan(xr, ['production']);
+  const keptRun = xr.filter((r) => CONSUMPTION_CHECKS.includes(r.id) && r.status === 'ok');
+  const xRun = xr.filter((r) => r.group !== 'registered' && r.status === 'ok'), xMiss = xr.filter((r) => r.status !== 'ok');
+  const allOnTime = xRun.every((r) => r.late == null || r.late === 0);
+  // beat 4 reads the shared toggle (D-064): the mobility scenario is the comparison it is built around
+  const mobF = flowOf(data!.flows, 'mobility_le_8gpus', 'S'), mob = savingOf(mobF);
+  const sc = scenarioOf(data!.flows, scenario), shown = savingOf(flowOf(data!.flows, scenario, arcPolicy));
+  const bf = budgetFacts(data!.budget, 'S');
+  const slots = asNum(data!.manifest.assumptions.home_slots) ?? 0;
   const sto = data!.storage, sf = sto ? storageFacts(sto) : null;
   const steps: { t: string; body: React.ReactNode; ev: React.ReactNode }[] = [
     {
-      t: "Utah's grid has a rush hour, and it comes after sunset",
-      body: <>On a {lm.short} weekday demand peaks at {fmtHour(argmax(jul.demand_mw.value))}. Then the sun sets and solar drops away, so net load, the load the rest of the fleet must carry, keeps climbing to {fmtHour(argmax(net))} ({fmt(net[argmax(net)])} MW). {cap(copy.allYear)}, the {fmt(k)} highest net-load hours fall on {monthSpan} evenings, mostly {spanLabel(rush)}. The cleanest hours are {spanLabel(clean)}, while the sun is up.</>,
-      ev: <><Ev e="observed">load: EIA-930</Ev><EvCI /></>,
+      t: "One job, in Utah's evening rush",
+      body: <>This is PACE, the balancing area serving much of Utah. On a {lm.short} weekday demand peaks at {fmtHour(argmax(jul.demand_mw.value))}; then, as solar fades, net load, the load the rest of the fleet must carry, keeps climbing to {fmtHour(argmax(net))} ({fmt(net[argmax(net)])} MW). {cap(copy.allYear)}, the {fmt(k)} highest net-load hours fall on {monthSpan} evenings, mostly {spanLabel(rush)}; the cleanest hours are {spanLabel(clean)}, while the sun is up. Picture a hypothetical {fmt(slots)}-GPU AI cluster here, and one of its jobs arriving.</>,
+      ev: <><Ev e="observed">load: EIA-930</Ev><EvCI /><Ev e="assumed">cluster size</Ev></>,
     },
     {
-      t: "Tomorrow's report: forecasts catch the daily swing",
-      body: <>Each day at 10 AM, three forecasts predict tomorrow's carbon in Utah from data that is at least four days old: {pname('K')}, {pname('W')} and {pname('L')}. {copy.validationReadings ? 'All three follow the swing between night and midday; none is clearly better than the others.' : 'Their errors over the test year are in the method drawer.'}</>,
-      ev: <><Ev e="forecast" /><Ev e="measured">errors</Ev></>,
-    },
-    {
-      t: 'One job: stay, wait or move',
-      body: <>A {fmt(ij.gpus.value)}-GPU {ij.job_type} job of {ij.declared_duration_s.value < 3600 ? `${fmt(ij.declared_duration_s.value / 60, 1)} minutes` : `${fmt(ij.declared_duration_s.value / 3600, 1)} hours`} ({fmt(ij.declared_gpu_h.value, ij.declared_gpu_h.value < 1 ? 2 : 1)} GPU-h), arriving {fmtDate(ij.arrival, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}. It may start up to {fmt(ij.max_delay_s.value / 3600)} h late. Moving it adds a transfer delay but lands it on a cleaner grid. It was picked by a rule fixed before seeing its outcome: the GPU-hour-weighted median of the eligible flexible jobs. The registered count-median job runs only {litDur}; see how this job was chosen.{ij.disclosure ? <details className="t-12 ink-3" style={{ marginTop: 8 }}><summary className="cursor-pointer fw-500">How this job was chosen (source text)</summary><span>{ij.disclosure}</span></details> : null}</>,
+      t: 'Stay, wait or move',
+      body: <>A {fmt(ij.gpus.value)}-GPU {ij.job_type} job of {dur(ij.declared_duration_s.value)} ({fmt(ij.declared_gpu_h.value, ij.declared_gpu_h.value < 1 ? 2 : 1)} GPU-h). It may start up to {fmt(ij.max_delay_s.value / 3600)} h late, which buys little against a run this long. Moving it adds a transfer delay but lands it on a cleaner grid. Moving means placing a job that has not started at another site with spare GPUs; nothing migrates mid-run.{ij.disclosure ? <details className="t-12 ink-3" style={{ marginTop: 8 }}><summary className="cursor-pointer fw-500">How this job was chosen</summary><span>A rule fixed before its outcome was seen: the GPU-hour-weighted median of the eligible flexible jobs (the registered count-median job runs only {dur(lit.declared_duration_s.value)}). {ij.disclosure}</span></details> : null}</>,
       ev: <><Ev e="measured">job size</Ev><Ev e="modeled">option CO₂</Ev><Ev e="simulated">placements</Ev></>,
     },
     {
-      t: `Place the work: ${copy.overYear}, ${pct(topDest[1] / remoteTot, 0)}% of the moved energy went to ${REGION[topDest[0]].name === 'Northwest hydro' ? 'the Northwest' : REGION[topDest[0]].name}`,
-      body: <>{cap(copy.overYear)}, {pname('W')} ran {remote.map(([d, v]) => `${pct(v / remoteTot, 0)}% of its moved energy in ${REGION[d].name}`).join(', ')}. {weekTop && weekTop.to !== topDest[0] ? <>The replay week shown on the map is different: {REGION[weekTop.to as Core].name} took more GPU-hours that week. </> : null}In that week it sent {DESTS.map((d) => { const a = w.arcs.find((x: Json) => x.to === d); return a ? `${fmt(a.gpu_h.value)} GPU-h to ${REGION[d].name}` : null; }).filter(Boolean).join(', ')}. {cap(copy.overYear)} it moved {pct(wyear.moved_share_jobs.value)}% of jobs and ran {pct(wyear.remote_energy_share.value)}% of the energy outside Utah, with {fmt(wyear.late_jobs.value)} late jobs.</>,
-      ev: <Ev e="simulated">{`energy by site, ${copy.allYear}; arcs, one week`}</Ev>,
+      t: copy.validationReadings ? 'The whole year: a simple ranking does well' : `${cap(copy.wholeYear)}: the aggregate`,
+      body: <span data-testid="story-result">{copy.over}, {pname('S')} {sOwn.v < 0 ? 'raised' : 'cut'} attributed CO₂ by <b className="fw-600">{pct(Math.abs(sOwn.v))}%</b> (its own 95% interval {pct(sOwn.lo)}–{pct(sOwn.hi)}%) against U local (stay in Utah), with {DEADLINES_MET} and the same declared work. Waiting in Utah alone cut {waitPhrase(m)}. Compute follows cleaner power: {pct(topDest[1] / remoteTot, 0)}% of the energy S ran outside Utah ran in {REGION[topDest[0]].name === 'Northwest hydro' ? 'the Northwest' : REGION[topDest[0]].name}.{copy.validationReadings ? ' We found no demonstrated aggregate benefit from dynamic search in this replay; the forecast-driven policies land beside S.' : ''}<span className="block t-12 ink-3" style={{ marginTop: 8 }} data-testid="story-frame">{FRAME_LINE}</span></span>,
+      ev: <><Ev e="simulated">{fmt(m.cohort.n_jobs.value)} jobs, 95% intervals</Ev><button className="btn" onClick={() => set({ drawer: true })}><Icon name="doc" />Every policy, in the method drawer</button></>,
     },
     {
-      t: 'The count: moving beats waiting',
-      body: <span data-testid="story-result">{copy.over}, the four placement policies cut attributed CO₂ by <b className="fw-600">{pctRange(h.placement.lo, h.placement.hi)}%</b> against U local (stay in Utah), with {DEADLINES_MET} and the same work done. Waiting in Utah alone cut <b className="fw-600">{pctRange(h.timing.lo, h.timing.hi)}%</b>.{copy.validationReadings ? ' Forecast choice barely matters; placement dominates.' : ''} Most jobs are tiny, but most of the energy, and most of the saving, sits in a few large jobs: the largest {pct(top1.fraction.value, 0)}% of jobs use {pct(top1.energy_share.value, 0)}% of the energy and carry {pct(top1.saving_share.value, 0)}% of the saving.<span className="block t-12 ink-3" style={{ marginTop: 8 }} data-testid="story-frame">{FRAME_LINE}</span></span>,
-      ev: <><Ev e="simulated">{fmt(m.cohort.n_jobs.value)} jobs, 95% intervals</Ev><Ev e="measured">job sizes</Ev></>,
+      t: 'Lock large jobs to Utah',
+      body: <span data-testid="story-lock">The largest {pct(top1.fraction.value, 0)}% of jobs use {pct(top1.energy_share.value, 0)}% of the energy. {mob && mobF ? <>If only jobs of 8 GPUs or fewer may move, {pname('S')}'s saving falls from {pct(sOwn.v)}% to <b className="fw-600">{pct(mob.v)}%</b> ({pct(mob.lo)}–{pct(mob.hi)}%, a scenario estimate), and only {pct(mobF.remote_execution_share.value, 1)}% of the execution energy runs outside Utah. </> : null}{bf ? <><BudgetHeadline p="S" /> </> : null}{!data!.flows && own(m, arcPolicy) ? <span data-testid="story-lock-own">{copy.over}, {pname(arcPolicy)} {own(m, arcPolicy)!.v < 0 ? 'raised' : 'cut'} attributed CO₂ by {pct(Math.abs(own(m, arcPolicy)!.v))}% (its own 95% interval {pct(own(m, arcPolicy)!.lo)}–{pct(own(m, arcPolicy)!.hi)}%); the mobility and capacity scenarios are not shown for this window. </span> : null}Whether large training jobs can move is the lever; in this study it is an assumption, not a measurement.{sc && shown ? <span className="block t-12 ink-2" style={{ marginTop: 8 }} data-testid="story-lock-shown">Shown: {sc.label}, {kindOf(sc)}: {pname(arcPolicy)} {pct(shown.v)}% ({pct(shown.lo)}–{pct(shown.hi)}%).</span> : null}</span>,
+      ev: data!.flows ? <><Ev e="simulated">scenario runs, validation</Ev><Ev e="assumed">mobility rule</Ev></> : <Ev e="measured">job sizes</Ev>,
     },
     {
       t: "Move what you can, store for what you can't",
-      body: sf ? <span data-testid="story-storage">Moving cuts {pctRange(h.placement.lo, h.placement.hi)}%, but only if large multi-node jobs can move; {spanMob ? <>if only jobs of 8 GPUs or fewer may, it falls to {pctRange(spanMob[0], spanMob[1])}%</> : 'the small-jobs-only check did not run'}. For work that stays, a battery can shift its energy instead. <b className="fw-600" data-testid="storage-headline">{/^(8|11|18)/.test(String(sf.E)) ? 'An' : 'A'} {fmt(sf.E)} MWh, {fmt(sf.P)} MW battery cuts the Utah cluster's CO₂ by {pct(sf.cutA, 1)}%</b> on a fixed daily schedule; charging is limited to the roughly {fmt(sf.headroomLo, 1)}–{fmt(sf.headroomMid, 1)} MW the site connection leaves free. <span data-testid="storage-combined">Moving the small jobs and storing for the big ones cuts <b className="fw-600">{pct(sf.moveStoreA, 1)}%</b> against {pname('U')}.</span> <b className="fw-600 block" style={{ marginTop: 8 }} data-testid="storage-skeptic">On a flat marginal basis it may add about {sig2(sf.flatAddT)} t: storage only helps if charging carbon ÷ η &lt; displaced carbon.</b></span> : <>{copy.line}</>,
-      ev: <><span className="chip-neutral">illustrative · not the registered result</span><EvCI /><Ev e="simulated">dispatch</Ev><Ev e="assumed">battery, schedule</Ev><button className="btn" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button></>,
+      body: <>{sf ? <span data-testid="story-storage">Moving cuts {pct(sOwn.v)}% ({pname('S')}), but only if large multi-node jobs can move; {mob ? <>if only jobs of 8 GPUs or fewer may, it falls to {pct(mob.v)}% (a scenario estimate)</> : 'the small-jobs-only check did not run'}. For work that stays, a battery can shift its energy instead. <b className="fw-600" data-testid="storage-headline">{/^(8|11|18)/.test(String(sf.E)) ? 'An' : 'A'} {fmt(sf.E)} MWh, {fmt(sf.P)} MW battery cuts the Utah cluster's CO₂ by {pct(sf.cutA, 1)}%</b> on a fixed daily schedule; charging is limited to the roughly {fmt(sf.headroomLo, 1)}–{fmt(sf.headroomMid, 1)} MW the site connection leaves free. <span data-testid="storage-combined">Moving the small jobs and storing for the big ones cuts <b className="fw-600">{pct(sf.moveStoreA, 1)}%</b> against {pname('U')}.</span> <b className="fw-600 block" style={{ marginTop: 8 }} data-testid="storage-skeptic">On a flat marginal basis it may add about {sig2(sf.flatAddT)} t: storage only helps if charging carbon ÷ η &lt; displaced carbon.</b></span> : <>{copy.line}</>}{data!.water ? <WaterLine w={data!.water} /> : null}</>,
+      ev: !sf ? <Ev e="assumed">illustrative</Ev> : <><span className="chip-neutral">illustrative · not the registered result</span><EvCI /><Ev e="simulated">dispatch</Ev><Ev e="assumed">battery, schedule</Ev><button className="btn" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button></>,
+    },
+    {
+      t: 'The evidence',
+      body: <>This is a simulated scheduling scenario on EIA's estimated emissions, with jobs running exactly as long as declared.{span ? <span data-testid="story-checks"> We checked it {xRun.length} more ways. {listJoin(keptRun.map((r) => PHRASE[r.id] ?? r.label)).replace(/^./, (c) => c.toUpperCase())}, {pname('S')}, {pname('W')} and {pname('L')} still cut {pctRange(span[0], span[1])}%: scenario estimates, one-axis changes, not a confidence interval.{spanProd ? ` On production-basis carbon the cut is ${pctRange(spanProd[0], spanProd[1])}%; production basis flatters hydro-heavy destinations.` : ''}{allOnTime ? ' No job was late in any run.' : ''}{xMiss.length ? ` ${xMiss.length} more check${xMiss.length > 1 ? 's' : ''} did not run (${xMiss[0].reason}).` : ''}</span> : null} The full table, every assumption and the run behind each number are in the method drawer. {copy.line}</>,
+      ev: <><Ev e="simulated">checks</Ev><Ev e="assumed">settings</Ev><button className="btn" onClick={() => set({ drawer: true })}><Icon name="doc" />Method &amp; evidence</button></>,
     },
   ];
   return (
@@ -119,16 +127,16 @@ const fill = (n: React.ReactNode) => <div className="grid h-full" style={{ gridT
 function Visual({ step, rush, clean, curve }: { step: number; rush: [number, number]; clean: [number, number]; curve: (number | null)[] }) {
   const { data } = useApp();
   const jul = data!.grid.pace_july_weekday, lm = loadMonth(data!.grid);
-  if (step === 2) return fill(<ForecastPanel />);
-  if (step === 3) return <JobCard />;
-  if (step === 4) return <PlaceWork />;
-  if (step === 5) return <Count />;
-  if (step === 6) return <StorageBeat />;
+  if (step === 2) return <JobCard />;
+  if (step === 3) return <Count />;
+  if (step === 4) return <LockLarge />;
+  if (step === 5) return <StorageBeat />;
+  if (step === 6) return <Limits />;
   return (
     <div className="grid h-full" style={{ gridTemplateRows: 'minmax(0,1.4fr) minmax(0,1fr)', gap: 16 }}>
       <Panel className="flex flex-col min-h-0" style={{ padding: '12px 0 8px' }}>
         <div className="flex items-baseline justify-between" style={{ padding: '0 16px' }}>
-          <span className="t-15">Utah, a {lm.short} weekday: load in MW, carbon below</span><Ev e="observed">load</Ev>
+          <span className="t-15">Utah (PACE), a {lm.short} weekday: load in MW, carbon below</span><Ev e="observed">load</Ev>
         </div>
         <div className="flex-1 min-h-0"><LoadChart rush={rush} clean={clean} dem={jul.demand_mw.value} net={jul.net_load_mw.value} sol={jul.solar_mw.value} month={lm.short} /></div>
         <CarbonRibbon curve={curve} />
@@ -185,69 +193,51 @@ function JobCard() {
   );
 }
 
-function PlaceWork() {
-  const { data, hour, month } = useApp();
-  const g = data!.grid, w = data!.jobs.week.policies.W;
+/** Beat 4: the toggle, its scenario's replay-week arcs and destination rows, and the registered flexibility budget. */
+function LockLarge() {
+  const { data, hour, month, scenario, arcPolicy, dest } = useApp();
+  const g = data!.grid;
+  const sc = scenarioOf(data!.flows, scenario);
+  const f = flowOf(data!.flows, scenario, arcPolicy) ?? { week_arcs: data!.jobs.week.policies[arcPolicy].arcs };
   const ci = useMemo(() => Object.fromEntries((['PACE', 'BPAT', 'CISO', 'NEVP'] as Core[]).map((c) => [c, dayCurve(g, c, month)[hour]])), [g, month, hour]);
   const context = useMemo(() => Object.fromEntries(Object.entries(g.context_year_mean_ci.by_ba).map(([k, e]) => [k, asNum(e as never)])), [g]);
-  const arcs = useMemo<ArcSpec[]>(() => {
-    const gh = (a: Json) => a.gpu_h.value as number;
-    const tot = w.arcs.map(gh).reduce((x: number, y: number) => x + y, 0) || 1, max = Math.max(...w.arcs.map(gh), 1);
-    return w.arcs.filter((a: Json) => gh(a) / tot >= 0.01).map((a: Json) => ({ to: a.to, weight: Math.sqrt(gh(a) / max), label: `${fmt(gh(a))} GPU-h`, selected: a.to === 'BPAT' }));
-  }, [w]);
+  const arcs = useMemo<ArcSpec[]>(() => arcsOf(f, dest), [f, dest]);
+  const shown = savingOf(flowOf(data!.flows, scenario, arcPolicy));
+  const tight = useViewport().h < 1000;
   return (
-    <div className="grid h-full" style={{ gridTemplateRows: 'minmax(0,1fr) auto', gap: 16 }}>
+    <div className="grid h-full" style={{ gridTemplateRows: 'auto minmax(0,1fr) auto', gap: tight ? 12 : 16 }}>
+      <Panel style={{ padding: '10px 12px' }}><ScenarioToggle /></Panel>
       <Panel className="relative overflow-hidden" style={{ padding: 0 }}>
         <WestMap id="map-story" variant="inset" interactive={false} ci={ci} context={context} hourLabel={fmtHour(hour)} arcs={arcs}
           bounds={[[-124.6, 31.8], [-104.0, 48.9]]} padding={{ top: 72, bottom: 16, left: 150, right: 120 }} />
         <div className="absolute flex items-baseline justify-between gap-2" style={{ left: 16, right: 16, top: 16 }}>
-          <span className="t-15">{pname('W')}: GPU-hours moved out of Utah</span>
+          <span className="t-15 swap" key={`${scenario}-${arcPolicy}`}>{pname(arcPolicy)}: {shown ? `${pct(Math.abs(shown.v))}% ${shown.v < 0 ? 'more' : 'less'} CO₂` : 'saving not run'} · {sc ? kindOf(sc) : 'registered result'}</span>
           <Ev e="simulated" />
         </div>
-        <div className="absolute t-11 ink-2" style={{ left: 16, top: 40 }}>Regions: typical {monthLabel(month, true).split(' ')[0]} day, {fmtHour(hour)} · Arcs: replay week {fmtDate(data!.jobs.week.start, { month: 'short', day: 'numeric' })}–{fmtDate(new Date(new Date(data!.jobs.week.end).getTime() - 1).toISOString(), { day: 'numeric' })}, {fmtDate(data!.jobs.week.start, { year: 'numeric' })} <EvCI /></div>
-      </Panel>
-      <Panel>
-        <div className="grid t-13" style={{ gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 16 }}>
-          {DESTS.map((d) => { const a = w.arcs.find((x: Json) => x.to === d); return (
-            <div key={d}><div className="t-12 ink-3">{REGION[d].name} · {d}</div><div className="t-15 num">{a ? fmt(a.gpu_h.value) : 0}<span className="unit">GPU-h</span></div><div className="t-11 ink-3">{a ? fmt(a.jobs.value) : 0} jobs</div></div>
+        <div className="absolute panel over-map" style={{ left: 16, right: 16, top: 60, padding: '0 10px', borderRadius: 10, display: flowOf(data!.flows, scenario, arcPolicy)?.remote_execution_share.value === 0 && flowOf(data!.flows, scenario, arcPolicy)?.retimed_home_execution_share.value === 0 ? 'block' : 'none' }}>
+          <NoChangeNote f={flowOf(data!.flows, scenario, arcPolicy)} p={arcPolicy} testId="story-nochange" />
+        </div>
+        <div className="absolute t-11 ink-2" style={{ left: 16, top: 40, right: 16 }}>Arcs: GPU-hours run outside Utah, replay week {fmtDate(data!.jobs.week.start, { month: 'short', day: 'numeric' })}–{fmtDate(new Date(new Date(data!.jobs.week.end).getTime() - 1).toISOString(), { day: 'numeric' })}, {fmtDate(data!.jobs.week.start, { year: 'numeric' })}, a static weekly flow · Regions: typical {monthLabel(month, true).split(' ')[0]} day, {fmtHour(hour)} <EvCI /></div>
+        <div className="absolute grid t-12 swap" key={`r-${scenario}-${arcPolicy}`} style={{ left: 16, right: 16, bottom: 12, gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 12 }} data-testid="story-work-rows">
+          {DESTS.map((d) => { const a = (f.week_arcs as Json[]).find((x) => x.to === d); return (
+            <div key={d} className="panel over-map" style={{ padding: '6px 10px', borderRadius: 10 }}><div className="t-11 ink-3">{REGION[d].name} · {d}</div><div className="t-15 num">{a ? fmt(a.gpu_h.value) : 0}<span className="unit">GPU-h</span> <span className="t-11 ink-3 fw-400">{a ? fmt(a.jobs.value) : 0} jobs</span></div></div>
           ); })}
         </div>
+      </Panel>
+      <Panel style={{ padding: tight ? 12 : 16 }}>
+        <div className="flex items-baseline justify-between gap-2"><span className="t-15">Flexibility budget (registered run): {pname('S')}{sc && !sc.registered ? <span className="t-12 fw-500" data-testid="story-budget-toggle-note"> · the toggle does not change this bar</span> : null}</span><span className="flex gap-2"><Ev e="simulated" /><Ev e="assumed">flags</Ev></span></div>
+        <div className="t-13" style={{ margin: '4px 0 8px' }}><BudgetHeadline p="S" /></div>
+        <BudgetBar p="S" rows={!tight} testId="budget-story" />
       </Panel>
     </div>
   );
 }
 
-function Count() {
-  const { data } = useApp();
-  const m = data!.metrics, wl = data!.workload;
-  const tight = useViewport().h < 1000;
-  return (
-    <Panel className={`flex flex-col ${tight ? 'tight' : ''}`} style={{ gap: tight ? 8 : 12, maxHeight: '100%', overflow: 'auto' }}>
-      <span className="t-15">Saving in attributed CO₂ vs U local (stay in Utah), with 95% intervals</span>
-      <IntervalChart m={m} rows={['G', 'S', 'K', 'W', 'L', 'H', 'W_time', 'L_time']} rowH={tight ? 20 : 26} />
-      <div className="t-12 ink-3">Filled dots: the four placement policies. Open dots: {pname('G')}, the two wait-only runs, and the dashed {pname('H')}. <Ev e="simulated" /></div>
-      <div style={{ overflowX: 'auto' }}><PolicyTable m={m} /></div>
-      <hr className="rule" />
-      <div className="t-13">
-        <span className="t-15">A few large jobs carry the result</span>
-        <table className="tbl" style={{ marginTop: 8 }}>
-          <thead><tr><th>Largest jobs</th><th>Share of GPU-hours</th><th>Share of energy</th><th>Share of {pname(wl.policy)}'s saving</th></tr></thead>
-          <tbody>
-            {wl.top.map((t: Json) => (
-              <tr key={t.fraction.value}><td>top {pct(t.fraction.value, t.fraction.value < 0.01 ? 1 : 0)}% ({fmt(t.n_jobs.value)} jobs)</td><td>{pct(t.gpu_h_share.value, 0)}%</td><td>{pct(t.energy_share.value, 0)}%</td><td>{t.saving_share.value == null ? '–' : `${pct(t.saving_share.value, 0)}%`}</td></tr>
-            ))}
-          </tbody>
-        </table>
-        <div className="t-12 ink-3" style={{ marginTop: 4 }}>{pct(wl.share_jobs_under_1_gpu_h.value, 0)}% of jobs use under 1 GPU-hour; the median job uses {fmt(wl.median_gpu_h.value, 2)} GPU-hours. <Ev e="measured">sizes</Ev> <Ev e="simulated">energy and saving</Ev></div>
-      </div>
-    </Panel>
-  );
-}
-
+/** Beat 5 (T10b): move what you can, store for what you can't. */
 function StorageBeat() {
   const { data } = useApp();
   const sto = data!.storage;
-  if (!sto) return <Panel><span className="t-13 ink-3">The storage illustration was not exported (results/storage.json is missing).</span></Panel>;
+  if (!sto) return <Panel><span className="t-13 ink-3">The storage illustration is not shown for this window.</span></Panel>;
   const f = storageFacts(sto);
   return (
     <div className="grid h-full" style={{ gridTemplateRows: 'minmax(0,1.15fr) minmax(0,1fr)', gap: 16 }}>
@@ -266,5 +256,36 @@ function StorageBeat() {
         </div>
       </Panel>
     </div>
+  );
+}
+
+function Count() {
+  const { data } = useApp();
+  const m = data!.metrics;
+  const tight = useViewport().h < 1000;
+  return (
+    <Panel className={`flex flex-col ${tight ? 'tight' : ''}`} style={{ gap: tight ? 8 : 12, maxHeight: '100%', overflow: 'auto' }}>
+      <span className="t-15">Saving in attributed CO₂ vs U local (stay in Utah), each policy's own 95% interval</span>
+      <IntervalChart m={m} rows={['S', 'K', 'W', 'L', 'G', 'H', 'W_time', 'L_time']} rowH={tight ? 26 : 34} />
+      <div className="t-12 ink-3">Filled dots: the four placement policies, {pname('S')} first. Open dots: {pname('G')}, the dashed {pname('H')}, and the two wait-only runs. The full policy table is in the method drawer. <Ev e="simulated" /></div>
+    </Panel>
+  );
+}
+
+function Limits() {
+  const { data } = useApp();
+  const lim: string[] = data!.manifest.limitations;
+  return (
+    <Panel className="flex flex-col" style={{ gap: 12, overflow: 'auto', maxHeight: '100%' }}>
+      <span className="t-15">What the result does not say</span>
+      <ul className="t-13" style={{ margin: 0, paddingLeft: 16, columns: 2, columnGap: 32 }}>
+        {plainLimitations(lim).map((l) => <li key={l} style={{ marginBottom: 8, breakInside: 'avoid' }}>{l}</li>)}
+        <li style={{ breakInside: 'avoid' }}>Jobs run exactly as long as declared; what happens when runtimes are uncertain is untested.</li>
+      </ul>
+      <details className="t-12 ink-2">
+        <summary className="cursor-pointer fw-500">Source text</summary>
+        <ul style={{ margin: '8px 0 0', paddingLeft: 16 }}>{lim.map((l) => <li key={l} style={{ marginBottom: 4 }}>{l}</li>)}</ul>
+      </details>
+    </Panel>
   );
 }

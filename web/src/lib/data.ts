@@ -26,6 +26,16 @@ export interface Results {
   ext: Json | null;
   /** results/storage.json (Stage 3 T10b, D-061; illustrative); null if the file is absent. */
   storage: Json | null;
+  /** results/scenario-flows.json (Stage 3 T15, D-064); null if the file is absent. */
+  flows: Json | null;
+  /** results/flexibility-budget.json (Stage 3 T15, D-064); null if the file is absent. */
+  budget: Json | null;
+  /** results/water.json (Stage 3 T14, D-063; illustrative); null if the file is absent. */
+  water: Json | null;
+  /** results/case-days.json (Stage 3 T16, D-066; illustrative); null if the file is absent. */
+  caseDays: Json | null;
+  /** results/assumptions.json (Stage 3 T17, D-068; built by notebook 40); null if the file is absent. */
+  assumptions: Json | null;
 }
 
 const base = import.meta.env?.BASE_URL ?? './'; // './' (relative deployment base)
@@ -38,14 +48,19 @@ async function get(name: string, w: EvalWindow = 'validation'): Promise<Json> {
   return r.json();
 }
 export async function loadResults(w: EvalWindow = 'validation'): Promise<Results> {
-  const v = w === 'validation';  // the D-058 extensions and the T10b storage piece are validation-only
-  const [metrics, manifest, forecast, jobs, grid, workload, ext, storage] = await Promise.all([
+  const v = w === 'validation';  // the D-058 extensions, the T10b storage piece, the T15 scenario flows and budget, the T14 water piece, the T16 toughest days and the T17 assumptions register are validation-only
+  const [metrics, manifest, forecast, jobs, grid, workload, ext, storage, flows, budget, water, caseDays, assumptions] = await Promise.all([
     get('metrics.json', w), get('manifest.json', w), get('forecast-replay.json', w), get('job-replay.json', w), get('grid-profile.json', w), get('workload-profile.json', w),
     v ? get('extensions.json').catch(() => null) : Promise.resolve(null),
     v ? get('storage.json').catch(() => null) : Promise.resolve(null),
+    v ? get('scenario-flows.json').catch(() => null) : Promise.resolve(null),
+    v ? get('flexibility-budget.json').catch(() => null) : Promise.resolve(null),
+    v ? get('water.json').catch(() => null) : Promise.resolve(null),
+    v ? get('case-days.json').catch(() => null) : Promise.resolve(null),
+    v ? get('assumptions.json').catch(() => null) : Promise.resolve(null),
   ]);
   if (w === 'test' && (metrics.window !== 'test' || manifest.window !== 'test')) throw new Error('results/test/ does not hold test-window results');
-  return { metrics, manifest, forecast, jobs, grid, workload, ext, storage };
+  return { metrics, manifest, forecast, jobs, grid, workload, ext, storage, flows, budget, water, caseDays, assumptions };
 }
 /** What copy-data found: the test option is enabled only when results/test/manifest.json exists. */
 export interface ResultsIndex { files: string[]; test?: { available: boolean; files: string[]; frozen_at: string | null } }
@@ -152,6 +167,24 @@ export function headline(m: Json) {
     return { policies: ps, contrasts: cs, lo: Math.min(...pts), hi: Math.max(...pts), ciLo: Math.min(...los), ciHi: Math.max(...his), evidence: cs[0].saving.evidence };
   };
   return { placement: group(['S', 'K', 'W', 'L']), timing: group(['W_time', 'L_time']), nWeeks: contrast(m, 'S')!.n_weeks };
+}
+
+/** One policy's own registered estimate and interval vs U (F10: the headline is never a span across policies). */
+export function own(m: Json, p = 'S') {
+  const c = contrast(m, p);
+  if (!c || c.saving.value == null) return null;
+  const [lo, hi] = c.saving_ci95.value as [number, number];
+  return { v: c.saving.value as number, lo, hi, evidence: c.saving.evidence };
+}
+/** "about 22.5": a saving rounded to the nearest half percent, for spoken-style headlines (F06). */
+export const aboutPct = (x: number) => String(Math.round(x * 200) / 2);
+/** The wait-only runs as one phrase: "under 1%" when both are, else their range (F06). */
+export function waitPhrase(m: Json) {
+  const xs = ['W_time', 'L_time'].map((p) => contrast(m, p)?.saving.value).filter((v): v is number => typeof v === 'number');
+  if (!xs.length) return 'not run';
+  if (Math.min(...xs) >= 0 && Math.max(...xs) < 0.01) return 'under 1%';
+  const f = (x: number) => (x * 100).toFixed(1).replace('-', '−');
+  return Math.min(...xs).toFixed(3) === Math.max(...xs).toFixed(3) ? `${f(xs[0])}%` : `${f(Math.min(...xs))}–${f(Math.max(...xs))}%`;
 }
 
 /** One BA's 24-hour tier-1 consumed CI for a month (America/Denver hours): EIA's estimate, modeled. */

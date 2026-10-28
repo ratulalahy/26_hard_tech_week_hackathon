@@ -1,0 +1,32 @@
+{
+  "source": "Water factors for the illustrative water footprint (Stage 3 T14, D-063): NREL/TP-6A20-50900 (generation water consumption factors) and LBNL-2001637 (data-center site WUE)",
+  "license": "U.S. Government-sponsored reports (NREL and LBNL, DOE national laboratories), publicly released; values are cited with attribution. See each file's license note.",
+  "notes": {
+    "retrieval": "Downloaded with curl on 2026-10-27 (Stage 3 T14). The LBNL landing page (https://eta-publications.lbl.gov/publications/2024-lbnl-data-center-energy-usage-report) links eScholarship (DOI 10.71468/P1WC7Q), which refused scripted downloads (HTTP 403, CloudFront); the same report is served as a PDF on LBL's own publications site, the URL recorded here. Its first page and citation read 'LBNL-2001637', December 2024. The NREL URL answers HEAD with 404 but GET with the PDF.",
+    "use": "Values transcribed by hand into lab/src/gridpilot/data/water_factors.py (table, page and units next to each), pinned by lab/tests/test_water_factors.py.",
+    "location": "This manifest is committed with the code (the main checkout's data/manifests/ is a tracked directory: writing an untracked file there would dirty the tree the sealed test entry point checks). The PDFs live in the shared data dir, data/raw/water/ (gitignored), read-only."
+  },
+  "files": [
+    {
+      "file": "NREL-TP-6A20-50900.pdf",
+      "path": "raw/water/NREL-TP-6A20-50900.pdf",
+      "url": "https://docs.nlr.gov/docs/fy11osti/50900.pdf",
+      "retrieved_at": "2026-10-27T21:24:11Z",
+      "bytes": 1154794,
+      "sha256": "dd1492c5a6b811d037ece63af4c74058aaaec69b04fcb1b4bcb70263ff95b3ca",
+      "citation": "Macknick, J., Newmark, R., Heath, G., Hallett, K.C. (2011). A Review of Operational Water Consumption and Withdrawal Factors for Electricity Generating Technologies. NREL/TP-6A20-50900, March 2011.",
+      "license": "NREL technical report, prepared under DOE contract DE-AC36-08GO28308; publicly available from NREL at no cost. U.S. Government work; cited with attribution (no redistribution of the PDF in git)."
+    },
+    {
+      "file": "LBNL-2001637.pdf",
+      "path": "raw/water/LBNL-2001637.pdf",
+      "url": "https://eta-publications.lbl.gov/sites/default/files/2024-12/lbnl-2024-united-states-data-center-energy-usage-report_1.pdf",
+      "retrieved_at": "2026-10-27T21:25:07Z",
+      "server_last_modified": "Fri, 20 Dec 2024 04:30:45 GMT",
+      "bytes": 4031183,
+      "sha256": "3a2257cdf4c350356062ffd8f75e886f099b13781b0a37af5605d65d5e46c2eb",
+      "citation": "Shehabi, A., Smith, S.J., Hubbard, A., Newkirk, A., Lei, N., Siddik, M.A.B., Holecek, B., Koomey, J., Masanet, E., Sartor, D. (2024). 2024 United States Data Center Energy Usage Report. Lawrence Berkeley National Laboratory, LBNL-2001637. doi:10.71468/P1WC7Q",
+      "license": "LBNL report under DOE contract DE-AC02-05CH11231; the U.S. Government retains a non-exclusive, paid-up, irrevocable, worldwide license to publish or reproduce it (the report's copyright notice). Publicly available; cited with attribution (no redistribution of the PDF in git)."
+    }
+  ]
+}

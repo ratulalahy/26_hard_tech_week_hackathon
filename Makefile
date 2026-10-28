@@ -5,10 +5,17 @@
 NOTEBOOKS := $(sort $(wildcard notebooks/[0-9][0-9]_*.ipynb))
 NB_FROM_LAB := $(addprefix ../,$(NOTEBOOKS))
 
-.PHONY: test notebooks profile slice need-run-dir ext-runs extensions storage web
+.PHONY: test data notebooks profile slice need-run-dir ext-runs extensions storage flows water case-days extras-validation web freeze
 
 test:
 	cd lab && uv run pytest
+
+# Rebuild the pipeline's derived tables from data/raw into $(GRIDPILOT_DATA_DIR) (Stage 3 T12, A2):
+# interim/eia930/balance.parquet, then processed/carbon/carbon_hourly.parquet (+ lineage). The
+# freeze record pins these by hash, so it refuses to replace an existing table: point
+# GRIDPILOT_DATA_DIR at a fresh data dir (raw/ and manifests/ in it). ARGS=--overwrite replaces.
+data:
+	cd lab && uv run python scripts/build_data.py $(ARGS)
 
 # Re-execute every evidence notebook in place (outputs are committed), then export HTML copies.
 # Timing metadata is off so that a re-run on the same data changes nothing.
@@ -58,6 +65,32 @@ extensions: need-run-dir
 storage: need-run-dir
 	cd lab && uv run python scripts/export_storage.py --registered-run $(RUN_DIR) --ext-root $(EXT_ROOT)
 
+# Stage 3 T15 (D-064): results/scenario-flows.json (per scenario and policy S/W/L: the saving
+# copied from metrics/extensions.json, remote execution by site, retiming, replay-week arcs) and
+# results/flexibility-budget.json (the registered primary's energy by what S, W and L did with it).
+# RUN_DIR (required): the registered run or its equal-ledger reproduction; the scenario runs are the
+# ones extensions.json names under EXT_ROOT. Re-reads ledgers only; validation only. About 15 s.
+flows: need-run-dir
+	cd lab && uv run python scripts/export_flows.py --run-dir $(RUN_DIR) --ext-root $(EXT_ROOT)
+
+# The water illustration (Stage 3 T14, D-063; validation only): results/water.json and the
+# manifest's `water` pointer. RUN_DIR (required): the registered run. The source PDFs are checked
+# against the committed data/manifests/water.json.
+water: need-run-dir
+	cd lab && uv run python scripts/export_water.py --registered-run $(RUN_DIR)
+
+# "Utah's toughest grid days" (Stage 3 T16, D-066; validation only, illustrative):
+# results/case-days.json and the manifest's `case_days` pointer. The pre-registered top 3
+# validation days by PACE daily maximum net load, day-sliced from RUN_DIR's ledgers.
+case-days: need-run-dir
+	cd lab && uv run python scripts/export_case_days.py --registered-run $(RUN_DIR)
+
+# The validation counterparts of the pre-registered test-year extras (Stage 3 T20, D-071):
+# results/extras-validation.json (the seasonal split, forecast skill, the frozen p10/p90 intervals
+# and the L permutation importance on validation). The test run reads it; it never recomputes it.
+extras-validation: need-run-dir
+	cd lab && uv run python scripts/export_extras_validation.py --registered-run $(RUN_DIR)
+
 # The dashboard's validation-year grid context (Task 8): results/grid-profile.json.
 # RUN_DIR: the registered slice run (default runs/slice/<results/manifest.json run_id>).
 profile:
@@ -68,3 +101,10 @@ profile:
 # Needs the web dependencies (cd web && npm ci). Without a data dir it keeps the committed map layers.
 web:
 	cd web && { [ -d node_modules ] || npm ci; } && npm run data && npm run build
+
+# The configuration freeze record (Stage 3 T12): config/freeze.json from HEAD, validated with the
+# seal, plus the lead's commit/tag/push commands. ARGS=--dry-run prints it instead; ARGS may add
+# --registered-run <abs dir> (default runs/slice/<run_id>). Refuses on a dirty tree, a lab/ tree
+# that the rebuild evidence did not rebuild, or any prior opening of the sealed window.
+freeze:
+	cd lab && uv run python scripts/write_freeze.py $(ARGS)

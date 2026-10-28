@@ -71,3 +71,83 @@ export const storageFlatT = (Math.round(flat / p10) * p10).toLocaleString('en-US
 /** The same ranges from the synthetic test fixture (its savings are halved, so they differ from validation). */
 export const testPlacementRange = range(['S', 'K', 'W', 'L'].map((p) => saving(p, 'U', fixtureMetrics)));
 export const testTimeOnlyRange = range(['W_time', 'L_time'].map((p) => saving(p, 'U', fixtureMetrics)));
+/** F10 (T15): S's own saving in the synthetic test fixture, as the hero prints it. */
+export const testSOwn = `${pct(saving('S', 'U', fixtureMetrics))}%`;
+
+/** F10: S's own registered estimate and its own interval, e.g. "22.6%" and "18.4–26.8%". */
+const sB4 = metrics.contrasts.find((x: { candidate: string; reference: string }) => x.candidate === 'S' && x.reference === 'U').blocks['4'];
+export const sOwn = `${pct(sB4.saving.value)}%`;
+export const sOwnCI = `${pct(sB4.saving_ci95.value[0])}–${pct(sB4.saving_ci95.value[1])}%`;
+/** F06: "about 22.5" (S to the nearest half percent). */
+export const sAbout = String(Math.round(sB4.saving.value * 200) / 2);
+
+/** T15: results/scenario-flows.json and results/flexibility-budget.json. */
+export const flows = JSON.parse(readFileSync(join(results, 'scenario-flows.json'), 'utf8'));
+export const budget = JSON.parse(readFileSync(join(results, 'flexibility-budget.json'), 'utf8'));
+const flow = (id: string, p = 'S') => flows.scenarios.find((s: { id: string }) => s.id === id).policies[p];
+/** S under "only jobs of 8 GPUs or fewer may move", e.g. "3.2%". */
+export const sMobility = `${pct(flow('mobility_le_8gpus').saving_vs_U.saving.value)}%`;
+/** S's replay-week GPU-hours to BPAT in a scenario, as the rows print them ("17,168"). */
+export const bpatGpuH = (id: string) => Math.round(flow(id).week_arcs.find((a: { to: string }) => a.to === 'BPAT').gpu_h.value).toLocaleString('en-US');
+const bs = budget.policies.S;
+/** The flexibility budget's one-sentence headline for S. */
+export const budgetHeadline = `${Math.round(bs.flexible_mobile_share.value * 100)}% of the energy sits in jobs flagged movable (${Math.round(bs.fits_remote_share.value * 100)}% fit a remote site); ${Math.round(bs.must_stay_share.value * 100)}% must stay in Utah.`;
+/** I1: S's registered remote share on the execution basis, as the remote line prints it ("30.9%"). */
+export const sRemoteExec = `${pct(flow('registered').remote_execution_share.value)}%`;
+export const sMovedExec = `${pct(flow('registered').moved_share_energy.value)}%`;
+/** I7: a percentage that is not the end of a span ("22.6%" but not "22.4–22.6%"). */
+export const exact = (s: string) => new RegExp(`(?<![–\\d.])${s.replace(/[.]/g, '\\.')}`);
+/** Each wait-only policy's own saving in the synthetic test fixture (M9). */
+export const testOwn = (p: string) => `${pct(saving(p, 'U', fixtureMetrics))}%`;
+const wp = (xs: number[]) => (Math.min(...xs) >= 0 && Math.max(...xs) < 0.01 ? 'under 1%' : null);
+export const testWaitPhrase = wp(['W_time', 'L_time'].map((p) => saving(p, 'U', fixtureMetrics))) ?? testTimeOnlyRange;
+/** T14: results/water.json. The story's water line, as printed: signed million gallons, two decimals. */
+export const water = JSON.parse(readFileSync(join(results, 'water.json'), 'utf8'));
+const smg = (g: number) => (g > 0 ? '+' : g < 0 ? '−' : '') + (Math.abs(g) / 1e6).toFixed(2);
+const mspan = (r: number[]) => (smg(r[0]) === smg(r[1]) ? smg(r[0]) : `${smg(r[0])} to ${smg(r[1])}`);
+export const waterExSpan = mspan(water.headline.change_ex_hydro_gal.value);
+export const waterWithSpan = mspan(water.headline.change_with_hydro_gal.value);
+export const waterCaveats: string[] = water.caveats;
+/** the window in days, as the UI rounds it (not annualised) */
+export const waterDays = String(Math.round(water.window.n_hours.value / 24));
+
+/** T16: results/case-days.json. Per day: the date button, the rank, the peak and the Utah-cluster numbers, as printed. */
+export const caseDays = JSON.parse(readFileSync(join(results, 'case-days.json'), 'utf8'));
+const hr = (h: number) => `${h % 12 === 0 ? 12 : h % 12} ${h < 12 ? 'AM' : 'PM'}`;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const caseExpect = (caseDays.days as any[]).map((d) => ({
+  button: new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' }).format(new Date(d.date + 'T12:00:00Z')),
+  rank: `Rank ${d.rank.value} of ${caseDays.days_considered.n.value} days`,
+  cluster: `${hr(d.peak.hour_index.value)} peak hour, ${d.policies.U.utah_cluster_at_peak_mw.value.toFixed(2)} → ${d.policies.S.utah_cluster_at_peak_mw.value.toFixed(2)} MW`,
+  peak: `net load peaked at ${Number(d.peak.net_load_mw.value).toLocaleString('en-US')} MW at ${hr(d.peak.hour_index.value)}`,
+  slc: `${Math.round(d.weather.PACE_SLC.tmax_f.value)} °F high`,
+  context: (d.context as { kind: string; sentence: string }[]).find((c) => c.kind === 'none')?.sentence ?? '',
+  scale: (() => {
+    const u: number = d.policies.U.utah_cluster_at_peak_mw.value;
+    const peak: number = d.peak.net_load_mw.value; // unrounded, as the story line prints it (T20 merge fix)
+    return `Scale: about ${u < 1.5 ? u.toFixed(1) : Math.round(u)} MW against a ${peak.toLocaleString('en-US')} MW peak; illustrative.`;
+  })(),
+  // the Sep 2 caveat: a Utah workload under 60% of the other chosen days'
+  small: (() => {
+    const e = (x: any) => Object.values(x.policies.U.energy_mwh_by_site).reduce((a: number, v: any) => a + v.value, 0) as number;
+    const others = (caseDays.days as any[]).filter((x) => x.date !== d.date).map(e);
+    return e(d) / Math.max(...others) < 0.6;
+  })(),
+}));
+
+/** T17 (D-068): results/assumptions.json, checked against numbers computed here from metrics.json
+ * and extensions.json (not from the notebook's sentences). */
+export const assumptions = JSON.parse(readFileSync(join(results, 'assumptions.json'), 'utf8'));
+export const nRegister: number = assumptions.register.length;
+const ci = (cand: string, ref = 'U') => {
+  const c = metrics.contrasts.find((x: { candidate: string; reference: string }) => x.candidate === cand && x.reference === ref);
+  const [lo, hi] = c.blocks['4'].saving_ci95.value as number[];
+  return `${pct(saving(cand, ref))}% [${pct(lo)}, ${pct(hi)}]`;
+};
+/** "Perfect carbon foresight (H) saves 22.6% [18.4, 26.8]" and S's own saving, as the weather point prints them. */
+export const weatherH = `(H) saves ${ci('H')}`;
+export const weatherS = `ranking S saves ${ci('S')}`;
+/** Waiting in Utah, as the negative-results list prints it: "save 0.7% [0.5, 0.9] (W_time)". */
+export const waitW = `save ${ci('W_time')} (W_time)`;
+/** The mobility row: "W saves 3.9% [2.6, 5.4]". */
+export const mobilityW = `W saves ${cell(ext.sensitivities.mobility_le_8gpus.policies.W.vs_U['4'])}`;

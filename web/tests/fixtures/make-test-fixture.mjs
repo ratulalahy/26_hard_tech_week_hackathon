@@ -56,7 +56,20 @@ man.freeze = {
   rerun_reason: null, read_log: 'results/test_reads.jsonl', session: 'fixture', code_commit: '0'.repeat(40),
 };
 const met = art['metrics.json'];
-for (const c of met.contrasts) if (c.reference === 'U') for (const b of Object.values(c.blocks)) { half(b.saving); half(b.saving_ci95); }
+for (const c of met.contrasts) if (c.reference === 'U') for (const b of Object.values(c.blocks)) { half(b.saving); half(b.saving_ci95); half(b.diff_kg); half(b.diff_kg_ci95); }
+// T15 fix r1 M17: each policy's CO2 total follows its halved saving vs U (b = 4), so the totals, the
+// differences and the savings agree; contrasts against other references are rebuilt from the totals.
+const co2U = met.policies.U.metrics.co2_kg.value;
+for (const c of met.contrasts) if (c.reference === 'U' && met.policies[c.candidate]) met.policies[c.candidate].metrics.co2_kg.value = co2U - c.blocks['4'].diff_kg.value;
+for (const c of met.contrasts) if (c.reference !== 'U' && met.policies[c.candidate] && met.policies[c.reference]) {
+  for (const b of Object.values(c.blocks)) {
+    const d = met.policies[c.reference].metrics.co2_kg.value - met.policies[c.candidate].metrics.co2_kg.value;
+    const shift = d - b.diff_kg.value;
+    b.diff_kg.value = d;
+    if (Array.isArray(b.diff_kg_ci95?.value)) b.diff_kg_ci95.value = b.diff_kg_ci95.value.map((v) => v + shift);
+    if (b.saving?.value != null) b.saving.value = d / met.policies[c.reference].metrics.co2_kg.value;
+  }
+}
 const fr = art['forecast-replay.json'];
 fr.test_mae = fr.selection_mae;
 delete fr.selection_mae;

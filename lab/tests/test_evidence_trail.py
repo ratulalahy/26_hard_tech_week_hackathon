@@ -19,13 +19,20 @@ MAX_BYTES = 5 * 1024 * 1024
 
 
 def decision_ids() -> list[str]:
-    return re.findall(r"^### (D-\d{3})\b", DECISIONS.read_text(), flags=re.MULTILINE)
+    # D-001..D-043 are `###` entries under the index; D-044 onward are `##` entries (T17).
+    return re.findall(r"^#{2,3} (D-\d{3})\b", DECISIONS.read_text(), flags=re.MULTILINE)
+
+
+# Numbers the log skips: D-070 has no entry (D-071 was written next on main; T20 flags it to the
+# lead rather than inventing one).
+SKIPPED_IDS = {"D-070"}
 
 
 def test_decision_ids_are_unique_and_sequential():
     ids = decision_ids()
     assert len(ids) >= 25
-    assert ids == [f"D-{i:03d}" for i in range(1, len(ids) + 1)]
+    n = int(ids[-1][2:])
+    assert ids == [f"D-{i:03d}" for i in range(1, n + 1) if f"D-{i:03d}" not in SKIPPED_IDS]
 
 
 def test_there_are_notebooks():

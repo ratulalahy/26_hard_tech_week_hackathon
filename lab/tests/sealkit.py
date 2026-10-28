@@ -149,7 +149,7 @@ def make_repo(root: Path, data_dir: Path, *, F: datetime = F_SYN, tag: str = "an
     for rel, text in (extra_files or {}).items():
         (repo / rel).parent.mkdir(parents=True, exist_ok=True)
         (repo / rel).write_text(text)
-    (repo / "results").mkdir()
+    (repo / "results").mkdir(exist_ok=True)
     (repo / "results" / "manifest.json").write_text(json.dumps(VALIDATION_MANIFEST) + "\n")
     (repo / "results" / "metrics.json").write_text(json.dumps(VALIDATION_METRICS) + "\n")
     (repo / "config").mkdir()
@@ -244,9 +244,35 @@ def full_balance(start: datetime, end: datetime, bas=BALANCE_BAS) -> pl.DataFram
         cols["gen_coal_adj_mw"] = (demand * 0.5).clip(0)
         cols["gen_gas_adj_mw"] = (demand - cols["gen_solar_adj_mw"]
                                   - cols["gen_wind_adj_mw"] - cols["gen_coal_adj_mw"]).clip(0)
+        # T20: EIA's day-ahead demand forecast and the split hydro columns the D-071 extras read
+        cols["gen_pumped_storage_adj_mw"] = np.zeros(n)
+        cols["gen_hydro_conv_adj_mw"] = np.full(n, np.nan)
         parts.append(pl.DataFrame({"ba": [ba] * n, "ts_utc": hours, "demand_adj_mw": demand,
-                                   **cols}))
+                                   "demand_forecast_mw": demand * (1 + 0.03 * rng.standard_normal(n)),
+                                   **cols}).with_columns(pl.col("gen_hydro_conv_adj_mw")
+                                                         .fill_nan(None)))
     return pl.concat(parts).with_columns(pl.col("ba").cast(pl.Categorical))
+
+
+def write_weather_slc(data: Path, start: datetime, end: datetime) -> list[str]:
+    """Synthetic Salt Lake City archive files (Open-Meteo JSON, hour-ending labels) for the
+    D-071 toughest-days temperature context; returns their data-dir-relative paths."""
+    import numpy as np
+
+    out = []
+    for y in range(start.year, end.year + 1):
+        a = max(start, datetime(y, 1, 1, tzinfo=UTC))
+        b = min(end, datetime(y + 1, 1, 1, tzinfo=UTC))
+        hours = _hours(a, b)
+        t = 10 + 8 * np.sin(2 * np.pi * (np.arange(len(hours)) % 24 - 9) / 24)
+        rel = f"{seal.WEATHER_SLC_REL}/{y}-01-01_{y}-12-31.json"
+        p = data / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps({"hourly": {
+            "time": [(h + H).strftime("%Y-%m-%dT%H:%M") for h in hours],
+            "temperature_2m": [round(float(x), 1) for x in t]}}))
+        out.append(rel)
+    return out
 
 
 def make_full_data_dir(root: Path, F: datetime, trace_src: Path) -> Path:

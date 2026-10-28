@@ -1,0 +1,5034 @@
+{
+ "schema_version": "gridpilot.results.v1",
+ "artifact": "extras-validation",
+ "kind": "validation counterparts of the pre-registered test-year extras (D-071)",
+ "window": "validation",
+ "run_id": "20261027T160656Z",
+ "label": "validation counterpart of the pre-registered test-year extras (D-071)",
+ "note": "validation results, fixed before the seal opens; the test run's drift table and interval coverage read this file",
+ "seasonal": {
+  "status": "ok",
+  "label": "validation counterpart of the pre-registered test-year extras (D-071)",
+  "rule": "each arrival week (Monday 00:00 America/Denver, as the registered weekly totals) belongs to the meteorological season of its Monday's month (DJF, MAM, JJA, SON); a season's weeks need not be contiguous (SON joins the window's two ends); the paired block bootstrap (blocks 2, 4 and 8; 4 primary) runs on a season's weekly totals only when it has at least 8 weeks; descriptive only",
+  "arrivals": [
+   "2024-11-01T00:00:00Z",
+   "2025-10-16T07:49:42Z"
+  ],
+  "seasons": {
+   "DJF": {
+    "n_weeks": {
+     "value": 13,
+     "unit": "weeks",
+     "evidence": "measured",
+     "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:n",
+     "status": "ok",
+     "reason": null
+    },
+    "weeks": [
+     "2024-12-02T00:00:00-07:00",
+     "2024-12-09T00:00:00-07:00",
+     "2024-12-16T00:00:00-07:00",
+     "2024-12-23T00:00:00-07:00",
+     "2024-12-30T00:00:00-07:00",
+     "2025-01-06T00:00:00-07:00",
+     "2025-01-13T00:00:00-07:00",
+     "2025-01-20T00:00:00-07:00",
+     "2025-01-27T00:00:00-07:00",
+     "2025-02-03T00:00:00-07:00",
+     "2025-02-10T00:00:00-07:00",
+     "2025-02-17T00:00:00-07:00",
+     "2025-02-24T00:00:00-07:00"
+    ],
+    "policies": {
+     "S": {
+      "U_co2_kg": {
+       "value": 1430468.0255174772,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:S:U",
+       "status": "ok",
+       "reason": null
+      },
+      "co2_kg": {
+       "value": 1155082.9769795258,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:S:co2",
+       "status": "ok",
+       "reason": null
+      },
+      "saving": {
+       "value": 0.192513949019119,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:S:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "blocks": {
+       "2": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.19251394901911884,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:S:b2:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.12384119948923636,
+          0.272090859615799
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:S:b2:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 275385.0485379512,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:S:b2:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          183199.40196191153,
+          383533.67707478296
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:S:b2:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "4": {
+        "primary": true,
+        "labels": [],
+        "saving": {
+         "value": 0.19251394901911884,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:S:b4:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.13383276963106508,
+          0.27880401940141164
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:S:b4:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 275385.0485379512,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:S:b4:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          196970.27157286878,
+          376024.4575404701
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:S:b4:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "8": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.19251394901911884,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:S:b8:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.1291194756403374,
+          0.264015880214476
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:S:b8:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 275385.0485379512,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:S:b8:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          196769.6039403451,
+          354000.493135558
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:S:b8:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "W": {
+      "U_co2_kg": {
+       "value": 1430468.0255174772,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:W:U",
+       "status": "ok",
+       "reason": null
+      },
+      "co2_kg": {
+       "value": 1154714.430179803,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:W:co2",
+       "status": "ok",
+       "reason": null
+      },
+      "saving": {
+       "value": 0.1927715897305145,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:W:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "blocks": {
+       "2": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.19277158973051434,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:W:b2:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.12421142390006963,
+          0.27222457407051215
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:W:b2:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 275753.595337674,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:W:b2:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          182638.36050258533,
+          384122.3772541974
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:W:b2:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "4": {
+        "primary": true,
+        "labels": [],
+        "saving": {
+         "value": 0.19277158973051434,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:W:b4:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.1339162108055691,
+          0.27874191023461153
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:W:b4:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 275753.595337674,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:W:b4:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          197160.0003535024,
+          375274.65892725316
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:W:b4:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "8": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.19277158973051434,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:W:b8:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.12901893798833636,
+          0.2639227095765586
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:W:b8:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 275753.595337674,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:W:b8:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          196598.8969297267,
+          354908.2937456219
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:DJF:W:b8:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     }
+    }
+   },
+   "MAM": {
+    "n_weeks": {
+     "value": 13,
+     "unit": "weeks",
+     "evidence": "measured",
+     "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:n",
+     "status": "ok",
+     "reason": null
+    },
+    "weeks": [
+     "2025-03-03T00:00:00-07:00",
+     "2025-03-10T00:00:00-06:00",
+     "2025-03-17T00:00:00-06:00",
+     "2025-03-24T00:00:00-06:00",
+     "2025-03-31T00:00:00-06:00",
+     "2025-04-07T00:00:00-06:00",
+     "2025-04-14T00:00:00-06:00",
+     "2025-04-21T00:00:00-06:00",
+     "2025-04-28T00:00:00-06:00",
+     "2025-05-05T00:00:00-06:00",
+     "2025-05-12T00:00:00-06:00",
+     "2025-05-19T00:00:00-06:00",
+     "2025-05-26T00:00:00-06:00"
+    ],
+    "policies": {
+     "S": {
+      "U_co2_kg": {
+       "value": 1001707.993295178,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:S:U",
+       "status": "ok",
+       "reason": null
+      },
+      "co2_kg": {
+       "value": 711366.7423692143,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:S:co2",
+       "status": "ok",
+       "reason": null
+      },
+      "saving": {
+       "value": 0.2898461955673019,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:S:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "blocks": {
+       "2": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.2898461955673018,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:S:b2:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.21916123933220769,
+          0.3542195647762215
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:S:b2:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 290341.2509259636,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:S:b2:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          219881.37578386746,
+          371930.71181006555
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:S:b2:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "4": {
+        "primary": true,
+        "labels": [],
+        "saving": {
+         "value": 0.2898461955673018,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:S:b4:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.23068845681914626,
+          0.3457543039771023
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:S:b4:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 290341.2509259636,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:S:b4:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          231085.18661278993,
+          336744.3917213964
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:S:b4:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "8": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.2898461955673018,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:S:b8:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.24665521851760036,
+          0.3393770747640427
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:S:b8:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 290341.2509259636,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:S:b8:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          257175.4129445818,
+          324853.33591102576
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:S:b8:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "W": {
+      "U_co2_kg": {
+       "value": 1001707.993295178,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:W:U",
+       "status": "ok",
+       "reason": null
+      },
+      "co2_kg": {
+       "value": 717689.0447224574,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:W:co2",
+       "status": "ok",
+       "reason": null
+      },
+      "saving": {
+       "value": 0.28353467325185594,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:W:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "blocks": {
+       "2": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.2835346732518561,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:W:b2:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.21538776655061098,
+          0.34743303403667913
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:W:b2:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 284018.94857272075,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:W:b2:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          214914.2385680515,
+          360921.1958136913
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:W:b2:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "4": {
+        "primary": true,
+        "labels": [],
+        "saving": {
+         "value": 0.2835346732518561,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:W:b4:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.22527828196289032,
+          0.3398419504404898
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:W:b4:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 284018.94857272075,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:W:b4:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          226214.9346805931,
+          330824.88837513595
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:W:b4:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "8": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.2835346732518561,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:W:b8:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.24060115794682221,
+          0.33324796278086655
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:W:b8:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 284018.94857272075,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:W:b8:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          251548.57142352173,
+          316889.7387290746
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:MAM:W:b8:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     }
+    }
+   },
+   "JJA": {
+    "n_weeks": {
+     "value": 13,
+     "unit": "weeks",
+     "evidence": "measured",
+     "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:n",
+     "status": "ok",
+     "reason": null
+    },
+    "weeks": [
+     "2025-06-02T00:00:00-06:00",
+     "2025-06-09T00:00:00-06:00",
+     "2025-06-16T00:00:00-06:00",
+     "2025-06-23T00:00:00-06:00",
+     "2025-06-30T00:00:00-06:00",
+     "2025-07-07T00:00:00-06:00",
+     "2025-07-14T00:00:00-06:00",
+     "2025-07-21T00:00:00-06:00",
+     "2025-07-28T00:00:00-06:00",
+     "2025-08-04T00:00:00-06:00",
+     "2025-08-11T00:00:00-06:00",
+     "2025-08-18T00:00:00-06:00",
+     "2025-08-25T00:00:00-06:00"
+    ],
+    "policies": {
+     "S": {
+      "U_co2_kg": {
+       "value": 1370294.8857158804,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:S:U",
+       "status": "ok",
+       "reason": null
+      },
+      "co2_kg": {
+       "value": 1109809.6139729524,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:S:co2",
+       "status": "ok",
+       "reason": null
+      },
+      "saving": {
+       "value": 0.190094317988236,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:S:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "blocks": {
+       "2": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.19009431798823617,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:S:b2:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.14172170310687046,
+          0.24529479905172136
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:S:b2:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 260485.2717429283,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:S:b2:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          204694.22557576007,
+          311555.108162071
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:S:b2:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "4": {
+        "primary": true,
+        "labels": [],
+        "saving": {
+         "value": 0.19009431798823617,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:S:b4:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.14508270190767947,
+          0.25078794656096776
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:S:b4:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 260485.2717429283,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:S:b4:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          212875.07601495567,
+          311901.8179707954
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:S:b4:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "8": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.19009431798823617,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:S:b8:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.14961510239684145,
+          0.2385389238776543
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:S:b8:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 260485.2717429283,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:S:b8:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          219414.99795474578,
+          301555.54553111026
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:S:b8:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "W": {
+      "U_co2_kg": {
+       "value": 1370294.8857158804,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:W:U",
+       "status": "ok",
+       "reason": null
+      },
+      "co2_kg": {
+       "value": 1110974.8515542478,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:W:co2",
+       "status": "ok",
+       "reason": null
+      },
+      "saving": {
+       "value": 0.18924396264250568,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:W:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "blocks": {
+       "2": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.18924396264250568,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:W:b2:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.14181735560650596,
+          0.24337396890965737
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:W:b2:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 259320.03416163265,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:W:b2:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          204358.79671846592,
+          308788.42797813995
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:W:b2:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "4": {
+        "primary": true,
+        "labels": [],
+        "saving": {
+         "value": 0.18924396264250568,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:W:b4:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.14534253782706544,
+          0.24837454427335162
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:W:b4:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 259320.03416163265,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:W:b4:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          213247.74491277963,
+          307911.44150541065
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:W:b4:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "8": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.18924396264250568,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:W:b8:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.1500630922351364,
+          0.23620202784145697
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:W:b8:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 259320.03416163265,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:W:b8:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          220251.26190934866,
+          298388.8064139165
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:JJA:W:b8:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     }
+    }
+   },
+   "SON": {
+    "n_weeks": {
+     "value": 12,
+     "unit": "weeks",
+     "evidence": "measured",
+     "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:n",
+     "status": "ok",
+     "reason": null
+    },
+    "weeks": [
+     "2024-10-28T00:00:00-06:00",
+     "2024-11-04T00:00:00-07:00",
+     "2024-11-11T00:00:00-07:00",
+     "2024-11-18T00:00:00-07:00",
+     "2024-11-25T00:00:00-07:00",
+     "2025-09-01T00:00:00-06:00",
+     "2025-09-08T00:00:00-06:00",
+     "2025-09-15T00:00:00-06:00",
+     "2025-09-22T00:00:00-06:00",
+     "2025-09-29T00:00:00-06:00",
+     "2025-10-06T00:00:00-06:00",
+     "2025-10-13T00:00:00-06:00"
+    ],
+    "policies": {
+     "S": {
+      "U_co2_kg": {
+       "value": 867215.2187887041,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:S:U",
+       "status": "ok",
+       "reason": null
+      },
+      "co2_kg": {
+       "value": 637163.8334568201,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:S:co2",
+       "status": "ok",
+       "reason": null
+      },
+      "saving": {
+       "value": 0.26527600109833377,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:S:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "blocks": {
+       "2": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.26527600109833377,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:S:b2:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.21711257273753035,
+          0.2972570113480528
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:S:b2:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 230051.38533188403,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:S:b2:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          149037.3356694697,
+          310032.6646390722
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:S:b2:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "4": {
+        "primary": true,
+        "labels": [],
+        "saving": {
+         "value": 0.26527600109833377,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:S:b4:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.2285541602553146,
+          0.29003273454269357
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:S:b4:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 230051.38533188403,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:S:b4:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          155182.50838043058,
+          310106.6926025959
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:S:b4:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "8": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.26527600109833377,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:S:b8:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.23719052729925974,
+          0.28735276796448217
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:S:b8:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 230051.38533188403,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:S:b8:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          166790.70018759998,
+          293312.07047616795
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:S:b8:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "W": {
+      "U_co2_kg": {
+       "value": 867215.2187887041,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:W:U",
+       "status": "ok",
+       "reason": null
+      },
+      "co2_kg": {
+       "value": 634984.7383195442,
+       "unit": "kg_CO2",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:W:co2",
+       "status": "ok",
+       "reason": null
+      },
+      "saving": {
+       "value": 0.267788751209338,
+       "unit": "fraction",
+       "evidence": "simulated",
+       "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:W:saving",
+       "status": "ok",
+       "reason": null
+      },
+      "blocks": {
+       "2": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.267788751209338,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:W:b2:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.2212907694171767,
+          0.29852360777687637
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:W:b2:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 232230.4804691599,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:W:b2:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          151088.52628508437,
+          311765.3111909498
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:W:b2:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "4": {
+        "primary": true,
+        "labels": [],
+        "saving": {
+         "value": 0.267788751209338,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:W:b4:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.23256012775780388,
+          0.29142603190623556
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:W:b4:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 232230.4804691599,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:W:b4:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          157390.9263969746,
+          311835.83681846864
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:W:b4:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "8": {
+        "primary": false,
+        "labels": [],
+        "saving": {
+         "value": 0.267788751209338,
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:W:b8:saving",
+         "status": "ok",
+         "reason": null
+        },
+        "saving_ci95": {
+         "value": [
+          0.24116374740746435,
+          0.28872384222565306
+         ],
+         "unit": "fraction",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:W:b8:saving_ci",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg": {
+         "value": 232230.4804691599,
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:W:b8:diff",
+         "status": "ok",
+         "reason": null
+        },
+        "diff_kg_ci95": {
+         "value": [
+          169596.1371725856,
+          294864.8237657341
+         ],
+         "unit": "kg_CO2",
+         "evidence": "simulated",
+         "provenance_id": "extras-validation:20261027T160656Z:seasonal:SON:W:b8:diff_ci",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "forecast_skill": {
+  "status": "ok",
+  "label": "validation counterpart of the pre-registered test-year extras (D-071)",
+  "rule": "frozen empirical interval: the 10th and 90th percentiles of daily-forecast residuals (truth − forecast) per series and model, over the validation selection issues [2024-11-01, 2025-10-24) of the registered forecast run (spec §6); coverage = share of scored hours with p10 ≤ residual ≤ p90; no guaranteed conditional coverage",
+  "pi_rule": "L permutation importance: the frozen L refitted exactly (its forecasts must match the run's), each feature group's columns shuffled together across the scored rows, MAE increase over the unshuffled MAE, averaged over 5 shuffles (numpy default_rng seed 20261027 per series and group)",
+  "scored_targets": [
+   "2024-11-01T00:00:00Z",
+   "2025-10-24T00:00:00Z"
+  ],
+  "series": {
+   "PACE": {
+    "ci_consumed": {
+     "models": {
+      "K": {
+       "mae": {
+        "value": 86.62984501919583,
+        "unit": "g/kWh",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:K:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8568,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:K:n",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -152.20114933319522,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:K:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 123.33155895430681,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:K:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 275.53270828750203,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:K:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.7993697478991597,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:K:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      },
+      "W": {
+       "mae": {
+        "value": 82.76466562476158,
+        "unit": "g/kWh",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:W:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8568,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:W:n",
+        "status": "ok",
+        "reason": null
+       },
+       "mae_vs_climatology": {
+        "value": 0.9553828199325788,
+        "unit": "ratio",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:W:rel_K",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -139.4218016166116,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:W:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 129.4413336518388,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:W:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 268.8631352684504,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:W:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.8008870214752568,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:W:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      },
+      "L": {
+       "mae": {
+        "value": 82.91935972192545,
+        "unit": "g/kWh",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:L:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8568,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:L:n",
+        "status": "ok",
+        "reason": null
+       },
+       "mae_vs_climatology": {
+        "value": 0.9571685105006457,
+        "unit": "ratio",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:L:rel_K",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -119.97021844778952,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:L:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 149.86542687751304,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:L:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 269.83564532530255,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:L:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.8013538748832867,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:L:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "eia_day_ahead": {
+      "status": "not_run",
+      "reason": "EIA publishes a day-ahead forecast for demand only",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:eia"
+     },
+     "permutation_importance": {
+      "rule": "L permutation importance: the frozen L refitted exactly (its forecasts must match the run's), each feature group's columns shuffled together across the scored rows, MAE increase over the unshuffled MAE, averaged over 5 shuffles (numpy default_rng seed 20261027 per series and group)",
+      "n_rows": {
+       "value": 8568,
+       "unit": "rows",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:pi:n",
+       "status": "ok",
+       "reason": null
+      },
+      "mae_unshuffled": {
+       "value": 82.91935972192543,
+       "unit": "g/kWh",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:pi:m0",
+       "status": "ok",
+       "reason": null
+      },
+      "reproduces_frozen_forecasts": true,
+      "groups": {
+       "calendar": {
+        "mae_increase": {
+         "value": 11.082079249309848,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:pi:calendar",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          11.598894182058189,
+          11.074057544179027,
+          10.762371672663534,
+          10.971552210779734,
+          11.003520636868757
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:pi:calendar:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "weekly memory": {
+        "mae_increase": {
+         "value": 32.89571044470019,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:pi:weekly memory",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          32.86170599389966,
+          32.70482543229285,
+          33.18496386834195,
+          32.6995147587312,
+          33.02754217023532
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:pi:weekly memory:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "most recent": {
+        "mae_increase": {
+         "value": 7.101885021093443,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:pi:most recent",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          7.360564172012346,
+          7.072334272148552,
+          7.224410407037254,
+          6.729724333404789,
+          7.122391920864274
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:pi:most recent:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "recent level": {
+        "mae_increase": {
+         "value": 1.3177476156100056,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:pi:recent level",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          1.8981654740884437,
+          1.389883203146283,
+          1.0121126163285226,
+          0.9896220730990848,
+          1.2989547113876938
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:pi:recent level:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "missing-data flags": {
+        "mae_increase": {
+         "value": 0.0,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:pi:missing-data flags",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:pi:missing-data flags:runs",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "L_max_leaf_nodes": {
+      "value": 15,
+      "unit": "leaves",
+      "evidence": "assumed",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:leaves",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "demand": {
+     "models": {
+      "K": {
+       "mae": {
+        "value": 376.5856676003735,
+        "unit": "MW",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:K:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8568,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:K:n",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -150.0,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:K:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 786.1500000000001,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:K:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 936.1500000000001,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:K:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.8000700280112045,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:K:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      },
+      "W": {
+       "mae": {
+        "value": 347.8230625583567,
+        "unit": "MW",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:W:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8568,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:W:n",
+        "status": "ok",
+        "reason": null
+       },
+       "mae_vs_climatology": {
+        "value": 0.9236226773437931,
+        "unit": "ratio",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:W:rel_K",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -539.65,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:W:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 528.1500000000001,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:W:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 1067.8000000000002,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:W:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.8013538748832867,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:W:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      },
+      "L": {
+       "mae": {
+        "value": 238.253241062318,
+        "unit": "MW",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:L:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8568,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:L:n",
+        "status": "ok",
+        "reason": null
+       },
+       "mae_vs_climatology": {
+        "value": 0.6326667782671656,
+        "unit": "ratio",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:L:rel_K",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -322.5904453033766,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:L:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 393.3585405034647,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:L:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 715.9489858068414,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:L:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.7997198879551821,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:L:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "eia_day_ahead": {
+      "note": "EIA-930 demand forecast (DF) on the same target hours; EIA's forecast is its own product, not issued at our 10:00 Denver time",
+      "mae": {
+       "value": 249.0905695611578,
+       "unit": "MW",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:eia:mae",
+       "status": "ok",
+       "reason": null
+      },
+      "n_hours": {
+       "value": 8568,
+       "unit": "hours",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:eia:n",
+       "status": "ok",
+       "reason": null
+      },
+      "L_mae_same_hours": {
+       "value": 238.253241062318,
+       "unit": "MW",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:eia:L",
+       "status": "ok",
+       "reason": null
+      },
+      "L_vs_eia": {
+       "value": 0.9564924175253493,
+       "unit": "ratio",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:eia:ratio",
+       "status": "ok",
+       "reason": null
+      }
+     },
+     "permutation_importance": {
+      "rule": "L permutation importance: the frozen L refitted exactly (its forecasts must match the run's), each feature group's columns shuffled together across the scored rows, MAE increase over the unshuffled MAE, averaged over 5 shuffles (numpy default_rng seed 20261027 per series and group)",
+      "n_rows": {
+       "value": 8568,
+       "unit": "rows",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:pi:n",
+       "status": "ok",
+       "reason": null
+      },
+      "mae_unshuffled": {
+       "value": 238.253241062318,
+       "unit": "MW",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:pi:m0",
+       "status": "ok",
+       "reason": null
+      },
+      "reproduces_frozen_forecasts": true,
+      "groups": {
+       "calendar": {
+        "mae_increase": {
+         "value": 92.80863069540116,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:pi:calendar",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          88.08115063030021,
+          94.35394162560561,
+          92.20496765203109,
+          94.04939696993853,
+          95.35369659913039
+         ],
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:pi:calendar:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "weekly memory": {
+        "mae_increase": {
+         "value": 167.26999474997336,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:pi:weekly memory",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          163.81148724548103,
+          168.89297767582758,
+          171.4388486882862,
+          167.92009816659993,
+          164.28656197367212
+         ],
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:pi:weekly memory:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "most recent": {
+        "mae_increase": {
+         "value": 345.1076419897733,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:pi:most recent",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          339.38857274979046,
+          346.0718981102726,
+          349.82453926354424,
+          345.07259255486167,
+          345.18060727039756
+         ],
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:pi:most recent:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "recent level": {
+        "mae_increase": {
+         "value": 8.16206365527463,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:pi:recent level",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          9.219212385286824,
+          7.897855076449503,
+          8.188550384826073,
+          7.378658639851437,
+          8.126041789959316
+         ],
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:pi:recent level:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "missing-data flags": {
+        "mae_increase": {
+         "value": 0.0,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:pi:missing-data flags",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+         ],
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:pi:missing-data flags:runs",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "L_max_leaf_nodes": {
+      "value": 31,
+      "unit": "leaves",
+      "evidence": "assumed",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:leaves",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "wind": {
+     "models": {
+      "K": {
+       "mae": {
+        "value": 707.6070261437909,
+        "unit": "MW",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:K:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8568,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:K:n",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -648.65,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:K:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 1508.0,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:K:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 2156.65,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:K:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.7999533146591971,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:K:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      },
+      "W": {
+       "mae": {
+        "value": 737.546626984127,
+        "unit": "MW",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:W:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8568,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:W:n",
+        "status": "ok",
+        "reason": null
+       },
+       "mae_vs_climatology": {
+        "value": 1.0423110564680178,
+        "unit": "ratio",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:W:rel_K",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -1120.0,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:W:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 1311.8000000000002,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:W:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 2431.8,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:W:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.8015873015873016,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:W:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      },
+      "L": {
+       "mae": {
+        "value": 722.7615438996486,
+        "unit": "MW",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:L:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8568,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:L:n",
+        "status": "ok",
+        "reason": null
+       },
+       "mae_vs_climatology": {
+        "value": 1.0214165733181657,
+        "unit": "ratio",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:L:rel_K",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -743.7301884400707,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:L:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 1499.7385998202594,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:L:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 2243.4687882603303,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:L:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.8014705882352942,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:L:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "eia_day_ahead": {
+      "status": "not_run",
+      "reason": "EIA publishes a day-ahead forecast for demand only",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:eia"
+     },
+     "permutation_importance": {
+      "rule": "L permutation importance: the frozen L refitted exactly (its forecasts must match the run's), each feature group's columns shuffled together across the scored rows, MAE increase over the unshuffled MAE, averaged over 5 shuffles (numpy default_rng seed 20261027 per series and group)",
+      "n_rows": {
+       "value": 8568,
+       "unit": "rows",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:pi:n",
+       "status": "ok",
+       "reason": null
+      },
+      "mae_unshuffled": {
+       "value": 722.7615438996487,
+       "unit": "MW",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:pi:m0",
+       "status": "ok",
+       "reason": null
+      },
+      "reproduces_frozen_forecasts": true,
+      "groups": {
+       "calendar": {
+        "mae_increase": {
+         "value": 40.36831949749435,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:pi:calendar",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          43.093771568099214,
+          35.759523068259455,
+          41.52809039460976,
+          40.720043058615374,
+          40.74016939788794
+         ],
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:pi:calendar:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "weekly memory": {
+        "mae_increase": {
+         "value": 9.286765203692562,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:pi:weekly memory",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          9.74434832266877,
+          9.968501721272105,
+          9.865862704333836,
+          8.630730157720222,
+          8.224383112467876
+         ],
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:pi:weekly memory:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "most recent": {
+        "mae_increase": {
+         "value": -3.1476718974595768,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:pi:most recent",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          -3.8118615378889444,
+          -3.0481514791533755,
+          -2.632118273511878,
+          -2.5941115231097456,
+          -3.652116673633941
+         ],
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:pi:most recent:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "recent level": {
+        "mae_increase": {
+         "value": 8.285968253453893,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:pi:recent level",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          8.141690773629534,
+          6.678390722166341,
+          7.804929538986357,
+          9.403802888019072,
+          9.401027344468162
+         ],
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:pi:recent level:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "missing-data flags": {
+        "mae_increase": {
+         "value": 0.0,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:pi:missing-data flags",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+         ],
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:pi:missing-data flags:runs",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "L_max_leaf_nodes": {
+      "value": 15,
+      "unit": "leaves",
+      "evidence": "assumed",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:leaves",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "solar": {
+     "models": {
+      "K": {
+       "mae": {
+        "value": 291.9030112044818,
+        "unit": "MW",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:K:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8568,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:K:n",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -1.0,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:K:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 907.1500000000001,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:K:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 908.1500000000001,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:K:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.80765639589169,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:K:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      },
+      "W": {
+       "mae": {
+        "value": 179.95920868347338,
+        "unit": "MW",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:W:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8568,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:W:n",
+        "status": "ok",
+        "reason": null
+       },
+       "mae_vs_climatology": {
+        "value": 0.6165034335922271,
+        "unit": "ratio",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:W:rel_K",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -355.5,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:W:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 361.5,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:W:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 717.0,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:W:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.7998366013071896,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:W:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      },
+      "L": {
+       "mae": {
+        "value": 205.6226132012152,
+        "unit": "MW",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:L:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8568,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:L:n",
+        "status": "ok",
+        "reason": null
+       },
+       "mae_vs_climatology": {
+        "value": 0.7044210073501911,
+        "unit": "ratio",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:L:rel_K",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -146.51104381763932,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:L:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 576.0273601906608,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:L:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 722.5384040083002,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:L:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.8005368814192344,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:L:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "eia_day_ahead": {
+      "status": "not_run",
+      "reason": "EIA publishes a day-ahead forecast for demand only",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:eia"
+     },
+     "permutation_importance": {
+      "rule": "L permutation importance: the frozen L refitted exactly (its forecasts must match the run's), each feature group's columns shuffled together across the scored rows, MAE increase over the unshuffled MAE, averaged over 5 shuffles (numpy default_rng seed 20261027 per series and group)",
+      "n_rows": {
+       "value": 8568,
+       "unit": "rows",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:pi:n",
+       "status": "ok",
+       "reason": null
+      },
+      "mae_unshuffled": {
+       "value": 205.6226132012152,
+       "unit": "MW",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:pi:m0",
+       "status": "ok",
+       "reason": null
+      },
+      "reproduces_frozen_forecasts": true,
+      "groups": {
+       "calendar": {
+        "mae_increase": {
+         "value": 44.58937444595297,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:pi:calendar",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          45.26218496489395,
+          43.44348621961154,
+          44.71865689569407,
+          45.23132159941443,
+          44.29122255015085
+         ],
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:pi:calendar:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "weekly memory": {
+        "mae_increase": {
+         "value": 431.34556420090087,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:pi:weekly memory",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          425.72944929307647,
+          422.4445367882242,
+          437.80148799505236,
+          429.64678216744227,
+          441.1055647607088
+         ],
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:pi:weekly memory:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "most recent": {
+        "mae_increase": {
+         "value": 202.2702832859367,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:pi:most recent",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          199.50990069965457,
+          197.73426142868487,
+          205.87081663954388,
+          200.28190124030493,
+          207.95453642149533
+         ],
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:pi:most recent:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "recent level": {
+        "mae_increase": {
+         "value": 10.203073084345965,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:pi:recent level",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          10.084121505934746,
+          10.379321181059879,
+          9.993746805357489,
+          10.850381520301056,
+          9.707794409076655
+         ],
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:pi:recent level:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "missing-data flags": {
+        "mae_increase": {
+         "value": 0.0,
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:pi:missing-data flags",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+         ],
+         "unit": "MW",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:pi:missing-data flags:runs",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "L_max_leaf_nodes": {
+      "value": 15,
+      "unit": "leaves",
+      "evidence": "assumed",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:leaves",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "CISO": {
+    "ci_consumed": {
+     "models": {
+      "K": {
+       "mae": {
+        "value": 34.81261276031673,
+        "unit": "g/kWh",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:K:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8465,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:K:n",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -73.07097749854879,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:K:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 28.265483195004006,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:K:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 101.3364606935528,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:K:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.8005906674542232,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:K:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      },
+      "W": {
+       "mae": {
+        "value": 26.799129179705346,
+        "unit": "g/kWh",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:W:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8465,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:W:n",
+        "status": "ok",
+        "reason": null
+       },
+       "mae_vs_climatology": {
+        "value": 0.7698109120454745,
+        "unit": "ratio",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:W:rel_K",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -44.01463415338162,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:W:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 43.10055002115919,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:W:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 87.11518417454081,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:W:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.7994093325457767,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:W:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      },
+      "L": {
+       "mae": {
+        "value": 27.018070638806574,
+        "unit": "g/kWh",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:L:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8465,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:L:n",
+        "status": "ok",
+        "reason": null
+       },
+       "mae_vs_climatology": {
+        "value": 0.7761000538748635,
+        "unit": "ratio",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:L:rel_K",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -49.550375095219245,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:L:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 36.169429228651325,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:L:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 85.71980432387056,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:L:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.7992911990549321,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:L:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "eia_day_ahead": {
+      "status": "not_run",
+      "reason": "EIA publishes a day-ahead forecast for demand only",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:eia"
+     },
+     "permutation_importance": {
+      "rule": "L permutation importance: the frozen L refitted exactly (its forecasts must match the run's), each feature group's columns shuffled together across the scored rows, MAE increase over the unshuffled MAE, averaged over 5 shuffles (numpy default_rng seed 20261027 per series and group)",
+      "n_rows": {
+       "value": 8465,
+       "unit": "rows",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:pi:n",
+       "status": "ok",
+       "reason": null
+      },
+      "mae_unshuffled": {
+       "value": 27.018070638806574,
+       "unit": "g/kWh",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:pi:m0",
+       "status": "ok",
+       "reason": null
+      },
+      "reproduces_frozen_forecasts": true,
+      "groups": {
+       "calendar": {
+        "mae_increase": {
+         "value": 7.388933528036015,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:pi:calendar",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          7.322522311152614,
+          7.697754503515231,
+          7.378931985195354,
+          7.452172822902082,
+          7.093286017414794
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:pi:calendar:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "weekly memory": {
+        "mae_increase": {
+         "value": 16.297191655293418,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:pi:weekly memory",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          16.048842421936218,
+          16.493622352801868,
+          16.55922997584913,
+          16.009246848009877,
+          16.37501667786999
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:pi:weekly memory:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "most recent": {
+        "mae_increase": {
+         "value": 1.18019377447811,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:pi:most recent",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          1.2228080979201472,
+          1.1559288229265867,
+          1.250046353487818,
+          1.161575826739135,
+          1.110609771316863
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:pi:most recent:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "recent level": {
+        "mae_increase": {
+         "value": 1.6833920491447656,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:pi:recent level",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          1.6016126778318167,
+          1.6505040334017345,
+          1.7288523429915017,
+          1.655375492404719,
+          1.7806156990940565
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:pi:recent level:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "missing-data flags": {
+        "mae_increase": {
+         "value": 0.0,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:pi:missing-data flags",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:pi:missing-data flags:runs",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "L_max_leaf_nodes": {
+      "value": 15,
+      "unit": "leaves",
+      "evidence": "assumed",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:leaves",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "BPAT": {
+    "ci_consumed": {
+     "models": {
+      "K": {
+       "mae": {
+        "value": 35.2490655846379,
+        "unit": "g/kWh",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:K:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8568,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:K:n",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -40.603865529412,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:K:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 67.82991503266322,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:K:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 108.43378056207521,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:K:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.7991363211951448,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:K:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      },
+      "W": {
+       "mae": {
+        "value": 28.213023468112432,
+        "unit": "g/kWh",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:W:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8568,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:W:n",
+        "status": "ok",
+        "reason": null
+       },
+       "mae_vs_climatology": {
+        "value": 0.8003906770342337,
+        "unit": "ratio",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:W:rel_K",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -41.56387687221638,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:W:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 47.7268779147556,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:W:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 89.29075478697197,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:W:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.7970354808590103,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:W:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      },
+      "L": {
+       "mae": {
+        "value": 28.0190249799114,
+        "unit": "g/kWh",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:L:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8568,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:L:n",
+        "status": "ok",
+        "reason": null
+       },
+       "mae_vs_climatology": {
+        "value": 0.7948870279308209,
+        "unit": "ratio",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:L:rel_K",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -33.516970311574134,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:L:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 53.9737892743068,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:L:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 87.49075958588094,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:L:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.7992530345471522,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:L:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "eia_day_ahead": {
+      "status": "not_run",
+      "reason": "EIA publishes a day-ahead forecast for demand only",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:eia"
+     },
+     "permutation_importance": {
+      "rule": "L permutation importance: the frozen L refitted exactly (its forecasts must match the run's), each feature group's columns shuffled together across the scored rows, MAE increase over the unshuffled MAE, averaged over 5 shuffles (numpy default_rng seed 20261027 per series and group)",
+      "n_rows": {
+       "value": 8568,
+       "unit": "rows",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:pi:n",
+       "status": "ok",
+       "reason": null
+      },
+      "mae_unshuffled": {
+       "value": 28.019024979911404,
+       "unit": "g/kWh",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:pi:m0",
+       "status": "ok",
+       "reason": null
+      },
+      "reproduces_frozen_forecasts": true,
+      "groups": {
+       "calendar": {
+        "mae_increase": {
+         "value": 3.3359979649992773,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:pi:calendar",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          3.367791951268199,
+          3.2319903069352414,
+          3.324852244571616,
+          3.3793120839634625,
+          3.376043238257868
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:pi:calendar:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "weekly memory": {
+        "mae_increase": {
+         "value": 3.3220575503315537,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:pi:weekly memory",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          3.4238357063986697,
+          3.232475871399771,
+          3.4006878971178622,
+          3.298920489392355,
+          3.2543677873491106
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:pi:weekly memory:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "most recent": {
+        "mae_increase": {
+         "value": 5.339668869608447,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:pi:most recent",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          5.356520162021216,
+          5.194619856688821,
+          5.52659484137666,
+          5.322068338776237,
+          5.298541149179304
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:pi:most recent:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "recent level": {
+        "mae_increase": {
+         "value": -1.1541462214708837,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:pi:recent level",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          -1.1067711352615355,
+          -1.0505150661223048,
+          -1.1575737868509144,
+          -1.1971783513319139,
+          -1.2586927677877497
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:pi:recent level:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "missing-data flags": {
+        "mae_increase": {
+         "value": 0.0,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:pi:missing-data flags",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:pi:missing-data flags:runs",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "L_max_leaf_nodes": {
+      "value": 15,
+      "unit": "leaves",
+      "evidence": "assumed",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:leaves",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "NEVP": {
+    "ci_consumed": {
+     "models": {
+      "K": {
+       "mae": {
+        "value": 34.469006489077906,
+        "unit": "g/kWh",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:K:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8564,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:K:n",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -67.3069744177244,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:K:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 42.4846725331076,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:K:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 109.791646950832,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:K:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.7998598785614199,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:K:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      },
+      "W": {
+       "mae": {
+        "value": 28.52936063604537,
+        "unit": "g/kWh",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:W:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8564,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:W:n",
+        "status": "ok",
+        "reason": null
+       },
+       "mae_vs_climatology": {
+        "value": 0.8276815476270077,
+        "unit": "ratio",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:W:rel_K",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -43.146044006021995,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:W:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 43.45693269695956,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:W:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 86.60297670298155,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:W:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.7998598785614199,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:W:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      },
+      "L": {
+       "mae": {
+        "value": 27.819691178468858,
+        "unit": "g/kWh",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:L:mae",
+        "status": "ok",
+        "reason": null
+       },
+       "n_hours": {
+        "value": 8564,
+        "unit": "hours",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:L:n",
+        "status": "ok",
+        "reason": null
+       },
+       "mae_vs_climatology": {
+        "value": 0.807092922370246,
+        "unit": "ratio",
+        "evidence": "measured",
+        "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:L:rel_K",
+        "status": "ok",
+        "reason": null
+       },
+       "interval": {
+        "p10": {
+         "value": -46.35652378864155,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:L:p10",
+         "status": "ok",
+         "reason": null
+        },
+        "p90": {
+         "value": 38.856101609850775,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:L:p90",
+         "status": "ok",
+         "reason": null
+        },
+        "width": {
+         "value": 85.21262539849232,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:L:width",
+         "status": "ok",
+         "reason": null
+        },
+        "coverage": {
+         "value": 0.7997431106959365,
+         "unit": "fraction",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:L:coverage",
+         "status": "ok",
+         "reason": null
+        },
+        "nominal": {
+         "value": 0.8,
+         "unit": "fraction",
+         "evidence": "assumed",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:nominal",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "eia_day_ahead": {
+      "status": "not_run",
+      "reason": "EIA publishes a day-ahead forecast for demand only",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:eia"
+     },
+     "permutation_importance": {
+      "rule": "L permutation importance: the frozen L refitted exactly (its forecasts must match the run's), each feature group's columns shuffled together across the scored rows, MAE increase over the unshuffled MAE, averaged over 5 shuffles (numpy default_rng seed 20261027 per series and group)",
+      "n_rows": {
+       "value": 8564,
+       "unit": "rows",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:pi:n",
+       "status": "ok",
+       "reason": null
+      },
+      "mae_unshuffled": {
+       "value": 27.81969117846886,
+       "unit": "g/kWh",
+       "evidence": "measured",
+       "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:pi:m0",
+       "status": "ok",
+       "reason": null
+      },
+      "reproduces_frozen_forecasts": true,
+      "groups": {
+       "calendar": {
+        "mae_increase": {
+         "value": 5.614558371367287,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:pi:calendar",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          5.58199728748593,
+          5.512179717865454,
+          5.539069916481065,
+          5.81451954427207,
+          5.625025390731917
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:pi:calendar:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "weekly memory": {
+        "mae_increase": {
+         "value": 36.874364966014134,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:pi:weekly memory",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          36.7887199645843,
+          36.48968128740019,
+          37.063916967722875,
+          37.5101112988804,
+          36.519395311482896
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:pi:weekly memory:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "most recent": {
+        "mae_increase": {
+         "value": 21.736350226711604,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:pi:most recent",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          21.53845215507712,
+          21.459711676637394,
+          21.94252796297989,
+          22.264041494483,
+          21.477017844380622
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:pi:most recent:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "recent level": {
+        "mae_increase": {
+         "value": -0.03601390746196671,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:pi:recent level",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          0.027922056598807643,
+          -0.15438244537343593,
+          0.07034624078064056,
+          -0.0408114952286347,
+          -0.08314389408721112
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:pi:recent level:runs",
+         "status": "ok",
+         "reason": null
+        }
+       },
+       "missing-data flags": {
+        "mae_increase": {
+         "value": 0.0,
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:pi:missing-data flags",
+         "status": "ok",
+         "reason": null
+        },
+        "mae_increase_runs": {
+         "value": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+         ],
+         "unit": "g/kWh",
+         "evidence": "measured",
+         "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:pi:missing-data flags:runs",
+         "status": "ok",
+         "reason": null
+        }
+       }
+      }
+     },
+     "L_max_leaf_nodes": {
+      "value": 15,
+      "unit": "leaves",
+      "evidence": "assumed",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:leaves",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   }
+  },
+  "feature_groups": {
+   "calendar": [
+    "lead_h",
+    "hour",
+    "month",
+    "dow",
+    "weekend",
+    "doy"
+   ],
+   "weekly memory": [
+    "lag_168",
+    "lag_336",
+    "lag_504",
+    "lag_672",
+    "lag_median",
+    "n_lags"
+   ],
+   "most recent": [
+    "last_value",
+    "last_age_h",
+    "same_hour_value",
+    "same_hour_days"
+   ],
+   "recent level": [
+    "trail7_mean",
+    "trail7_range",
+    "trail7_n",
+    "trail24_mean"
+   ],
+   "missing-data flags": [
+    "miss_lag_168",
+    "miss_lag_336",
+    "miss_lag_504",
+    "miss_lag_672",
+    "miss_last",
+    "miss_same_hour"
+   ]
+  },
+  "frozen_intervals": {
+   "PACE": {
+    "ci_consumed": {
+     "K": {
+      "value": [
+       -152.20114933319522,
+       123.33155895430681
+      ],
+      "unit": "g/kWh",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:K:interval",
+      "status": "ok",
+      "reason": null
+     },
+     "W": {
+      "value": [
+       -139.4218016166116,
+       129.4413336518388
+      ],
+      "unit": "g/kWh",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:W:interval",
+      "status": "ok",
+      "reason": null
+     },
+     "L": {
+      "value": [
+       -119.97021844778952,
+       149.86542687751304
+      ],
+      "unit": "g/kWh",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/ci_consumed:L:interval",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "demand": {
+     "K": {
+      "value": [
+       -150.0,
+       786.1500000000001
+      ],
+      "unit": "MW",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:K:interval",
+      "status": "ok",
+      "reason": null
+     },
+     "W": {
+      "value": [
+       -539.65,
+       528.1500000000001
+      ],
+      "unit": "MW",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:W:interval",
+      "status": "ok",
+      "reason": null
+     },
+     "L": {
+      "value": [
+       -322.5904453033766,
+       393.3585405034647
+      ],
+      "unit": "MW",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/demand:L:interval",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "wind": {
+     "K": {
+      "value": [
+       -648.65,
+       1508.0
+      ],
+      "unit": "MW",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:K:interval",
+      "status": "ok",
+      "reason": null
+     },
+     "W": {
+      "value": [
+       -1120.0,
+       1311.8000000000002
+      ],
+      "unit": "MW",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:W:interval",
+      "status": "ok",
+      "reason": null
+     },
+     "L": {
+      "value": [
+       -743.7301884400707,
+       1499.7385998202594
+      ],
+      "unit": "MW",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/wind:L:interval",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    "solar": {
+     "K": {
+      "value": [
+       -1.0,
+       907.1500000000001
+      ],
+      "unit": "MW",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:K:interval",
+      "status": "ok",
+      "reason": null
+     },
+     "W": {
+      "value": [
+       -355.5,
+       361.5
+      ],
+      "unit": "MW",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:W:interval",
+      "status": "ok",
+      "reason": null
+     },
+     "L": {
+      "value": [
+       -146.51104381763932,
+       576.0273601906608
+      ],
+      "unit": "MW",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:PACE/solar:L:interval",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "CISO": {
+    "ci_consumed": {
+     "K": {
+      "value": [
+       -73.07097749854879,
+       28.265483195004006
+      ],
+      "unit": "g/kWh",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:K:interval",
+      "status": "ok",
+      "reason": null
+     },
+     "W": {
+      "value": [
+       -44.01463415338162,
+       43.10055002115919
+      ],
+      "unit": "g/kWh",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:W:interval",
+      "status": "ok",
+      "reason": null
+     },
+     "L": {
+      "value": [
+       -49.550375095219245,
+       36.169429228651325
+      ],
+      "unit": "g/kWh",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:CISO/ci_consumed:L:interval",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "BPAT": {
+    "ci_consumed": {
+     "K": {
+      "value": [
+       -40.603865529412,
+       67.82991503266322
+      ],
+      "unit": "g/kWh",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:K:interval",
+      "status": "ok",
+      "reason": null
+     },
+     "W": {
+      "value": [
+       -41.56387687221638,
+       47.7268779147556
+      ],
+      "unit": "g/kWh",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:W:interval",
+      "status": "ok",
+      "reason": null
+     },
+     "L": {
+      "value": [
+       -33.516970311574134,
+       53.9737892743068
+      ],
+      "unit": "g/kWh",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:BPAT/ci_consumed:L:interval",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   },
+   "NEVP": {
+    "ci_consumed": {
+     "K": {
+      "value": [
+       -67.3069744177244,
+       42.4846725331076
+      ],
+      "unit": "g/kWh",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:K:interval",
+      "status": "ok",
+      "reason": null
+     },
+     "W": {
+      "value": [
+       -43.146044006021995,
+       43.45693269695956
+      ],
+      "unit": "g/kWh",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:W:interval",
+      "status": "ok",
+      "reason": null
+     },
+     "L": {
+      "value": [
+       -46.35652378864155,
+       38.856101609850775
+      ],
+      "unit": "g/kWh",
+      "evidence": "measured",
+      "provenance_id": "extras-validation:20261027T160656Z:skill:NEVP/ci_consumed:L:interval",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   }
+  }
+ },
+ "storage_peak": {
+  "rule": "D-073 (pre-registered before the opening): from the training years' PACE net load (2022-01-01 to 2024-10-29, the storage training window), each America/Denver day's top 4 hours and its lowest hour (complete days only); discharge in the 4 local hours most often among the day's top 4 (ties to the earlier hour), charge in the 4 other hours most often the day's lowest (ties to the earlier hour); same battery, η 0.85, P = E/4 and site cap as D-061/D-067; a design comparison, not the headline",
+  "label_note": "a design comparison; the carbon schedule stays the headline",
+  "schedules": {
+   "carbon": {
+    "charge_hours": {
+     "value": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ],
+     "unit": "local_hour",
+     "evidence": "assumed",
+     "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:charge",
+     "status": "ok",
+     "reason": null
+    },
+    "discharge_hours": {
+     "value": [
+      0,
+      1,
+      6,
+      21,
+      22,
+      23
+     ],
+     "unit": "local_hour",
+     "evidence": "assumed",
+     "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:discharge",
+     "status": "ok",
+     "reason": null
+    },
+    "cases": {
+     "U": {
+      "4": {
+       "co2_t": {
+        "value": 4505.687942457083,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:4:co2",
+        "status": "ok",
+        "reason": null
+       },
+       "base_co2_t": {
+        "value": 4669.68612331725,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:4:base",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_t": {
+        "value": 163.99818086016643,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:4:cut",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_frac": {
+        "value": 0.035119743924815545,
+        "unit": "fraction",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:4:cut_frac",
+        "status": "ok",
+        "reason": null
+       },
+       "flat_marginal_cut_t": {
+        "value": -108.5405856906035,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:4:flat",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_before_mw": {
+        "value": 1.11610285,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:4:rush0",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_after_mw": {
+        "value": 1.0363707,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:4:rush1",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_before_mw": {
+        "value": 1.6391664,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:4:peak0",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_after_mw": {
+        "value": 1.64736,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:4:peak1",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_hours_discharging": {
+        "value": 1,
+        "unit": "hours",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:4:rush_dis",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      "8": {
+       "co2_t": {
+        "value": 4491.663602097346,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:8:co2",
+        "status": "ok",
+        "reason": null
+       },
+       "base_co2_t": {
+        "value": 4669.68612331725,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:8:base",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_t": {
+        "value": 178.02252121990455,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:8:cut",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_frac": {
+        "value": 0.0381230165194574,
+        "unit": "fraction",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:8:cut_frac",
+        "status": "ok",
+        "reason": null
+       },
+       "flat_marginal_cut_t": {
+        "value": -120.10210584016595,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:8:flat",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_before_mw": {
+        "value": 1.11610285,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:8:rush0",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_after_mw": {
+        "value": 1.0363707,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:8:rush1",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_before_mw": {
+        "value": 1.6391664,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:8:peak0",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_after_mw": {
+        "value": 1.6473600000000002,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:8:peak1",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_hours_discharging": {
+        "value": 1,
+        "unit": "hours",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:U:8:rush_dis",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     },
+     "mobility_le_8gpus_W": {
+      "4": {
+       "co2_t": {
+        "value": 4284.621481373959,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:4:co2",
+        "status": "ok",
+        "reason": null
+       },
+       "base_co2_t": {
+        "value": 4443.362537914308,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:4:base",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_t": {
+        "value": 158.74105654034858,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:4:cut",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_frac": {
+        "value": 0.03572543432723381,
+        "unit": "fraction",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:4:cut_frac",
+        "status": "ok",
+        "reason": null
+       },
+       "flat_marginal_cut_t": {
+        "value": -105.58452579759172,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:4:flat",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_before_mw": {
+        "value": 1.04483555,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:4:rush0",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_after_mw": {
+        "value": 0.9615022166666667,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:4:rush1",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_before_mw": {
+        "value": 1.6416,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:4:peak0",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_after_mw": {
+        "value": 1.64736,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:4:peak1",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_hours_discharging": {
+        "value": 1,
+        "unit": "hours",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:4:rush_dis",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      "8": {
+       "co2_t": {
+        "value": 4271.9308879734035,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:8:co2",
+        "status": "ok",
+        "reason": null
+       },
+       "base_co2_t": {
+        "value": 4443.362537914308,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:8:base",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_t": {
+        "value": 171.43164994090424,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:8:cut",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_frac": {
+        "value": 0.03858151309466938,
+        "unit": "fraction",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:8:cut_frac",
+        "status": "ok",
+        "reason": null
+       },
+       "flat_marginal_cut_t": {
+        "value": -116.41975938078704,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:8:flat",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_before_mw": {
+        "value": 1.04483555,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:8:rush0",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_after_mw": {
+        "value": 0.9591145833333333,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:8:rush1",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_before_mw": {
+        "value": 1.6416,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:8:peak0",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_after_mw": {
+        "value": 1.6473600000000002,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:8:peak1",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_hours_discharging": {
+        "value": 1,
+        "unit": "hours",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:carbon:mobility_le_8gpus_W:8:rush_dis",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     }
+    }
+   },
+   "peak": {
+    "charge_hours": {
+     "value": [
+      8,
+      9,
+      10,
+      14
+     ],
+     "unit": "local_hour",
+     "evidence": "assumed",
+     "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:charge",
+     "status": "ok",
+     "reason": null
+    },
+    "discharge_hours": {
+     "value": [
+      18,
+      19,
+      20,
+      21
+     ],
+     "unit": "local_hour",
+     "evidence": "assumed",
+     "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:discharge",
+     "status": "ok",
+     "reason": null
+    },
+    "cases": {
+     "U": {
+      "4": {
+       "co2_t": {
+        "value": 4624.674915180459,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:4:co2",
+        "status": "ok",
+        "reason": null
+       },
+       "base_co2_t": {
+        "value": 4669.68612331725,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:4:base",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_t": {
+        "value": 45.01120813679136,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:4:cut",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_frac": {
+        "value": 0.009639022184389626,
+        "unit": "fraction",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:4:cut_frac",
+        "status": "ok",
+        "reason": null
+       },
+       "flat_marginal_cut_t": {
+        "value": -78.04873960637995,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:4:flat",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_before_mw": {
+        "value": 1.11610285,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:4:rush0",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_after_mw": {
+        "value": 0.90352879,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:4:rush1",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_before_mw": {
+        "value": 1.6391664,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:4:peak0",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_after_mw": {
+        "value": 1.64736,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:4:peak1",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_hours_discharging": {
+        "value": 4,
+        "unit": "hours",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:4:rush_dis",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      "8": {
+       "co2_t": {
+        "value": 4621.058544795807,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:8:co2",
+        "status": "ok",
+        "reason": null
+       },
+       "base_co2_t": {
+        "value": 4669.68612331725,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:8:base",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_t": {
+        "value": 48.6275785214426,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:8:cut",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_frac": {
+        "value": 0.010413457615198032,
+        "unit": "fraction",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:8:cut_frac",
+        "status": "ok",
+        "reason": null
+       },
+       "flat_marginal_cut_t": {
+        "value": -85.01980465246588,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:8:flat",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_before_mw": {
+        "value": 1.11610285,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:8:rush0",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_after_mw": {
+        "value": 0.9347219233333334,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:8:rush1",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_before_mw": {
+        "value": 1.6391664,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:8:peak0",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_after_mw": {
+        "value": 1.6473600000000002,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:8:peak1",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_hours_discharging": {
+        "value": 4,
+        "unit": "hours",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:U:8:rush_dis",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     },
+     "mobility_le_8gpus_W": {
+      "4": {
+       "co2_t": {
+        "value": 4399.764989670255,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:4:co2",
+        "status": "ok",
+        "reason": null
+       },
+       "base_co2_t": {
+        "value": 4443.362537914308,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:4:base",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_t": {
+        "value": 43.59754824405257,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:4:cut",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_frac": {
+        "value": 0.009811836840240598,
+        "unit": "fraction",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:4:cut_frac",
+        "status": "ok",
+        "reason": null
+       },
+       "flat_marginal_cut_t": {
+        "value": -77.03918274768002,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:4:flat",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_before_mw": {
+        "value": 1.04483555,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:4:rush0",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_after_mw": {
+        "value": 0.8475510266666666,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:4:rush1",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_before_mw": {
+        "value": 1.6416,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:4:peak0",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_after_mw": {
+        "value": 1.64736,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:4:peak1",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_hours_discharging": {
+        "value": 5,
+        "unit": "hours",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:4:rush_dis",
+        "status": "ok",
+        "reason": null
+       }
+      },
+      "8": {
+       "co2_t": {
+        "value": 4395.0861930392275,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:8:co2",
+        "status": "ok",
+        "reason": null
+       },
+       "base_co2_t": {
+        "value": 4443.362537914308,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:8:base",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_t": {
+        "value": 48.27634487508051,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:8:cut",
+        "status": "ok",
+        "reason": null
+       },
+       "cut_frac": {
+        "value": 0.010864822409413657,
+        "unit": "fraction",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:8:cut_frac",
+        "status": "ok",
+        "reason": null
+       },
+       "flat_marginal_cut_t": {
+        "value": -84.47091345563999,
+        "unit": "t_CO2",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:8:flat",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_before_mw": {
+        "value": 1.04483555,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:8:rush0",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_import_after_mw": {
+        "value": 0.8698966599999999,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:8:rush1",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_before_mw": {
+        "value": 1.6416,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:8:peak0",
+        "status": "ok",
+        "reason": null
+       },
+       "peak_import_after_mw": {
+        "value": 1.6473600000000002,
+        "unit": "MW",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:8:peak1",
+        "status": "ok",
+        "reason": null
+       },
+       "rush_hours_discharging": {
+        "value": 5,
+        "unit": "hours",
+        "evidence": "simulated",
+        "provenance_id": "extras-validation:20261027T160656Z:storage:2b:peak:mobility_le_8gpus_W:8:rush_dis",
+        "status": "ok",
+        "reason": null
+       }
+      }
+     }
+    }
+   }
+  },
+  "peak_schedule_from": "computed here (training years)",
+  "label": "validation counterpart of the pre-registered test-year extras (D-071)",
+  "peak_schedule": {
+   "rule": "D-073 (pre-registered before the opening): from the training years' PACE net load (2022-01-01 to 2024-10-29, the storage training window), each America/Denver day's top 4 hours and its lowest hour (complete days only); discharge in the 4 local hours most often among the day's top 4 (ties to the earlier hour), charge in the 4 other hours most often the day's lowest (ties to the earlier hour); same battery, η 0.85, P = E/4 and site cap as D-061/D-067; a design comparison, not the headline",
+   "charge_hours": {
+    "value": [
+     8,
+     9,
+     10,
+     14
+    ],
+    "unit": "local_hour",
+    "evidence": "assumed",
+    "provenance_id": "extras-validation:peak:charge",
+    "status": "ok",
+    "reason": null
+   },
+   "discharge_hours": {
+    "value": [
+     18,
+     19,
+     20,
+     21
+    ],
+    "unit": "local_hour",
+    "evidence": "assumed",
+    "provenance_id": "extras-validation:peak:discharge",
+    "status": "ok",
+    "reason": null
+   },
+   "n_training_days": {
+    "value": 1031,
+    "unit": "days",
+    "evidence": "measured",
+    "provenance_id": "extras-validation:peak:n_days",
+    "status": "ok",
+    "reason": null
+   },
+   "top4_counts": {
+    "value": [
+     151,
+     71,
+     40,
+     27,
+     27,
+     61,
+     172,
+     230,
+     87,
+     24,
+     3,
+     3,
+     3,
+     6,
+     12,
+     36,
+     87,
+     253,
+     454,
+     624,
+     738,
+     581,
+     317,
+     117
+    ],
+    "unit": "days",
+    "evidence": "observed",
+    "provenance_id": "extras-validation:peak:top4",
+    "status": "ok",
+    "reason": null
+   },
+   "lowest_counts": {
+    "value": [
+     16,
+     34,
+     37,
+     35,
+     15,
+     7,
+     2,
+     7,
+     126,
+     104,
+     104,
+     77,
+     71,
+     71,
+     146,
+     96,
+     28,
+     13,
+     4,
+     0,
+     1,
+     0,
+     3,
+     34
+    ],
+    "unit": "days",
+    "evidence": "observed",
+    "provenance_id": "extras-validation:peak:lowest",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  "rush_hours": {
+   "value": 12,
+   "unit": "hours",
+   "evidence": "measured",
+   "provenance_id": "extras-validation:20261027T160656Z:storage:rush:n",
+   "status": "ok",
+   "reason": null
+  }
+ }
+}

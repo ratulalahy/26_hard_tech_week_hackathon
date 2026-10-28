@@ -168,6 +168,9 @@ class RunResult:
     metrics_canonical_sha256: str | None = None
     summary_canonical_sha256: str | None = None
     exported: bool = False
+    # test window only (T20): the in-memory ledgers, cohort and truth the D-071 extras reuse,
+    # so the session never re-reads its own run directory
+    objects: dict | None = field(default=None, compare=False, repr=False)
 
 
 __all__ = ["EXTENSIONS", "PRIMARY_POLICIES", "RunResult", "Scenario", "Window"]

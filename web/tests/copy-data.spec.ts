@@ -37,3 +37,15 @@ test('copy-data copies results/test only when it matches the logged export', () 
   expect(r2.stderr).toContain('does not match the logged export: metrics.json');
   expect(existsSync(join(edited, 'web', 'public', 'data', 'results', 'test'))).toBe(false);
 });
+
+test('copy-data publishes the T16 case-days artifact byte for byte and lists it in the index', () => {
+  const repo = mkdtempSync(join(tmpdir(), 'copy-data-'));
+  mkdirSync(join(repo, 'results'), { recursive: true });
+  const text = readFileSync(join(process.cwd(), '..', 'results', 'case-days.json'), 'utf8');
+  writeFileSync(join(repo, 'results', 'case-days.json'), text);
+  const r = run(repo);
+  expect(r.status, r.stderr).toBe(0);
+  expect(readFileSync(join(repo, 'web', 'public', 'data', 'results', 'case-days.json'), 'utf8')).toBe(text);
+  const idx = JSON.parse(readFileSync(join(repo, 'web', 'public', 'data', 'results', 'index.json'), 'utf8'));
+  expect(idx.files).toContain('case-days.json');
+});

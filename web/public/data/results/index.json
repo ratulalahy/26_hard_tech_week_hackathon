@@ -1,12 +1,18 @@
 {
  "files": [
+  "assumptions.json",
+  "case-days.json",
   "extensions.json",
+  "extras-validation.json",
+  "flexibility-budget.json",
   "forecast-replay.json",
   "grid-profile.json",
   "job-replay.json",
   "manifest.json",
   "metrics.json",
+  "scenario-flows.json",
   "storage.json",
+  "water.json",
   "workload-profile.json"
  ],
  "test": {

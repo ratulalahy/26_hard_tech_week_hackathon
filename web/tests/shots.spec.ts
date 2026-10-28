@@ -13,9 +13,14 @@ const SIZES = [{ w: 1728, h: 1117 }, { w: 1440, h: 900 }];
 const STATES: { name: string; hash: string; prep?: (p: Page) => Promise<void> }[] = [
   { name: 'control', hash: '#control' },
   { name: 'control-zoomed', hash: '#control', prep: async (p) => { await p.getByRole('button', { name: 'Zoom in' }).click(); await p.waitForTimeout(400); await p.getByRole('button', { name: 'Zoom in' }).click(); await p.waitForTimeout(700); } },
+  // T15: the four toggle states (the budget sits in the right dock) and story 4 with the toggle
+  ...([['registered', 0], ['mobility', 1], ['wait0', 2], ['double', 3]] as const).map(([n, i]) => ({ name: `control-toggle-${n}`, hash: '#control', prep: async (p: Page) => { await p.getByTestId('scenario-toggle').getByRole('button').nth(i).click(); await p.waitForTimeout(500); } })),
+  { name: 'story-4-mobility', hash: '#story-4', prep: async (p) => { await p.waitForTimeout(900); await p.getByTestId('scenario-toggle').getByRole('button').nth(1).click(); await p.waitForTimeout(600); } },
   { name: 'cockpit', hash: '#cockpit' },
   { name: 'cockpit-wait', hash: '#cockpit', prep: async (p) => { await p.getByRole('group', { name: 'Router action' }).getByRole('button', { name: 'Wait' }).click(); } },
   { name: 'ribbon', hash: '#ribbon' },
+  // T16: the toughest-days card on its third day
+  ...[2, 3].map((n) => ({ name: `ribbon-case-${n}`, hash: '#ribbon', prep: async (p: Page) => { await p.getByRole('radiogroup', { name: 'Toughest days' }).getByRole('radio').nth(n - 1).click(); await p.waitForTimeout(300); } })),
   ...[1, 2, 3, 4, 5, 6].map((n) => ({ name: `story-${n}`, hash: `#story-${n}`, prep: async (p: Page) => { await p.waitForTimeout(900); } })),
   { name: 'method', hash: '#control', prep: async (p) => { await p.getByRole('button', { name: 'Method & evidence' }).click(); await p.waitForTimeout(300); } },
   { name: 'method-checks', hash: '#control', prep: async (p) => { await p.getByRole('button', { name: 'Method & evidence' }).click(); await p.waitForTimeout(300); await p.getByTestId('method-extensions').scrollIntoViewIfNeeded(); await p.waitForTimeout(300); } },

@@ -1,0 +1,1049 @@
+{
+ "schema_version": "gridpilot.results.v1",
+ "kind": "flexibility-budget",
+ "evidence_scope": "validation (selection) results; the sealed test window [2025-11-01, 2026-11-01) is never read",
+ "run_id": "20261027T160656Z",
+ "registered_run_id": "20261027T160656Z",
+ "default_policy": "S",
+ "flags_evidence": "assumed",
+ "definition": "the registered primary's cohort execution energy (MWh, math.fsum) split by what the policy did with each job; each bucket's share of energy, job count, and share of the policy's CO2 saving vs U (U - policy per job, execution plus transfer; signed). Assignment precedence: must_stay (identical across policies), capacity_blocked (blocked, flexible and mobile), moved_remote, retimed_home, stayed_booking; blocked jobs that must stay are in must_stay and counted in blocked_must_stay_mwh, so capacity_blocked + blocked_must_stay_mwh = blocked_total_mwh. fits_remote_share: flexible and mobile jobs no larger than a destination's slots. Flexibility and mobility flags are assumed (spec rule); every outcome is simulated.",
+ "bucket_order": [
+  "moved_remote",
+  "retimed_home",
+  "stayed_booking",
+  "must_stay",
+  "capacity_blocked"
+ ],
+ "policies": {
+  "S": {
+   "total_mwh": {
+    "value": 8233.6421426,
+    "unit": "MWh",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:S:total",
+    "status": "ok",
+    "reason": null
+   },
+   "saving_kg": {
+    "value": 1056262.9565387273,
+    "unit": "kg_CO2",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:S:saving",
+    "status": "ok",
+    "reason": null
+   },
+   "flexible_mobile_share": {
+    "value": 0.4612534983698892,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:S:flex_mobile_share",
+    "status": "ok",
+    "reason": null
+   },
+   "fits_remote_share": {
+    "value": 0.30930797176907654,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:S:fits_remote_share",
+    "status": "ok",
+    "reason": null
+   },
+   "blocked_must_stay_mwh": {
+    "value": 0.0271092,
+    "unit": "MWh",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:S:blocked_must_stay",
+    "status": "ok",
+    "reason": null
+   },
+   "blocked_must_stay_jobs": {
+    "value": 93,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:S:blocked_must_stay_n",
+    "status": "ok",
+    "reason": null
+   },
+   "must_stay_share": {
+    "value": 0.5387465016301108,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:S:must_stay_share",
+    "status": "ok",
+    "reason": null
+   },
+   "blocked_total_mwh": {
+    "value": 0.0271092,
+    "unit": "MWh",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:S:blocked_total",
+    "status": "ok",
+    "reason": null
+   },
+   "dest_slots": {
+    "value": 512,
+    "unit": "GPU_slots",
+    "evidence": "assumed",
+    "provenance_id": "20261027T160656Z:budget:S:dest_slots",
+    "status": "ok",
+    "reason": null
+   },
+   "buckets": [
+    {
+     "id": "moved_remote",
+     "text": "ran at a remote site (remote execution)",
+     "status": "ok",
+     "reason": null,
+     "flags_evidence": "assumed",
+     "mwh": {
+      "value": 2545.523241,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:moved_remote:mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "share": {
+      "value": 0.30916126750636025,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:moved_remote:share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_jobs": {
+      "value": 383499,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:moved_remote:n",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_kg": {
+      "value": 1056279.3835833468,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:moved_remote:saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_share": {
+      "value": 1.0000155520408227,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:moved_remote:saving_share",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    {
+     "id": "retimed_home",
+     "text": "flexible job retimed at home: ran in Utah with its start changed from its booking",
+     "status": "ok",
+     "reason": null,
+     "flags_evidence": "assumed",
+     "mwh": {
+      "value": 0.36679680000000003,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:retimed_home:mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "share": {
+      "value": 4.4548547732264425e-05,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:retimed_home:share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_jobs": {
+      "value": 6,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:retimed_home:n",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_kg": {
+      "value": -3.433271444919228e-10,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:retimed_home:saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_share": {
+      "value": -3.2503946329517515e-16,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:retimed_home:saving_share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_later": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:retimed_home:n_later",
+      "status": "ok",
+      "reason": null
+     },
+     "n_earlier": {
+      "value": 6,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:retimed_home:n_earlier",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    {
+     "id": "stayed_booking",
+     "text": "flexible and mobile, but ran on its Utah booking (no better option for the policy)",
+     "status": "ok",
+     "reason": null,
+     "flags_evidence": "assumed",
+     "mwh": {
+      "value": 1251.9062047999998,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:stayed_booking:mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "share": {
+      "value": 0.15204768231579663,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:stayed_booking:share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_jobs": {
+      "value": 482,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:stayed_booking:n",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_kg": {
+      "value": 0.0,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:stayed_booking:saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_share": {
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:stayed_booking:saving_share",
+      "status": "ok",
+      "reason": null
+     },
+     "larger_than_destination_jobs": {
+      "value": 468,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:stayed_booking:larger_than_destination_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "larger_than_destination_mwh": {
+      "value": 1250.7765279999999,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:stayed_booking:larger_than_destination_mwh",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    {
+     "id": "must_stay",
+     "text": "must stay: not flexible or not mobile (assumed flags), wherever it started; identical across policies",
+     "status": "ok",
+     "reason": null,
+     "flags_evidence": "assumed",
+     "mwh": {
+      "value": 4435.8459,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:must_stay:mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "share": {
+      "value": 0.5387465016301108,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:must_stay:share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_jobs": {
+      "value": 533922,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:must_stay:n",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_kg": {
+      "value": -16.42704461924327,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:must_stay:saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_share": {
+      "value": -1.5552040822365978e-05,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:must_stay:saving_share",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    {
+     "id": "capacity_blocked",
+     "text": "capacity-blocked (F14.7), flexible and mobile jobs only: the policy would have chosen better without other jobs' pending bookings",
+     "status": "ok",
+     "reason": null,
+     "flags_evidence": "assumed",
+     "mwh": {
+      "value": 0.0,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:capacity_blocked:mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "share": {
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:capacity_blocked:share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_jobs": {
+      "value": 0,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:capacity_blocked:n",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_kg": {
+      "value": 0.0,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:capacity_blocked:saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_share": {
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:S:capacity_blocked:saving_share",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   ]
+  },
+  "W": {
+   "total_mwh": {
+    "value": 8233.6421426,
+    "unit": "MWh",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:W:total",
+    "status": "ok",
+    "reason": null
+   },
+   "saving_kg": {
+    "value": 1051323.0585411876,
+    "unit": "kg_CO2",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:W:saving",
+    "status": "ok",
+    "reason": null
+   },
+   "flexible_mobile_share": {
+    "value": 0.4612534983698892,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:W:flex_mobile_share",
+    "status": "ok",
+    "reason": null
+   },
+   "fits_remote_share": {
+    "value": 0.30930797176907654,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:W:fits_remote_share",
+    "status": "ok",
+    "reason": null
+   },
+   "blocked_must_stay_mwh": {
+    "value": 0.019272,
+    "unit": "MWh",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:W:blocked_must_stay",
+    "status": "ok",
+    "reason": null
+   },
+   "blocked_must_stay_jobs": {
+    "value": 3,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:W:blocked_must_stay_n",
+    "status": "ok",
+    "reason": null
+   },
+   "must_stay_share": {
+    "value": 0.5387465016301108,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:W:must_stay_share",
+    "status": "ok",
+    "reason": null
+   },
+   "blocked_total_mwh": {
+    "value": 724.6132608,
+    "unit": "MWh",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:W:blocked_total",
+    "status": "ok",
+    "reason": null
+   },
+   "dest_slots": {
+    "value": 512,
+    "unit": "GPU_slots",
+    "evidence": "assumed",
+    "provenance_id": "20261027T160656Z:budget:W:dest_slots",
+    "status": "ok",
+    "reason": null
+   },
+   "buckets": [
+    {
+     "id": "moved_remote",
+     "text": "ran at a remote site (remote execution)",
+     "status": "ok",
+     "reason": null,
+     "flags_evidence": "assumed",
+     "mwh": {
+      "value": 2541.0420633999997,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:moved_remote:mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "share": {
+      "value": 0.3086170153367384,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:moved_remote:share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_jobs": {
+      "value": 383493,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:moved_remote:n",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_kg": {
+      "value": 1046738.4809846363,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:moved_remote:saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_share": {
+      "value": 0.9956392304731595,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:moved_remote:saving_share",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    {
+     "id": "retimed_home",
+     "text": "flexible job retimed at home: ran in Utah with its start changed from its booking",
+     "status": "ok",
+     "reason": null,
+     "flags_evidence": "assumed",
+     "mwh": {
+      "value": 130.7061888,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:retimed_home:mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "share": {
+      "value": 0.015874650189584984,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:retimed_home:share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_jobs": {
+      "value": 129,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:retimed_home:n",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_kg": {
+      "value": 4286.645805072537,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:retimed_home:saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_share": {
+      "value": 0.004077382085598572,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:retimed_home:saving_share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_later": {
+      "value": 126,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:retimed_home:n_later",
+      "status": "ok",
+      "reason": null
+     },
+     "n_earlier": {
+      "value": 3,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:retimed_home:n_earlier",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    {
+     "id": "stayed_booking",
+     "text": "flexible and mobile, but ran on its Utah booking (no better option for the policy)",
+     "status": "ok",
+     "reason": null,
+     "flags_evidence": "assumed",
+     "mwh": {
+      "value": 401.4540016,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:stayed_booking:mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "share": {
+      "value": 0.048757766568809105,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:stayed_booking:share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_jobs": {
+      "value": 154,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:stayed_booking:n",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_kg": {
+      "value": 0.0,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:stayed_booking:saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_share": {
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:stayed_booking:saving_share",
+      "status": "ok",
+      "reason": null
+     },
+     "larger_than_destination_jobs": {
+      "value": 146,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:stayed_booking:larger_than_destination_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "larger_than_destination_mwh": {
+      "value": 400.54315360000004,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:stayed_booking:larger_than_destination_mwh",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    {
+     "id": "must_stay",
+     "text": "must stay: not flexible or not mobile (assumed flags), wherever it started; identical across policies",
+     "status": "ok",
+     "reason": null,
+     "flags_evidence": "assumed",
+     "mwh": {
+      "value": 4435.8459,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:must_stay:mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "share": {
+      "value": 0.5387465016301108,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:must_stay:share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_jobs": {
+      "value": 533922,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:must_stay:n",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_kg": {
+      "value": 3.973695562593759,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:must_stay:saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_share": {
+      "value": 3.779709319899866e-06,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:must_stay:saving_share",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    {
+     "id": "capacity_blocked",
+     "text": "capacity-blocked (F14.7), flexible and mobile jobs only: the policy would have chosen better without other jobs' pending bookings",
+     "status": "ok",
+     "reason": null,
+     "flags_evidence": "assumed",
+     "mwh": {
+      "value": 724.5939888,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:capacity_blocked:mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "share": {
+      "value": 0.08800406627475668,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:capacity_blocked:share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_jobs": {
+      "value": 211,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:capacity_blocked:n",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_kg": {
+      "value": 293.95805591607143,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:capacity_blocked:saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_share": {
+      "value": 0.00027960773192206654,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:W:capacity_blocked:saving_share",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   ]
+  },
+  "L": {
+   "total_mwh": {
+    "value": 8233.6421426,
+    "unit": "MWh",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:L:total",
+    "status": "ok",
+    "reason": null
+   },
+   "saving_kg": {
+    "value": 1051159.089311859,
+    "unit": "kg_CO2",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:L:saving",
+    "status": "ok",
+    "reason": null
+   },
+   "flexible_mobile_share": {
+    "value": 0.4612534983698892,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:L:flex_mobile_share",
+    "status": "ok",
+    "reason": null
+   },
+   "fits_remote_share": {
+    "value": 0.30930797176907654,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:L:fits_remote_share",
+    "status": "ok",
+    "reason": null
+   },
+   "blocked_must_stay_mwh": {
+    "value": 0.019272,
+    "unit": "MWh",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:L:blocked_must_stay",
+    "status": "ok",
+    "reason": null
+   },
+   "blocked_must_stay_jobs": {
+    "value": 3,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:L:blocked_must_stay_n",
+    "status": "ok",
+    "reason": null
+   },
+   "must_stay_share": {
+    "value": 0.5387465016301108,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:L:must_stay_share",
+    "status": "ok",
+    "reason": null
+   },
+   "blocked_total_mwh": {
+    "value": 676.7957824,
+    "unit": "MWh",
+    "evidence": "simulated",
+    "provenance_id": "20261027T160656Z:budget:L:blocked_total",
+    "status": "ok",
+    "reason": null
+   },
+   "dest_slots": {
+    "value": 512,
+    "unit": "GPU_slots",
+    "evidence": "assumed",
+    "provenance_id": "20261027T160656Z:budget:L:dest_slots",
+    "status": "ok",
+    "reason": null
+   },
+   "buckets": [
+    {
+     "id": "moved_remote",
+     "text": "ran at a remote site (remote execution)",
+     "status": "ok",
+     "reason": null,
+     "flags_evidence": "assumed",
+     "mwh": {
+      "value": 2541.8673916000002,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:moved_remote:mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "share": {
+      "value": 0.3087172538685699,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:moved_remote:share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_jobs": {
+      "value": 383482,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:moved_remote:n",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_kg": {
+      "value": 1046308.3654328171,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:moved_remote:saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_share": {
+      "value": 0.9953853570516928,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:moved_remote:saving_share",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    {
+     "id": "retimed_home",
+     "text": "flexible job retimed at home: ran in Utah with its start changed from its booking",
+     "status": "ok",
+     "reason": null,
+     "flags_evidence": "assumed",
+     "mwh": {
+      "value": 127.3361904,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:retimed_home:mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "share": {
+      "value": 0.015465353994579862,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:retimed_home:share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_jobs": {
+      "value": 141,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:retimed_home:n",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_kg": {
+      "value": 4449.177123576142,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:retimed_home:saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_share": {
+      "value": 0.004232639158824944,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:retimed_home:saving_share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_later": {
+      "value": 138,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:retimed_home:n_later",
+      "status": "ok",
+      "reason": null
+     },
+     "n_earlier": {
+      "value": 3,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:retimed_home:n_earlier",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    {
+     "id": "stayed_booking",
+     "text": "flexible and mobile, but ran on its Utah booking (no better option for the policy)",
+     "status": "ok",
+     "reason": null,
+     "flags_evidence": "assumed",
+     "mwh": {
+      "value": 451.8161502,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:stayed_booking:mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "share": {
+      "value": 0.05487439730497281,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:stayed_booking:share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_jobs": {
+      "value": 170,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:stayed_booking:n",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_kg": {
+      "value": 0.0,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:stayed_booking:saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_share": {
+      "value": 0.0,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:stayed_booking:saving_share",
+      "status": "ok",
+      "reason": null
+     },
+     "larger_than_destination_jobs": {
+      "value": 161,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:stayed_booking:larger_than_destination_jobs",
+      "status": "ok",
+      "reason": null
+     },
+     "larger_than_destination_mwh": {
+      "value": 451.26922720000005,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:stayed_booking:larger_than_destination_mwh",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    {
+     "id": "must_stay",
+     "text": "must stay: not flexible or not mobile (assumed flags), wherever it started; identical across policies",
+     "status": "ok",
+     "reason": null,
+     "flags_evidence": "assumed",
+     "mwh": {
+      "value": 4435.8459,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:must_stay:mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "share": {
+      "value": 0.5387465016301108,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:must_stay:share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_jobs": {
+      "value": 533922,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:must_stay:n",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_kg": {
+      "value": 3.9926098649596162,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:must_stay:saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_share": {
+      "value": 3.798292670972742e-06,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:must_stay:saving_share",
+      "status": "ok",
+      "reason": null
+     }
+    },
+    {
+     "id": "capacity_blocked",
+     "text": "capacity-blocked (F14.7), flexible and mobile jobs only: the policy would have chosen better without other jobs' pending bookings",
+     "status": "ok",
+     "reason": null,
+     "flags_evidence": "assumed",
+     "mwh": {
+      "value": 676.7765104,
+      "unit": "MWh",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:capacity_blocked:mwh",
+      "status": "ok",
+      "reason": null
+     },
+     "share": {
+      "value": 0.08219649320176661,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:capacity_blocked:share",
+      "status": "ok",
+      "reason": null
+     },
+     "n_jobs": {
+      "value": 194,
+      "unit": "jobs",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:capacity_blocked:n",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_kg": {
+      "value": 397.55414560098575,
+      "unit": "kg_CO2",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:capacity_blocked:saving",
+      "status": "ok",
+      "reason": null
+     },
+     "saving_share": {
+      "value": 0.0003782054968113765,
+      "unit": "fraction",
+      "evidence": "simulated",
+      "provenance_id": "20261027T160656Z:budget:L:capacity_blocked:saving_share",
+      "status": "ok",
+      "reason": null
+     }
+    }
+   ]
+  }
+ },
+ "ledger_run_dir": "runs/slice/20261027T160656Z"
+}

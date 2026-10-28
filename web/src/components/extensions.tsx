@@ -3,7 +3,7 @@
 // registered result. Rows that did not run show their reason. Every number keeps its envelope.
 import { contrast, pname, type Json } from '../lib/data';
 import { fmt, pct } from '../lib/format';
-import { Ev, EvCI } from './ui';
+import { Ev, EvCI, ScrollX } from './ui';
 
 const POLS = ['S', 'W', 'L'] as const;
 
@@ -101,7 +101,7 @@ export function ExtensionsTable({ m, ext, testId }: { m: Json; ext: Json; testId
   const rows = extRows(m, ext);
   return (
     <div>
-      <div style={{ overflowX: 'auto' }}>
+      <ScrollX label="Robustness and sensitivity checks, table">
         <table className="tbl" data-testid={testId}>
           <thead>
             <tr>
@@ -122,7 +122,7 @@ export function ExtensionsTable({ m, ext, testId }: { m: Json; ext: Json; testId
             ))}
           </tbody>
         </table>
-      </div>
+      </ScrollX>
       <div className="flex flex-wrap gap-3 items-center t-12 ink-3" style={{ marginTop: 6 }}>
         <span>{pname('S')}, {pname('W')} and {pname('L')}; ratio of totals, 4-week blocks.</span>
         <Ev e="simulated">savings, 95% intervals</Ev><Ev e="assumed">scenario settings</Ev><EvCI extra="both bases" />
