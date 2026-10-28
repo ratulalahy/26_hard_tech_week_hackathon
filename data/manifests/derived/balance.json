@@ -20,10 +20,10 @@
     "raw/eia930/EIA930_BALANCE_2026_Jul_Dec.csv": "b5f2247b9ad4fc9d0bec3c1d182903c74b57567086e28928d603391d4dbce0dd"
   },
   "code": "gridpilot.data.eia930.build_balance",
-  "lab_tree": "0dd46c18a331efe117806efc9ead70c4c81cb180",
+  "lab_tree": "dbc52a6e1392f56d08c332fed015745e73917585",
   "rebuild": {
     "evidence": "docs/evidence/rebuild-20261027.json",
-    "clone_commit": "ef5b66f9e59ad57db594eb2007dd98a0312ebce6",
-    "data_dir": "/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild/data"
+    "clone_commit": "7762fc620986bd4d373a4e655712b705ede87f19",
+    "data_dir": "/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild-final/data"
   }
 }

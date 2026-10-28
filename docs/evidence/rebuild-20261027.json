@@ -1,16 +1,16 @@
 {
  "schema": "gridpilot.rebuild.v1",
- "generated_at": "2026-10-27T22:28:24Z",
+ "generated_at": "2026-10-28T01:14:50Z",
  "what": "F12.6 independent clean rebuild: a fresh clone of the freeze-candidate commit, a fresh data dir rebuilt from raw by `make data`, and `run_slice --no-export` on the validation window, compared with the registered run",
  "clone": {
-  "path": "/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild/repo",
+  "path": "/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild-final/repo",
   "source": "https://github.com/ratulalahy/26_hard_tech_week_hackathon.git",
-  "commit": "ef5b66f9e59ad57db594eb2007dd98a0312ebce6",
-  "lab_tree": "0dd46c18a331efe117806efc9ead70c4c81cb180",
+  "commit": "7762fc620986bd4d373a4e655712b705ede87f19",
+  "lab_tree": "dbc52a6e1392f56d08c332fed015745e73917585",
   "status_porcelain": ""
  },
  "data_dir": {
-  "path": "/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild/data",
+  "path": "/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild-final/data",
   "raw": {
    "symlink": true,
    "target": "/home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/data/raw"
@@ -25,7 +25,8 @@
    "snapshot.json": "e5fe3166bcf6c091f246c2eb338cfd7df7094adf79fd3273df3fe4854babe2c0",
    "traces_acme.json": "636d81a7c3a75dc823933368175e1cc0badcac9e7164584268611072fa0ccd31",
    "traces_alibaba_spot2026.json": "42d8e490f4aba2db4acdc0332562604c8902f0a4cc20bf060d872748e4caf56a",
-   "traces_pai2020.json": "1328d822040abf5b3aa0566f0932a4bc3bb84d295ef82ce60d583321c5f4ba8c"
+   "traces_pai2020.json": "1328d822040abf5b3aa0566f0932a4bc3bb84d295ef82ce60d583321c5f4ba8c",
+   "water.json": "222f80567a75a84318fb07e1ca5c5e062e298924e9a29d05838c6287692fa9a6"
   },
   "manifests_equal_clone_git": true,
   "built_by_make_data": [
@@ -41,9 +42,9 @@
   "snapshot_id": "05efabe781cc"
  },
  "rebuild_run": {
-  "run_id": "20261027T220749Z",
-  "path": "/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild/runs/20261027T220749Z",
-  "git_sha": "ef5b66f9e59ad57db594eb2007dd98a0312ebce6",
+  "run_id": "20261028T005458Z",
+  "path": "/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild-final/runs/20261028T005458Z",
+  "git_sha": "7762fc620986bd4d373a4e655712b705ede87f19",
   "git_clean": true,
   "snapshot_id": "8a1b36b24b91",
   "window": "validation"
@@ -451,35 +452,35 @@
  "commands": [
   {
    "step": "clone",
-   "command": "git clone --quiet --no-checkout https://github.com/ratulalahy/26_hard_tech_week_hackathon.git /tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild/repo"
+   "command": "git clone --quiet --no-checkout https://github.com/ratulalahy/26_hard_tech_week_hackathon.git /tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild-final/repo"
   },
   {
    "step": "checkout",
-   "command": "git -C /tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild/repo checkout --quiet --detach ef5b66f9e59ad57db594eb2007dd98a0312ebce6"
+   "command": "git -C /tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild-final/repo checkout --quiet --detach 7762fc620986bd4d373a4e655712b705ede87f19"
   },
   {
    "step": "data_dir",
-   "command": "bash -c mkdir -p '/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild/data/interim' '/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild/data/processed' && ln -s '/home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/data/raw' '/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild/data/raw' && cp -r '/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild/repo/data/manifests' '/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild/data/manifests'"
+   "command": "bash -c mkdir -p '/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild-final/data/interim' '/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild-final/data/processed' && ln -s '/home/nvidia/workspace/personal/projects/26_hard_tech_week_hackathon/data/raw' '/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild-final/data/raw' && cp -r '/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild-final/repo/data/manifests' '/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild-final/data/manifests'"
   },
   {
    "step": "make_data",
-   "command": "make -C /tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild/repo data"
+   "command": "make -C /tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild-final/repo data"
   },
   {
    "step": "run_slice",
-   "command": "bash -c cd '/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild/repo/lab' && uv run python scripts/run_slice.py --window validation --no-export --out '/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild/runs'"
+   "command": "bash -c cd '/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild-final/repo/lab' && uv run python scripts/run_slice.py --window validation --no-export --out '/tmp/claude-1001/-home-nvidia-workspace-personal-projects/d7fb1e5c-cee6-4473-88b2-02a108cc36ac/scratchpad/rebuild-final/runs'"
   }
  ],
  "wall_time_s": {
-  "clone": 149.1,
+  "clone": 22.0,
   "checkout": 0.2,
   "data_dir": 0.0,
-  "make_data": 7.7,
-  "run_slice": 1215.6,
-  "compare": 6.8
+  "make_data": 7.2,
+  "run_slice": 1174.8,
+  "compare": 6.7
  },
- "started_at": "2026-10-27T22:05:10Z",
- "finished_at": "2026-10-27T22:28:31Z",
+ "started_at": "2026-10-28T00:54:26Z",
+ "finished_at": "2026-10-28T01:14:56Z",
  "balance_derivation": {
   "written": "../data/manifests/derived/balance.json",
   "output_sha256": "f63d0c2703c6e42a1bbdabc9ff746ab0405cbc72b1c5a9dad8c6251ef29d0e86"
