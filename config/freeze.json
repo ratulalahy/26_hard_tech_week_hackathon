@@ -1,0 +1,222 @@
+{
+  "schema": "gridpilot.freeze.v1",
+  "freeze_commit": "8afed0c65b5e80142843bf74aa8e2a061452607a",
+  "frozen_at": "2026-10-28T01:22:06Z",
+  "deployed_policy": {
+    "name": "S",
+    "rule_trace": [
+      {
+        "rule": "0. candidates: U, G, S, K, W, L (spec §8) from the committed validation results/metrics.json, run 20261027T160656Z; H (hindsight) and the time-only W, L are not candidates",
+        "result": "U, G, S, K, W, L"
+      },
+      {
+        "rule": "1. hard feasibility: status ok, feasible, work conserved, zero late jobs, zero capacity violations, completed GPU-s = requested GPU-s, relaxed-bound check ok",
+        "result": "U, G, S, K, W, L pass",
+        "values": {
+          "U": {
+            "status_ok": true,
+            "feasible": true,
+            "conserved": true,
+            "late_jobs": 0,
+            "capacity_violations": 0,
+            "completed_eq_requested_gpu_s": true,
+            "bound_check_ok": true,
+            "passes": true
+          },
+          "G": {
+            "status_ok": true,
+            "feasible": true,
+            "conserved": true,
+            "late_jobs": 0,
+            "capacity_violations": 0,
+            "completed_eq_requested_gpu_s": true,
+            "bound_check_ok": true,
+            "passes": true
+          },
+          "S": {
+            "status_ok": true,
+            "feasible": true,
+            "conserved": true,
+            "late_jobs": 0,
+            "capacity_violations": 0,
+            "completed_eq_requested_gpu_s": true,
+            "bound_check_ok": true,
+            "passes": true
+          },
+          "K": {
+            "status_ok": true,
+            "feasible": true,
+            "conserved": true,
+            "late_jobs": 0,
+            "capacity_violations": 0,
+            "completed_eq_requested_gpu_s": true,
+            "bound_check_ok": true,
+            "passes": true
+          },
+          "W": {
+            "status_ok": true,
+            "feasible": true,
+            "conserved": true,
+            "late_jobs": 0,
+            "capacity_violations": 0,
+            "completed_eq_requested_gpu_s": true,
+            "bound_check_ok": true,
+            "passes": true
+          },
+          "L": {
+            "status_ok": true,
+            "feasible": true,
+            "conserved": true,
+            "late_jobs": 0,
+            "capacity_violations": 0,
+            "completed_eq_requested_gpu_s": true,
+            "bound_check_ok": true,
+            "passes": true
+          }
+        }
+      },
+      {
+        "rule": "2. lowest aggregate attributed CO2 on validation (co2_kg, kg CO2) among the feasible; policies within 1e-06 kg of the minimum are tied",
+        "result": "S (3,613,423.17 kg); next W +4,939.90 kg",
+        "values": {
+          "co2_kg": {
+            "U": 4669686.12331724,
+            "G": 4669221.9068728145,
+            "S": 3613423.1667785128,
+            "K": 3623430.3672101563,
+            "W": 3618363.0647760523,
+            "L": 3618527.0340053807
+          },
+          "ranked": [
+            "S",
+            "W",
+            "L",
+            "K",
+            "G",
+            "U"
+          ]
+        }
+      },
+      {
+        "rule": "3. tie-break: lower mean wait (wait_mean_s, s)",
+        "result": "not needed (S is the unique minimum)",
+        "values": {
+          "wait_mean_s": {
+            "U": 10.84332215938617,
+            "G": 10.366262886626016,
+            "S": 1116.9904881638595,
+            "K": 1516.4693351955368,
+            "W": 1493.3860001372684,
+            "L": 1534.9461613297178
+          }
+        }
+      },
+      {
+        "rule": "4. tie-break: the simpler policy, in the order U, G, S, K, W, L",
+        "result": "not needed (S)"
+      },
+      {
+        "rule": "deployed product policy",
+        "result": "S"
+      }
+    ]
+  },
+  "L_max_leaf_nodes": {
+    "PACE/ci_consumed": 15,
+    "CISO/ci_consumed": 15,
+    "BPAT/ci_consumed": 15,
+    "NEVP/ci_consumed": 15,
+    "PACE/demand": 31,
+    "PACE/wind": 15,
+    "PACE/solar": 15
+  },
+  "test_F": "2026-10-25T00:00:00Z",
+  "test_F_basis": {
+    "D": "2026-10-24",
+    "rule": "D = the last UTC day <= TEST_END - 1 day on which all 24 hours exist as rows with a valid value (CO2: present, finite numeric, not negative; demand: non-null, finite) for PACE, CISO, BPAT and NEVP consumed CO2 intensity (EIA BA workbooks) and PACE demand (EIA-930 balance demand_adj_mw); interior invalid hours before D are left to the F14.6 fill; F_test = min(D + 1 day, TEST_END) at 00:00Z (spec §5: value completeness)",
+    "last_row_ts_utc": {
+      "BPAT/ci_consumed": "2026-10-27T06:00:00Z",
+      "CISO/ci_consumed": "2026-10-27T06:00:00Z",
+      "NEVP/ci_consumed": "2026-10-27T06:00:00Z",
+      "PACE/ci_consumed": "2026-10-27T05:00:00Z",
+      "PACE/demand": "2026-10-27T05:00:00Z"
+    },
+    "completeness_log": {
+      "path": "docs/evidence/completeness-20261027.jsonl",
+      "line_sha256": "6062dd6c0896e35b34a5a1004609f57ab22b374c209027551ccb11db7fc17b70"
+    }
+  },
+  "test_fit_at": "2025-10-29T00:00:00Z",
+  "test_history_start": "2023-01-01T00:00:00Z",
+  "s_ranking": {
+    "order": [
+      "BPAT",
+      "CISO",
+      "NEVP",
+      "PACE"
+    ],
+    "window": [
+      "2023-01-01T00:00:00Z",
+      "2025-10-29T00:00:00Z"
+    ],
+    "fit_at": "2025-10-29T00:00:00Z",
+    "mean_consumed_ci_g_kwh": {
+      "BPAT": 95.52834018343006,
+      "CISO": 194.23025313711406,
+      "NEVP": 312.5501951035566,
+      "PACE": 572.8467823209695
+    },
+    "source": "eia_co2.s_ranking_at: math.fsum means of EIA's estimated consumption-basis hourly CO2 intensity over [2023-01-01, 2025-10-29), rows published by fit_at (ts_utc + 1 h + 96 h <= fit_at), from processed/carbon/carbon_hourly.parquet sha256 c34a9f8a00caf22e1525bf7f6f92329eefcf2a9d7b474389ef636dd0ab7e1258"
+  },
+  "scenario_catalog": {
+    "primary": {
+      "name": "primary",
+      "dest_slots": 512,
+      "transfer_s": 1800.0,
+      "batch_delay_s": 21600,
+      "mobility_max_gpus": null,
+      "phase_days": 0,
+      "note": "registered primary scenario",
+      "sites": {
+        "PACE": 2288,
+        "CISO": 512,
+        "BPAT": 512,
+        "NEVP": 512
+      },
+      "time_only_sites": {
+        "PACE": 2288,
+        "CISO": 0,
+        "BPAT": 0,
+        "NEVP": 0
+      },
+      "policies": [
+        "U",
+        "G",
+        "S",
+        "K",
+        "W",
+        "L",
+        "H",
+        "W_time",
+        "L_time"
+      ],
+      "changes_deadlines": false,
+      "own_cohort": false
+    }
+  },
+  "snapshot_id": "8a1b36b24b91",
+  "input_sha256": {
+    "raw/eia930/ba_workbooks/PACE.xlsx": "35a9955d674254360db5abb550e641f172023eb027ebb8c7bbb839fc47ab58b4",
+    "raw/eia930/ba_workbooks/CISO.xlsx": "4fa4cda65ce4c49e3ecc15064e7e4112d550c7e88d84a428fcadc574fcb9e099",
+    "raw/eia930/ba_workbooks/BPAT.xlsx": "89081601c5c944d17a4457a9c569d2d1904c76e27c2f725199a026bfebd9c523",
+    "raw/eia930/ba_workbooks/NEVP.xlsx": "ca0383cfdad59b95f5e10be50e150c5df2fe292260496c49bb36766358988fa7",
+    "interim/eia930/balance.parquet": "f63d0c2703c6e42a1bbdabc9ff746ab0405cbc72b1c5a9dad8c6251ef29d0e86",
+    "raw/traces/acme/trace_seren.csv": "747854c73ce8b3263b764aa9ff8d866d89903705d31fcd0e0520c33dd14af9a1",
+    "raw/openmeteo/historical-forecast/best_match/PACE_SLC/2025-01-01_2025-12-31.json": "112defe37c93c34e8b3f5a94feaed4e321529a914ac5b0a2bf4619265e6efb1a",
+    "raw/openmeteo/historical-forecast/best_match/PACE_SLC/2026-01-01_2026-10-26.json": "4763272bcd43388eba026cb5bc89c9b21fcf7b20855c42102544cf9675e8c411"
+  },
+  "validation_run": {
+    "run_id": "20261027T160656Z",
+    "metrics_canonical_sha256": "e6ad2635699099775e414ddd073b5a7d9a81a57293d2ea3693ec309d9baeae35"
+  }
+}
