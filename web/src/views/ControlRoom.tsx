@@ -90,7 +90,7 @@ function ResultDock({ compact }: { compact: boolean }) {
           <span className="fw-500 whitespace-nowrap" style={{ color: C.ink }}>Saving vs U, 95% interval</span>
           <span className="t-11 ink-3 whitespace-nowrap">{fmt(nWeeks.value as number)} weeks, registered <Ev e="simulated" /></span>
         </div>
-        <IntervalChart m={m} rows={strips || compact ? ['S', 'K', 'W', 'L', 'W_time', 'L_time'] : ['S', 'K', 'W', 'L']} stacked rowH={compact ? 24 : 26} />
+        <IntervalChart m={m} rows={['S', 'K', 'W', 'L', 'W_time', 'L_time']} stacked rowH={compact ? 24 : 26} />
       </div>
       <hr className="rule" />
       {compact ? null : (<>

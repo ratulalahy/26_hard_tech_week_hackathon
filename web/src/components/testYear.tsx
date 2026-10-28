@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { Ev, ScrollX } from './ui';
 import { asNum, pname, type Env, type Json } from '../lib/data';
+import { useApp } from '../lib/store';
 import { fmt, pct, pctRange, signed } from '../lib/format';
 
 export const TEST_TAG = 'test year (sealed, opened once)';
@@ -46,6 +47,8 @@ export function testFacts(x: Json | null, m: Json) {
       carbonCut: v(carbonU.cut_frac)!, peakCut: v(peakU.cut_frac)!,
       rushBefore: v(peakU.rush_import_before_mw)!, carbonRushAfter: v(carbonU.rush_import_after_mw)!, peakRushAfter: v(peakU.rush_import_after_mw)!,
       carbonRushH: v(carbonU.rush_hours_discharging)!, peakRushH: v(peakU.rush_hours_discharging)!, rushN: v(x.storage.rush.n_hours)!,
+      carbonFlatT: v(carbonU.flat_marginal_cut_t)!, peakFlatT: v(peakU.flat_marginal_cut_t)!, flatG: v(x.storage.flat_marginal_g_kwh)!, flatLabel: String(x.storage.flat_marginal_label ?? ''),
+      peakDrawBefore: v(peakU.peak_import_before_mw)!, peakDrawAfter: v(peakU.peak_import_after_mw)!,
       moveOnly: v(x.storage.combined.move_only_cut_frac)!, moveStore: v(x.storage.combined.move_and_store_cut_frac.A['4'])!,
     } : null,
     h3: vsS.length ? { rows: vsS, supported: vsS.some((r) => r.beats) } : null,
@@ -54,15 +57,18 @@ export function testFacts(x: Json | null, m: Json) {
   };
 }
 
-/** "K +9.9 t [0.8, 19.5]" */
+/** "W − S +3.9 t [−4.7, 13.8]" */
 export const tonnes = (r: { p: string; t: number; lo: number; hi: number }) => `${r.p} − S ${signed(r.t, 1)} t [${fmt(r.lo, 1)}, ${fmt(r.hi, 1)}]`;
+/** "K emitted 9.9 t more than S (95% interval 0.8 to 19.5 t, excludes zero)" */
+const moreThanS = (r: { p: string; t: number; lo: number; hi: number }) => `${r.p} emitted ${fmt(r.t, 1)} t more than S (95% interval ${fmt(r.lo, 1)} to ${fmt(r.hi, 1)} t, excludes zero)`;
 
 /** The H3 sentence: whether any forecast-driven policy beat the fixed ranking on the test year. */
 export function h3Sentence(h3: NonNullable<ReturnType<typeof testFacts>>['h3']) {
   if (!h3) return '';
   const worse = h3.rows.filter((r) => r.lo > 0), tied = h3.rows.filter((r) => r.lo <= 0 && !r.beats);
   if (h3.supported) return `Dynamic search beat the fixed ranking on the test year: ${h3.rows.filter((r) => r.beats).map(tonnes).join('; ')}.`;
-  return `Dynamic search did not beat the fixed ranking (H3 not supported): ${[...worse, ...tied].map(tonnes).join('; ')}${tied.length ? `; ${tied.map((r) => r.p).join(' and ')} ${tied.length > 1 ? 'are' : 'is'} not distinguishable from S` : ''}.`;
+  const parts = [...worse.map(moreThanS), ...(tied.length ? [`${tied.map((r) => r.p).join(' and ')} ${tied.length > 1 ? 'are' : 'is'} not distinguishable from S (${tied.map(tonnes).join('; ')})`] : [])];
+  return `Dynamic search did not beat the fixed ranking (H3 not supported): ${parts.join('; ')}.`;
 }
 
 // ---------------------------------------------------------------- the drift table
@@ -70,7 +76,7 @@ function cell(e: Env<unknown> | null | undefined): string {
   if (!e || e.status !== 'ok' || e.value == null) return e?.reason ?? 'unavailable';
   const one = (x: number) => {
     switch (e.unit) {
-      case 'fraction': return `${pct(x, 1)}%`;
+      case 'fraction': return x !== 0 && Math.abs(x) < 0.001 ? `${pct(x, 2)}%` : `${pct(x, 1)}%`;
       case 'kg_CO2': return `${fmt(x / 1000, 1)} t`;
       case 't_CO2': return `${fmt(x, 1)} t`;
       case 'MW': return `${fmt(x, 2)} MW`;
@@ -87,7 +93,7 @@ function diffCell(e: Env<unknown> | null | undefined): string {
   if (!e || e.status !== 'ok' || e.value == null || Array.isArray(e.value)) return '';
   const x = e.value as number;
   switch (e.unit) {
-    case 'fraction': return `${signed(x * 100, 1)} pt`;
+    case 'fraction': return x !== 0 && Math.abs(x) < 0.001 ? `${signed(x * 100, 2)} pt` : `${signed(x * 100, 1)} pt`;
     case 'kg_CO2': return `${signed(x / 1000, 1)} t`;
     case 't_CO2': return `${signed(x, 1)} t`;
     case 'MW': return `${signed(x, 2)} MW`;
@@ -97,35 +103,90 @@ function diffCell(e: Env<unknown> | null | undefined): string {
   }
 }
 
-/** The row's name, with kilograms restated as the tonnes the cells show. */
+/** Raw keys in the drift file's row names, restated for a reader (r1 m8). A = the fixed daily schedule,
+ * B = the daily hindsight heuristic (D-061). */
+const LABELS: [RegExp, string][] = [
+  [/mobility_le_8gpus_W/g, 'jobs ≤ 8 GPUs move, W'],
+  [/mobility_le_8gpus/g, 'jobs ≤ 8 GPUs move'],
+  [/dest_slots_1024/g, 'twice the destination room'],
+  [/dest_slots_0/g, 'no destination room'],
+  [/transfer_120min/g, '2-hour transfers'],
+  [/batch_delay_24h/g, '24-hour batch delay'],
+  [/phase_(\d+)/g, 'workload shifted $1 days'],
+  [/(\d+) MWh A\b/g, '$1 MWh, fixed schedule'],
+  [/(\d+) MWh B\b/g, '$1 MWh, hindsight heuristic'],
+  [/rush_hours_discharging/g, 'rush hours discharging'],
+  [/rush_import_after_mw/g, 'average rush-hour draw, before → after'],
+  [/peak_import_after_mw/g, 'yearly peak draw after (MW)'],
+  [/flat_marginal_cut_t/g, 'flat-marginal change (t; negative = adds CO₂)'],
+  [/flat-marginal change \(t\)/g, 'flat-marginal change (t; negative = adds CO₂)'],
+  [/cut_frac/g, 'CO₂ cut'],
+  [/ex_hydro_frac vs U/g, 'water vs U, without hydro evaporation'],
+  [/with_hydro_frac vs U/g, 'water vs U, with hydro evaporation'],
+  [/ci_consumed/g, 'carbon intensity'],
+  [/saving_ci95/g, 'saving, 95% interval'],
+];
 const metricLabel = (r: Json, strip?: RegExp) => {
-  const m: string = strip ? r.metric.replace(strip, '') : r.metric;
+  let m: string = strip ? r.metric.replace(strip, '') : r.metric;
+  for (const [re, to] of LABELS) m = m.replace(re, to);
   return r.test?.unit === 'kg_CO2' || r.validation?.unit === 'kg_CO2' ? m.replace(/\(kg\b/, '(t') : m;
 };
+
+/** Rows over Utah's rush hours compare different hour sets (same 7,207 MW-style threshold, different years),
+ * so they are shown per year and never differenced (r1 m2). Counts read "a of N"; draws read before → after. */
+function rushCells(r: Json, ctx: { x: Json; vx: Json | null }): [string, string] | null {
+  const m = /^(carbon|peak) schedule, (U|mobility_le_8gpus_W), (\d+) MWh: (rush_import_after_mw|rush_hours_discharging)$/.exec(r.metric);
+  const nT = v(ctx.x.storage?.rush?.n_hours), nV = v(ctx.vx?.storage_peak?.rush_hours);
+  if (m) {
+    const t = ctx.x.storage?.schedule_comparison?.schedules?.[m[1]]?.cases?.[m[2]]?.[m[3]];
+    const vv = ctx.vx?.storage_peak?.schedules?.[m[1]]?.cases?.[m[2]]?.[m[3]];
+    const one = (c: Json, n: number | null) => {
+      if (!c) return 'unavailable';
+      return m[4] === 'rush_hours_discharging' ? `${fmt(v(c.rush_hours_discharging) ?? 0)} of ${n == null ? '?' : fmt(n)}`
+        : `${fmt(v(c.rush_import_before_mw) ?? 0, 2)} → ${fmt(v(c.rush_import_after_mw) ?? 0, 2)} MW`;
+    };
+    return [one(vv, nV), one(t, nT)];
+  }
+  return null;
+}
+const isRush = (r: Json) => /rush/i.test(r.metric);
+/** The one-line caption for the rows over rush hours. */
+export function RushCaption({ x, vx }: { x: Json; vx: Json | null }) {
+  const nT = v(x.storage?.rush?.n_hours), nV = v(vx?.storage_peak?.rush_hours), thr = v(x.storage?.rush?.threshold_mw);
+  return <p className="t-11 ink-3" style={{ margin: '4px 0 0' }} data-testid="rush-caption"><span data-valok="">Rush hours use the same threshold in both years (the training years' top 1%{thr != null ? `, ${fmt(thr)} MW` : ''}) but different hours: {nV != null ? fmt(nV) : '?'} in validation, {nT != null ? fmt(nT) : '?'} in test</span>, so those rows are shown per year and not differenced. The draws are the cluster's average over the rush hours.</p>;
+}
 
 /** Drift rows of one D-071 item, in the file's order. */
 export const driftRows = (x: Json | null, item: string | ((s: string) => boolean)) =>
   ((x?.drift?.rows ?? []) as Json[]).filter((r) => (typeof item === 'string' ? r.item === item : item(r.item)));
 
 export function DriftTable({ rows, testId, label, strip }: { rows: Json[]; testId: string; label: string; strip?: RegExp }) {
+  const { data } = useApp();
   if (!rows.length) return <p className="t-12 ink-3" style={{ margin: 0 }}>Not in the test run's drift table.</p>;
+  const ctx = { x: data?.extras, vx: data?.valExtras ?? null };
   return (
-    <ScrollX label={label}>
-      <table className="tbl" data-testid={testId} data-valok="">
-        <caption className="sr-only">{label}: validation year, test year (sealed, opened once), and test − validation</caption>
-        <thead><tr><th scope="col" style={{ textAlign: 'left' }}>Quantity</th><th scope="col">Validation</th><th scope="col">Test (sealed)</th><th scope="col">Test − validation</th></tr></thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={i}>
-              <td style={{ textAlign: 'left', whiteSpace: 'normal' }}>{metricLabel(r, strip)}</td>
-              <td className="ink-2">{cell(r.validation)}</td>
-              <td className="fw-600">{cell(r.test)}</td>
-              <td className="ink-2">{diffCell(r.difference)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </ScrollX>
+    <>
+      <ScrollX label={label}>
+        <table className="tbl" data-testid={testId}>
+          <caption className="sr-only" data-valok="">{label}: validation year, test year (sealed, opened once), and test − validation</caption>
+          <thead><tr><th scope="col" style={{ textAlign: 'left' }}>Quantity</th><th scope="col" data-valok="">Validation</th><th scope="col">Test (sealed)</th><th scope="col" data-valok="">Test − validation</th></tr></thead>
+          <tbody>
+            {rows.map((r, i) => {
+              const rc = ctx.x ? rushCells(r, ctx as { x: Json; vx: Json | null }) : null;
+              return (
+                <tr key={i}>
+                  <td style={{ textAlign: 'left', whiteSpace: 'normal' }}>{metricLabel(r, strip)}</td>
+                  <td className="ink-2">{rc ? rc[0] : cell(r.validation)}</td>
+                  <td className="fw-600">{rc ? rc[1] : cell(r.test)}</td>
+                  <td className="ink-2">{rc || isRush(r) ? '' : diffCell(r.difference)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </ScrollX>
+      {ctx.x && rows.some(isRush) ? <RushCaption x={ctx.x} vx={ctx.vx} /> : null}
+    </>
   );
 }
 
@@ -147,7 +208,7 @@ export function DriftView({ x }: { x: Json }) {
           </select>
         </label>
         <TestTag />
-        <span className="t-11 ink-3" data-valok="">{fmt(v(x.drift.n_rows) ?? 0)} rows in all; {x.drift.rule}. <Ev e="simulated" /><Ev e="measured">skill</Ev></span>
+        <span className="t-11 ink-3">{fmt(v(x.drift.n_rows) ?? 0)} rows in all; <span data-valok="">{x.drift.rule}</span>. <Ev e="simulated" /><Ev e="measured">skill</Ev></span>
       </div>
       <DriftTable rows={rows} testId="drift-table" label={`Validation to test drift, ${ITEMS.find(([k]) => k === item)?.[1]}`} />
     </div>
@@ -155,6 +216,9 @@ export function DriftView({ x }: { x: Json }) {
 }
 
 // ---------------------------------------------------------------- item panels
+/** "adds 107 t" / "cuts 12 t": a flat-marginal change, signed for a reader (negative cut = adds CO₂). */
+export const flatPhrase = (cutT: number) => (cutT < 0 ? `adds ${fmt(-cutT)} t` : `cuts ${fmt(cutT)} t`);
+
 /** D-073: the carbon schedule (the headline) beside the peak-aimed schedule, 4 MWh, every job in Utah. */
 export function TestStorage({ x, testId = 'test-storage' }: { x: Json; testId?: string }) {
   const s = x.storage;
@@ -167,7 +231,9 @@ export function TestStorage({ x, testId = 'test-storage' }: { x: Json; testId?: 
       <tr key={k}>
         <th scope="row" style={{ textAlign: 'left', fontWeight: 500 }}>{name}</th>
         <td>{pct(v(c.cut_frac)!, 1)}%</td>
+        <td>{flatPhrase(v(c.flat_marginal_cut_t)!)}</td>
         <td>{fmt(v(c.rush_import_before_mw)!, 2)} → <b className="fw-600">{fmt(v(c.rush_import_after_mw)!, 2)}</b> MW</td>
+        <td>{fmt(v(c.peak_import_before_mw)!, 2)} → {fmt(v(c.peak_import_after_mw)!, 2)} MW</td>
         <td>{fmt(v(c.rush_hours_discharging)!)} of {fmt(n)}</td>
       </tr>
     );
@@ -177,11 +243,11 @@ export function TestStorage({ x, testId = 'test-storage' }: { x: Json; testId?: 
       <ScrollX label="Storage schedules on the test year, table">
         <table className="tbl" data-testid={testId}>
           <caption className="sr-only">Battery 4 MWh at the Utah cluster, test year: carbon schedule vs peak-aimed schedule</caption>
-          <thead><tr><th scope="col" style={{ textAlign: 'left' }}>4 MWh battery, every job in Utah</th><th scope="col">CO₂ cut</th><th scope="col">Rush-hour grid import</th><th scope="col">Rush hours discharging</th></tr></thead>
+          <thead><tr><th scope="col" style={{ textAlign: 'left' }}>4 MWh battery, every job in Utah</th><th scope="col">CO₂ cut</th><th scope="col">Flat-marginal basis</th><th scope="col">Average rush-hour draw</th><th scope="col">Yearly peak draw</th><th scope="col">Rush hours discharging</th></tr></thead>
           <tbody>{row('carbon', 'Carbon schedule (the headline)')}{row('peak', 'Peak-aimed schedule (D-073)')}</tbody>
         </table>
       </ScrollX>
-      <div className="t-11 ink-3" data-valok="">Rush hours: test-year hours with Utah net load at or above the training years' top 1% ({fmt(v(s.rush.threshold_mw)!)} MW), {fmt(n)} hours. {String(s.schedule_comparison.label_note).replace(/^./, (c) => c.toUpperCase())}. Move small and store for big: {pct(v(s.combined.move_only_cut_frac)!, 1)}% moving only, {pct(v(s.combined.move_and_store_cut_frac.A['4'])!, 1)}% with the 4 MWh battery. <TestTag /> <Ev e="simulated">dispatch</Ev> <Ev e="assumed">battery, schedules</Ev></div>
+      <div className="t-11 ink-3">Draws are the Utah cluster's own grid import, averaged over the rush hours: test-year hours with Utah net load at or above the training years' top 1% ({fmt(v(s.rush.threshold_mw)!)} MW), {fmt(n)} hours. Neither schedule lowers the cluster's yearly peak draw. Flat-marginal basis: every kWh at {fmt(v(s.flat_marginal_g_kwh)!)} g/kWh ({s.flat_marginal_label}), a threshold scenario. {String(s.schedule_comparison.label_note).replace(/^./, (c) => c.toUpperCase())}. Move small and store for big: {pct(v(s.combined.move_only_cut_frac)!, 1)}% moving only, {pct(v(s.combined.move_and_store_cut_frac.A['4'])!, 1)}% with the 4 MWh battery. <TestTag /> <Ev e="simulated">dispatch</Ev> <Ev e="assumed">battery, schedules</Ev></div>
     </div>
   );
 }
@@ -221,10 +287,27 @@ export function ItemSection({ x, item, strip, note }: { x: Json; item: string; s
   const label = ITEMS.find(([k]) => k === item)?.[1] ?? item;
   return (
     <div className="flex flex-col" style={{ gap: 6 }}>
-      {note ? <p className="t-12 ink-2" style={{ margin: 0 }} data-valok="">{note}</p> : null}
+      {note ? <p className="t-12 ink-2" style={{ margin: 0 }}>{note}</p> : null}
       <DriftTable rows={driftRows(x, item)} testId={`test-item-${item.replace(/\W+/g, '-')}`} label={`${label}, validation and test year`} strip={strip} />
     </div>
   );
+}
+
+/** How often the truth fell inside the p10–p90 intervals frozen on validation, over every series and model. */
+export function coverageSentence(x: Json) {
+  const cells: { s: string; c: number; nom: number }[] = [];
+  for (const [ser, ts] of Object.entries((x.forecast_skill?.series ?? {}) as Record<string, Json>)) {
+    for (const [tgt, t] of Object.entries(ts as Record<string, Json>)) {
+      for (const mm of Object.values((t?.models ?? {}) as Record<string, Json>)) {
+        const c = v(mm?.interval?.coverage), nom = v(mm?.interval?.nominal);
+        if (c != null && nom != null) cells.push({ s: tgt === 'ci_consumed' ? ser : `${ser} ${tgt}`, c, nom });
+      }
+    }
+  }
+  if (!cells.length) return '';
+  const lo = cells.reduce((a, b) => (b.c < a.c ? b : a)), hi = cells.reduce((a, b) => (b.c > a.c ? b : a));
+  const nom = cells[0].nom, short = cells.filter((c) => c.c < nom).length;
+  return `On the test year the frozen p10–p90 intervals covered ${pct(lo.c, 0)}–${pct(hi.c, 0)}% of hours (nominal ${pct(nom, 0)}%); ${short} of ${cells.length} series-model cells fell short, the lowest ${lo.s}: the intervals are too narrow for this year.`;
 }
 
 /** Pre-registered checks on the test year: S, W and L vs U at b = 4, from the extension runs. */

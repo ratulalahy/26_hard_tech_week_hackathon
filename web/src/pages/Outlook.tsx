@@ -1,5 +1,5 @@
 // The grid outlook (Stage 3 T19): the next seven Utah days of consumed CO2 intensity for Utah and its
-// three move destinations, forecast with p10–p90 bands, and what the deployed router (policy S) would
+// three move destinations, forecast with p10–p90 bands, and what policy S (the baseline to pilot) would
 // recommend each day. A standalone, full-width page: it loads data/results/outlook.json itself and needs
 // nothing from the rest of the app, so a top-level nav can mount <Outlook /> on its own route.
 // Every number keeps its evidence envelope. A validation-dated demo is labelled as such on the page.
@@ -59,7 +59,9 @@ function OutlookBody({ o }: { o: Json }) {
   const mode = [...starts].sort((a, b) => count(b) - count(a) || hourOf(a) - hourOf(b))[0];
   const span = `${timeLabel(mode)}–${timeLabel(new Date(Date.parse(mode) + 4 * 3600e3).toISOString())}`;
   // merge-time fix (T19 re-review): hours read off the seasonal average are "typical", not forecast
-  const typical = days.some((d) => hourOf(d.home_cleanest_block.start_utc) === hourOf(mode) && d.regions.PACE.status !== 'forecast');
+  // "typical" when most of the days with that start hour read Utah off the seasonal average (r1 m12)
+  const modeDays = days.filter((d) => hourOf(d.home_cleanest_block.start_utc) === hourOf(mode));
+  const typical = modeDays.filter((d) => d.regions.PACE.status !== 'forecast').length * 2 >= modeDays.length;
   const issued = fmtDate(o.issue_utc, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
   const first = days[0].date_local, last = days[days.length - 1].date_local;
   return (
@@ -78,7 +80,7 @@ function OutlookBody({ o }: { o: Json }) {
           </h1>
           <p className="t-13 fw-500" style={{ margin: '6px 0 0', maxWidth: '100ch' }} data-testid="outlook-skill-line">{sk.line}</p>
           <p className="t-13 ink-2" style={{ margin: '4px 0 0', maxWidth: '100ch' }}>
-            Consumed CO₂ intensity for {dayLabel(first)} to {dayLabel(last)}, issued {issued}. The deployed router (policy S) sends a movable job to the first region in a fixed ranking learned from training years; it does not read this forecast. The forecast adds the time-shift view: which hours of each day are cleanest.
+            Consumed CO₂ intensity for {dayLabel(first)} to {dayLabel(last)}, issued {issued}. Policy S, the baseline to pilot, sends a movable job to the first region in a fixed ranking learned from training years; it does not read this forecast. The forecast adds the time-shift view: which hours of each day are cleanest.
           </p>
         </div>
         <div className="flex gap-3 items-center"><Ev e="forecast">forecast · p10–p90 band</Ev><Ev e="measured">skill: validation year</Ev></div>

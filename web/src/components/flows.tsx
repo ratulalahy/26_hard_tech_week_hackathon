@@ -40,7 +40,7 @@ export function ScenarioToggle({ compact = false }: { compact?: boolean }) {
   const lid = 'toggle-' + useId().replace(/[^a-zA-Z0-9]/g, '');
   const s = scenarioOf(data!.flows, scenario);
   // validation scenarios only: with no scenario-flows.json for this window, there is nothing to switch
-  if (!data!.flows) return <div className="t-11 ink-3" data-testid="scenario-toggle-off" data-valok="">The scenario map and toggle are validation-year scenario runs with no test counterpart; the test year's mobility check is in the text and the method drawer.</div>;
+  if (!data!.flows) return <div className="t-11 ink-3" data-testid="scenario-toggle-off"><span data-valok="">The mobility/capacity toggle: validation year · no test counterpart.</span> The map shows the test year's own replay week; the test year's mobility check is in the text and the method drawer.</div>;
   return (
     <div className={short ? 'flex items-center' : 'flex flex-col items-center'} style={{ gap: short ? 8 : 4 }} data-testid="scenario-toggle">
       <div className="flex items-center gap-2 justify-center">

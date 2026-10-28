@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { TestToughDays } from '../components/testYear';
+import { TestTag, TestToughDays } from '../components/testYear';
 import { EChart } from '../components/EChart';
 import { Panel, Strip, useWidth } from '../components/charts';
 import { Ev, EvCI } from '../components/ui';
@@ -37,7 +37,7 @@ export function Ribbon() {
           </p>
         </div>
         <div data-testid="ribbon-timing" className="panel flex-none" style={{ padding: '8px 12px', maxWidth: 460 }}>
-          <div className="t-12 ink-2">Saved by waiting in Utah alone, {copy.allYear}; each policy's own estimate</div>
+          <div className="t-12 ink-2">Saved by waiting in Utah alone, {copy.allYear}; each policy's own estimate{copy.validationReadings ? null : <> <TestTag /></>}</div>
           <div className="flex items-baseline gap-4" style={{ marginTop: 2 }}>
             {(['W_time', 'L_time'] as const).map((p) => { const o = own(data!.metrics, p); return o ? (
               <span key={p} className="flex items-baseline gap-1" data-testid={`ribbon-own-${p}`}><span className="t-hero" style={{ fontSize: 28 }}>{pct(o.v)}%</span><span className="t-11 ink-2">{pname(p)} <span className="ink-3">[{pct(o.lo)}, {pct(o.hi)}]</span></span></span>

@@ -38,6 +38,8 @@ export interface Results {
   assumptions: Json | null;
   /** results/test/extras.json, the pre-registered test-year extras and the drift table (D-071); test window only, else null. */
   extras: Json | null;
+  /** results/extras-validation.json, read in test mode for the validation side of the drift rows that need it (rush-hour draws). */
+  valExtras: Json | null;
 }
 
 const base = import.meta.env?.BASE_URL ?? './'; // './' (relative deployment base)
@@ -51,7 +53,7 @@ async function get(name: string, w: EvalWindow = 'validation'): Promise<Json> {
 }
 export async function loadResults(w: EvalWindow = 'validation'): Promise<Results> {
   const v = w === 'validation';  // the D-058 extensions, the T10b storage piece, the T15 scenario flows and budget, the T14 water piece, the T16 toughest days and the T17 assumptions register are validation-only
-  const [metrics, manifest, forecast, jobs, grid, workload, ext, storage, flows, budget, water, caseDays, assumptions, extras] = await Promise.all([
+  const [metrics, manifest, forecast, jobs, grid, workload, ext, storage, flows, budget, water, caseDays, assumptions, extras, valExtras] = await Promise.all([
     get('metrics.json', w), get('manifest.json', w), get('forecast-replay.json', w), get('job-replay.json', w), get('grid-profile.json', w), get('workload-profile.json', w),
     v ? get('extensions.json').catch(() => null) : Promise.resolve(null),
     v ? get('storage.json').catch(() => null) : Promise.resolve(null),
@@ -62,10 +64,11 @@ export async function loadResults(w: EvalWindow = 'validation'): Promise<Results
     // the assumptions register has no test counterpart: in test mode it is shown labelled as validation
     get('assumptions.json').catch(() => null),
     v ? Promise.resolve(null) : get('extras.json', w).catch(() => null),
+    v ? Promise.resolve(null) : get('extras-validation.json').catch(() => null),
   ]);
   if (w === 'test' && (metrics.window !== 'test' || manifest.window !== 'test')) throw new Error('results/test/ does not hold test-window results');
   if (extras && extras.window !== 'test') throw new Error('results/test/extras.json is not a test-window artifact');
-  return { metrics, manifest, forecast, jobs, grid, workload, ext, storage, flows, budget, water, caseDays, assumptions, extras };
+  return { metrics, manifest, forecast, jobs, grid, workload, ext, storage, flows, budget, water, caseDays, assumptions, extras, valExtras };
 }
 /** What copy-data found: the test option is enabled only when results/test/manifest.json exists. */
 export interface ResultsIndex { files: string[]; test?: { available: boolean; files: string[]; frozen_at: string | null } }

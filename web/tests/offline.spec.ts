@@ -51,7 +51,7 @@ test('every view renders registered values with zero non-localhost requests', as
   // T11/T13: the window switch shows the validation year by default; results/test now holds the one opening, so the test option is enabled
   await expect(page.getByRole('radio', { name: 'Validation year' })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('radio', { name: 'Test year (sealed, opened once)' })).toBeEnabled();
-  await expect(page.getByTestId('window-switch')).toHaveAccessibleDescription('Validation year (Nov 2024 – Oct 2025) · test year sealed');
+  await expect(page.getByTestId('window-switch')).toHaveAccessibleDescription('Validation year (Nov 2024 – Oct 2025) · test year sealed, opened once');
   // the map is drawn locally: a WebGL canvas and the four core regions labelled on it
   await expect(page.locator('#map-main canvas.maplibregl-canvas')).toBeVisible();
   for (const label of ['Utah · PACE', 'Northwest hydro · BPAT', 'California · CISO', 'Nevada · NEVP']) {
@@ -153,6 +153,12 @@ test('every view renders registered values with zero non-localhost requests', as
   expect(g.seen.length).toBeGreaterThan(5);
 });
 
+/** r1 m3: data-valok exempts only a leaf that itself names the validation year. */
+async function everyValokNamesValidation(loc: import('@playwright/test').Locator, where: string) {
+  const bad = await loc.evaluate((el) => [...el.querySelectorAll('[data-valok]')].map((n) => n.textContent ?? '').filter((t) => !/validation/i.test(t)));
+  expect(bad, `${where}: data-valok on an element that does not name the validation year`).toEqual([]);
+}
+
 /** The text of a region minus every element marked data-valok: the places that show a validation number in
  * test mode because the test year has no counterpart, each labelled as such (the drift table, val-only chips). */
 async function unlabelledText(loc: import('@playwright/test').Locator) {
@@ -176,8 +182,9 @@ test('the test-year state shows only test numbers and no unlabelled validation w
     for (const loc of [page.locator('main'), page.locator('footer')]) {
       const t = (await unlabelledText(loc)).toLowerCase();
       expect(t.split('\n').filter((l) => l.includes('validation')), `${where}: validation wording on test numbers`).toEqual([]);
-      // M14: the test year covers a period, not a full year
-      expect(/all year|over the year|the year's|whole year/.test(t), `${where}: "year" wording on test numbers`).toBe(false);
+      // M14: the test year covers a period, not a full year (checked on the unfiltered text)
+      expect(/all year|over the year|the year's|whole year/.test((await loc.innerText()).toLowerCase()), `${where}: "year" wording on test numbers`).toBe(false);
+      await everyValokNamesValidation(loc, where);
     }
   };
 
@@ -344,10 +351,25 @@ test('the sealed test year (results/test, opened once): extras, storage, drift; 
 
   await page.goto('./#story-3');
   await expect(page.getByTestId('story-h3')).toContainText('H3 not supported');
-  await expect(page.getByTestId('story-h3')).toContainText(`K − S +${(-kS.diff_kg.value / 1000).toFixed(1)} t [${(-kS.diff_kg_ci95.value[1] / 1000).toFixed(1)}, ${(-kS.diff_kg_ci95.value[0] / 1000).toFixed(1)}]`);
+  await expect(page.getByTestId('story-h3')).toContainText(`K emitted ${(-kS.diff_kg.value / 1000).toFixed(1)} t more than S (95% interval ${(-kS.diff_kg_ci95.value[1] / 1000).toFixed(1)} to ${(-kS.diff_kg_ci95.value[0] / 1000).toFixed(1)} t, excludes zero)`);
   await expect(page.getByTestId('story-result')).toContainText(`${(cs('W_time').saving.value * 100).toFixed(2)}%`);
   await expect(page.getByTestId('story-storage-test')).toContainText(`${peak.rush_import_after_mw.value.toFixed(2)} MW`);
   await expect(page.getByTestId('story-storage-test')).toContainText(`${peak.rush_hours_discharging.value} of ${x.storage.rush.n_hours.value} rush hours`);
+  // r1 M2: the flat-marginal skeptic line, read from the JSON (negative cut = adds CO₂)
+  const carbonFlat = -x.storage.schedule_comparison.schedules.carbon.cases.U['4'].flat_marginal_cut_t.value as number;
+  const peakFlat = -peak.flat_marginal_cut_t.value as number;
+  await expect(page.getByTestId('storage-skeptic-test')).toContainText(`add about ${Math.round(carbonFlat)} t on the carbon schedule and ${Math.round(peakFlat)} t aimed at the peak`);
+  // r1 m1: an average draw over the rush hours, and the yearly peak draw does not fall
+  await expect(page.getByTestId('story-storage-test')).toContainText("cluster's average draw");
+  await expect(page.getByTestId('story-storage-test')).toContainText(`(${peak.peak_import_before_mw.value.toFixed(2)} → ${peak.peak_import_after_mw.value.toFixed(2)} MW)`);
+  await page.goto('./#story-5');
+  await expect(page.getByTestId('story-storage-skeptic-panel')).toContainText(`${Math.round(peakFlat)} t`);
+  // r1 M1: beat 4's map is the test year's replay week, titled from S's own test estimate; only the toggle is validation-only
+  await page.goto('./#story-4');
+  await expect(page.getByTestId('story-map-title')).toContainText(`S static clean-region ranking: ${f1(sU.saving.value)}% less CO₂`);
+  await expect(page.getByTestId('story-map-title')).toContainText('test year (sealed, opened once)');
+  await expect(page.locator('main')).not.toContainText('saving not run');
+  await expect(page.getByTestId('scenario-toggle-off')).toContainText("The map shows the test year's own replay week");
   await expect(page.locator('main')).not.toContainText(/pending/i);
 
   await page.getByRole('navigation', { name: 'Views' }).getByRole('link', { name: 'Day ribbon' }).click();
@@ -363,6 +385,19 @@ test('the sealed test year (results/test, opened once): extras, storage, drift; 
   await expect(drawer.getByTestId('test-item-6-permutation-importance')).toBeVisible();
   await expect(drawer.getByTestId('test-item-6-forecast-skill')).toBeVisible();
   await expect(drawer.getByTestId('method-h3')).toContainText('H3 not supported');
+  // r1 m6: the frozen intervals' coverage on the test year, from the JSON
+  const covs = Object.values(x.forecast_skill.series as Record<string, Record<string, { models: Record<string, { interval: { coverage: { value: number } } }> }>>)
+    .flatMap((ts) => Object.values(ts).flatMap((t) => Object.values(t.models ?? {}).map((mm) => mm.interval?.coverage?.value).filter((c): c is number => typeof c === 'number')));
+  await expect(drawer.getByTestId('method-coverage')).toContainText(`covered ${Math.round(Math.min(...covs) * 100)}–${Math.round(Math.max(...covs) * 100)}% of hours (nominal 80%)`);
+  // r1 m2: rush rows read "a of N" per year, with no difference cell
+  await drawer.getByTestId('drift-item').selectOption('2b storage schedules');
+  const peakRow = drawer.getByTestId('drift-table').locator('tbody tr').filter({ hasText: /^peak schedule, U, 4 MWh: rush hours discharging/ });
+  await expect(peakRow.locator('td').nth(1)).toHaveText('4 of 12');
+  await expect(peakRow.locator('td').nth(2)).toHaveText(`${peak.rush_hours_discharging.value} of ${x.storage.rush.n_hours.value}`);
+  await expect(peakRow.locator('td').nth(3)).toHaveText('');
+  await expect(drawer.getByTestId('drift-view').getByTestId('rush-caption')).toContainText('different hours: 12 in validation, 14 in test');
+  await everyValokNamesValidation(drawer, 'drawer');
+  expect(/all year|over the year|the year's|whole year/.test((await drawer.innerText()).toLowerCase()), 'drawer: "year" wording').toBe(false);
   // the manifest's two pre-extras caveats are restated: phases 49 and 98 ran, shadow-U was cut (never "pending")
   await expect(drawer).not.toContainText(/pending/i);
   await expect(drawer).toContainText('offsets of 49 and 98 days ran on the test year');

@@ -11,7 +11,7 @@ export const VALIDATION_LINE = 'These are validation-year results, which shaped 
 /** Its test-year counterpart. */
 export const TEST_LINE = 'These are sealed test-year results: the year was opened once, after the model and policy settings were frozen, and nothing was tuned on it.';
 /** Validation chip, kept verbatim from Task 8 (the offline test reads it). */
-export const SEALED = 'Validation year (Nov 2024 – Oct 2025) · test year sealed';
+export const SEALED = 'Validation year (Nov 2024 – Oct 2025) · test year sealed, opened once';
 
 export interface WindowCopy {
   window: EvalWindow;
@@ -48,7 +48,8 @@ const span = (a: string, b: string) => `${fmtDate(a, { month: 'short', year: 'nu
 /** The freeze date from a test manifest, e.g. "Oct 27, 2026"; null when there is none. */
 export function freezeDate(man: Json | null | undefined): string | null {
   const t: string | undefined = man?.freeze?.wallclock_frozen_at;
-  return t ? fmtDate(t, { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : null;
+  // the dashboard keeps Mountain time (America/Denver, fmtDate's default), as its hours do (r1 m9)
+  return t ? fmtDate(t, { month: 'short', day: 'numeric', year: 'numeric' }) : null;
 }
 
 /** The switch's label for the test option: "Test year (sealed until <freeze>)". `frozenAt` is the

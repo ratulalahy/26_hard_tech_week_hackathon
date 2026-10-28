@@ -5,7 +5,7 @@ import { CONSUMPTION_CHECKS, ExtensionsTable, PHRASE, extRows, listJoin, placeme
 import { ReliefTable, RushSensitivity, hourSpans, storageFacts } from '../components/storage';
 import { Ev, Icon, ScrollX } from '../components/ui';
 import { WaterPanel } from '../components/water';
-import { DriftView, ItemSection, TestStorage, TestTag, ValOnlyTag, checkLine, h3Sentence, testFacts } from '../components/testYear';
+import { DriftView, ItemSection, TestStorage, TestTag, ValOnlyTag, checkLine, coverageSentence, h3Sentence, testFacts } from '../components/testYear';
 import { useCopy } from '../lib/useCopy';
 import { DEADLINE_RULE, asNum, headline, plainLimitations, pname, resolveLimitations, stripCodes, type Json } from '../lib/data';
 import { fmt, fmtDate, pct, pctRange, sig2, signed } from '../lib/format';
@@ -63,7 +63,7 @@ export function MethodDrawer() {
             <Sec title={copy.cohortTitle}>
               <div className="t-12 ink-2" style={{ marginBottom: 8 }}>
                 Arrivals {iso(m.covered.arrivals[0])} to {iso(m.covered.arrivals[1])}; jobs then finish by {iso(m.covered.drain[1])}. U − policy is the U total minus the policy's, so positive means the policy emits less.
-                Intervals: 95%, resampling 4-week blocks of the {fmt(m.cohort.n_weeks.value)} weeks. Hover a name for its rule. <Ev e="simulated" />
+                Intervals: 95%, resampling 4-week blocks of the {fmt(m.cohort.n_weeks.value)} weeks. Hover a name for its rule. <Ev e="simulated" />{copy.validationReadings ? null : <> <TestTag /></>}
               </div>
               <ScrollX label="Every policy, table"><PolicyTable m={m} testId="policy-table" /></ScrollX>
             </Sec>
@@ -100,7 +100,7 @@ export function MethodDrawer() {
               <ExtensionsTable m={m} ext={data!.ext} testId="method-extensions" />
             </Sec> : null}
             {x ? <Sec title="Robustness and sensitivity checks, test year">
-              <p className="t-13" style={{ margin: '0 0 8px' }} data-testid="method-checks-test" data-valok="">{checkLine(tf)}{tf?.mob ? <> Letting only jobs of 8 GPUs or fewer move leaves {pctRange(tf.mob.lo, tf.mob.hi)}% (S, W and L): most of the saving sits in large multi-node jobs.</> : null} Each row: the validation year's scenario estimate beside the test year's, S, W and L vs U at 4-week blocks. <TestTag /></p>
+              <p className="t-13" style={{ margin: '0 0 8px' }} data-testid="method-checks-test">{checkLine(tf)}{tf?.mob ? <> Letting only jobs of 8 GPUs or fewer move leaves {pctRange(tf.mob.lo, tf.mob.hi)}% (S, W and L): most of the saving sits in large multi-node jobs.</> : null} <span data-valok="">Each row: the validation year's scenario estimate beside the test year's</span>, S, W and L vs U at 4-week blocks. <TestTag /></p>
               <ItemSection x={x} item="1 extensions" />
               <p className="t-12 ink-3" style={{ margin: '6px 0 0' }} data-valok="">Production-basis repricing and the published-values-only check were validation analyses; they were not pre-registered for the test year. <ValOnlyTag what="those two rows" /></p>
             </Sec> : null}
@@ -132,9 +132,9 @@ export function MethodDrawer() {
               <details className="t-12 ink-2" style={{ marginTop: 8 }}>
                 <summary className="cursor-pointer fw-500">Source text</summary>
                 <div style={{ marginTop: 8 }}>
-                  <div className="fw-500">Limitations, as written in the results manifest</div>
+                  <div className="fw-500">{x ? 'Limitations from the results manifest (two restated, see the note below)' : 'Limitations, as written in the results manifest'}</div>
                   <ul style={{ margin: '4px 0 0', paddingLeft: 16 }}>{lims.map((l: string) => <li key={l} style={{ marginBottom: 4 }}>{l}</li>)}</ul>
-                  {x ? <p style={{ margin: '4px 0 0' }} className="ink-3" data-valok="">Two lines, written before the test-year extras ran, are restated from results/test/extras.json and the manifest's not-run list.</p> : null}
+                  {x ? <p style={{ margin: '4px 0 0' }} className="ink-3">Two lines, written before the test-year extras ran, are restated from results/test/extras.json and the manifest's not-run list.</p> : null}
                   {man.not_run?.length ? <><div className="fw-500" style={{ marginTop: 8 }}>Not run</div><ul style={{ margin: '4px 0 0', paddingLeft: 16 }}>{man.not_run.map((x: { item: string; reason: string }) => <li key={x.item}>{x.item}: {x.reason}</li>)}</ul></> : null}
                   <div className="fw-500" style={{ marginTop: 8 }}>Framing, as written in the metrics</div>
                   {Object.values((m.framing ?? {}) as Record<string, string>).map((t) => <p key={t} style={{ margin: '4px 0 0' }}>{t}</p>)}
@@ -166,7 +166,7 @@ export function MethodDrawer() {
             {x ? <div className="well" style={{ padding: 12 }}><Sec title="Storage on the test year (illustrative, not the registered result)">
               <TestStorage x={x} testId="method-storage-test" />
               <div style={{ marginTop: 8 }}><ItemSection x={x} item="2 storage" /></div>
-              <div style={{ marginTop: 8 }}><ItemSection x={x} item="2b storage schedules" note="The carbon schedule against the peak-aimed one (D-073), validation beside test. The storage curve, the hindsight heuristic's break-even and the lower-threshold relief were not pre-registered for the test year; they stay on the validation view." /></div>
+              <div style={{ marginTop: 8 }}><ItemSection x={x} item="2b storage schedules" note={<>The carbon schedule against the peak-aimed one (D-073). <span data-valok="">Validation beside test; the storage curve, the hindsight heuristic's break-even and the lower-threshold relief were not pre-registered for the test year and stay on the validation view.</span></>} /></div>
             </Sec></div> : null}
             {x ? <div className="well" style={{ padding: 12 }}><Sec title="Water on the test year (illustrative)">
               <ItemSection x={x} item="4 water" strip={/ frac vs U$/} note={<>Change vs {pname('U')} in water consumed for generation, without and with hydro evaporation. {x.water?.claim ? `Claim: ${x.water.claim}.` : ''} <TestTag /></>} />
@@ -175,12 +175,13 @@ export function MethodDrawer() {
               <ItemSection x={x} item="5 seasonal" note={<>Each arrival week belongs to the season of its Monday's month; S and W vs {pname('U')}, ratio of totals. <TestTag /></>} />
             </Sec> : null}
             {x ? <Sec title="Forecast skill and the frozen intervals, test year">
-              <ItemSection x={x} item="6 forecast skill" note={<>Mean absolute error of K, W and L per series, and how often the truth fell inside the p10–p90 interval frozen on validation (nominal 80%). <TestTag /> <Ev e="measured" /></>} />
+              <p className="t-13" style={{ margin: '0 0 8px' }} data-testid="method-coverage">{coverageSentence(x)} <TestTag /></p>
+              <ItemSection x={x} item="6 forecast skill" note={<>Mean absolute error of K, W and L per series, and how often the truth fell inside the <span data-valok="">p10–p90 interval frozen on validation</span>. <TestTag /> <Ev e="measured" /></>} />
             </Sec> : null}
             {x ? <Sec title="What the learned model leans on (permutation importance), test year">
               <ItemSection x={x} item="6 permutation importance" note={<>MAE increase when one feature group of the frozen {pname('L')} is shuffled. <TestTag /> <Ev e="measured" /></>} />
             </Sec> : null}
-            {x ? <div data-valok=""><Sec title="Validation → test drift"><DriftView x={x} /></Sec></div> : null}
+            {x ? <Sec title="Validation → test drift" valok><DriftView x={x} /></Sec> : null}
             {data!.water ? <div className="well" style={{ padding: 12 }}><Sec title="Water footprint illustration (not the registered result)">
               <WaterPanel w={data!.water} />
             </Sec></div> : null}
@@ -203,10 +204,10 @@ export function MethodDrawer() {
 
 const VS_LIST = (e: { value: number[] }) => e.value.join(', ');
 
-function Sec({ title, children }: { title: string; children: React.ReactNode }) {
+function Sec({ title, children, valok }: { title: string; children: React.ReactNode; valok?: boolean }) {
   return (
     <section>
-      <h3 className="t-15" style={{ margin: '0 0 8px' }}>{title}</h3>
+      <h3 className="t-15" style={{ margin: '0 0 8px' }} data-valok={valok ? '' : undefined}>{title}</h3>
       {children}
     </section>
   );

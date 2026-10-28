@@ -28,6 +28,13 @@ test('the price lens shows the caveat, the honest headline and both charts, offl
   await expect(page.getByTestId('prices-title')).toContainText(`Over ${prices.policies.W.interval.blocks[String(prices.policies.W.interval.primary_block.value)].n_weeks.value} weeks`);
   await expect(page.getByTestId('prices-card-hero')).toContainText(k);
   await expect(page.getByTestId('prices-whisker-note')).toContainText('not the price-node choice');
+  // merge-time fix (#87 re-review): SCE's 95% interval for W, read from the JSON
+  {
+    const alt = prices.california_node.alternative_policies.W.interval;
+    const [a, b] = alt.blocks[String(alt.primary_block.value)].delta_vs_U_usd_ci95.value as [number, number];
+    const us = (x: number) => `${x > 0 ? '+' : '−'}$${Math.round(Math.abs(x)).toLocaleString('en-US')}`;
+    await expect(page.getByTestId('prices-whisker-note')).toContainText(`with a 95% interval of ${us(a)} to ${us(b)}`);
+  }
   await expect(page.getByTestId('prices-per-tonne-note')).toBeVisible();
   const mob = prices.policies['mobility_le_8gpus:W'];
   if (mob) {

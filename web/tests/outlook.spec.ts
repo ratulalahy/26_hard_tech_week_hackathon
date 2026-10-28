@@ -25,6 +25,16 @@ test('the outlook page shows every day, the router pick and the skill table, off
     await expect(page.getByTestId('outlook-skill-line')).toContainText("Utah's forecast is not reliably better than its seasonal average");
     await expect(page.getByTestId('outlook-days')).not.toContainText('better than avg');
   }
+  // merge-time fix (#85 re-review): a Utah card whose cell fails the skill rule shows only "seasonal average", no point estimate
+  for (const [i, d] of (outlook.days as any[]).entries()) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const card = page.getByTestId('outlook-days').locator('li').nth(i);
+    if (d.regions.PACE.status !== 'forecast') {
+      await expect(card).toContainText('seasonal average');
+      await expect(card).not.toContainText('vs avg');
+      await expect(card).not.toContainText('forecast');
+    }
+  }
+  if (outlook.days.every((d: any) => d.regions.PACE.status !== 'forecast')) await expect(page.getByTestId('outlook-title')).toContainText('typical cleanest hours'); // eslint-disable-line @typescript-eslint/no-explicit-any
   await expect(page.getByRole('radiogroup', { name: 'Evaluation window' })).toHaveCount(0);
   await expect(page.getByTestId('outlook-skill').locator('tbody tr')).toHaveCount(4);
   for (const ba of ['PACE', 'BPAT', 'CISO', 'NEVP']) await expect(page.getByTestId(`outlook-chart-${ba}`).locator('svg')).toBeVisible();
