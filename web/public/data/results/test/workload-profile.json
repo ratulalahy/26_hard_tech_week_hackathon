@@ -1,0 +1,168 @@
+{
+ "schema_version": "gridpilot.results.v1",
+ "kind": "workload-profile",
+ "run_id": "20261028T012253Z",
+ "policy": "W",
+ "definition": "jobs ranked by declared GPU-hours (ties by job_uid); shares of the cohort's declared GPU-hours, of U's energy, and of W's saving vs U",
+ "n_jobs": {
+  "value": 888224,
+  "unit": "jobs",
+  "evidence": "simulated",
+  "provenance_id": "20261028T012253Z:workload:n_jobs",
+  "status": "ok",
+  "reason": null
+ },
+ "median_gpu_h": {
+  "value": 0.05555555555555555,
+  "unit": "GPU_h",
+  "evidence": "measured",
+  "provenance_id": "20261028T012253Z:workload:median_gpu_h",
+  "status": "ok",
+  "reason": null
+ },
+ "share_jobs_under_1_gpu_h": {
+  "value": 0.8631324981085852,
+  "unit": "fraction",
+  "evidence": "measured",
+  "provenance_id": "20261028T012253Z:workload:under_1_gpu_h",
+  "status": "ok",
+  "reason": null
+ },
+ "saving_kg": {
+  "value": 933848.3787852573,
+  "unit": "kg_CO2",
+  "evidence": "simulated",
+  "provenance_id": "20261028T012253Z:workload:saving_kg",
+  "status": "ok",
+  "reason": null
+ },
+ "top": [
+  {
+   "fraction": {
+    "value": 0.001,
+    "unit": "fraction",
+    "evidence": "assumed",
+    "provenance_id": "20261028T012253Z:workload:q0.001",
+    "status": "ok",
+    "reason": null
+   },
+   "n_jobs": {
+    "value": 889,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261028T012253Z:workload:q0.001:n",
+    "status": "ok",
+    "reason": null
+   },
+   "gpu_h_share": {
+    "value": 0.7439612013762615,
+    "unit": "fraction",
+    "evidence": "measured",
+    "provenance_id": "20261028T012253Z:workload:q0.001:gpu_h",
+    "status": "ok",
+    "reason": null
+   },
+   "energy_share": {
+    "value": 0.7439612013762616,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261028T012253Z:workload:q0.001:energy",
+    "status": "ok",
+    "reason": null
+   },
+   "saving_share": {
+    "value": 0.6676723193742784,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261028T012253Z:workload:q0.001:saving",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  {
+   "fraction": {
+    "value": 0.01,
+    "unit": "fraction",
+    "evidence": "assumed",
+    "provenance_id": "20261028T012253Z:workload:q0.01",
+    "status": "ok",
+    "reason": null
+   },
+   "n_jobs": {
+    "value": 8883,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261028T012253Z:workload:q0.01:n",
+    "status": "ok",
+    "reason": null
+   },
+   "gpu_h_share": {
+    "value": 0.9452044965460776,
+    "unit": "fraction",
+    "evidence": "measured",
+    "provenance_id": "20261028T012253Z:workload:q0.01:gpu_h",
+    "status": "ok",
+    "reason": null
+   },
+   "energy_share": {
+    "value": 0.9452044965460777,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261028T012253Z:workload:q0.01:energy",
+    "status": "ok",
+    "reason": null
+   },
+   "saving_share": {
+    "value": 0.9251503332384039,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261028T012253Z:workload:q0.01:saving",
+    "status": "ok",
+    "reason": null
+   }
+  },
+  {
+   "fraction": {
+    "value": 0.1,
+    "unit": "fraction",
+    "evidence": "assumed",
+    "provenance_id": "20261028T012253Z:workload:q0.1",
+    "status": "ok",
+    "reason": null
+   },
+   "n_jobs": {
+    "value": 88823,
+    "unit": "jobs",
+    "evidence": "simulated",
+    "provenance_id": "20261028T012253Z:workload:q0.1:n",
+    "status": "ok",
+    "reason": null
+   },
+   "gpu_h_share": {
+    "value": 0.9875967492382028,
+    "unit": "fraction",
+    "evidence": "measured",
+    "provenance_id": "20261028T012253Z:workload:q0.1:gpu_h",
+    "status": "ok",
+    "reason": null
+   },
+   "energy_share": {
+    "value": 0.9875967492382031,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261028T012253Z:workload:q0.1:energy",
+    "status": "ok",
+    "reason": null
+   },
+   "saving_share": {
+    "value": 0.9818367340929475,
+    "unit": "fraction",
+    "evidence": "simulated",
+    "provenance_id": "20261028T012253Z:workload:q0.1:saving",
+    "status": "ok",
+    "reason": null
+   }
+  }
+ ],
+ "window": "test"
+}
