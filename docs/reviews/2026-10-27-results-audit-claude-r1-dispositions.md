@@ -4,7 +4,7 @@
 - **Why Claude, not Astra:** the planned independent Codex (Astra) results audit could not run because the Codex credits are exhausted. A fresh Claude session ran the same prompt (`origin/review/results-audit:docs/reviews/prompts/2026-10-27-results-audit-astra-r1.md`) read-only, with the packet (`origin/review/results-audit:docs/reviews/2026-10-27-results-audit-packet.md`) as a map only. This is a substitution, not an independent cross-model review; the owner should weigh it that way.
 - **Audited:** origin/main `605e845` (the sealed test-year run 20261028T012253Z and its read log).
 - **Dispositions by:** the pitch rewrite task (P2), Tue 2026-10-27 night, on branch `pitch/post-test`. Nothing in `results/`, `config/` or `lab/` was changed, and nothing reopened the sealed window.
-- **"Fixed" means fixed in this PR's commit** on `pitch/post-test` (PR "pitch: post-test rewrite + results-audit dispositions"); the file and the change are named in each row.
+- **"Fixed" means fixed in commit `9390c48`** on `pitch/post-test` (PR "pitch: post-test rewrite + results-audit dispositions"); the file and the change are named in each row.
 
 ## Counts
 
